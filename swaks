@@ -8,7 +8,7 @@ use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20050605.3";
+my $p_version = "20050605.3-dev";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003-2005 John Jetmore <jj33\@pobox.com>
@@ -29,11 +29,10 @@ my $p_cp      = <<EOM;
 EOM
 ext_usage(); # before we do anything else, check for --help
 
-my($from, $to, $helo, $data, $server, $port, $a_type, $a_user, $a_pass,
-   $lint, $timeout, %O)
-             = (undef);
+my %O        = ();
 my $user     = get_username();
 my $hostname = get_hostname();
+$|           = 1;
 
 Getopt::Long::Configure("bundling_override");
 GetOptions(
@@ -109,11 +108,39 @@ if ($G::dump_args) {
   exit(0);
 }
 
+# we're going to abstract away the actual connection layer from the mail 
+# process, so move the act of connecting into its own sub.  The sub will
+# set info in global hash %G::link
+# XXX instead of passing raw data, have processs_opts create a link_data
+# XXX hash that we can pass verbatim here
+open_link($opts->{server}, $opts->{port}, $opts->{lint}, $opts->{timeout});
+
 sendmail($opts->{from}, $opts->{to}, $opts->{helo}, $opts->{data},
          $opts->{server}, $opts->{port}, $opts->{a_user}, $opts->{a_pass},
          $opts->{a_type}, $opts->{lint}, $opts->{timeout});
 
 exit(0);
+
+sub open_link {
+  my $host    = shift;
+  my $port    = shift;
+  my $lint    = shift;
+  my $timeout = shift;
+  %G::link    = {};
+
+  $G::link{type} = "socket";
+  print_transaction(11, "Trying $host:$port...");
+  $G::link{sock} = IO::Socket::INET->new( PeerAddr  => $host, PeerPort => $port,
+		                       Proto     => 'tcp', Timeout  => $timeout,
+                                       LocalAddr => $lint);
+
+  if ($@) {
+    print_transaction(12,"Error connecting $lint to $host:$port:\n\t$@");
+    exit(2);
+  }
+  print_transaction(11, "Connected to $host.");
+
+}
 
 sub sendmail {
   my $from    = shift;	# envelope-from
@@ -128,8 +155,8 @@ sub sendmail {
   my $lint    = shift;	# what local interface to use
   my $timeout = shift;	# timeout for all transactions
   my $ehlo    = {};	# If server is esmtp, save advertised features here
-  $|          = 1;
 
+# XXX cut
   print_transaction(11, "Trying $host:$port...");
   my $s       = IO::Socket::INET->new( PeerAddr  => $host, PeerPort => $port,
 		                       Proto     => 'tcp', Timeout  => $timeout,
@@ -140,6 +167,7 @@ sub sendmail {
     exit(2);
   }
   print_transaction(11, "Connected to $host.");
+#XXX end cut
 
   # start up tls if -tlsc specified
   if ($G::tls_on_connect) {
@@ -355,7 +383,7 @@ sub do_smtp_tls {
   if (!$e->{STARTTLS}) {
     print_transaction(12, "STARTTLS not supported");
     return $G::tls_optional ? 1 : 0;
-  } elsif (!do_smtp_gen($s, "STARTTLS", '220', $timeout)) {
+  } elsif (!do_smtp_gen($s, "STARTTLS", '220', $t)) {
     return $G::tls_optional ? 1 : 0;
   } elsif (!start_tls($s)) {
     print_transaction(12, "TLS startup failed ($G::tls_res)");
@@ -1053,12 +1081,12 @@ sub process_args {
       $n{a_user}   = $o->{auth_user} if (defined($o->{auth_user}));
       $n{a_user} ||= $fconf->{USER};
       $n{a_user} ||= interact("Username: ", 'SKIP');
-      $n{a_user}   = '' if ($a_user eq '<>');
+      $n{a_user}   = '' if ($n{a_user} eq '<>');
 
       $n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
       $n{a_pass} ||= $fconf->{PASS};
       $n{a_pass} ||= interact("Password: ", 'SKIP');
-      $n{a_pass}   = '' if ($a_pass eq '<>');
+      $n{a_pass}   = '' if ($n{a_pass} eq '<>');
   
       $n{a_type} = $o->{auth};
       $G::auth_showpt = 1 if (defined($o->{auth_showpt}));
