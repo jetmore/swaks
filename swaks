@@ -678,48 +678,69 @@ sub do_smtp_gen {
   }
 }
 
+# If we detect that the other side has gone away when we were expecting
+# to still be reading, come in here to error and die.  Abstracted because
+# the error message will vary depending on the type of connection
+sub handle_disconnect {
+  # XXX assign a real exit code and make the error message conditional
+  print_transaction(12, "Connection unexpectedly ended FIXME");
+  exit(37)
+}
+
+# write a bunch of data to whatever is listening on the end.  We don't 
+# have any requirements about the data except that we will be writing
+# \r\n onto the end of it.  Any connection level details will be handled
+# in here
+sub send_data {
+  my $d = shift; # data to write
+  # Either an IO::Socket obj or a FH to my child - the thing to write to
+  my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{wr} : $G::link{sock};
+
+  if ($G::link{tls}{active}) {
+    my $res = Net::SSLeay::write($G::link{tls}{ssl}, "$d\r\n");
+  } else {
+    print $s $d, "\r\n";
+  }
+}
+
+# read data from the other end, possibly more than one line at a time.
+# If more than one line returned, return one line of data at a time.
+# If not a whole line returned, read until newline.  Any connection level
+# details will be handled in here.
+sub recv_line {
+  # Either an IO::Socket obj or a FH to my child - the thing to read from
+  my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{re} : $G::link{sock};
+  my $r = undef;
+
+  if ($G::link{tls}{active}) {
+    $r = Net::SSLeay::read($G::link{tls}{ssl});
+  } else {
+    $r = <$s>;
+  }
+  $r =~ s|\r||msg;
+  return($r);
+}
+
 sub transact {
   my $send    = shift;     # This is the string to send
   my $buff    = shift;     # we will store and manipulate the return value here.
-  my $s       = $G::link{sock}; # This is my IO::Socket object
-  # wr = child stdin, re = child stdout, er = child stderr
-  my($wr,$re) = ($s->{wr},$s->{re}) if ($G::link{type} eq 'pipe');
 
   eval {
     local $SIG{'ALRM'} = sub {
       $buff = "Timeout ($G::link{timeout} secs) waiting for server response";
       die;
     };
-    if (defined($send)) {
-      if ($G::link{tls}{active}) {
-        my $res = Net::SSLeay::write($G::link{tls}{ssl}, "$send\r\n");
-      } else {
-        if ($G::link{type} eq 'pipe') {
-          print $wr $send, "\r\n";
-        } else {
-          print $s $send, "\r\n";
-        }
-      }
-    }
+    send_data($send) if (defined($send));
     alarm($G::link{timeout});
+
     if ($buff) {
       $buff = '';
     } else {
-      # The 'do' allows for multi-line responses
-      if ($G::link{tls}{active}) {
-        do {
-          $buff .= Net::SSLeay::read($G::link{tls}{ssl});
-        } while ($buff !~ /^\d\d\d /m);
-      } else {
-        do {
-          if ($G::link{type} eq 'pipe') {
-            $buff .= <$re>;
-          } else {
-            $buff .= <$s>;
-          }
-        } while ($buff !~ /^\d\d\d /m);
+      while ($buff !~ /^\d\d\d /m) {
+        my $l = recv_line();
+        handle_disconnect() if (!defined($l));
+        $buff .= $l;
       }
-      $buff =~ s/\r//msg;
       chomp($buff);
     }
     alarm(0);
