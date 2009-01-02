@@ -1435,6 +1435,32 @@ sub get_date_string {
                     );
 }
 
+# partially Cribbed from "Programming Perl" and MIME::Base64 v2.12
+sub decode_b64 {
+  my $s =  shift;
+  $s    =~ tr#A-Za-z0-9+/##cd;
+  $s    =~ s|=+$||;
+  $s    =~ tr#A-Za-z0-9+/# -_#;
+  my $r = '';
+  while ($s =~ s/(.{1,60})//s) {
+    $r .= unpack("u", chr(32 + int(length($1)*3/4)) . $1);
+  }
+  return($r);
+}
+
+# partially Cribbed from MIME::Base64 v2.12
+sub encode_b64 {
+  my $s    =  shift;
+  my $l    =  length($s);
+  chomp($s =  pack("u", $s));
+  $s       =~ s|\n.||gms;
+  $s       =~ s|\A.||gms;
+  $s       =~ tr#` -_#AA-Za-z0-9+/#;
+  my $p    =  (3 - $l%3) % 3;
+  $s       =~ s/.{$p}$/'=' x $p/e if ($p);
+  return($s);
+}
+
 sub ext_usage {
   if ($ARGV[0] =~ /^--help$/i) {
     require Config;
