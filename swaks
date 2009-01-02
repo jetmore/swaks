@@ -77,7 +77,7 @@ load_modules({
   'AUTH CRAM-MD5'          => ['Digest::MD5'],
   'AUTH NTLM'              => ['Authen::NTLM'],
   'AUTH DIGEST-MD5'        => ['Authen::DigestMD5'],
-  'MX lookups'             => ['xNet::DNS'],
+  'MX lookups'             => ['Net::DNS'],
   'High resolution timing' => ['Time::HiRes'],
   'TLS'                    => ['Net::SSLeay'],
 }, \%G::modules);
