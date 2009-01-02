@@ -67,6 +67,7 @@ GetOptions(
   'hs|hide-send'    => \$O{hide_send},     # Don't show sending lines
   'stl|show-time-lapse:s' => \$O{show_time_lapse}, # print lapse for send/recv
   'ndf|no-data-fixup' => \$O{no_data_fixup}, # don't touch the data
+  'pipe:s'          => \$O{pipe_cmd},      # command to communicate with
   'dump'            => \$O{dump_args}      # build options and dump
 ) || exit(1);
 
@@ -85,10 +86,13 @@ exit(0) if ($O{get_support}); # --support means report capabilities only
 my $opts = process_args(\%O);
 
 if ($G::dump_args) {
+  print "type       = $G::link{type}\n";
+  print "server     = $G::link{server}\n";
+  print "socket     = $G::link{socket}\n";
+  print "process    = $G::link{process}\n";
   print "from       = $opts->{from}\n";
   print "to         = $opts->{to}\n";
   print "helo       = $opts->{helo}\n";
-  print "server     = $G::link{server}\n";
   print "port       = $G::link{port}\n";
   print "tls        = ";
   if ($G::tls) {
@@ -121,21 +125,36 @@ sendmail($opts->{from}, $opts->{to}, $opts->{helo}, $opts->{data},
 exit(0);
 
 sub open_link {
-  $G::link{type}    = "socket";
+  if ($G::link{type} eq 'socket-inet') {
+    print_transaction(11, "Trying $G::link{server}:$G::link{port}...");
+    $G::link{sock} = IO::Socket::INET->new(PeerAddr => $G::link{server},
+                            PeerPort  => $G::link{port}, Proto => 'tcp',
+                            Timeout   => $G::link{timeout},
+                            LocalAddr => $G::link{lint});
 
-  print_transaction(11, "Trying $G::link{server}:$G::link{port}...");
-  $G::link{sock} = IO::Socket::INET->new(PeerAddr => $G::link{server},
-                          PeerPort  => $G::link{port}, Proto => 'tcp',
-                          Timeout   => $G::link{timeout},
-                          LocalAddr => $G::link{lint});
-
-  if ($@) {
-    print_transaction(12, "Error connecting $G::link{lint} " .
-                          "to $G::link{server}:$G::link{port}:\n\t$@");
-    exit(2);
+    if ($@) {
+      print_transaction(12, "Error connecting $G::link{lint} " .
+                            "to $G::link{server}:$G::link{port}:\n\t$@");
+      exit(2);
+    }
+    print_transaction(11, "Connected to $G::link{server}.");
+  } elsif ($G::link{type} eq 'pipe') {
+    print_transaction(11, "Trying pipe to $G::link{process}...");
+    # XXX if I can figure out blocking and order, consider open3 here
+    if (!try_load("IPC::Open2")) {
+      print_transaction(12, "Couldn't load IPC::Open2 for pipe, exiting");
+      exit(2);
+    }
+    if (!open2($G::link{sock}{read},$G::link{sock}{write},$G::link{process})) {
+      print_transaction(12, "Error connecting to $G::link{process}:\n\t$!");
+      exit(2);
+    }
+    print_transaction(11, "Connected to $G::link{process}.");
+  } else {
+    print_transaction(12, "Unknown or unimplemented connection type " .
+                          "$G::link{type}");
+    exit(3);
   }
-  print_transaction(11, "Connected to $G::link{server}.");
-
 }
 
 sub sendmail {
@@ -580,9 +599,10 @@ sub do_smtp_gen {
 }
 
 sub transact {
-  my $send = shift;       # This is the string to send
-  my $buff = shift;       # we will store and manipulate the return value here.
-  my $s    = $G::link{sock}; # This is my IO::Socket object
+  my $send    = shift;     # This is the string to send
+  my $buff    = shift;     # we will store and manipulate the return value here.
+  my $s       = $G::link{sock}; # This is my IO::Socket object
+  my($wr,$re) = ($s->{write},$s->{read}) if ($G::link{type} eq 'pipe');
 
   eval {
     local $SIG{'ALRM'} = sub {
@@ -593,7 +613,11 @@ sub transact {
       if ($G::link{tls}{active}) {
         my $res = Net::SSLeay::write($G::link{tls}{ssl}, "$send\r\n");
       } else {
-        print $s $send, "\r\n";
+        if ($G::link{type} eq 'pipe') {
+          print $wr $send, "\r\n";
+        } else {
+          print $s $send, "\r\n";
+        }
       }
     }
     alarm($G::link{timeout});
@@ -605,7 +629,11 @@ sub transact {
         $buff = Net::SSLeay::read($G::link{tls}{ssl});
       } else {
         do {
-          $buff .= <$s>;
+          if ($G::link{type} eq 'pipe') {
+            $buff .= <$re>;
+          } else {
+            $buff .= <$s>;
+          }
         } while ($buff !~ /^\d\d\d /m);
       }
       $buff =~ s/\r//msg;
@@ -829,6 +857,15 @@ sub process_args {
     $o->{mail_data} = ''; # define it here so we get it on stdin later
   }
 
+#XXX
+  # pipe command, if one is specified
+  $G::link{process}   = $o->{pipe_cmd} || interact("Pipe: ", '^.+$')
+      if (defined($o->{pipe_cmd}));
+  $G::link{process} ||= $fconf->{PIPE} || "";
+  if ($G::link{process}) { $G::link{type} = 'pipe';   }
+  else                   { delete($G::link{process}); }
+#XXX
+
   # SMTP mail from
   $n{from} = $o->{mail_from} || interact("From: ", '^.*$')
       if (defined($o->{mail_from}));
@@ -851,8 +888,10 @@ sub process_args {
   $n{to}           ||= $fconf->{TO};
   $n{to}             = interact("To: ", '^.*$')
       if (!$n{to} && !($G::server_only && $G::link{server}));
-  $G::link{server}   = get_server($n{to})
-      if (!$G::link{server});
+  if (!$G::link{type}) {
+    $G::link{server} = get_server($n{to}) if (!$G::link{server});
+    $G::link{type}   = "socket-inet";
+  }
 
   # local interface to connect from
   $G::link{lint}   = $o->{lint} || interact("Interface: ", '^.*$')
@@ -1298,6 +1337,10 @@ error parsing command line options
 =item 2
 
 error connecting to remote server
+
+=item 3
+
+unknown connection type
 
 =item 10
 
