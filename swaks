@@ -2,13 +2,13 @@
 
 use strict;
 
-use IO::Socket qw();
+use IO::Socket;
 use Sys::Hostname;
 use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20050605.3-dev";
+my $p_version = "20050625.8";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003-2005 John Jetmore <jj33\@pobox.com>
@@ -68,6 +68,7 @@ GetOptions(
   'stl|show-time-lapse:s' => \$O{show_time_lapse}, # print lapse for send/recv
   'ndf|no-data-fixup' => \$O{no_data_fixup}, # don't touch the data
   'pipe:s'          => \$O{pipe_cmd},      # command to communicate with
+  'socket:s'        => \$O{socket},        # unix doain socket to talk to
   'dump'            => \$O{dump_args}      # build options and dump
 ) || exit(1);
 
@@ -127,7 +128,7 @@ teardown_link();
 exit(0);
 
 sub teardown_link {
-  if ($G::link{type} eq 'socket-inet') {
+  if ($G::link{type} eq 'socket-inet' || $G::link{type} eq 'socket-unix') {
     # XXX need anything special for tls teardown?
     close($G::link{sock});
     print_transaction(11,  "Connection closed by foreign host.");
@@ -154,6 +155,17 @@ sub open_link {
       exit(2);
     }
     print_transaction(11, "Connected to $G::link{server}.");
+  } elsif ($G::link{type} eq 'socket-unix') {
+    print_transaction(11, "Trying $G::link{sockfile}...");
+    $G::link{sock} = IO::Socket::UNIX->new(Peer => $G::link{sockfile},
+                            Timeout   => $G::link{timeout},
+                            Type => SOCK_STREAM);
+
+    if ($@) {
+      print_transaction(12, "Error connecting to $G::link{sockfile}:\n\t$@");
+      exit(2);
+    }
+    print_transaction(11, "Connected to $G::link{sockfile}.");
   } elsif ($G::link{type} eq 'pipe') {
     $SIG{PIPE} = sub {
       print_transaction(12, "Child process went away unexpectedly, exiting");
@@ -885,14 +897,19 @@ sub process_args {
     $o->{mail_data} = ''; # define it here so we get it on stdin later
   }
 
-#XXX
   # pipe command, if one is specified
   $G::link{process}   = $o->{pipe_cmd} || interact("Pipe: ", '^.+$')
       if (defined($o->{pipe_cmd}));
   $G::link{process} ||= $fconf->{PIPE} || "";
   if ($G::link{process}) { $G::link{type} = 'pipe';   }
   else                   { delete($G::link{process}); }
-#XXX
+
+  # socket file, if one is specified
+  $G::link{sockfile}   = $o->{socket} || interact("Socket File: ", '^.+$')
+      if (defined($o->{socket}));
+  $G::link{sockfile} ||= $fconf->{SOCKET} || "";
+  if ($G::link{sockfile}) { $G::link{type} = 'socket-unix';   }
+  else                   { delete($G::link{sockfile}); }
 
   # SMTP mail from
   $n{from} = $o->{mail_from} || interact("From: ", '^.*$')
@@ -1141,6 +1158,10 @@ swaks [--help|--version] | (see description of options below)
 =item --pipe
 
 This option takes as its argument a program and the program's arguments.  If this option is present, swaks opens a pipe to the program and enters an SMTP transaction over that pipe rather than connecting to a remote server.  Some MTAs have testing modes using stdin/stdout.  This option allows you to tie into those options.  For example, if you implemented DNSBL checking with exim and you wanted to make sure it was working, you could run 'swaks --pipe "exim -bh 127.0.0.2"'.
+
+=item --socket
+
+This option takes as its argument a unix domain socket file.  If this option is present, swaks enters an SMTP transaction over over the unix domains socket rather than over an internet domain socket.  I think this option has uses when combined with a (yet unwritten) LMTP mode, but to be honest at this point I just implemented it because I could.
 
 =item -l, --input-file
 
