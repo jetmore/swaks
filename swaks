@@ -1383,7 +1383,7 @@ sub process_args {
     # use default numbers is service names don't resolve.  Never prompt user
     if ($G::protocol eq 'lmtp') {
       $G::link{port} = getservbyname('lmtp',  'tcp') || '24';
-    if ($G::tls_on_connect) {
+    } elsif ($G::tls_on_connect) {
       $G::link{port} = getservbyname('smtps', 'tcp') || '465';
     } else {
       $G::link{port} = getservbyname('smtp',  'tcp') || '25';
