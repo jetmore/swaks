@@ -168,7 +168,7 @@ sub sendmail {
   }
 
   # QUIT here if the user has asked us to do so
-  if ($G::quit_after eq 'helo') {
+  if ($G::quit_after eq 'first-helo') {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(0);
   }
@@ -195,6 +195,12 @@ sub sendmail {
       do_smtp_gen($s, 'QUIT', '221', $timeout);
       exit(32);
     }
+  }
+
+  # QUIT here if the user has asked us to do so
+  if ($G::quit_after eq 'helo') {
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
+    exit(0);
   }
 
   # handle auth here if user has requested it
@@ -1119,7 +1125,7 @@ Use argument as DATA portion of SMTP transaction, or prompt user if no argument 
 
 This string should be on one single line, with a literal \n representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  Very basic token parsing is done.  %F is replaced with the value that will be used for "MAIL FROM", %T is replaced with "RCPT TO" values, and %D is replaced with a timestamp.
 
-Default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\n\nThis is a test mailing\n".
+Default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\nX-Mailer: swaks v$p_version jetmore.org/john/code/#swaks\n\nThis is a test mailing\n".
 
 =item --timeout
 
@@ -1143,7 +1149,7 @@ If this option is specified, swaks summarizes the DATA portion of the SMTP trans
 
 =item -q, --quit-after
 
-The argument to this option is used as an indicator of where to quit the SMTP transaction.  It can be thought of as "quit after", with valid arguments CONNECT, HELO, TLS, AUTH, MAIL, and RCPT.
+The argument to this option is used as an indicator of where to quit the SMTP transaction.  It can be thought of as "quit after", with valid arguments CONNECT, FISRT-HELO, TLS, HELO, AUTH, MAIL, and RCPT.  In a non-STARTTLS session, FIRST-HELO and HELO behave the same way.  In a STARTTLS session, FIRST-HELO quits after the first HELO sent, while HELO quits after the second HELO is sent.
 
 =item -m
 
