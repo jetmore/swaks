@@ -166,121 +166,77 @@ sub sendmail {
   }
 
   # read the server's 220 banner
-  if (!do_smtp_gen(undef, '220')) {
-    do_smtp_gen('QUIT', '221');
-    exit(21);
-  }
+  do_smtp_gen(undef, '220') || do_smtp_quit(1, 21);
 
   # QUIT here if the user has asked us to do so
-  if ($G::quit_after eq 'connect') {
-    do_smtp_gen('QUIT', '221');
-    exit(0);
-  }
+  do_smtp_quit(1, 0) if ($G::quit_after eq 'connect');
 
   # Send a HELO string
-  if (!do_smtp_helo($helo, $ehlo)) {
-    do_smtp_gen('QUIT', '221');
-    exit(22);
-  }
+  do_smtp_helo($helo, $ehlo) || do_smtp_quit(1, 22);
 
   # QUIT here if the user has asked us to do so
-  if ($G::quit_after eq 'first-helo') {
-    do_smtp_gen('QUIT', '221');
-    exit(0);
-  }
+  do_smtp_quit(1, 0) if ($G::quit_after eq 'first-helo');
 
   # handle TLS here if user has requested it
   if ($G::tls) {
-    if (!do_smtp_tls($ehlo) && !$G::tls_optional)
-    {
-      do_smtp_gen('QUIT', '221');
-      exit(29);
-    }
+    do_smtp_quit(1, 29) if (!do_smtp_tls($ehlo) && !$G::tls_optional);
   }
 
   # QUIT here if the user has asked us to do so
-  if ($G::quit_after eq 'tls') {
-    do_smtp_gen('QUIT', '221');
-    exit(0);
-  }
+  do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 
   if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
     # According to RFC3207, we need to forget state info and re-EHLO here
     $ehlo = {};
-    if (!do_smtp_helo($helo, $ehlo)) {
-      do_smtp_gen('QUIT', '221');
-      exit(32);
-    }
+    do_smtp_helo($helo, $ehlo) || do_smtp_quit(1, 32);
   }
 
   # QUIT here if the user has asked us to do so
-  if ($G::quit_after eq 'helo') {
-    do_smtp_gen('QUIT', '221');
-    exit(0);
-  }
+  do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
 
   # handle auth here if user has requested it
   if ($a_type) {
-    if (!do_smtp_auth($ehlo, $a_type, $a_user, $a_pass, $host)
-         && !$O{auth_optional})
-    {
-      do_smtp_gen('QUIT', '221');
-      exit(28);
-    }
+    do_smtp_quit(1, 28) if (!do_smtp_auth($ehlo,$a_type,$a_user,$a_pass,$host)
+                            && !$O{auth_optional});
   }
 
   # QUIT here if the user has asked us to do so
-  if ($G::quit_after eq 'auth') {
-    do_smtp_gen('QUIT', '221');
-    exit(0);
-  }
+  do_smtp_quit(1, 0) if ($G::quit_after eq 'auth');
 
   # send MAIL
-  if (!do_smtp_gen("MAIL FROM:<$from>", '250')) {
-    do_smtp_gen('QUIT', '221');
-    exit(23);
-  }
+  do_smtp_quit(1, 23) if (!do_smtp_gen("MAIL FROM:<$from>", '250'));
 
   # QUIT here if the user has asked us to do so
-  if ($G::quit_after eq 'mail') {
-    do_smtp_gen('QUIT', '221');
-    exit(0);
-  }
+  do_smtp_quit(1, 0) if ($G::quit_after eq 'mail');
 
   # send RCPT
   my $num_accepted = 0;
-  foreach my $r (split(/,/, $to)) {
-    $num_accepted++ if (do_smtp_rcpt($r));
-  }
-  if (!$num_accepted) {
-    do_smtp_gen('QUIT', '221');
-    exit(24);
-  }
+  foreach my $r (split(/,/, $to)) { $num_accepted++ if (do_smtp_rcpt($r)); }
+  do_smtp_quit(1, 24) if (!$num_accepted);
 
   # QUIT here if the user has asked us to do so
-  if ($G::quit_after eq 'rcpt') {
-    do_smtp_gen('QUIT', '221');
-    exit(0);
-  }
+  do_smtp_quit(1, 0) if ($G::quit_after eq 'rcpt');
 
   # send DATA
-  if (!do_smtp_gen("DATA", '354')) {
-    do_smtp_gen('QUIT', '221');
-    exit(25);
-  }
+  do_smtp_gen('DATA', '354') || do_smtp_quit(1, 25);
 
   # send the actual data
-  if (!do_smtp_gen("$data", '250', undef, $O{supress_data})) {
-    do_smtp_gen('QUIT', '221');
-    exit(26);
-  }
+  do_smtp_gen($data, '250', undef, $O{supress_data}) || do_smtp_quit(1, 26);
 
   # send QUIT
-  if (!do_smtp_gen("QUIT", '221')) {
-    exit(27);
-  }
+  do_smtp_quit(0) || exit(27);
 
   print_transaction(11,  "Connection closed by foreign host.");
+}
+
+sub do_smtp_quit {
+  my $exit = shift;
+  my $err  = shift;
+
+  my $r = do_smtp_gen('QUIT', '221');
+  exit $err if ($exit);
+
+  return($r);
 }
 
 sub start_tls {
