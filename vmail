@@ -12,37 +12,28 @@ my($user)     = getpwuid($<);
 my($hostname) = get_hostname();
 
 GetOptions(
-  'l=s'  => \$O::option_file,
-  'f:s'  => \$O::mail_from,
-  't:s'  => \$O::mail_to,
-  'h:s'  => \$O::mail_helo,
-  's:s'  => \$O::mail_server,
-  'p:i'  => \$O::mail_port,
-  'd:s'  => \$O::mail_data,
-  'g'    => \$O::data_on_stdin,
-  'm'    => \$O::emulate_mail,
-  'q=s'  => \$O::quit_after,
-  'n'    => \$O::supress_data,
+  'l=s'  => \$O::option_file,   # (l)ocation of input data
+  'f:s'  => \$O::mail_from,     # envelope-(f)rom address
+  't:s'  => \$O::mail_to,       # envelope-(t)o address
+  'h:s'  => \$O::mail_helo,     # (h)elo string
+  's:s'  => \$O::mail_server,   # (s)erver to use
+  'p:i'  => \$O::mail_port,     # (p)ort to use
+  'd:s'  => \$O::mail_data,     # (d)ata portion ('\n' for newlines)
+  'g'    => \$O::data_on_stdin, # (g)et data on stdin 
+  'm'    => \$O::emulate_mail,  # emulate (M)ail command
+  'q=s'  => \$O::quit_after,    # (q)uit after (connect,helo,mail,rcpt,auth)
+  'n'    => \$O::supress_data,  # do (n)ot print data portion
   'a:s'  => \$O::auth,          # force auth, exit if not supported
   'au:s' => \$O::auth_user,     # user for auth
   'ap:s' => \$O::auth_pass,     # pass for auth
   'ao'   => \$O::auth_optional, # make auth optional (ignore auth failure)
 ) || exit(1);
-# l - specify location of a file containing a (l)ist of data to be used
-# f - specify the (f)rom address
-# t - specify the (t)o address
-# h - who do I claim to be in the (h)elo transaction?
-# s - what (s)erver do I send this mail to?
-# p - what (p)ort do I connect to?
-# d - what is the (d)ata section of the email?
-# g - (g)et data on STDIN
-# m - emulate basic "Mail -v" functionality
-# q - send quit after (valid options are 'helo', 'mail', 'rcpt', and 'connect')
-# n - do (n)ot print all the data portion
 
 # normalize the auth options a bit
+$O::auth_optional = 1 if (defined($O::auth_optional));
+$O::auth = uc($O::auth) if ($O::auth);
 $O::auth = 'ANY' if ((defined($O::auth_user) || defined($O::auth_pass) ||
-                      defined($O::auth_optional)) && !$O::auth);
+                      $O::auth_optional) && !$O::auth);
 $O::auth = 'ANY' if (defined($O::auth) && !$O::auth);
 
 $O::quit_after = lc($O::quit_after) if ($O::quit_after);
@@ -76,7 +67,7 @@ if ($O::auth) {
   try_load("Digest::MD5 qw(md5)");
   if (!try_load("MIME::Base64")) {
     print STDERR "MIME::Base64 not installed, ";
-    if (defined($O::auth_optional)) {
+    if ($O::auth_optional) {
       print STDERR "skipping AUTH attempts...\n";
       $a_type = ''; # So we won't attempt it later
     } else {
@@ -279,6 +270,28 @@ sub do_smtp_auth {
   my $au = shift; # auth user
   my $ap = shift; # auth password
 
+  # the auth_optional stuff is handled higher up, so tell the truth about
+  # failing here
+
+  if (($at ne 'ANY' && !$e->{AUTH}{$at}) || !$e->{AUTH}) {
+    print_transaction('===', "$at authentication not supported");
+    return(0);
+  }
+
+  if (($at eq 'ANY' || $at eq 'CRAM-MD5') && $e->{AUTH}{'CRAM-MD5'}) {
+    return(1) if (do_smtp_auth_cram($s, $t, $au, $ap));
+  }
+  if (($at eq 'ANY' || $at eq 'PLAIN') && $e->{AUTH}{PLAIN}) {
+    return(1) if (do_smtp_auth_plain($s, $t, $au, $ap));
+  }
+  if (($at eq 'ANY' || $at eq 'LOGIN') && $e->{AUTH}{LOGIN}) {
+    return(1) if (do_smtp_auth_login($s, $t, $au, $ap));
+  }
+
+  print_transaction('===', "No authentication type succeeded");
+  return(0);
+
+
   # I need to handle $a_type here correctly (specific or any), bu just get
   # something to work right now
   #print_transaction('===', "doing auth here");
@@ -290,11 +303,11 @@ sub do_smtp_auth {
   #if (do_smtp_auth_login($s, $t, $au, $ap)) {
   #  return(1);
   #}
-  if (do_smtp_auth_cram($s, $t, $au, $ap)) {
-    return(1);
-  }
-
-  return(0);
+  #if (do_smtp_auth_cram($s, $t, $au, $ap)) {
+  #  return(1);
+  #}
+  #
+  #return(0);
 }
 
 sub do_smtp_auth_cram {
@@ -354,6 +367,8 @@ sub do_smtp_helo {
     # AUTH lends itself more towards a multilevel hash.  What I'm going to do
     # is come here and add each key in the way that makes most sense in each
     # case.  I only need auth for now.
+    # XXX I don't think I'm handling AUTH=LOGIN right.  I think it just means
+    # LOGIN and the = is not important - something to check if it's a problem.
     foreach my $l (split(/\n/, $r)) {
       $l =~ s/^....//;
       if ($l =~ /^AUTH(.*)$/) {
