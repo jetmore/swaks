@@ -51,10 +51,10 @@ GetOptions(
   'a|auth:s'        => \$O{auth},          # force auth, exit if not supported
   'au|auth-user:s'  => \$O{auth_user},     # user for auth
   'ap|auth-password:s' => \$O{auth_pass},  # pass for auth
-  'am|auth-map=s' => \$O{auth_map},        # auth type map
+  'am|auth-map=s'   => \$O{auth_map},      # auth type map
   'ahp|auth-hide-password' => \$O{auth_hidepw}, # hide passwords when possible
   'apt|auth-plaintext' => \$O{auth_showpt}, # translate base64 strings
-  'ao|auth-optional' => \$O{auth_optional}, # auth optional (ignore failure)
+  'ao|auth-optional:s' => \$O{auth_optional}, # auth optional (ignore failure)
   'support'         => \$O{get_support},   # report capabilties
   'li|local-interface:s' => \$O{lint},     # local interface to use
   'tls'             => \$O{tls},           # use TLS
@@ -65,7 +65,8 @@ GetOptions(
   'nth|no-hints'    => \$O{no_hints},      # Don't show transaction hints
   'hr|hide-receive' => \$O{hide_receive},  # Don't show reception lines
   'hs|hide-send'    => \$O{hide_send},     # Don't show sending lines
-  'stl|show-time-lapse:s' => \$O{show_time_lapse} # print lapse for send/recv
+  'stl|show-time-lapse:s' => \$O{show_time_lapse}, # print lapse for send/recv
+  'dump'            => \$O{dump_args}      # build options and dump
 ) || exit(1);
 
 load_modules({
@@ -82,18 +83,29 @@ exit(0) if ($O{get_support}); # --support means report capabilities only
 # We need to fix things up a bit and set a couple of global options
 my $opts = process_args(\%O);
 
-#print "from    = $opts->{from}\n";
-#print "to      = $opts->{to}\n";
-#print "helo    = $opts->{helo}\n";
-#print "data    = $opts->{data}\n";
-#print "server  = $opts->{server}\n";
-#print "port    = $opts->{port}\n";
-#print "a_type  = $opts->{a_type}\n";
-#print "a_user  = $opts->{a_user}\n";
-#print "a_pass  = $opts->{a_pass}\n";
-#print "lint    = $opts->{lint}\n";
-#print "timeout = $opts->{timeout}\n";
-#exit;
+if ($G::dump_args) {
+  print "from       = $opts->{from}\n";
+  print "to         = $opts->{to}\n";
+  print "helo       = $opts->{helo}\n";
+  print "server     = $opts->{server}\n";
+  print "port       = $opts->{port}\n";
+  print "tls        = ";
+  if ($G::tls) {
+    print "starttls (", $G::tls_optional ? 'optional' : 'required', ")\n";
+  } elsif ($G::tls_on_connect) {
+    print "on connect (required)\n";
+  } else { print "no\n"; }
+  print "auth       = ";
+  if ($opts->{a_type}) {
+    print $G::auth_optional ? 'optional' : 'yes', " type='$opts->{a_type}' ",
+          "user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
+  } else { print "no\n"; }
+  print "quit after = $G::quit_after\n";
+  print "local int  = $opts->{lint}\n";
+  print "timeout    = $opts->{timeout}\n";
+  print "data       = <<.\n$opts->{data}\n";
+  exit;
+}
 
 sendmail($opts->{from}, $opts->{to}, $opts->{helo}, $opts->{data},
          $opts->{server}, $opts->{port}, $opts->{a_user}, $opts->{a_pass},
@@ -831,6 +843,8 @@ sub process_args {
 
   # load the $fconf hash if user has specified a -l file
   process_file($o->{option_file}, $fconf) if ($o->{option_file});
+
+  $G::dump_args = 1 if ($o->{dump_args});
   
   # set global option of -q option
   $G::quit_after = lc($o->{quit_after}) if ($o->{quit_after});
@@ -939,6 +953,7 @@ sub process_args {
   # Handle AUTH options
   $G::auth_optional = 1 if (defined($o->{auth_optional}));
   $o->{auth} = uc($o->{auth}) if ($o->{auth});
+  $o->{auth} = uc($o->{auth_optional}) if ($o->{auth_optional} && !$o->{auth});
   $o->{auth} = 'ANY' if (!$o->{auth} && (defined($o->{auth_user}) ||
                          defined($o->{auth_pass}) || $o->{auth_optional}));
   $o->{auth} = 'ANY' if (defined($o->{auth}) && !$o->{auth});
@@ -1230,6 +1245,8 @@ This program was written because I was testing a new MTA on an alternate port.  
 
 =head1 REQUIRES
 
+=over 4
+
 =item IO::Socket, Sys::Hostname, Getop::Long, Time::Local
 
 These modules are all required for the program to run at all.  This shouldn't be an issue as I believe these are all core modules.
@@ -1262,7 +1279,11 @@ This module is required for DIGEST-MD5 authentication.
 
 This module is required for high resolution timing.  If unavailable only integer timing is available.
 
+=back
+
 =head1 EXIT CODES
+
+=over 4
 
 =item 0
 
@@ -1320,6 +1341,14 @@ error in TLS transaction
 
 error in EHLO following TLS negotiation
 
+=back
+
 =head1 CONTACT
 
+=over 4
+
 =item proj-swaks@jetmore.net
+
+=back
+
+=cut
