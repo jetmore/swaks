@@ -87,7 +87,6 @@ sub sendmail {
   my($port) = shift;	# where's the remote smtp process live?
 
   my($timeout) = 10;
-  #my($s) = LWP::Socket->new();
   my($s) = IO::Socket::INET->new(
 		PeerAddr => $host,
 		PeerPort => $port,
@@ -100,101 +99,120 @@ sub sendmail {
   $| = 1;
 
   eval {
-    #local $SIG{'ALRM'} = sub { die "Alarm - Trying to connect\n" };
-    #alarm $timeout;
-print "=== Trying $host:$port...\n";
-    #$s->connect($host,$port);
+    print "=== Trying $host:$port...\n";
     die "Can't connect to $host:$port ($@)\n" if (!$s);
-print "=== Connected to $host.\n";
-    local $SIG{'ALRM'} = sub { die "Alarm - No response from server\n" };
-    alarm $timeout;
-    #$s->read_until("\n", \$buffer);
-    $buffer = <$s>;
-$buffer =~ s/[\r\n]//msg;
-print "<-  $buffer\n";
+    print "=== Connected to $host.\n";
+
+    # read the server's 220 banner
+    $buffer = transact($s, '', '', $timeout);
+    print "<- $buffer\n";
+    $buffer =~ /^220 / || exit;
+
+    # send HELO - expand to ehlo here later
+    $send = $opt{q} eq 'connect' ? 'QUIT' : "HELO $helo";
+    print " -> $send\n";
+    $buffer = transact($s, $send, '', $timeout);
+    print "<- $buffer\n";
+    $buffer =~ /^250 / || exit;
+
+
+    #local $SIG{'ALRM'} = sub { die "Alarm - No response from server\n" };
+    
+    #alarm $timeout;
+    #$buffer = <$s>;
+    #$buffer =~ s/[\r\n]//msg;
+    #print "<-  $buffer\n";
     local $SIG{'ALRM'} = sub {die "Alarm - timeout during transaction"};
     alarm $timeout;
-    if ($buffer =~ /^220/) {
+    #if ($buffer =~ /^220/) {
       alarm $timeout;
-$send = "HELO $helo";
-$send = "QUIT" if ($opt{q} eq 'connect');
-print " -> $send\n";
-      #$s->write("$send\r\n");
-      #$s->read_until("\n", \$buffer);
-      print $s "$send\r\n";
-      $buffer = <$s>;
-$buffer =~ s/[\r\n]//msg;
-print "<-  $buffer\n";
-      if ($buffer =~ /^250/) {
+      #$send = "HELO $helo";
+      #$send = "QUIT" if ($opt{q} eq 'connect');
+      #print " -> $send\n";
+      #print $s "$send\r\n";
+      #$buffer = <$s>;
+      #$buffer =~ s/[\r\n]//msg;
+      #print "<-  $buffer\n";
+      #if ($buffer =~ /^250/) {
         alarm $timeout;
-$send = "MAIL FROM:<$from>";
-$send = "QUIT" if ($opt{q} eq 'helo');
-print " -> $send\n";
-        #$s->write("$send\r\n"); 
-        #$s->read_until("\n", \$buffer);
+        $send = "MAIL FROM:<$from>";
+        $send = "QUIT" if ($opt{q} eq 'helo');
+        print " -> $send\n";
         print $s "$send\r\n";
         $buffer = <$s>;
-$buffer =~ s/[\r\n]//msg;
-print "<-  $buffer\n";
+        $buffer =~ s/[\r\n]//msg;
+        print "<-  $buffer\n";
         if ($buffer =~ /^250/) {
           alarm $timeout;
-$send = "RCPT TO:<$to>";
-$send = "QUIT" if ($opt{q} eq 'mail');
-print " -> $send\n";
-          #$s->write("$send\r\n");
-          #$s->read_until("\n", \$buffer);
+          $send = "RCPT TO:<$to>";
+          $send = "QUIT" if ($opt{q} eq 'mail');
+          print " -> $send\n";
           print $s "$send\r\n";
           $buffer = <$s>;
-$buffer =~ s/[\r\n]//msg;
-print "<-  $buffer\n";
+          $buffer =~ s/[\r\n]//msg;
+          print "<-  $buffer\n";
           if ($buffer =~ /^250/) {
             alarm $timeout;
-$send = "DATA";
-$send = "QUIT" if ($opt{q} eq 'rcpt');
-print " -> $send\n";
-            #$s->write("$send\r\n");
-            #$s->read_until("\n", \$buffer);
+            $send = "DATA";
+            $send = "QUIT" if ($opt{q} eq 'rcpt');
+            print " -> $send\n";
             print $s "$send\r\n";
             $buffer = <$s>;
-$buffer =~ s/[\r\n]//msg;
-print "<-  $buffer\n";
+            $buffer =~ s/[\r\n]//msg;
+            print "<-  $buffer\n";
             if ($buffer =~ /^354/) {
               alarm $timeout;
-$send = "$data";
-my($t) = $send;
-$t =~ s/\n/\n -> /msg;
-print " -> $t\n";
-              #$s->write("$send\r\n");
-              #$s->read_until("\n", \$buffer);
+              $send = "$data";
+              my($t) = $send;
+              $t =~ s/\n/\n -> /msg;
+              print " -> $t\n";
               print $s "$send\r\n";
               $buffer = <$s>;
-$buffer =~ s/[\r\n]//msg;
-print "<-  $buffer\n";
+              $buffer =~ s/[\r\n]//msg;
+              print "<-  $buffer\n";
               if ($buffer =~ /^250/) {
                 alarm(0);
-$send = "QUIT";
-print " -> $send\n";
-                #$s->write("$send\r\n");
-                #$s->read_until("\n", \$buffer);
+                $send = "QUIT";
+                print " -> $send\n";
                 print $s "$send\r\n";
                 $buffer = <$s>;
-$buffer =~ s/[\r\n]//msg;
-print "<-  $buffer\n";
+                $buffer =~ s/[\r\n]//msg;
+                print "<-  $buffer\n";
               } else {
                 alarm(0);
               }
             } else { die "Command '$send' failed\n"; }
           } else { die "Command '$send' failed\n"; }
         } else { die "Command '$send' failed\n"; }
-      } else { die "Command '$send' failed\n"; }
-print "=== Connection closed by foreign host.\n";
-    } else { die "Connection to $host on port $port failed\n"; }
+      #} else { die "Command '$send' failed\n"; }
+        #print "=== Connection closed by foreign host.\n";
+    #} else { die "Connection to $host on port $port failed\n"; }
     alarm 0;
   };
-#  $buffer =~ s/[\r\n]//msg;
   $@ =~ s/[\r\n]//msg;
-#print STDERR "\$@ = $@\n";
-#  return($step, $@, $buffer);
+}
+
+sub transact {
+  my $s    = shift;       # This is my IO::Socket object
+  my $send = shift;       # This is the string to send
+  my $buff = shift;       # we will store and manipulate the return value here.
+  my $alrm = shift || 60; # transaction timeout
+
+  eval {
+    local $SIG{'ALRM'} = sub {
+      $buff = "Timeout ($alrm secs) waiting for server response";
+      die;
+    };
+    print $s $send, "\n" if ($send); # $send being null means we want to read
+    alarm($alrm);
+    if ($buff) {
+      $buff = '';
+    } else {
+      $buff = <$s>;
+      $buff =~ s/[\r\n]//msg;
+    }
+  };
+  return($buff);
 }
 
 sub process_file {
