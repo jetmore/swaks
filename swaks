@@ -1699,7 +1699,22 @@ Use argument as the SMTP transaction timeout, or prompt user if no argument give
 
 =item --protocol
 
-Specify which protocol to use in the transaction.  Valid options are 'smtp', 'esmtp', and 'lmtp'.  'esmtp' is the default.  'smtp' causes swaks to only send a HELO string, and all STMP extensions are therefore disabled.  'esmtp' causes swaks to try an EHLO and fall back to HELO is EHLO is unrecognized.  'lmtp' causes swaks to greet the server with LHLO and use the LMTP protocol in the transaction (see RFC 2033).
+Specify which protocol to use in the transaction.  Valid options are shown in the table below.  Currently the 'core' protocols are SMTP, ESMTP, and LMTP.  By using variations of these protocol types one can specify default ports, whether authentication should be attempted, and the type of TLS connection that should be attempted.  The default protocol is ESMTP.  This table demonstrates the available arguments to --protocol and the options each sets as a side effect:
+
+           HELO            AUTH    TLS     PORT
+   --------------------------------------------------
+   SMTP    HELO                            smtp  / 25
+   SSMTP   EHLO->HELO              -tlsc   smtps / 465
+   SSMTPA  EHLO->HELO      -a      -tlsc   smtps / 465
+   SMTPS   HELO                    -tlsc   smtps / 465
+   ESMTP   EHLO->HELO                      smtp  / 25
+   ESMTPA  EHLO->HELO      -a              smtp  / 25
+   ESMTPS  EHLO->HELO              -tls    smtp  / 25
+   ESMTPSA EHLO->HELO      -a      -tls    smtp  / 25
+   LMTP    LHLO                            lmtp  / 24
+   LMTPA   LHLO            -a              lmtp  / 24
+   LMTPS   LHLO                    -tls    lmtp  / 24
+   LMTPSA  LHLO            -a      -tls    lmtp  / 24
 
 =item -li, --local-interface
 
