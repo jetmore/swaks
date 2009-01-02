@@ -58,6 +58,7 @@ GetOptions(
 load_modules({
   'Basic AUTH'    => ['MIME::Base64'],
   'AUTH CRAM-MD5' => ['Digest::MD5'],
+  'AUTH NTLM'     => ['Authen::NTLM'],
   'MX lookups'    => ['Net::DNS'],
   'TLS'           => ['Net::SSLeay'],
 }, \%modules);
@@ -504,6 +505,13 @@ sub do_smtp_auth {
       # debug?
     }
   }
+  if (($at eq 'ANY' || $at eq 'NTLM') && $e->{AUTH}{'NTLM'}) {
+    if ($modules{"Authen::NTLM"}) {
+      return(1) if (do_smtp_auth_ntlm($s, $t, $au, $ap));
+    } else {
+      # debug?
+    }
+  }
   if (($at eq 'ANY' || $at eq 'PLAIN') && $e->{AUTH}{PLAIN}) {
     return(1) if (do_smtp_auth_plain($s, $t, $au, $ap));
   }
@@ -513,6 +521,56 @@ sub do_smtp_auth {
 
   print_transaction(12, "No authentication type succeeded");
   return(0);
+}
+
+sub do_smtp_auth_ntlm {
+  my $s = shift; # socket
+  my $t = shift; # timeout
+  my $u = shift; # auth user
+  my $p = shift; # auth password
+  my $r = '';    # will store smtp response
+  
+  my $auth_string = "AUTH NTLM";
+  do_smtp_gen($s, $auth_string, '334', $t, \$r, '', '',
+              $O::auth_showpt ? \&unencode_smtp : '')
+      || return(0);
+
+  $r =~ s/^....//; # maybe something a little better here?
+  my $client = new_client Authen::NTLM(Authen::NTLM::lm_hash($p),
+                                       Authen::NTLM::nt_hash($p),
+                                       $u, '','','');
+  my $flags =
+    $Authen::NTLM::NTLMSSP_NEGOTIATE_80000000 |
+    $Authen::NTLM::NTLMSSP_NEGOTIATE_128 |
+    $Authen::NTLM::NTLMSSP_NEGOTIATE_ALWAYS_SIGN |
+    $Authen::NTLM::NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED |
+    $Authen::NTLM::NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED |
+    $Authen::NTLM::NTLMSSP_NEGOTIATE_NTLM |
+    $Authen::NTLM::NTLMSSP_NEGOTIATE_UNICODE |
+    $Authen::NTLM::NTLMSSP_NEGOTIATE_OEM |
+    $Authen::NTLM::NTLMSSP_REQUEST_TARGET;
+  my $d = $client->negotiate_msg($flags);
+
+  $auth_string = encode_base64("$d", '');
+  do_smtp_gen($s, $auth_string, '334', $t, \$r, '',
+              $O::auth_showpt ? "$d" : '') || return(0);
+
+  $r =~ s/^....//; # maybe something a little better here?
+  chomp($r = decode_base64($r));
+  my ($domain, $flags, $nonce, $ctx_upper,
+    $ctx_lower) = $client->parse_challenge($r);
+
+  $flags = $Authen::NTLM::NTLMSSP_NEGOTIATE_ALWAYS_SIGN |
+    $Authen::NTLM::NTLMSSP_NEGOTIATE_NTLM |
+    $Authen::NTLM::NTLMSSP_NEGOTIATE_UNICODE |
+    $Authen::NTLM::NTLMSSP_REQUEST_TARGET;
+  $d = $client->auth_msg($nonce, $flags);
+
+  $auth_string = encode_base64("$d", '');
+  do_smtp_gen($s, $auth_string, '334', $t, \$r, '',
+              $O::auth_showpt ? "$d" : '') || return(0);
+
+  return(1);
 }
 
 sub do_smtp_auth_cram {
