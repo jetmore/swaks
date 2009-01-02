@@ -807,7 +807,7 @@ sub transact {
     }
 
     while (my $i = shift(@G::pending_send)) {
-      if ($i->{cxn_string}) {
+      if (defined($i->{cxn_string})) {
         ptrans(21,$i->{show_string}||$i->{cxn_string},$i->{summarize_output});
         send_data($i->{cxn_string});
       }
