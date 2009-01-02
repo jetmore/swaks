@@ -1,23 +1,30 @@
 #!/usr/bin/perl
 
-# %O hash holds options (organized in sub hashes (auth, tls, etc)
-# G:: holds global options; only _very_ necessary variables, like $G::tls_active
-# all "normalization" of variables should be in subroutines
-
-use strict; # *gasp*!  A program by jetmore that uses strict?!?!
+use strict;
 
 use IO::Socket qw();
 use Sys::Hostname;
 use Getopt::Long;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20031111.0";
+my $p_version = "20031201.1";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
-Copyright (c) 2003
-      John Jetmore <jj33\@pobox.com>.  All rights reserved.
-This code freely redistributable provided my name and this copyright notice
-are not removed.  Send email to the contact address if you use this program.
+        Copyright (c) 2003 John Jetmore <jj33\@pobox.com>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 EOM
 ext_usage(); # before we do anything else, check for --help
 
@@ -1009,11 +1016,11 @@ __END__
 
 =head1 NAME
 
-vmail - SMTP transaction tester
+swaks - SMTP transaction tester
 
 =head1 USAGE
 
-vmail [--help|--version] | (see description of options below)
+swaks [--help|--version] | (see description of options below)
 
 =head1 OPTIONS
 
@@ -1035,15 +1042,15 @@ Use argument as "MAIL FROM" address, or prompt user if no argument specified.  O
 
 =item -s, --server
 
-Use argument as mail server to which to connect, or prompt user if no argument specified.  Overridden by -l token SERVER.  If unspecified, vmail tries to determine primary MX of destination address.  If Net::DNS module is not available, tries to connect to A record for recipient's domain.
+Use argument as mail server to which to connect, or prompt user if no argument specified.  Overridden by -l token SERVER.  If unspecified, swaks tries to determine primary MX of destination address.  If Net::DNS module is not available, tries to connect to A record for recipient's domain.
 
 =item -p, --port
 
-Use argument as port to connect to on server, or prompt user if no argument is specified.  Overridden by -l token PORT.  If unspecified, vmail will try to connect to port 25.
+Use argument as port to connect to on server, or prompt user if no argument is specified.  Overridden by -l token PORT.  If unspecified, swaks will try to connect to port 25.
 
 =item -h, --helo, --ehlo
 
-Use argument as argument to SMTP EHLO/HELO command, or prompt use if no argument is specified.  Overridden by -l token HELO.  If unspecified, vmail uses best guess at DNS hostname of local host.
+Use argument as argument to SMTP EHLO/HELO command, or prompt use if no argument is specified.  Overridden by -l token HELO.  If unspecified, swaks uses best guess at DNS hostname of local host.
 
 =item -d, --data
 
@@ -1063,7 +1070,7 @@ Use argument as the local interface for the SMTP connection, or prompt user if n
 
 =item -g
 
-If specified, vmail will read the DATA value for the mail from STDIN.  If there is a From_ line in the email, it will be removed (but see -nsf option).  Useful for delivering real message (stored in files) instead of using example messages.
+If specified, swaks will read the DATA value for the mail from STDIN.  If there is a From_ line in the email, it will be removed (but see -nsf option).  Useful for delivering real message (stored in files) instead of using example messages.
 
 =item -nsf, --no-strip-from
 
@@ -1071,7 +1078,7 @@ Don't strip the From_ line from the DATA portion, if present.
 
 =item -n, --suppress-data
 
-If this option is specified, vmail summarizes the DATA portion of the SMTP transaction instead of printing every line.
+If this option is specified, swaks summarizes the DATA portion of the SMTP transaction instead of printing every line.
 
 =item -q, --quit-after
 
@@ -1079,15 +1086,15 @@ The argument to this option is used as an indicator of where to quit the SMTP tr
 
 =item -m
 
-Emulate Mail command.  Least used option in vmail.
+Emulate Mail command.  Least used option in swaks.
 
 =item --support
 
-Cause vmail to print its capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and lets you know which functionality is present.
+Cause swaks to print its capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and lets you know which functionality is present.
 
 =item -S, --silent
 
-Cause vmail to be silent.  "-S" causes vmail to print no output until an error occurs, after which all output is shown.  "-S -S" causes vmail to only show error conditions.  "-S -S -S" shows no output.
+Cause swaks to be silent.  "-S" causes swaks to print no output until an error occurs, after which all output is shown.  "-S -S" causes swaks to only show error conditions.  "-S -S -S" shows no output.
 
 =item -tls
 
@@ -1099,7 +1106,7 @@ Attempt to use STARTTLS if possible, continue t/ normal transaction if TLS unava
 
 =item -a, --auth
 
-Require authentication.  If Authentication fails or is unavailable, stop transaction.  -a can take an argument specifying which type of authentication to use.  vmail currently supports PLAIN, LOGIN, and CRAM-MD5.  If no argument is given any available authentication type is used.  If neither password (-ap) or username (-au) is supplied on command line, vmail will prompt on STDIN.
+Require authentication.  If Authentication fails or is unavailable, stop transaction.  -a can take an argument specifying which type of authentication to use.  swaks currently supports PLAIN, LOGIN, and CRAM-MD5.  If no argument is given any available authentication type is used.  If neither password (-ap) or username (-au) is supplied on command line, swaks will prompt on STDIN.
 
 SPA (NTLM/MSN) authentication is now supported.  Tested as a client against Exim and Stalker's CommuniGate, but implementation may be incomplete.  Authen::NTLM is currently required.  Note that CPAN hosts two different Authen::NTLM modules.  Current implementation requires Mark Bush's implementation (Authen/NTLM-1.02.tar.gz).  Plan to reimplement directly at some point to avoid confusion.
 
@@ -1157,11 +1164,11 @@ Version info.
 
 =over 4
 
-=item vmail
+=item swaks
 
 prompt user for to address and send a default email.
 
-=item cat mailfile | vmail -g -n -t user@example.com -tlso -a -au user -ap password
+=item cat mailfile | swaks -g -n -t user@example.com -tlso -a -au user -ap password
 
 send the contents of "mailfile" to user@example.com, using TLS if available, requiring authentication, using user/password as authentication information.
 
@@ -1265,4 +1272,4 @@ error in EHLO following TLS negotiation
 
 =head1 CONTACT
 
-=item proj-vmail@jetmore.net
+=item proj-swaks@jetmore.net
