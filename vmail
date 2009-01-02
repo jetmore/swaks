@@ -102,6 +102,7 @@ if ($O::tls) {
 # normalize the auth options a bit
 $O::auth_optional = 1 if (defined($O::auth_optional));
 $O::auth = uc($O::auth) if ($O::auth);
+$O::auth = 'NTLM' if ($O::auth =~ /^(SPA|MSN)$/);
 $O::auth = 'ANY' if ((defined($O::auth_user) || defined($O::auth_pass) ||
                       $O::auth_optional) && !$O::auth);
 $O::auth = 'ANY' if (defined($O::auth) && !$O::auth);
@@ -529,11 +530,13 @@ sub do_smtp_auth_ntlm {
   my $u = shift; # auth user
   my $p = shift; # auth password
   my $r = '';    # will store smtp response
+  my $domain;
+  ($u,$domain) = split(/%/, $u);
   
   my $auth_string = "AUTH NTLM";
   do_smtp_gen($s, $auth_string, '334', $t) || return(0);
 
-  Authen::NTLM::ntlm_domain();
+  Authen::NTLM::ntlm_domain($domain);
   Authen::NTLM::ntlm_user($u);
   Authen::NTLM::ntlm_password($p);
   my $d = decode_base64(Authen::NTLM::ntlm());
@@ -544,56 +547,6 @@ sub do_smtp_auth_ntlm {
 
   $r =~ s/^....//; # maybe something a little better here?
   $d = decode_base64(Authen::NTLM::ntlm($r));
-
-  $auth_string = encode_base64("$d", '');
-  do_smtp_gen($s, $auth_string, '235', $t, \$r, '',
-              $O::auth_showpt ? "$d" : '') || return(0);
-
-  return(1);
-}
-
-sub do_smtp_auth_ntlm_OFF {
-  my $s = shift; # socket
-  my $t = shift; # timeout
-  my $u = shift; # auth user
-  my $p = shift; # auth password
-  my $r = '';    # will store smtp response
-  
-  my $auth_string = "AUTH NTLM";
-  do_smtp_gen($s, $auth_string, '334', $t, \$r, '', '',
-              $O::auth_showpt ? \&unencode_smtp : '')
-      || return(0);
-
-  $r =~ s/^....//; # maybe something a little better here?
-  my $client = new_client Authen::NTLM(Authen::NTLM::lm_hash($p),
-                                       Authen::NTLM::nt_hash($p),
-                                       $u, '','','');
-  my $flags =
-    $Authen::NTLM::NTLMSSP_NEGOTIATE_80000000 |
-    $Authen::NTLM::NTLMSSP_NEGOTIATE_128 |
-    $Authen::NTLM::NTLMSSP_NEGOTIATE_ALWAYS_SIGN |
-    $Authen::NTLM::NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED |
-    $Authen::NTLM::NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED |
-    $Authen::NTLM::NTLMSSP_NEGOTIATE_NTLM |
-    $Authen::NTLM::NTLMSSP_NEGOTIATE_UNICODE |
-    $Authen::NTLM::NTLMSSP_NEGOTIATE_OEM |
-    $Authen::NTLM::NTLMSSP_REQUEST_TARGET;
-  my $d = $client->negotiate_msg($flags);
-
-  $auth_string = encode_base64("$d", '');
-  do_smtp_gen($s, $auth_string, '334', $t, \$r, '',
-              $O::auth_showpt ? "$d" : '') || return(0);
-
-  $r =~ s/^....//; # maybe something a little better here?
-  chomp($r = decode_base64($r));
-  my ($domain, $flags, $nonce, $ctx_upper,
-    $ctx_lower) = $client->parse_challenge($r);
-
-  $flags = $Authen::NTLM::NTLMSSP_NEGOTIATE_ALWAYS_SIGN |
-    $Authen::NTLM::NTLMSSP_NEGOTIATE_NTLM |
-    $Authen::NTLM::NTLMSSP_NEGOTIATE_UNICODE |
-    $Authen::NTLM::NTLMSSP_REQUEST_TARGET;
-  $d = $client->auth_msg($nonce, $flags);
 
   $auth_string = encode_base64("$d", '');
   do_smtp_gen($s, $auth_string, '235', $t, \$r, '',
@@ -676,6 +629,7 @@ sub do_smtp_helo {
       $l =~ s/^....//;
       if ($l =~ /^AUTH(.*)$/) {
         map { $e->{AUTH}{$_} = 1 } (split(' ', $1));
+        $e->{AUTH}{NTLM} = 1 if ($e->{AUTH}{SPA} || $e->{AUTH}{MSN});
       } elsif ($l =~ /^STARTTLS$/) {
         $e->{STARTTLS} = 1;
       }
@@ -1050,6 +1004,8 @@ Attempt to use STARTTLS if possible, continue t/ normal transaction if TLS unava
 
 Require authentication.  If Authentication fails or is unavailable, stop transaction.  -a can take an argument specifying which type of authentication to use.  vmail currently supports PLAIN, LOGIN, and CRAM-MD5.  If no argument is given any available authentication type is used.  If neither password (-ap) or username (-au) is supplied on command line, vmail will prompt on STDIN.
 
+SPA (NTLM/MSN) authentication is now supported.  Tested as a client against Exim, but implementation may be complete.  Authen::NTLM is currently required.  Note that CPAN hosts two different Authen::NTLM modules.  Current implementation requires Mark Bush's implementation (Authen/NTLM-1.02.tar.gz).  Plan to reimplement directly at some point to avoid confusion.
+
 =item -ao, --auth-optional
 
 Same as -a, but if authentication is unavailable or fails, attempts to continue transaction.
@@ -1057,6 +1013,8 @@ Same as -a, but if authentication is unavailable or fails, attempts to continue 
 =item -au, --auth-user
 
 Supply the username for authentication.
+
+For SPA authentication, a "domain" can be specified after the regular username with a % seperator.  For instance, if "-ap user@example.com%NTDOM" is passed, "user@example.com" is the username and "NTDOM" is the domain.  NOTE: I don't actually have access to a mail server where the domain isn't ignored, so this may be implemented incorrectly.
 
 =item -ap, --auth-password
 
