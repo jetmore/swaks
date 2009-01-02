@@ -680,7 +680,9 @@ sub transact {
   my $send    = shift;     # This is the string to send
   my $buff    = shift;     # we will store and manipulate the return value here.
   my $s       = $G::link{sock}; # This is my IO::Socket object
-  my($wr,$re) = ($s->{wr},$s->{re}) if ($G::link{type} eq 'pipe');
+  # wr = child stdin, re = child stdout, er = child stderr
+  my($wr,$re,$er) = ($s->{wr},$s->{re},$s->{er})
+      if ($G::link{type} eq 'pipe');
 
   eval {
     local $SIG{'ALRM'} = sub {
