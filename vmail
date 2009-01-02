@@ -85,6 +85,8 @@ if ($O::auth) {
       $a_user = $fconf->{USER}
     }
     $a_user ||= interact("Username: ", 'SKIP');
+    # kludge to allow null users on command line
+    $a_user = '' if ($a_user eq 'NULLNULL');
 
     # populate the password info
     if (defined($O::auth_pass)) {
