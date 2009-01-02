@@ -8,7 +8,7 @@ use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20031218.0";
+my $p_version = "20031218.0-dev";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003 John Jetmore <jj33\@pobox.com>
@@ -848,8 +848,8 @@ sub process_args {
   # SMTP mail from
   $n{from} = $o->{mail_from} || interact("From: ", '^.*$')
       if (defined($o->{mail_from}));
-  $n{from} ||= $fconf->{FROM} || $hostname ? "$user\@$hostname" :
-                                             interact("From: ", '^.*$');
+  $n{from} ||= $fconf->{FROM} || ($hostname ? "$user\@$hostname" :
+                                             interact("From: ", '^.*$'));
   $n{from} = '' if ($n{from} eq '<>');
 
   # SMTP rcpt to
@@ -860,8 +860,8 @@ sub process_args {
   # SMTP helo/ehlo
   $n{helo} = $o->{mail_helo} || interact("Helo: ", '^.*$')
       if (defined($o->{mail_helo}));
-  $n{helo} ||= $fconf->{HELO} || $hostname ? $hostname :
-                                             interact("Helo: ", '^.*$');;
+  $n{helo} ||= $fconf->{HELO} || ($hostname ? $hostname :
+                                             interact("Helo: ", '^.*$'));
 
   # SMTP server
   $n{server} = $o->{mail_server} || interact("Server: ", '^.*$')
