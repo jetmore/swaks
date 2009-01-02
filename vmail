@@ -2,7 +2,8 @@
 
 use strict; # *gasp*!  A program by jetmore that uses strict?!?!
 
-use LWP::Socket qw();
+#use LWP::Socket qw();
+use IO::Socket qw();
 use WCS::Util qw();
 use Getopt::Std;
 
@@ -72,22 +73,30 @@ sub sendmail {
   my($host) = shift;	# receiving host
   my($port) = shift;	# where's the remote smtp process live?
 
-  my($s) = LWP::Socket->new();
   my($timeout) = 10;
+  #my($s) = LWP::Socket->new();
+  my($s) = IO::Socket::INET->new(
+		PeerAddr => $host,
+		PeerPort => $port,
+		Proto    => 'tcp',
+		Timeout  => $timeout,
+           );
   my($buffer) = '';
   my($send) = '';
   $@ = '';
   $| = 1;
 
   eval {
-    local $SIG{'ALRM'} = sub { die "Alarm - Trying to connect\n" };
-    alarm $timeout;
+    #local $SIG{'ALRM'} = sub { die "Alarm - Trying to connect\n" };
+    #alarm $timeout;
 print "=== Trying $host:$port...\n";
-    $s->connect($host,$port);
+    #$s->connect($host,$port);
+    die "Can't connect to $host:$port ($@)\n" if (!$s);
 print "=== Connected to $host.\n";
     local $SIG{'ALRM'} = sub { die "Alarm - No response from server\n" };
     alarm $timeout;
-    $s->read_until("\n", \$buffer);
+    #$s->read_until("\n", \$buffer);
+    $buffer = <$s>;
 $buffer =~ s/[\r\n]//msg;
 print "<-  $buffer\n";
     local $SIG{'ALRM'} = sub {die "Alarm - timeout during transaction"};
@@ -96,32 +105,40 @@ print "<-  $buffer\n";
       alarm $timeout;
 $send = "HELO $helo";
 print " -> $send\n";
-      $s->write("$send\r\n");
-      $s->read_until("\n", \$buffer);
+      #$s->write("$send\r\n");
+      #$s->read_until("\n", \$buffer);
+      print $s "$send\r\n";
+      $buffer = <$s>;
 $buffer =~ s/[\r\n]//msg;
 print "<-  $buffer\n";
       if ($buffer =~ /^250/) {
         alarm $timeout;
 $send = "MAIL FROM:<$from>";
 print " -> $send\n";
-        $s->write("$send\r\n"); 
-        $s->read_until("\n", \$buffer);
+        #$s->write("$send\r\n"); 
+        #$s->read_until("\n", \$buffer);
+        print $s "$send\r\n";
+        $buffer = <$s>;
 $buffer =~ s/[\r\n]//msg;
 print "<-  $buffer\n";
         if ($buffer =~ /^250/) {
           alarm $timeout;
 $send = "RCPT TO:<$to>";
 print " -> $send\n";
-          $s->write("$send\r\n");
-          $s->read_until("\n", \$buffer);
+          #$s->write("$send\r\n");
+          #$s->read_until("\n", \$buffer);
+          print $s "$send\r\n";
+          $buffer = <$s>;
 $buffer =~ s/[\r\n]//msg;
 print "<-  $buffer\n";
           if ($buffer =~ /^250/) {
             alarm $timeout;
 $send = "DATA";
 print " -> $send\n";
-            $s->write("$send\r\n");
-            $s->read_until("\n", \$buffer);
+            #$s->write("$send\r\n");
+            #$s->read_until("\n", \$buffer);
+            print $s "$send\r\n";
+            $buffer = <$s>;
 $buffer =~ s/[\r\n]//msg;
 print "<-  $buffer\n";
             if ($buffer =~ /^354/) {
@@ -130,16 +147,20 @@ $send = "$data";
 my($t) = $send;
 $t =~ s/\n/\n -> /msg;
 print " -> $t\n";
-              $s->write("$send\r\n");
-              $s->read_until("\n", \$buffer);
+              #$s->write("$send\r\n");
+              #$s->read_until("\n", \$buffer);
+              print $s "$send\r\n";
+              $buffer = <$s>;
 $buffer =~ s/[\r\n]//msg;
 print "<-  $buffer\n";
               if ($buffer =~ /^250/) {
                 alarm(0);
 $send = "QUIT";
 print " -> $send\n";
-                $s->write("$send\r\n");
-                $s->read_until("\n", \$buffer);
+                #$s->write("$send\r\n");
+                #$s->read_until("\n", \$buffer);
+                print $s "$send\r\n";
+                $buffer = <$s>;
 $buffer =~ s/[\r\n]//msg;
 print "<-  $buffer\n";
               } else {
