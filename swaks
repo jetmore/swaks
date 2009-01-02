@@ -69,6 +69,7 @@ GetOptions(
   'li|local-interface:s' => \$O{lint},     # local interface to use
   'tls'             => \$O{tls},           # use TLS
   'tlso|tls-optional' => \$O{tls_optional}, # use tls if available
+  'tlsos|tls-optional-strict:s' => \$O{tls_optional_strict}, # req tls if avail
   'tlsc|tls-on-connect' => \$O{tls_on_connect}, # use tls if available
   'S|silent+'       => \$O{silent},        # suppress output to varying degrees
   'nsf|no-strip-from' => \$O{no_strip_from}, # Don't strip From_ line from DATA
@@ -140,10 +141,12 @@ if ($G::dump_args) {
   print "port             = $G::link{port}\n";
   print "tls              = ";
   if ($G::tls) {
-    print "starttls (", $G::tls_optional ? 'optional' : 'required', ")\n";
-  } elsif ($G::tls_on_connect) {
-    print "on connect (required)\n";
-  } else { print "no\n"; }
+    print 'starttls (';
+    if ($G::tls_optional == 2)      { print "optional-strict)\n";
+    } elsif ($G::tls_optional == 1) { print "optional)\n";
+    } else                          { print "required)\n"; }
+  } elsif ($G::tls_on_connect)      { print "on connect (required)\n";
+  } else                            { print "no\n"; }
   print "auth             = ";
   if ($opts->{a_type}) {
     if ($G::auth_optional == 2) {
@@ -277,8 +280,33 @@ sub sendmail {
   do_smtp_quit(1, 0) if ($G::quit_after eq 'first-helo');
 
   # handle TLS here if user has requested it
+  #if ($G::tls) {
+  #  if ($ehlo->{STARTTLS} && !avail("tls")) {
+  #    # if !avail(tls) and !auth_optional or auth_optional==1, we'll never
+  #    # get here, but if we were at auth-optional-strict, we have to error here
+  #    ptrans(12,avail_str("tls").".  Exiting");
+  #    do_smtp_quit(1, 29);
+  #  }
+  #  do_smtp_quit(1, 29) if (!do_smtp_tls($ehlo) && !$G::tls_optional);
+  #}
   if ($G::tls) {
-    do_smtp_quit(1, 29) if (!do_smtp_tls($ehlo) && !$G::tls_optional);
+    # 0 = tls succeeded
+    # 1 = tls not advertised
+    # 2 = tls advertised and attempted negotiations failed
+    # note there's some duplicate logic here (with process_args) but I think
+    # it's best to do as thorough a job covering the options in both places
+    # so as to minimize chance of options falling through the cracks
+    my $result = do_smtp_tls($ehlo);
+    if ($result == 1) {
+      ptrans(12, "Host did not advertise STARTTLS");
+      do_smtp_quit(1, 29) if (!$G::tls_optional);
+    } elsif ($result == 2) {
+      ptrans(12, "STARTTLS attempted but failed");
+      do_smtp_quit(1, 29) if ($G::tls_optional != 1);
+    }
+  } elsif ($G::tls_optional == 2 && $ehlo->{STARTTLS}) {
+    ptrans(12, "TLS requested, advertised, and locally unavailable.  Exiting");
+    do_smtp_quit(1, 29);
   }
 
   # QUIT here if the user has asked us to do so
@@ -296,11 +324,11 @@ sub sendmail {
 
   # handle auth here if user has requested it
   if ($a_type) {
-    # 0 = smtp succeeded
-    # 1 = smtp not advertised
-    # 2 = smtp advertised but not attempted, no matching auth types
-    # 3 = smtp advertised but not attempted, auth not supported
-    # 4 = smtp advertised and attempted but no type succeeded
+    # 0 = auth succeeded
+    # 1 = auth not advertised
+    # 2 = auth advertised but not attempted, no matching auth types
+    # 3 = auth advertised but not attempted, auth not supported
+    # 4 = auth advertised and attempted but no type succeeded
     # note there's some duplicate logic here (with process_args) but I think
     # it's best to do as thorough a job covering the options in both places
     # so as to minimize chance of options falling through the cracks
@@ -464,19 +492,25 @@ sub do_smtp_quit {
 
 sub do_smtp_tls {
   my $e  = shift; # ehlo config hash
+    # 0 = tls succeeded
+    # 1 = tls not advertised
+    # 2 = tls advertised and attempted negotiations failed
 
   if (!$e->{STARTTLS}) {
-    ptrans(12, "STARTTLS not supported");
-    return $G::tls_optional ? 1 : 0;
+    #ptrans(12, "STARTTLS not supported");
+    #return $G::tls_optional ? 1 : 0;
+    return(1);
   } elsif (!do_smtp_gen("STARTTLS", '220')) {
-    return $G::tls_optional ? 1 : 0;
+    #return $G::tls_optional ? 1 : 0;
+    return(2);
   } elsif (!start_tls()) {
     ptrans(12, "TLS startup failed ($G::link{tls}{res})");
-    return $G::tls_optional ? 1 : 0;
+    #return $G::tls_optional ? 1 : 0;
+    return(2);
   }
 
   ptrans(11, "TLS started w/ cipher $G::link{tls}{cipher}");
-  return(1);
+  return(0);
 }
 
 sub do_smtp_auth {
@@ -1141,8 +1175,8 @@ sub process_args {
     $o->{auth} = ''; # cause auth to be processed below
   }
   if ($protos{$G::protocol}{tls} && !$o->{tls} && !$o->{tls_optional} &&
-      !$o->{tls_on_connect})
-  {
+      !$o->{tls_optional_strict} && !$o->{tls_on_connect})
+  { # 'touch' the variable so we process it below
     if ($protos{$G::protocol}{tls} eq 's') {
       $o->{tls} = '';
     } elsif ($protos{$G::protocol}{tls} eq 'c') {
@@ -1388,7 +1422,13 @@ sub process_args {
   }
 
   # Handle TLS options
+  # tls =>
+  #   0 - no.  STARTTLS must be advertised and must succeed, else error
+  #   1 - yes.  success if not advertised, advertised and fails _or_ succeeds
+  #   2 - strict.  satisfied if not advertised, or advertised and succeeded.
+  #                however, if it's advertised and fails, it's an error
   $G::tls_optional      = 1 if (defined($o->{tls_optional}));
+  $G::tls_optional      = 2 if (defined($o->{tls_optional_strict}));
   $G::tls               = 1 if (defined($o->{tls}) || $G::tls_optional);
   $G::tls_on_connect    = 1 if (defined($o->{tls_on_connect}));
   $G::link{tls}{active} = 0;
@@ -1396,7 +1436,7 @@ sub process_args {
     if (!avail("tls")) {
       if ($G::tls_optional) {
         $G::tls = undef; # so we won't try it later
-        ptrans(12,avail_str("tls").".  Skipping optional TLS");
+        ptrans(12,avail_str("tls"));
       } else {
         ptrans(12,avail_str("tls").".  Exiting");
         exit(10);
@@ -1815,6 +1855,10 @@ Require connection to use STARTTLS.  Exit if TLS not available for any reason (n
 =item -tlso, --tls-optional
 
 Attempt to use STARTTLS if possible, continue t/ normal transaction if TLS unavailable.
+
+=item --tlsos, --tls-optional-strict
+
+Attempt to use STARTTLS if available.  proceed if available and succeeds or not advertised.  If advertised but TLS negotiations fail, error out.
 
 =item -tlsc, --tls-on-connect
 
