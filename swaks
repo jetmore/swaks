@@ -80,17 +80,24 @@ GetOptions(
   'force-getpwuid'  => \$O{force_getpwuid} # use getpwuid building -f
 ) || exit(1);
 
-load_modules({
-  'Basic AUTH'             => ['MIME::Base64'],
-  'AUTH CRAM-MD5'          => ['Digest::MD5'],
-  'AUTH CRAM-SHA1'         => ['Digest::SHA1'],
-  'AUTH NTLM'              => ['Authen::NTLM'],
-  'AUTH DIGEST-MD5'        => ['Authen::DigestMD5'],
-  'MX lookups'             => ['Net::DNS'],
-  'High resolution timing' => ['Time::HiRes'],
-  'TLS'                    => ['Net::SSLeay'],
-}, \%G::modules);
-exit(0) if ($O{get_support}); # --support means report capabilities only
+# lists of dependencies for features
+%G::dependencies = (
+  auth            => { name => "Basic AUTH",     list => ['MIME::Base64'] },
+  auth_cram_md5   => { name => "AUTH CRAM-MD5",  list => ['Digest::MD5'] },
+  auth_cram_sha1  => { name => "AUTH CRAM-SHA1", list => ['Digest::SHA1'] },
+  auth_ntlm       => { name => "AUTH NTLM",      list => ['Authen::NTLM'] },
+  auth_digest_md5 => { name => "AUTH DIGEST-MD5",
+                       list => ['Authen::DigestMD5'] },
+  dns             => { name => "MX Routing",     list => ['Net::DNS'] },
+  tls             => { name => "TLS",            list => ['Net::SSLeay'] },
+  hires_timing    => { name => "Hi resolution timing",
+                       list => ['Time::HiRes'] },
+);
+
+if ($O{get_support}) {
+  test_support();
+  exit(0);
+}
 
 # We need to fix things up a bit and set a couple of global options
 my $opts = process_args(\%O);
@@ -200,7 +207,7 @@ sub open_link {
     $SIG{PIPE} = 'IGNORE';
     $SIG{CHLD} = 'IGNORE';
     ptrans(11, "Trying pipe to $G::link{process}...");
-    if (!try_load("IPC::Open2")) {
+    if (!load("IPC::Open2")) {
       ptrans(12, "Couldn't load IPC::Open2 for pipe, exiting");
       exit(2);
     }
@@ -929,9 +936,8 @@ sub get_server {
 
     
   
-  if (!$G::modules{"Net::DNS"}) {
-    ptrans(12,
-      "MX requirement Net::DNS not installed, using $server as mail server");
+  if (!avail("dns")) {
+    ptrans(12, avail_err("dns").".  Using $server as mail server");
     return($server);
   }
   my $res = new Net::DNS::Resolver;
@@ -952,19 +958,35 @@ sub get_server {
   return($server);
 }
 
-sub try_load {
-  my $mod = shift;
-
-  eval("use $mod");
-  return $@ ? 0 : 1;
-}
-
 sub load {
   my $m = shift;
 
   return $G::modules{$m} if (exists($G::modules{$m}));
   eval("use $m");
   return $G::modules{$m} = $@ ? 0 : 1;
+}
+
+sub avail_err { return $G::dependencies{$_[0]}{errstr}; }
+
+sub avail {
+  my $f = shift; # this is the feature we want to check support for (auth, tls)
+  my $s = \%G::dependencies;
+
+  # return immediately if we've already tested this.
+  return($s->{$f}{avail}) if (exists($s->{$f}{avail}));
+
+  $s->{$f}{failed} = [];
+  foreach my $m (@{$s->{$f}{list}}) {
+    push(@{$s->{$f}{failed}}, $m) if (!load($m));
+  }
+
+  if (scalar(@{$s->{$f}{failed}})) {
+    $s->{$f}{errstr} = "$s->{$f}{name} not available: requires "
+                     . join(', ', @{$s->{$f}{failed}});
+    return $s->{$f}{avail} = 0;
+  } else {
+    return $s->{$f}{avail} = 1;
+  }
 }
 
 sub get_digest {
@@ -996,26 +1018,14 @@ sub get_digest {
   return($digest);
 }
 
-sub load_modules {
-  my $s = shift;
-  my $l = shift;
+sub test_support {
+  my $s = \%G::dependencies;
 
-  foreach my $act (keys %$s) {
-    my @failed = ();
-    foreach my $m (@{$s->{$act}}) {
-      if (try_load($m)) {
-        $l->{$m}++;
-      } else {
-        push(@failed, $m);
-      }
-    }
-    if ($O{get_support}) {
-      if (scalar(@failed) > 0) {
-        ptrans(12, "$act not available: requires " .
-            join(', ', @failed));
-      } else {
-        ptrans(11, "$act supported");
-      }
+  foreach my $act (sort { $s->{$a}{name} cmp $s->{$b}{name} } keys %$s) {
+    if (avail($act)) {
+      ptrans(11, "$s->{$act}{name} supported");
+    } else {
+      ptrans(12, avail_err($act));
     }
   }
 }
@@ -1085,7 +1095,7 @@ sub process_args {
   # set global flag for -stl flag
   $G::show_time_lapse = time() if (defined($o->{show_time_lapse}));
   $G::show_time_hires = 1 if ($G::show_time_lapse &&
-                              $G::modules{'Time::HiRes'} &&
+                              avail("hires_timing") &&
                               $o->{show_time_lapse} !~ /^i/i);
 
   if ($o->{emulate_mail}) { # set up for -m option
@@ -1270,14 +1280,12 @@ sub process_args {
   $G::tls_on_connect    = 1 if (defined($o->{tls_on_connect}));
   $G::link{tls}{active} = 0;
   if ($G::tls || $G::tls_on_connect) {
-    if (!$G::modules{'Net::SSLeay'}) {
+    if (!avail("tls")) {
       if ($G::tls_optional) {
         $G::tls = undef; # so we won't try it later
-        ptrans(12,
-            'TLS requirement Net::SSLeay not installed, skipping optional TLS');
+        ptrans(12,avail_err("tls").".  Skipping optional TLS");
       } else {
-        ptrans(12,
-            'TLS requirement Net::SSLeay not installed, exiting');
+        ptrans(12,avail_err("tls").".  Exiting");
         exit(10);
       }
     }
@@ -1320,15 +1328,11 @@ sub process_args {
       $G::auth_map_t{$type} ||= [];
       push(@{$G::auth_map_t{$type}}, $alias);
     }
-    if (!$G::modules{"MIME::Base64"}) {
-      # MIME::Base64 is required for any auth type, so check it first
-      # and skip rest of processing if unfound
+    if (!avail("auth")) { # check for general auth requirements
       if ($G::auth_optional) {
-        ptrans(12,
-         'AUTH requirement MIME::Base64 not installed, skipping optional AUTH');
+        ptrans(12, avail_err("auth"). ".  Skipping optional AUTH");
       } else {
-        ptrans(12,
-         'AUTH requirement MIME::Base64 not installed, exiting');
+        ptrans(12, avail_err("auth"). ".  Exiting");
         exit(10);
       }
     } else {
@@ -1343,40 +1347,28 @@ sub process_args {
         # specified by the user
 
         if (!$G::auth_map_f{$type}) {
-          ptrans(12,
-            "$type is not a recognized auth type, skipping");
+          ptrans(12, "$type is not a recognized auth type, skipping");
         }
 
-        elsif ($G::auth_map_f{$type} eq 'CRAM-MD5' &&
-               !$G::modules{"Digest::MD5"})
+        elsif ($G::auth_map_f{$type} eq 'CRAM-MD5' && !avail("auth_cram_md5"))
         {
-          ptrans(12,
-            "AUTH:$type requirement Digest::MD5 not installed")
-            if ($o->{auth} ne 'ANY');
+          ptrans(12, avail_err("auth_cram_md5")) if ($o->{auth} ne 'ANY');
         }
 
-        elsif ($G::auth_map_f{$type} eq 'CRAM-SHA1' &&
-               !$G::modules{"Digest::SHA1"})
+        elsif ($G::auth_map_f{$type} eq 'CRAM-SHA1' && !avail("auth_cram_sha1"))
         {
-          ptrans(12,
-            "AUTH:$type requirement Digest::SHA1 not installed")
-            if ($o->{auth} ne 'ANY');
+          ptrans(12, avail_err("auth_cram_sha1")) if ($o->{auth} ne 'ANY');
         }
 
-        elsif ($G::auth_map_f{$type} eq 'NTLM' &&
-               !$G::modules{"Authen::NTLM"})
+        elsif ($G::auth_map_f{$type} eq 'NTLM' && !avail("auth_ntlm"))
         {
-          ptrans(12,
-            "AUTH:$type requirement Authen::NTLM not installed")
-            if ($o->{auth} ne 'ANY');
+          ptrans(12, avail_err("auth_ntlm")) if ($o->{auth} ne 'ANY');
         }
 
         elsif ($G::auth_map_f{$type} eq 'DIGEST-MD5' &&
-               !$G::modules{"Authen::DigestMD5"})
+               !avail("auth_digest_md5"))
         {
-          ptrans(12,
-            "AUTH:$type requirement Authen::DigestMD5 not installed")
-            if ($o->{auth} ne 'ANY');
+          ptrans(12, avail_err("auth_digest_md5")) if ($o->{auth} ne 'ANY');
         }
         
         else {
@@ -1411,7 +1403,7 @@ sub process_args {
         # beyond where this is easy to do.  Maybe sometime in the future
         #$G::auth_hidepw = 1 if (defined($o->{auth_hidepw}));
       }
-    } # end Base64 support tests
+    } # end avail("auth")
   } # end auth parsing
 
   return(\%n);
