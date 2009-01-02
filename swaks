@@ -8,7 +8,7 @@ use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20070921.0-dev";
+my $p_version = "20080618.0-dev";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
         Copyright (c) 2003-2008 John Jetmore <jj33@pobox.com>
@@ -184,7 +184,7 @@ sub sendmail {
   # start up tls if -tlsc specified
   if ($G::tls_on_connect) {
     if (start_tls()) {
-      ptrans(11, "TLS started w/ cipher $G::link{tls}{cipher}");
+      tls_post_start();
       # QUIT here if the user has asked us to do so
       do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
     } else {
@@ -315,6 +315,21 @@ sub sendmail {
   do_smtp_quit(0) || do_smtp_quit(1, 27);
 }
 
+#618
+sub tls_post_start {
+  ptrans(11, "TLS started w/ cipher $G::link{tls}{cipher}");
+  ptrans(11, "TLS peer subject DN=\"$G::link{tls}{cert_subject}\"");
+
+  if ($G::tls_get_peer_cert eq 'STDOUT') {
+    ptrans(11, $G::link{tls}{cert_x509});
+  } elsif ($G::tls_get_peer_cert) {
+    open(CERT, ">$G::tls_get_peer_cert") || 
+      ptrans(12, "Couldn't open $G::tls_get_peer_cert for writing: $!");
+    print CERT $G::link{tls}{cert_x509}, "\n";
+    close(CERT);
+  }
+}
+
 sub start_tls {
   my %t         = (); # This is a convenience var to access $G::link{tls}{...}
   $G::link{tls} = \%t;
@@ -335,6 +350,10 @@ sub start_tls {
   $t{res}    = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error())
                        if (!$t{active});
   $t{cipher} = Net::SSLeay::get_cipher($t{ssl});
+  $t{cert}   = Net::SSLeay::get_peer_certificate($t{ssl});
+  chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
+  $t{cert_subject} = Net::SSLeay::X509_NAME_oneline(
+                       Net::SSLeay::X509_get_subject_name($t{cert}));
 
   return($t{active});
 }
@@ -436,8 +455,8 @@ sub do_smtp_tls {
     #return $G::tls_optional ? 1 : 0;
     return(2);
   }
+  tls_post_start();
 
-  ptrans(11, "TLS started w/ cipher $G::link{tls}{cipher}");
   return(0);
 }
 
@@ -1171,6 +1190,9 @@ sub get_option_struct {
     # use tls if available
     { opts => ['tlsc', 'tls-on-connect'],         suffix => '',
       okey => 'tls_on_connect',                   type => 'scalar', },
+    # save tls peer certificate
+    { opts => ['tls-get-peer-cert'],              suffix => ':s',
+      okey => 'tls_get_peer_cert',                type => 'scalar', },
     # suppress output to varying degrees
     { opts => ['S', 'silent'],                    suffix => ':i',
       okey => 'silent',                           type => 'sub',
@@ -1712,6 +1734,11 @@ sub process_args {
         exit(10);
       }
     }
+  }
+  if ($o->{tls_get_peer_cert}) {
+    $G::tls_get_peer_cert = $o->{tls_get_peer_cert};
+  } elsif (defined($o->{tls_get_peer_cert})) {
+    $G::tls_get_peer_cert = "STDOUT";
   }
 
   # SMTP port
