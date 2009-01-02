@@ -178,7 +178,7 @@ $data     = join('', <STDIN>) if ($O::data_on_stdin);
 #print "\$a_user = $a_user\n";
 #print "\$a_pass = $a_pass\n";
 #print "\$lint   = $lint\n";
-exit;
+#exit;
 
 $data .= "\n.";
 $data =~ s/\\n/\r\n/g;
