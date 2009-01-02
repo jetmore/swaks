@@ -66,6 +66,7 @@ GetOptions(
   'stl|show-time-lapse:s' => \$O{show_time_lapse}, # print lapse for send/recv
   'ndf|no-data-fixup' => \$O{no_data_fixup}, # don't touch the data
   'pipe:s'          => \$O{pipe_cmd},      # command to communicate with
+  'pipe-no-stderr'  => \$O{pipe_no_stderr},# hide pipe STDERR
   'socket:s'        => \$O{socket},        # unix doain socket to talk to
   'dump'            => \$O{dump_args},     # build options and dump
   'force-getpwuid'  => \$O{force_getpwuid} # use getpwuid building -f
@@ -199,14 +200,14 @@ sub open_link {
       exit(5);
     };
     print_transaction(11, "Trying pipe to $G::link{process}...");
-    if (!try_load("IPC::Open3")) {
-      print_transaction(12, "Couldn't load IPC::Open3 for pipe, exiting");
+    if (!try_load("IPC::Open2")) {
+      print_transaction(12, "Couldn't load IPC::Open2 for pipe, exiting");
       exit(2);
     }
     eval{
-      open3($G::link{sock}{wr},$G::link{sock}{re}, 0, $G::link{process});
+      open2($G::link{sock}{re}, $G::link{sock}{wr}, $G::link{process});
     };
-    if ($@) { # =~ /open3/) {
+    if ($@) {
       print_transaction(12, "Error connecting to $G::link{process}:\n\t$@");
       exit(2);
     }
@@ -681,8 +682,7 @@ sub transact {
   my $buff    = shift;     # we will store and manipulate the return value here.
   my $s       = $G::link{sock}; # This is my IO::Socket object
   # wr = child stdin, re = child stdout, er = child stderr
-  my($wr,$re,$er) = ($s->{wr},$s->{re},$s->{er})
-      if ($G::link{type} eq 'pipe');
+  my($wr,$re) = ($s->{wr},$s->{re}) if ($G::link{type} eq 'pipe');
 
   eval {
     local $SIG{'ALRM'} = sub {
@@ -952,8 +952,8 @@ sub process_args {
   $G::link{sockfile}   = $o->{socket} || interact("Socket File: ", '^.+$')
       if (defined($o->{socket}));
   $G::link{sockfile} ||= $fconf->{SOCKET} || "";
-  if ($G::link{sockfile}) { $G::link{type} = 'socket-unix';   }
-  else                   { delete($G::link{sockfile}); }
+  if ($G::link{sockfile}) { $G::link{type} = 'socket-unix'; }
+  else                    { delete($G::link{sockfile});     }
 
   my $user     = get_username($o->{force_getpwuid});
   my $hostname = get_hostname();
