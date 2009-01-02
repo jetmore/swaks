@@ -7,7 +7,7 @@
 use strict;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20060621.0-dev";
+my $p_version = "20061116.0";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003-2006 John Jetmore <jj33\@pobox.com>
