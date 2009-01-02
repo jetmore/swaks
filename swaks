@@ -1341,7 +1341,7 @@ sub fetch_args {
       # loop through each of the options and see if it matches
       foreach my $e (@$l) {
         if (grep /^$whole_name$/, @{$e->{opts}}) {
-          next RUNOPTS; #XXX# this is a validopt that begins with "no-", skip
+          next RUNOPTS; # this is a validopt that begins with "no-", skip
         } elsif (grep /^$opt_name$/, @{$e->{opts}}) {
           splice(@ARGV, $i, 1);
           delete($r->{$e->{okey}});
