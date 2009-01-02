@@ -37,7 +37,8 @@ GetOptions(
   'li:s' => \$O::lint,          # local interface to use for connection
   'tls'  => \$O::tls,           # use TLS
   'tlso' => \$O::tls_optional,  # use tls if available
-  'S+'   => \$O::silent         # suppress output to varying degrees
+  'S+'   => \$O::silent,        # suppress output to varying degrees
+  'nsf'  => \$O::no_strip_from  # Don't strip From_ line from DATA
 ) || exit(1);
 
 load_modules({
@@ -56,7 +57,7 @@ $O::tls_optional = 1 if (defined($O::tls_optional));
 $O::tls = 1 if (defined($O::tls) || $O::tls_optional);
 my %tls = (); # will hold info for TLS transactions
 if ($O::tls) {
-  if (!$modules{'XNet::SSLeay'}) {
+  if (!$modules{'Net::SSLeay'}) {
     if ($O::tls_optional) {
       $O::tls = undef; # so we won't try it later
       print_transaction(12,
@@ -213,6 +214,7 @@ $data =~ s/\\n/\r\n/g;
 $data =~ s/%F/$from/g;
 $data =~ s/%T/$to/g;
 $data =~ s/%D/scalar(localtime(time()))/eg;
+$data =~ s/^From [^\n]*\n// if (!$O::no_strip_from);
 #print "after parsing, \$data looks like this:\n#\n$data\n#\n";
 #exit;
 sendmail($from, $to, $helo, $data, $server, $port, $a_user, $a_pass, $a_type,
@@ -414,13 +416,13 @@ sub print_transaction {
   # program error
   elsif ($f == 12) { $f = '***'; $o = \*STDERR; }
   # smtp send info
-  elsif ($f == 21) { $f = ' ->'; }
+  elsif ($f == 21) { $f = $tls{active} ? ' ~>' : ' ->'; }
   # smtp send error
-  elsif ($f == 22) { $f = '**>'; }
+  elsif ($f == 22) { $f = $tls{active} ? '*~>' : '**>'; }
   # smtp recv info
-  elsif ($f == 31) { $f = '<- '; }
+  elsif ($f == 31) { $f = $tls{active} ? '<~ ' : '<- '; }
   # smtp recv error
-  elsif ($f == 32) { $f = '<**'; }
+  elsif ($f == 32) { $f = $tls{active} ? '<~*' : '<**'; }
   # something went unexpectedly
   else { $f = '???'; }
 
