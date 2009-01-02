@@ -153,7 +153,7 @@ sub teardown_link {
   if ($G::link{type} eq 'socket-inet' || $G::link{type} eq 'socket-unix') {
     # XXX need anything special for tls teardown?
     close($G::link{sock});
-    print_transaction(11,  "Connection closed by foreign host.");
+    print_transaction(11,  "Connection closed with remote host.");
   } elsif ($G::link{type} eq 'pipe') {
     delete($SIG{PIPE});
     $SIG{CHLD} = 'IGNORE';
@@ -191,14 +191,14 @@ sub open_link {
     }
     print_transaction(11, "Connected to $G::link{sockfile}.");
   } elsif ($G::link{type} eq 'pipe') {
-    $SIG{PIPE} = sub {
-      print_transaction(12, "Child process went away unexpectedly, exiting");
-      exit(4);
-    };
-    $SIG{CHLD} = sub {
-      print_transaction(12, "Problem with child process, exiting");
-      exit(5);
-    };
+    $SIG{PIPE} = 'IGNORE';
+    #$SIG{PIPE} = sub {
+    #  print_transaction(12, "Child process went away unexpectedly, exiting");
+    #  exit(4);
+    #};
+    # Treat a child like a socket and only find out it's gone when you try 
+    # to read from a socket
+    $SIG{CHLD} = 'IGNORE';
     print_transaction(11, "Trying pipe to $G::link{process}...");
     if (!try_load("IPC::Open2")) {
       print_transaction(12, "Couldn't load IPC::Open2 for pipe, exiting");
@@ -382,8 +382,12 @@ sub do_smtp_quit {
   my $exit = shift;
   my $err  = shift;
 
-  $SIG{CHLD} = 'IGNORE'; # XXX kludge.  there's a chicken and egg problem here
+  $G::link{allow_lost_cxn} = 1;
   my $r = do_smtp_gen('QUIT', '221');
+  $G::link{allow_lost_cxn} = 0;
+
+  handle_disconnect($err) if ($G::link{lost_cxn});
+
   if ($exit) {
     teardown_link();
     exit $err;
@@ -669,12 +673,20 @@ sub do_smtp_gen {
   }
 
   $r = &$c($r) if (ref($c) eq 'CODE');
-  if ($r !~ /^$e /m) {
-    print_transaction(32, $r);
-    return(0);
+  my($ret,$ptc) = $r !~ /^$e /m ? (0,32) : (1,31);
+
+  if ($G::link{lost_cxn}) {
+    print_transaction($ptc, $r) if ($r);
+    if ($G::link{allow_lost_cxn}) {
+      # this means the calling code wants to handle a lost cxn itself
+      return($ret);
+    } else {
+      # if caller didn't want to handle, we'll handle a lost cxn ourselves
+      handle_disconnect();
+    }
   } else {
-    print_transaction(31, $r);
-    return(1);
+    print_transaction($ptc, $r);
+    return($ret);
   }
 }
 
@@ -682,6 +694,7 @@ sub do_smtp_gen {
 # to still be reading, come in here to error and die.  Abstracted because
 # the error message will vary depending on the type of connection
 sub handle_disconnect {
+  my $e = shift || 6; # this is the code we will exit with
   if ($G::link{type} eq 'socket-inet') {
     print_transaction(12, "Remote host closed connection unexpectedly.");
   } elsif ($G::link{type} eq 'socket-unix') {
@@ -689,7 +702,7 @@ sub handle_disconnect {
   } elsif ($G::link{type} eq 'pipe') {
     print_transaction(12, "Child process closed connection unexpectedly.");
   }
-  exit(37);
+  exit($e);
 }
 
 # write a bunch of data to whatever is listening on the end.  We don't 
@@ -743,8 +756,11 @@ sub transact {
     } else {
       while ($buff !~ /^\d\d\d /m) {
         my $l = recv_line();
-        handle_disconnect() if (!defined($l));
         $buff .= $l;
+        if (!defined($l)) {
+          $G::link{lost_cxn} = 1;
+          last;
+        }
       }
       chomp($buff);
     }
