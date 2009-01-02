@@ -27,29 +27,32 @@ my %modules  = ();
 Getopt::Long::Configure("bundling_override");
 GetOptions(
   'l|input-file=s'  => \$O::option_file,   # (l)ocation of input data
-  'f|from:s'  => \$O::mail_from,     # envelope-(f)rom address
-  't|to:s'  => \$O::mail_to,       # envelope-(t)o address
-  'h|helo|ehlo:s'  => \$O::mail_helo,     # (h)elo string
-  's|server:s'  => \$O::mail_server,   # (s)erver to use
-  'p|port:i'  => \$O::mail_port,     # (p)ort to use
-  'd|data:s'  => \$O::mail_data,     # (d)ata portion ('\n' for newlines)
-  'timeout:s' => \$O::timeout,  # timeout for smtp trans. in seconds (def 30)
-  'g'    => \$O::data_on_stdin, # (g)et data on stdin 
-  'm'    => \$O::emulate_mail,  # emulate (M)ail command
-  'q|quit|quit-after=s'  => \$O::quit_after,    # (q)uit after (connect,helo,mail,rcpt,auth)
-  'n|suppress-data'    => \$O::supress_data,  # do (n)ot print data portion
-  'a|auth:s'  => \$O::auth,          # force auth, exit if not supported
-  'au|auth-user:s' => \$O::auth_user,     # user for auth
-  'ap|auth-password:s' => \$O::auth_pass,     # pass for auth
-  'ahp|auth-hide-password'  => \$O::auth_hidepw,   # hide passwords when possible
-  'apt|auth-plaintext'  => \$O::auth_showpt,   # translate base64 strings
-  'ao|auth-optional'   => \$O::auth_optional, # make auth optional (ignore auth failure)
-  'support' => \$O::get_support,# report capabilties
-  'li|local-interface:s' => \$O::lint,          # local interface to use for connection
-  'tls'  => \$O::tls,           # use TLS
-  'tlso|tls-optional' => \$O::tls_optional,  # use tls if available
-  'S|silent+'   => \$O::silent,        # suppress output to varying degrees
-  'nsf|no-strip-from'  => \$O::no_strip_from  # Don't strip From_ line from DATA
+  'f|from:s'        => \$O::mail_from,     # envelope-(f)rom address
+  't|to:s'          => \$O::mail_to,       # envelope-(t)o address
+  'h|helo|ehlo:s'   => \$O::mail_helo,     # (h)elo string
+  's|server:s'      => \$O::mail_server,   # (s)erver to use
+  'p|port:i'        => \$O::mail_port,     # (p)ort to use
+  'd|data:s'        => \$O::mail_data,     # (d)ata portion ('\n' for newlines)
+  'timeout:s'       => \$O::timeout,       # timeout for each trans (def 30s)
+  'g'               => \$O::data_on_stdin, # (g)et data on stdin 
+  'm'               => \$O::emulate_mail,  # emulate (M)ail command
+  'q|quit|quit-after=s' => \$O::quit_after, # (q)uit after
+  'n|suppress-data' => \$O::supress_data,  # do (n)ot print data portion
+  'a|auth:s'        => \$O::auth,          # force auth, exit if not supported
+  'au|auth-user:s'  => \$O::auth_user,     # user for auth
+  'ap|auth-password:s' => \$O::auth_pass,  # pass for auth
+  'ahp|auth-hide-password' => \$O::auth_hidepw, # hide passwords when possible
+  'apt|auth-plaintext' => \$O::auth_showpt, # translate base64 strings
+  'ao|auth-optional' => \$O::auth_optional, # auth optional (ignore failure)
+  'support'         => \$O::get_support,   # report capabilties
+  'li|local-interface:s' => \$O::lint,     # local interface to use
+  'tls'             => \$O::tls,           # use TLS
+  'tlso|tls-optional' => \$O::tls_optional, # use tls if available
+  'S|silent+'       => \$O::silent,        # suppress output to varying degrees
+  'nsf|no-strip-from' => \$O::no_strip_from, # Don't strip From_ line from DATA
+  'nth|no-hints'    => \$O::no_hints,      # Don't show transaction hints
+  'hr|hide-receive' => \$O::hide_receive,  # Don't show reception lines
+  'hs|hide-send'    => \$O::hide_send      # Don't show sending lines
 ) || exit(1);
 
 load_modules({
@@ -402,10 +405,14 @@ sub start_tls {
 }
 
 sub print_transaction {
-  my $f = shift;  # transaction flag
+  my $c = shift;  # transaction flag
   my $m = shift;  # message to print
   my $b = shift;  # be brief in what we print
   my $o = \*STDOUT;
+  my $f;
+
+  return if (($O::hide_send    && int($c/10) == 2) ||
+             ($O::hide_receive && int($c/10) == 3));
 
   # global option silent controls what we echo to the terminal
   # 0 - print everything
@@ -415,9 +422,9 @@ sub print_transaction {
   # >=3 - don't print anything
   if ($O::silent > 0) {
     return if ($O::silent >= 3);
-    return if ($O::silent == 2 && $f%2 != 0);
+    return if ($O::silent == 2 && $c%2 != 0);
     if ($O::silent == 1) {
-      if ($f%2 != 0) {
+      if ($c%2 != 0) {
         return();
       } else {
         $O::silent = 0;
@@ -431,25 +438,28 @@ sub print_transaction {
   # x = 1 is info/normal
   # x = 2 is error
   # program info
-  if ($f == 11) { $f = '==='; }
+  if ($c == 11) { $f = '==='; }
   # program error
-  elsif ($f == 12) { $f = '***'; $o = \*STDERR; }
+  elsif ($c == 12) { $f = '***'; $o = \*STDERR; }
   # smtp send info
-  elsif ($f == 21) { $f = $tls{active} ? ' ~>' : ' ->'; }
+  elsif ($c == 21) { $f = $tls{active} ? ' ~>' : ' ->'; }
   # smtp send error
-  elsif ($f == 22) { $f = $tls{active} ? '*~>' : '**>'; }
+  elsif ($c == 22) { $f = $tls{active} ? '*~>' : '**>'; }
   # smtp recv info
-  elsif ($f == 31) { $f = $tls{active} ? '<~ ' : '<- '; }
+  elsif ($c == 31) { $f = $tls{active} ? '<~ ' : '<- '; }
   # smtp recv error
-  elsif ($f == 32) { $f = $tls{active} ? '<~*' : '<**'; }
+  elsif ($c == 32) { $f = $tls{active} ? '<~*' : '<**'; }
   # something went unexpectedly
-  else { $f = '???'; }
+  else { $c = '???'; }
+
+  $f .= ' ';
+  $f = '' if ($O::no_hints && int($c/10) != 1);
 
   if ($b) {
     $m = scalar(split(/\n/ms, $m)) . " lines sent";
   }
-  $m =~ s/\n/\n$f /msg;
-  print $o "$f $m\n";
+  $m =~ s/\n/\n$f/msg;
+  print $o "$f$m\n";
 }
 
 sub do_smtp_tls {
@@ -968,6 +978,18 @@ Supply the password for authentication.
 =item -apt, --auth-plaintext
 
 Instead of showing AUTH strings literally (in base64), translate them to plaintext before printing on screen.
+
+=item -nth, --no-hints
+
+Don't show transaction hints.  (Useful in conjunction with -hr to create copy/paste-able transactions
+
+=item -hr, --hide-receive
+
+Don't display reception lines
+
+=item -hs, --hide-send
+
+Don't display sending lines
 
 =item --help
 
