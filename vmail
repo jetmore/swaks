@@ -322,7 +322,7 @@ sub do_smtp_auth_cram {
 
   $r =~ s/^....//; # maybe something a little better here?
   my $d = get_digest($p, $r);
-  chomp($auth_string = encode_base64("$u $d"));
+  $auth_string = encode_base64("$u $d", '');
 
   do_smtp_gen($s, $auth_string, '235', $t) || return(0);
   return(1);
@@ -336,9 +336,9 @@ sub do_smtp_auth_login {
   
   my $auth_string = "AUTH LOGIN";
   do_smtp_gen($s, $auth_string, '334', $t) || return(0);
-  chomp($auth_string = encode_base64($u));
+  $auth_string = encode_base64($u, '');
   do_smtp_gen($s, $auth_string, '334', $t) || return(0);
-  chomp($auth_string = encode_base64($p));
+  $auth_string = encode_base64($p, '');
   do_smtp_gen($s, $auth_string, '235', $t) || return(0);
   return(1);
 }
@@ -349,8 +349,8 @@ sub do_smtp_auth_plain {
   my $u = shift; # auth user
   my $p = shift; # auth password
   
-  my $auth_string = "AUTH PLAIN " . encode_base64("\0$u\0$p");
-  chomp($auth_string);
+  my $auth_string = "AUTH PLAIN " . encode_base64("\0$u\0$p", '');
+  $auth_string;
   return(do_smtp_gen($s, $auth_string, '235', $t));
 }
 
