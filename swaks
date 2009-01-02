@@ -1746,7 +1746,12 @@ sub process_args {
              .'\n'
              .'%B\n';
   # The -g option trumps all other methods of getting the data
-  $n{data}   = join('', <STDIN>) if ($o->{data_on_stdin});
+  if ($o->{data_on_stdin}) {
+    $n{data} = join('', <STDIN>);
+  } elsif ($n{data} !~ m|[\\n\n]| && open(F, "<$n{data}")) {
+    $n{data} = join('', <F>);
+    close(F);
+  }
   if (!$o->{no_data_fixup}) {
     $n{data} =~ s/%B/$body/g;
     if (defined($o->{header}) && ref($o->{header}) eq 'ARRAY'
