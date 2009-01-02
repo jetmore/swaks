@@ -81,21 +81,22 @@ GetOptions(
 
 # lists of dependencies for features
 %G::dependencies = (
-  auth            => { name => "Basic AUTH",     list => [] },#MIME::Base64
-  auth_cram_md5   => { name => "AUTH CRAM-MD5",  list => ['Digest::MD5'] },
-  auth_cram_sha1  => { name => "AUTH CRAM-SHA1", list => ['Digest::SHA1'] },
-  auth_ntlm       => { name => "AUTH NTLM",      list => ['Authen::NTLM'] },
+  auth            => { name => "Basic AUTH",     opt => ['MIME::Base64'],
+                       req  => [] },
+  auth_cram_md5   => { name => "AUTH CRAM-MD5",  req => ['Digest::MD5'] },
+  auth_cram_sha1  => { name => "AUTH CRAM-SHA1", req => ['Digest::SHA1'] },
+  auth_ntlm       => { name => "AUTH NTLM",      req => ['Authen::NTLM'] },
   auth_digest_md5 => { name => "AUTH DIGEST-MD5",
-                       list => ['Authen::DigestMD5'] },
-  dns             => { name => "MX Routing",     list => ['Net::DNS'] },
-  tls             => { name => "TLS",            list => ['Net::SSLeay'] },
-  pipe            => { name => "Pipe Transport", list => ['IPC::Open2'] },
-  socket          => { name => "Socket Transport", list => ['IO::Socket'] },
-  date_manip      => { name => "Date Manipulation", list => ['Time::Local'] },
+                       req  => ['Authen::DigestMD5'] },
+  dns             => { name => "MX Routing",     req => ['Net::DNS'] },
+  tls             => { name => "TLS",            req => ['Net::SSLeay'] },
+  pipe            => { name => "Pipe Transport", req => ['IPC::Open2'] },
+  socket          => { name => "Socket Transport", req => ['IO::Socket'] },
+  date_manip      => { name => "Date Manipulation", req => ['Time::Local'] },
   hostname        => { name => "Local Hostname Detection",
-                       list => ['Sys::Hostname'] },
+                       req  => ['Sys::Hostname'] },
   hires_timing    => { name => "High Resolution Timing",
-                       list => ['Time::HiRes'] },
+                       req  => ['Time::HiRes'] },
 );
 
 if ($O{get_support}) {
@@ -938,7 +939,7 @@ sub get_server {
 
 
   if (!avail("dns")) {
-    ptrans(12, avail_err("dns").".  Using $server as mail server");
+    ptrans(12, avail_str("dns").".  Using $server as mail server");
     return($server);
   }
   my $res = new Net::DNS::Resolver;
@@ -967,7 +968,10 @@ sub load {
   return $G::modules{$m} = $@ ? 0 : 1;
 }
 
-sub avail_err { return $G::dependencies{$_[0]}{errstr}; }
+# Currently this is just an informational string - it's set on both
+# success and failure.  It currently has four output formats (supported,
+# supported but not optimal, unsupported, unsupported and missing optimal)
+sub avail_str { return $G::dependencies{$_[0]}{errstr}; }
 
 sub avail {
   my $f = shift; # this is the feature we want to check support for (auth, tls)
@@ -976,16 +980,30 @@ sub avail {
   # return immediately if we've already tested this.
   return($s->{$f}{avail}) if (exists($s->{$f}{avail}));
 
-  $s->{$f}{failed} = [];
-  foreach my $m (@{$s->{$f}{list}}) {
-    push(@{$s->{$f}{failed}}, $m) if (!load($m));
+  $s->{$f}{req_failed} = [];
+  $s->{$f}{opt_failed} = [];
+  foreach my $m (@{$s->{$f}{req}}) {
+    push(@{$s->{$f}{req_failed}}, $m) if (!load($m));
+  }
+  foreach my $m (@{$s->{$f}{opt}}) {
+    push(@{$s->{$f}{opt_failed}}, $m) if (!load($m));
   }
 
-  if (scalar(@{$s->{$f}{failed}})) {
+  if (scalar(@{$s->{$f}{req_failed}})) {
     $s->{$f}{errstr} = "$s->{$f}{name} not available: requires "
-                     . join(', ', @{$s->{$f}{failed}});
+                     . join(', ', @{$s->{$f}{req_failed}});
+    if (scalar(@{$s->{$f}{opt_failed}})) {
+      $s->{$f}{errstr} .= ".  Also missing optimizing "
+                        . join(', ', @{$s->{$f}{opt_failed}});
+    }
     return $s->{$f}{avail} = 0;
   } else {
+    if (scalar(@{$s->{$f}{opt_failed}})) {
+      $s->{$f}{errstr} = "$s->{$f}{name} supported, but missing optimizing "
+                       . join(', ', @{$s->{$f}{opt_failed}});
+    } else {
+      $s->{$f}{errstr} = "$s->{$f}{name} supported";
+    }
     return $s->{$f}{avail} = 1;
   }
 }
@@ -1023,11 +1041,13 @@ sub test_support {
   my $s = \%G::dependencies;
 
   foreach my $act (sort { $s->{$a}{name} cmp $s->{$b}{name} } keys %$s) {
-    if (avail($act)) {
-      ptrans(11, "$s->{$act}{name} supported");
-    } else {
-      ptrans(12, avail_err($act));
-    }
+    ptrans(avail($act) ? 11 : 12, avail_str($act));
+    #if (avail($act)) {
+    #  #ptrans(11, "$s->{$act}{name} supported");
+    #  ptrans(11, avail_err($act));
+    #} else {
+    #  ptrans(12, avail_err($act));
+    #}
   }
 }
 
@@ -1153,12 +1173,12 @@ sub process_args {
   # Verify we are able to handle the requested transport
   if ($G::link{type} eq 'pipe') {
     if (!avail("pipe")) {
-      ptrans(12, avail_err("pipe").".  Exiting");
+      ptrans(12, avail_str("pipe").".  Exiting");
       exit(2);
     }
   } else {
     if (!avail("socket")) {
-      ptrans(12, avail_err("socket").".  Exiting");
+      ptrans(12, avail_str("socket").".  Exiting");
       exit(2);
     }
   }
@@ -1297,9 +1317,9 @@ sub process_args {
     if (!avail("tls")) {
       if ($G::tls_optional) {
         $G::tls = undef; # so we won't try it later
-        ptrans(12,avail_err("tls").".  Skipping optional TLS");
+        ptrans(12,avail_str("tls").".  Skipping optional TLS");
       } else {
-        ptrans(12,avail_err("tls").".  Exiting");
+        ptrans(12,avail_str("tls").".  Exiting");
         exit(10);
       }
     }
@@ -1344,9 +1364,9 @@ sub process_args {
     }
     if (!avail("auth")) { # check for general auth requirements
       if ($G::auth_optional) {
-        ptrans(12, avail_err("auth"). ".  Skipping optional AUTH");
+        ptrans(12, avail_str("auth"). ".  Skipping optional AUTH");
       } else {
-        ptrans(12, avail_err("auth"). ".  Exiting");
+        ptrans(12, avail_str("auth"). ".  Exiting");
         exit(10);
       }
     } else {
@@ -1366,23 +1386,23 @@ sub process_args {
 
         elsif ($G::auth_map_f{$type} eq 'CRAM-MD5' && !avail("auth_cram_md5"))
         {
-          ptrans(12, avail_err("auth_cram_md5")) if ($o->{auth} ne 'ANY');
+          ptrans(12, avail_str("auth_cram_md5")) if ($o->{auth} ne 'ANY');
         }
 
         elsif ($G::auth_map_f{$type} eq 'CRAM-SHA1' && !avail("auth_cram_sha1"))
         {
-          ptrans(12, avail_err("auth_cram_sha1")) if ($o->{auth} ne 'ANY');
+          ptrans(12, avail_str("auth_cram_sha1")) if ($o->{auth} ne 'ANY');
         }
 
         elsif ($G::auth_map_f{$type} eq 'NTLM' && !avail("auth_ntlm"))
         {
-          ptrans(12, avail_err("auth_ntlm")) if ($o->{auth} ne 'ANY');
+          ptrans(12, avail_str("auth_ntlm")) if ($o->{auth} ne 'ANY');
         }
 
         elsif ($G::auth_map_f{$type} eq 'DIGEST-MD5' &&
                !avail("auth_digest_md5"))
         {
-          ptrans(12, avail_err("auth_digest_md5")) if ($o->{auth} ne 'ANY');
+          ptrans(12, avail_str("auth_digest_md5")) if ($o->{auth} ne 'ANY');
         }
 
         else {
@@ -1442,7 +1462,7 @@ sub get_date_string {
   my $o = 0;
 
   if (!avail("date_manip")) {
-    ptrans(12, avail_err("date_manip").".  Date strings will be in GMT");
+    ptrans(12, avail_str("date_manip").".  Date strings will be in GMT");
     @l = gmtime();
   } else {
     my @g = gmtime();
