@@ -88,8 +88,8 @@ if ($G::dump_args) {
   print "from       = $opts->{from}\n";
   print "to         = $opts->{to}\n";
   print "helo       = $opts->{helo}\n";
-  print "server     = $opts->{server}\n";
-  print "port       = $opts->{port}\n";
+  print "server     = $G::link{server}\n";
+  print "port       = $G::link{port}\n";
   print "tls        = ";
   if ($G::tls) {
     print "starttls (", $G::tls_optional ? 'optional' : 'required', ")\n";
@@ -102,8 +102,8 @@ if ($G::dump_args) {
           "user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
   } else { print "no\n"; }
   print "quit after = $G::quit_after\n";
-  print "local int  = $opts->{lint}\n";
-  print "timeout    = $opts->{timeout}\n";
+  print "local int  = $G::link{lint}\n";
+  print "timeout    = $G::link{timeout}\n";
   print "data       = <<.\n$opts->{data}\n";
   exit(0);
 }
@@ -113,31 +113,28 @@ if ($G::dump_args) {
 # set info in global hash %G::link
 # XXX instead of passing raw data, have processs_opts create a link_data
 # XXX hash that we can pass verbatim here
-open_link($opts->{server}, $opts->{port}, $opts->{lint}, $opts->{timeout});
+open_link();
 
 sendmail($opts->{from}, $opts->{to}, $opts->{helo}, $opts->{data},
-         $opts->{server}, $opts->{port}, $opts->{a_user}, $opts->{a_pass},
-         $opts->{a_type}, $opts->{lint}, $opts->{timeout});
+         $opts->{a_user}, $opts->{a_pass}, $opts->{a_type});
 
 exit(0);
 
 sub open_link {
-  my $host          = shift;
-  my $port          = shift;
-  my $lint          = shift;
-  $G::link{timeout} = shift || 0;
   $G::link{type}    = "socket";
 
-  print_transaction(11, "Trying $host:$port...");
-  $G::link{sock} = IO::Socket::INET->new( PeerAddr => $host, PeerPort => $port,
-		          Proto => 'tcp', Timeout => $G::link{timeout},
-                          LocalAddr => $lint);
+  print_transaction(11, "Trying $G::link{server}:$G::link{port}...");
+  $G::link{sock} = IO::Socket::INET->new(PeerAddr => $G::link{server},
+                          PeerPort  => $G::link{port}, Proto => 'tcp',
+                          Timeout   => $G::link{timeout},
+                          LocalAddr => $G::link{lint});
 
   if ($@) {
-    print_transaction(12,"Error connecting $lint to $host:$port:\n\t$@");
+    print_transaction(12, "Error connecting $G::link{lint} " .
+                          "to $G::link{server}:$G::link{port}:\n\t$@");
     exit(2);
   }
-  print_transaction(11, "Connected to $host.");
+  print_transaction(11, "Connected to $G::link{server}.");
 
 }
 
@@ -146,13 +143,9 @@ sub sendmail {
   my $to      = shift;	# envelope-to
   my $helo    = shift;	# who am I?
   my $data    = shift;	# body of message (content after DATA command)
-  my $host    = shift;	# receiving host
-  my $port    = shift;	# where's the remote smtp process live?
   my $a_user  = shift;	# what user to auth with?
   my $a_pass  = shift;	# what pass to auth with
   my $a_type  = shift;	# what kind of auth (this must be set to to attempt)
-  my $lint    = shift;	# what local interface to use
-  my $timeout = shift;	# timeout for all transactions
   my $ehlo    = {};	# If server is esmtp, save advertised features here
 
   # start up tls if -tlsc specified
@@ -196,7 +189,7 @@ sub sendmail {
 
   # handle auth here if user has requested it
   if ($a_type) {
-    do_smtp_quit(1, 28) if (!do_smtp_auth($ehlo,$a_type,$a_user,$a_pass,$host)
+    do_smtp_quit(1, 28) if (!do_smtp_auth($ehlo, $a_type, $a_user, $a_pass)
                             && !$O{auth_optional});
   }
 
@@ -204,7 +197,7 @@ sub sendmail {
   do_smtp_quit(1, 0) if ($G::quit_after eq 'auth');
 
   # send MAIL
-  do_smtp_quit(1, 23) if (!do_smtp_gen("MAIL FROM:<$from>", '250'));
+  do_smtp_gen("MAIL FROM:<$from>", '250') || do_smtp_quit(1, 23);
 
   # QUIT here if the user has asked us to do so
   do_smtp_quit(1, 0) if ($G::quit_after eq 'mail');
@@ -227,16 +220,6 @@ sub sendmail {
   do_smtp_quit(0) || exit(27);
 
   print_transaction(11,  "Connection closed by foreign host.");
-}
-
-sub do_smtp_quit {
-  my $exit = shift;
-  my $err  = shift;
-
-  my $r = do_smtp_gen('QUIT', '221');
-  exit $err if ($exit);
-
-  return($r);
 }
 
 sub start_tls {
@@ -317,6 +300,16 @@ sub print_transaction {
   print $o "$f$m\n";
 }
 
+sub do_smtp_quit {
+  my $exit = shift;
+  my $err  = shift;
+
+  my $r = do_smtp_gen('QUIT', '221');
+  exit $err if ($exit);
+
+  return($r);
+}
+
 sub do_smtp_tls {
   my $e  = shift; # ehlo config hash
 
@@ -339,7 +332,6 @@ sub do_smtp_auth {
   my $at = shift; # auth type
   my $au = shift; # auth user
   my $ap = shift; # auth password
-  my $h  = shift; # host (used by digest-md5)
 
   # the auth_optional stuff is handled higher up, so tell the truth about
   # failing here
@@ -359,7 +351,7 @@ sub do_smtp_auth {
   if ($G::modules{"Authen::DigestMD5"}) {
     foreach my $type (@{$G::auth_map_t{'DIGEST-MD5'}}) {
       if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
-        return(1) if (do_smtp_auth_digest($au, $ap, $type, $h));
+        return(1) if (do_smtp_auth_digest($au, $ap, $type));
       }
     }
   }
@@ -419,7 +411,6 @@ sub do_smtp_auth_digest {
   my $u = shift; # auth user
   my $p = shift; # auth password
   my $as = shift; # auth string
-  my $h = shift; # host (used in digest-uri)
   my $r = '';    # will store smtp response
   
   my $auth_string = "AUTH $as";
@@ -432,8 +423,10 @@ sub do_smtp_auth_digest {
   my $req = Authen::DigestMD5::Request->new($r);
   my $res = Authen::DigestMD5::Response->new();
   $res->got_request($req);
+  # XXX using link{server} here is probably a bug, but I don;t know what else
+  # XXX to use yet on a non-inet-socket connection
   $res->set('username' => $u, 'realm' => '',
-            'digest-uri' => "smtp/$h");
+            'digest-uri' => "smtp/$G::link{server}");
   $res->add_digest(password => $p);
   my $d = $res->output();
   $auth_string = encode_base64("$d", '');
@@ -844,33 +837,34 @@ sub process_args {
   $n{from} = '' if ($n{from} eq '<>');
 
   # SMTP helo/ehlo
-  $n{helo} = $o->{mail_helo} || interact("Helo: ", '^.*$')
+  $n{helo}   = $o->{mail_helo} || interact("Helo: ", '^.*$')
       if (defined($o->{mail_helo}));
   $n{helo} ||= $fconf->{HELO} || ($hostname ? $hostname :
                                              interact("Helo: ", '^.*$'));
 
   # SMTP server and rcpt to are interdependant, so they are handled together
-  $n{server} = $o->{mail_server} || interact("Server: ", '^.*$')
+  $G::link{server}   = $o->{mail_server} || interact("Server: ", '^.*$')
       if (defined($o->{mail_server}));
-  $n{server} ||= $fconf->{SERVER};
-  $n{to} = $o->{mail_to} || interact("To: ", '^.*$')
+  $G::link{server} ||= $fconf->{SERVER};
+  $n{to}             = $o->{mail_to} || interact("To: ", '^.*$')
       if (defined($o->{mail_to}));
-  $n{to} ||= $fconf->{TO};
-  $n{to} = interact("To: ", '^.*$') if (!$n{to} &&
-                                        !($G::server_only && $n{server}));
-  $n{server} = get_server($n{to}) if (!$n{server});
+  $n{to}           ||= $fconf->{TO};
+  $n{to}             = interact("To: ", '^.*$')
+      if (!$n{to} && !($G::server_only && $G::link{server}));
+  $G::link{server}   = get_server($n{to})
+      if (!$G::link{server});
 
   # local interface to connect from
-  $n{lint} = $o->{lint} || interact("Interface: ", '^.*$')
+  $G::link{lint}   = $o->{lint} || interact("Interface: ", '^.*$')
       if (defined($o->{lint}));
-  $n{lint} ||= $fconf->{INTERFACE} || '0.0.0.0';
+  $G::link{lint} ||= $fconf->{INTERFACE} || '0.0.0.0';
 
   # SMTP timeout
-  $o->{timeout} = '0s' if ($o->{timeout} eq '0'); # used 'eq' on purpose
-  $n{timeout} = $o->{timeout} || interact("Timeout: ", '^\d+[hHmMsS]?$')
+  $o->{timeout}       = '0s' if ($o->{timeout} eq '0'); # used 'eq' on purpose
+  $G::link{timeout}   = $o->{timeout} || interact("Timeout: ", '^\d+[hHmMsS]?$')
       if (defined($o->{timeout}));
-  $n{timeout} ||= $fconf->{TIMEOUT} || '30s';
-  $n{timeout} = time_to_seconds($n{timeout});
+  $G::link{timeout} ||= $fconf->{TIMEOUT} || '30s';
+  $G::link{timeout}   = time_to_seconds($G::link{timeout});
 
   # SMTP DATA
   # a '-' arg to -d is the same as setting -g
@@ -929,9 +923,9 @@ sub process_args {
   }
 
   # SMTP port
-  $n{port} = $o->{mail_port} || interact("Port: ", '^\d+$')
+  $G::link{port}   = $o->{mail_port} || interact("Port: ", '^\d+$')
       if (defined($o->{mail_port}));
-  $n{port} ||= $fconf->{PORT} || ($G::tls_on_connect ? 465 : 25);
+  $G::link{port} ||= $fconf->{PORT} || ($G::tls_on_connect ? 465 : 25);
 
   # Handle AUTH options
   $G::auth_optional = 1 if (defined($o->{auth_optional}));
