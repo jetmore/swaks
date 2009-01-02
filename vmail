@@ -386,9 +386,29 @@ sub print_transaction {
   my $b = shift;  # be brief in what we print
   my $o = \*STDOUT;
 
+  # global option silent controls what we echo to the terminal
+  # 0 - print everything
+  # 1 - don't show anything until you hit an error, then show everything
+  #     received after that (done by setting option to 0 on first error)
+  # 2 - don't show anything but errors
+  # >=3 - don't print anything
+  if ($O::silent > 0) {
+    return if ($O::silent >= 3);
+    return if ($O::silent == 2 && $f%2 != 0);
+    if ($O::silent == 1) {
+      if ($f%2 != 0) {
+        return();
+      } else {
+        $O::silent = 0;
+      }
+    }
+  }
+
   # 1x is program messages
   # 2x is smtp send
   # 3x is smtp recv
+  # x = 1 is info/normal
+  # x = 2 is error
   # program info
   if ($f == 11) { $f = '==='; }
   # program error
@@ -751,11 +771,13 @@ sub load_modules {
         push(@failed, $m);
       }
     }
-    if (scalar(@failed) > 0) {
-      print_transaction(12, "$act not available: requires " .
-          join(', ', @failed));
-    } else {
-      print_transaction(11, "$act supported");
+    if ($O::get_support) {
+      if (scalar(@failed) > 0) {
+        print_transaction(12, "$act not available: requires " .
+            join(', ', @failed));
+      } else {
+        print_transaction(11, "$act supported");
+      }
     }
   }
 }
