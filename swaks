@@ -246,7 +246,7 @@ sub sendmail {
   do_smtp_quit(1, 0) if ($G::quit_after eq 'connect');
 
   # Send a HELO string
-  do_smtp_helo($helo, $ehlo) || do_smtp_quit(1, 22);
+  do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 22);
 
   # QUIT here if the user has asked us to do so
   do_smtp_quit(1, 0) if ($G::quit_after eq 'first-helo');
@@ -288,6 +288,9 @@ sub sendmail {
   # send RCPT (sub handles multiple, comma-delimited recips
   #do_smtp_rcpt($to) || do_smtp_quit(1, 24);
   do_smtp_rcpt($to); # failures in this handled by smtp_rcpt_callback
+                     # note that smtp_rcpt_callback increments
+                     # $G::smtp_rcpt_failures at every failure.  This and
+                     # $G::smtp_rcpt_total are used after DATA for LMTP
 
   # QUIT here if the user has asked us to do so
   do_smtp_quit(1, 0) if ($G::quit_after eq 'rcpt');
@@ -296,7 +299,10 @@ sub sendmail {
   do_smtp_gen('DATA', '354') || do_smtp_quit(1, 25);
 
   # send the actual data
-  do_smtp_gen($data, '250', undef, $G::suppress_data) || do_smtp_quit(1, 26);
+  #do_smtp_gen($data, '250', undef, $G::suppress_data) || do_smtp_quit(1, 26);
+  # this was moved to a custom sub because the server will have a custom
+  # behaviour when using LMTP
+  do_smtp_data($data, $G::suppress_data) || do_smtp_quit(1, 26);
 
   # send QUIT
   do_smtp_quit(0) || do_smtp_quit(1, 27);
@@ -604,30 +610,35 @@ sub do_smtp_auth_plain {
 sub do_smtp_helo {
   my $h = shift;  # helo string to use
   my $e = shift;  # this is a hashref that will be populated w/ server options
+  my $p = shift;  # protocol for the transaction
   my $r = '';     # this'll be populated by do_smtp_gen
 
-  if (do_smtp_gen("EHLO $h", '250', \$r)) {
-    # $ehlo is designed to hold the advertised options, but I'm not sure how
-    # to store them all - for instance, SIZE is a simple key/value pair, but
-    # AUTH lends itself more towards a multilevel hash.  What I'm going to do
-    # is come here and add each key in the way that makes most sense in each
-    # case.  I only need auth for now.
-    # XXX I don't think I'm handling AUTH=LOGIN right.  I think it just means
-    # LOGIN and the = is not important - something to check if it's a problem.
-    foreach my $l (split(/\n/, $r)) {
-      $l =~ s/^....//;
-      if ($l =~ /^AUTH(.*)$/) {
-        map { $e->{AUTH}{$_} = 1 } (split(' ', $1));
-      } elsif ($l =~ /^STARTTLS$/) {
-        $e->{STARTTLS} = 1;
-      } elsif ($l =~ /^PIPELINING$/) {
-        $e->{PIPELINING} = 1;
-        $G::pipeline_adv = 1;
+  if ($p eq 'esmtp' || $p eq 'lmtp') {
+    my $l = $p eq 'lmtp' ? "LHLO" : "EHLO";
+    if (do_smtp_gen("$l $h", '250', \$r)) {
+      # $ehlo is designed to hold the advertised options, but I'm not sure how
+      # to store them all - for instance, SIZE is a simple key/value pair, but
+      # AUTH lends itself more towards a multilevel hash.  What I'm going to do
+      # is come here and add each key in the way that makes most sense in each
+      # case.  I only need auth for now.
+      # XXX I don't think I'm handling AUTH=LOGIN right.  I think it just means
+      # LOGIN and the = is not important - something to check if it's a problem.
+      foreach my $l (split(/\n/, $r)) {
+        $l =~ s/^....//;
+        if ($l =~ /^AUTH(.*)$/) {
+          map { $e->{AUTH}{$_} = 1 } (split(' ', $1));
+        } elsif ($l =~ /^STARTTLS$/) {
+          $e->{STARTTLS} = 1;
+        } elsif ($l =~ /^PIPELINING$/) {
+          $e->{PIPELINING} = 1;
+          $G::pipeline_adv = 1;
+        }
       }
+      return(1);
     }
-    return(1);
-  } elsif (do_smtp_gen("HELO $h", '250')) {
-    return(1);
+  }
+  if ($p eq 'esmtp' || $p eq 'smtp') {
+    return(do_smtp_gen("HELO $h", '250'));
   }
 
   return(0);
@@ -677,6 +688,25 @@ sub smtp_rcpt_callback {
   }
 }
 
+sub do_smtp_data {
+  my $m = shift; # string to send
+  my $b = shift; # be brief in the data we send
+  my $calls = $G::smtp_rcpt_total - $G::smtp_rcpt_failures;
+
+  my $ok = transact(cxn_string => $m, expect => '250', summarize_output => $b);
+
+  # now be a little messy - lmtp is not a lockstep after data - we need to 
+  # listen for as many calls as we had accepted recipients
+  # XXX UNTESTED (ok for e?smtp as it is never used, but LMTP multiple
+  # XXX           recips need to be tested)
+  if ($G::protocol eq 'lmtp') {
+    foreach my $c (1..($calls-1)) { # -1 because we already got 1 above
+      $ok += transact(cxn_string => undef, expect => '250');
+    }
+  }
+  return($ok)
+}
+
 sub do_smtp_gen {
   my $m = shift; # string to send
   my $e = shift; # String we're expecting to get back
@@ -687,7 +717,6 @@ sub do_smtp_gen {
   my $r = '';    # This'll be the return value from transact()
   my $time;
 
-#print "in do_smtp_gen($m)\n";
   return transact(cxn_string => $m, expect => $e, return_text => $p,
                   summarize_output => $b, show_string => $x,
                   print_callback => $c);
