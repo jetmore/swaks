@@ -643,12 +643,10 @@ sub do_smtp_helo {
       # AUTH lends itself more towards a multilevel hash.  What I'm going to do
       # is come here and add each key in the way that makes most sense in each
       # case.  I only need auth for now.
-      # XXX I don't think I'm handling AUTH=LOGIN right.  I think it just means
-      # LOGIN and the = is not important - something to check if it's a problem.
       foreach my $l (split(/\n/, $r)) {
         $l =~ s/^....//;
-        if ($l =~ /^AUTH(.*)$/) {
-          map { $e->{AUTH}{$_} = 1 } (split(' ', $1));
+        if ($l =~ /^AUTH=?(.*)$/) {
+          map { $e->{AUTH}{uc($_)} = 1 } (split(' ', $1));
         } elsif ($l =~ /^STARTTLS$/) {
           $e->{STARTTLS} = 1;
         } elsif ($l =~ /^PIPELINING$/) {
