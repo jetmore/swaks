@@ -2072,7 +2072,7 @@ Require connection to use STARTTLS.  Exit if TLS not available for any reason (n
 
 Attempt to use STARTTLS if possible, continue t/ normal transaction if TLS unavailable.
 
-=item --tlsos, --tls-optional-strict
+=item -tlsos, --tls-optional-strict
 
 Attempt to use STARTTLS if available.  proceed if available and succeeds or not advertised.  If advertised but TLS negotiations fail, error out.
 
