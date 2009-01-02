@@ -295,25 +295,16 @@ sub sendmail {
   do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
 
   # handle auth here if user has requested it
-#ptrans(11, "\$a_type = $a_type");
   if ($a_type) {
-    # XXX test this change - if I read this correctly, we error out here if
-    # !optional or optional-strict is in place
-    # XXX THIS ISN'T RIGHT!!! we need to know the difference  between
-    # auth not avail and auth attempted but not succeeded in do_smtp_auth
-    #do_smtp_quit(1, 28) if (!do_smtp_auth($ehlo, $a_type, $a_user, $a_pass)
-    #                        && $G::auth_optional != 1);
-
     # 0 = smtp succeeded
     # 1 = smtp not advertised
     # 2 = smtp advertised but not attempted, no matching auth types
     # 3 = smtp advertised but not attempted, auth not supported
     # 4 = smtp advertised and attempted but no type succeeded
     # note there's some duplicate logic here (with process_args) but I think
-    # its best to do as thorough a job covering the options in both places
+    # it's best to do as thorough a job covering the options in both places
     # so as to minimize chance of options falling through the cracks
     my $result = do_smtp_auth($ehlo, $a_type, $a_user, $a_pass);
-ptrans(11, "do_smtp_auth returned $result");
     if ($result == 1) {
       ptrans(12, "Host did not advertise authentication");
       do_smtp_quit(1, 28) if (!$G::auth_optional);
@@ -541,12 +532,6 @@ sub do_smtp_auth {
     }
   }
 
-  #if ($auth_attempted) {
-  #  ptrans(12, "No authentication type succeeded");
-  #} else {
-  #  ptrans(12, "No acceptable authentication types available");
-  #}
-  #return(0);
   return $auth_attempted ? 4 : 2;
 }
 
@@ -1461,7 +1446,8 @@ sub process_args {
   if ($o->{auth}) {
     @{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth}));
   } elsif ($o->{auth_optional_strict}) {
-    @{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth_optional_strict}));
+    @{$o->{auth_types}} =
+        map { uc($_) } (split(/,/, $o->{auth_optional_strict}));
   } elsif ($o->{auth_optional}) {
     @{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth_optional}));
   } elsif (defined($o->{auth_user}) || defined($o->{auth_pass}) ||
