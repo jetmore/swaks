@@ -130,11 +130,13 @@ sub teardown_link {
   if ($G::link{type} eq 'socket-inet') {
     # XXX need anything special for tls teardown?
     close($G::link{sock});
+    print_transaction(11,  "Connection closed by foreign host.");
   } elsif ($G::link{type} eq 'pipe') {
     delete($SIG{PIPE});
     $SIG{CHLD} = 'IGNORE';
     close($G::link{sock}{wr});
     close($G::link{sock}{re});
+    print_transaction(11,  "Connection closed with child process.");
   }
 }
 
@@ -157,10 +159,6 @@ sub open_link {
       print_transaction(12, "Child process went away unexpectedly, exiting");
       exit(4);
     };
-# XXX this needs to be turned off somehow at the end of the app so that error
-# XXX doesn't get printed when the app ends.  There probably needs to be a 
-# XXX teardown_link sub.  But that won't handle what happens when there's a
-# XXX mistake midway through the transaction
     $SIG{CHLD} = sub {
       print_transaction(12, "Problem with child process, exiting");
       exit(5);
@@ -237,7 +235,7 @@ sub sendmail {
   # handle auth here if user has requested it
   if ($a_type) {
     do_smtp_quit(1, 28) if (!do_smtp_auth($ehlo, $a_type, $a_user, $a_pass)
-                            && !$O{auth_optional});
+                            && !$G::auth_optional);
   }
 
   # QUIT here if the user has asked us to do so
@@ -265,8 +263,6 @@ sub sendmail {
 
   # send QUIT
   do_smtp_quit(0) || do_smtp_quit(1, 27);
-
-  print_transaction(11,  "Connection closed by foreign host.");
 }
 
 sub start_tls {
@@ -1003,7 +999,7 @@ sub process_args {
   $o->{auth} = uc($o->{auth}) if ($o->{auth});
   $o->{auth} = uc($o->{auth_optional}) if ($o->{auth_optional} && !$o->{auth});
   $o->{auth} = 'ANY' if (!$o->{auth} && (defined($o->{auth_user}) ||
-                         defined($o->{auth_pass}) || $o->{auth_optional}));
+                         defined($o->{auth_pass}) || $G::auth_optional));
   $o->{auth} = 'ANY' if (defined($o->{auth}) && !$o->{auth});
   if ($o->{auth}) {
     foreach (split(/\s+,\s+/, $o->{auth_map}),"PLAIN=PLAIN","LOGIN=LOGIN",
@@ -1141,6 +1137,10 @@ swaks [--help|--version] | (see description of options below)
 =head1 OPTIONS
 
 =over 4
+
+=item --pipe
+
+This option takes as its argument a program and the program's arguments.  If this option is present, swaks opens a pipe to the program and enters an SMTP transaction over that pipe rather than connecting to a remote server.  Some MTAs have testing modes using stdin/stdout.  This option allows you to tie into those options.  For example, if you implemented DNSBL checking with exim and you wanted to make sure it was working, you could run 'swaks --pipe "exim -bh 127.0.0.2"'.
 
 =item -l, --input-file
 
