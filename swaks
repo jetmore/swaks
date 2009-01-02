@@ -259,7 +259,8 @@ sub sendmail {
   # QUIT here if the user has asked us to do so
   do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 
-  if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
+  #if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
+  if ($G::link{tls}{active} && !$G::tls_on_connect) {
     # According to RFC3207, we need to forget state info and re-EHLO here
     $ehlo = {};
     do_smtp_helo($helo, $ehlo) || do_smtp_quit(1, 32);
