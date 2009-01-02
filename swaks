@@ -48,6 +48,7 @@ GetOptions(
   't|to:s'          => \$O{mail_to},       # envelope-(t)o address
   'h|helo|ehlo|lhlo:s' => \$O{mail_helo},  # (h)elo string
   's|server:s'      => \$O{mail_server},   # (s)erver to use
+  'copy-routing:s'  => \$O{copy_routing},  # copy MX/routing from another domain
   'p|port:s'        => \$O{mail_port},     # (p)ort to use
   'protocol:s'      => \$O{mail_protocol}, # protocol to use (smtp, esmtp, lmtp)
   'd|data:s'        => \$O{mail_data},     # (d)ata portion ('\n' for newlines)
@@ -929,10 +930,10 @@ sub get_server {
   my $pref   = -1;
   my $server = "localhost";
 
-  if ($addr =~ /\@\[(\d+\.\d+\.\d+\.\d+)\]$/) {
+  if ($addr =~ /\@?\[(\d+\.\d+\.\d+\.\d+)\]$/) {
     # handle automatic routing of domain literals (user@[1.2.3.4])
     return($1);
-  } elsif ($addr =~ /\@\#(\d+)$/) {
+  } elsif ($addr =~ /\@?\#(\d+)$/) {
     # handle automatic routing of decimal domain literals (user@#16909060)
     $addr = $1;
     return(($addr/(2**24))%(2**8) . '.' . ($addr/(2**16))%(2**8) . '.'
@@ -947,7 +948,7 @@ sub get_server {
   }
   my $res = new Net::DNS::Resolver;
 
-  return($server) if ($addr !~ /\@/);
+  #return($server) if ($addr !~ /\@/);
 
   $addr =~ s/^.*\@([^\@]*)$/$1/;
   return($server) if (!$addr);
@@ -1202,7 +1203,8 @@ sub process_args {
                                            $G::link{type} eq 'socket-unix' ||
                                            $G::link{type} eq 'pipe')));
   if (!$G::link{type}) {
-    $G::link{server} = get_server($n{to}) if (!$G::link{server});
+    $G::link{server} = get_server($o->{copy_routing} ?  $o->{copy_routing}
+                                : $n{to}) if (!$G::link{server});
     $G::link{type}   = "socket-inet";
   }
 
@@ -1647,7 +1649,7 @@ Use argument as "MAIL FROM" address, or prompt user if no argument specified.  O
 
 =item -s, --server
 
-Use argument as mail server to which to connect, or prompt user if no argument specified.  Overridden by -l token SERVER.  If unspecified, swaks tries to determine primary MX of destination address.  If Net::DNS module is not available, tries to connect to A record for recipient's domain.
+Use argument as mail server to which to connect, or prompt user if no argument specified.  Overridden by -l token SERVER.  If unspecified, swaks tries to determine primary MX of destination address.  If Net::DNS module is not available, tries to connect to A record for recipient's domain.  See also --copy-routing.
 
 =item -p, --port
 
@@ -1722,6 +1724,10 @@ Specify which protocol to use in the transaction.  Valid options are shown in th
 =item -li, --local-interface
 
 Use argument as the local interface for the SMTP connection, or prompt user if no argument given.  Overridden by the -l token INTERFACE.  Argument can be an IP or a hostname.  Default action is to let OS choose local interface.
+
+=item --copy-routing <domain part>
+
+The argument is interpretted as the domain part of an email address and it is used to find the destination server using the same logic that would be used to look up the destination server for a --to address.
 
 =item -g
 
