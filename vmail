@@ -36,11 +36,11 @@ GetOptions(
 ) || exit(1);
 
 load_modules({
-  'AUTH'          => ['MIME::Base64'],
-  'AUTH CRAM-MD5' => ['Digest::MD5'],
+  'Basic AUTH'    => ['MIME::Base64'],
+  'AUTH CRAM-MD5' => ['XDigest::MD5'],
   'MX lookups'    => ['Net::DNS'],
   'TLS'           => ['Net::SSLeay'],
-});
+}, \%modules);
 exit(0) if ($O::get_support); # --support means report capabilities only
 
 # normalize the auth options a bit
@@ -77,9 +77,17 @@ $lint   = $O::lint        || interact("Interface: ", '^[\-\da-zA-Z\.]+')
 if ($O::auth) {
   # make sure we can support it before we go any farther
 
-  #try_load("Digest::MD5 qw(md5)");
   if (!$modules{"MIME::Base64"}) {
     print STDERR "MIME::Base64 not installed, ";
+    if ($O::auth_optional) {
+      print STDERR "skipping AUTH attempts...\n";
+      $a_type = ''; # So we won't attempt it later
+    } else {
+      print STDERR "exiting...\n";
+      exit(10);
+    }
+  } elsif (!$modules{"Digest::MD5"} && $O::auth =~ /^cram(-md5)?$/i) {
+    print STDERR "Digest::MD5 not installed, ";
     if ($O::auth_optional) {
       print STDERR "skipping AUTH attempts...\n";
       $a_type = ''; # So we won't attempt it later
@@ -143,11 +151,6 @@ $lint   ||= $fconf->{INTERFACE} || '0.0.0.0';     # local interface
 # The -g option trumps all other methods of getting the data
 $data     = join('', <STDIN>) if ($O::data_on_stdin);
 
-# we're allowing them to specify a hostname also, so resolve it back to 
-# an IP
-# actually, IO::Socket may do this for us, check that first;
-#$lint = get_ip_from_name($lint) if ($lint && $lint !~ /^\d+\.\d+\.\d+\.\d+$/);
-
 #print "\$from   = $from\n";
 #print "\$to     = $to\n";
 #print "\$helo   = $helo\n";
@@ -160,13 +163,13 @@ $data     = join('', <STDIN>) if ($O::data_on_stdin);
 #print "\$lint   = $lint\n";
 #exit;
 
-$data =~ s/([^\.])$/$1\n./;
+$data .= "\n.";
 $data =~ s/\\n/\r\n/g;
 $data =~ s/%F/$from/g;
 $data =~ s/%T/$to/g;
 $data =~ s/%D/scalar(localtime(time()))/eg;
-#print "after parsing, \$data looks like this:\n#\n$data\n#\n";
-#exit;
+print "after parsing, \$data looks like this:\n#\n$data\n#\n";
+exit;
 sendmail($from, $to, $helo, $data, $server, $port, $a_user, $a_pass, $a_type,
          $lint);
 
@@ -311,7 +314,11 @@ sub do_smtp_auth {
   }
 
   if (($at eq 'ANY' || $at eq 'CRAM-MD5') && $e->{AUTH}{'CRAM-MD5'}) {
-    return(1) if (do_smtp_auth_cram($s, $t, $au, $ap));
+    if ($modules{"Digest::MD5"}) {
+      return(1) if (do_smtp_auth_cram($s, $t, $au, $ap));
+    } else {
+      # debug?
+    }
   }
   if (($at eq 'ANY' || $at eq 'PLAIN') && $e->{AUTH}{PLAIN}) {
     return(1) if (do_smtp_auth_plain($s, $t, $au, $ap));
@@ -533,7 +540,7 @@ sub get_server {
   my $pref   = -1;
   my $server = "localhost";
   
-  if (!modules{"Net::DNS"}) {
+  if (!$modules{"Net::DNS"}) {
     print STDERR "Net::DNS not installed, using $server as mail server\n";
     return($server);
   }
@@ -619,9 +626,4 @@ sub load_modules {
     }
   }
 }
-
-
-
-
-
 
