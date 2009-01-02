@@ -66,7 +66,6 @@ GetOptions(
   'stl|show-time-lapse:s' => \$O{show_time_lapse}, # print lapse for send/recv
   'ndf|no-data-fixup' => \$O{no_data_fixup}, # don't touch the data
   'pipe:s'          => \$O{pipe_cmd},      # command to communicate with
-  'pipe-no-stderr'  => \$O{pipe_no_stderr},# hide pipe STDERR
   'socket:s'        => \$O{socket},        # unix doain socket to talk to
   'dump'            => \$O{dump_args},     # build options and dump
   'force-getpwuid'  => \$O{force_getpwuid} # use getpwuid building -f
