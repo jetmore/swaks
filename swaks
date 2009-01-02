@@ -211,6 +211,8 @@ sub open_link {
       ptrans(12, "Error connecting to $G::link{process}:\n\t$@");
       exit(2);
     }
+    select((select($G::link{sock}{wr}), $| = 1)[0]);
+    select((select($G::link{sock}{re}), $| = 1)[0]);
     ptrans(11, "Connected to $G::link{process}.");
   } else {
     ptrans(12, "Unknown or unimplemented connection type " .
@@ -263,7 +265,7 @@ sub sendmail {
   if ($G::link{tls}{active} && !$G::tls_on_connect) {
     # According to RFC3207, we need to forget state info and re-EHLO here
     $ehlo = {};
-    do_smtp_helo($helo, $ehlo) || do_smtp_quit(1, 32);
+    do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 32);
   }
 
   # QUIT here if the user has asked us to do so
@@ -318,7 +320,12 @@ sub start_tls {
   $t{con}    = Net::SSLeay::CTX_new() || return(0);
   Net::SSLeay::CTX_set_options($t{con}, &Net::SSLeay::OP_ALL); # error check
   $t{ssl}    = Net::SSLeay::new($t{con}) || return(0);
-  Net::SSLeay::set_fd($t{ssl}, fileno($G::link{sock})); # error check?
+  if ($G::link{type} eq 'pipe') {
+    Net::SSLeay::set_wfd($t{ssl}, fileno($G::link{sock}{wr})); # error check?
+    Net::SSLeay::set_rfd($t{ssl}, fileno($G::link{sock}{re})); # error check?
+  } else {
+    Net::SSLeay::set_fd($t{ssl}, fileno($G::link{sock})); # error check?
+  }
   $t{active} = Net::SSLeay::connect($t{ssl}) == 1 ? 1 : 0;
   $t{res}    = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error())
                        if (!$t{active});
