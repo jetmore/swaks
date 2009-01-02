@@ -103,67 +103,68 @@ sub sendmail {
   print_transaction('===', "Connected to $host.");
 
   # read the server's 220 banner
-  if (!do_gen_smtp($s, '', '220', $timeout)) {
-    do_gen_smtp($s, 'QUIT', '221', $timeout);
+  if (!do_smtp_gen($s, '', '220', $timeout)) {
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(21);
   }
 
   # QUIT here if the user has asked us to do so
   if ($opt{q} eq 'connect') {
-    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(0);
   }
 
   # Send a HELO string
-  if (!do_gen_smtp($s, "HELO $helo", '250', $timeout)) {
-    do_gen_smtp($s, 'QUIT', '221', $timeout);
+  if (!do_smtp_gen($s, "HELO $helo", '250', $timeout)) {
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(22);
   }
 
   # QUIT here if the user has asked us to do so
   if ($opt{q} eq 'helo') {
-    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(0);
   }
 
   # send MAIL
-  if (!do_gen_smtp($s, "MAIL FROM:<$from>", '250', $timeout)) {
-    do_gen_smtp($s, 'QUIT', '221', $timeout);
+  if (!do_smtp_gen($s, "MAIL FROM:<$from>", '250', $timeout)) {
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(23);
   }
 
   # QUIT here if the user has asked us to do so
   if ($opt{q} eq 'mail') {
-    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(0);
   }
 
   # send RCPT
-  if (!do_gen_smtp($s, "RCPT TO:<$to>", '250', $timeout)) {
-    do_gen_smtp($s, 'QUIT', '221', $timeout);
+  #if (!do_smtp_gen($s, "RCPT TO:<$to>", '250', $timeout)) {
+  if (!do_smtp_rcpt($s, $to, $timeout)) {
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(24);
   }
 
   # QUIT here if the user has asked us to do so
   if ($opt{q} eq 'rcpt') {
-    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(0);
   }
 
   # send DATA
-  if (!do_gen_smtp($s, "DATA", '354', $timeout)) {
-    do_gen_smtp($s, 'QUIT', '221', $timeout);
+  if (!do_smtp_gen($s, "DATA", '354', $timeout)) {
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(25);
   }
 
   # send the actual data
-  if (!do_gen_smtp($s, "$data", '250', $timeout, $opt{n})) {
-    do_gen_smtp($s, 'QUIT', '221', $timeout);
+  if (!do_smtp_gen($s, "$data", '250', $timeout, $opt{n})) {
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(26);
   }
 
   # send QUIT
-  if (!do_gen_smtp($s, "QUIT", '221', $timeout)) {
+  if (!do_smtp_gen($s, "QUIT", '221', $timeout)) {
     exit(27);
   }
 
@@ -182,7 +183,22 @@ sub print_transaction {
   print "$f $m\n";
 }
 
-sub do_gen_smtp {
+sub do_smtp_rcpt {
+  my $s = shift;  # socket
+  my $m = shift;  # string of comma separated recipients
+  my $t = shift;  # timeout
+  my $f = 0;      # The number of failures we've experienced
+
+  my @a = split(/,/, $m);
+  foreach my $addr (@a) {
+    $f++ if (!do_smtp_gen($s, "RCPT TO:<$addr>", '250', $t));
+  }
+
+  # if at least one addr succeeded, we can proceed, else we stop here
+  return $f == scalar(@a) ? 0 : 1;
+}
+
+sub do_smtp_gen {
   my $s = shift;  # socket
   my $m = shift;  # string to send
   my $e = shift;  # String we're expecting to get back
