@@ -1305,13 +1305,10 @@ sub process_args {
     if (scalar(@{$o->{header}})) {
       my %matched = ();
       foreach my $l (map { split(/\\n/) } @{$o->{header}}) {
-        if ($l =~ /^([^:]+):/) {
-          my $h = $1;
+        if (my($h) = $l =~ /^([^:]+):/) {
           if (!$matched{$h} && $n{data} =~ s/(^|\\n)$h:.*?($|\\n)/$1$l$2/) {
             $matched{$h} = 1;
-          } else {
-            push(@{$o->{add_header}}, $l);
-          }
+          } else { push(@{$o->{add_header}}, $l); }
         } else { push(@{$o->{add_header}}, $l); }
       }
     }
