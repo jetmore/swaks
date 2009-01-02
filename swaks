@@ -122,17 +122,16 @@ sendmail($opts->{from}, $opts->{to}, $opts->{helo}, $opts->{data},
 exit(0);
 
 sub open_link {
-  my $host    = shift;
-  my $port    = shift;
-  my $lint    = shift;
-  my $timeout = shift;
-  %G::link    = {};
+  my $host          = shift;
+  my $port          = shift;
+  my $lint          = shift;
+  $G::link{timeout} = shift || 0;
+  $G::link{type}    = "socket";
 
-  $G::link{type} = "socket";
   print_transaction(11, "Trying $host:$port...");
-  $G::link{sock} = IO::Socket::INET->new( PeerAddr  => $host, PeerPort => $port,
-		                       Proto     => 'tcp', Timeout  => $timeout,
-                                       LocalAddr => $lint);
+  $G::link{sock} = IO::Socket::INET->new( PeerAddr => $host, PeerPort => $port,
+		          Proto => 'tcp', Timeout => $G::link{timeout},
+                          LocalAddr => $lint);
 
   if ($@) {
     print_transaction(12,"Error connecting $lint to $host:$port:\n\t$@");
@@ -156,165 +155,132 @@ sub sendmail {
   my $timeout = shift;	# timeout for all transactions
   my $ehlo    = {};	# If server is esmtp, save advertised features here
 
-# XXX cut
-#  print_transaction(11, "Trying $host:$port...");
-#  my $s       = IO::Socket::INET->new( PeerAddr  => $host, PeerPort => $port,
-#		                       Proto     => 'tcp', Timeout  => $timeout,
-#                                       LocalAddr => $lint);
-#
-#  if ($@) {
-#    print_transaction(12,"Error connecting $lint to $host:$port:\n\t$@");
-#    exit(2);
-#  }
-#  print_transaction(11, "Connected to $host.");
-my $s = '';
-#XXX end cut
-
   # start up tls if -tlsc specified
   if ($G::tls_on_connect) {
-    if (start_tls($s)) {
-      print_transaction(11, "TLS started w/ cipher $G::tls_cipher");
+    if (start_tls()) {
+      print_transaction(11, "TLS started w/ cipher $G::link{tls}{cipher}");
     } else {
-      print_transaction(12, "TLS startup failed ($G::tls_res)");
+      print_transaction(12, "TLS startup failed ($G::link{tls}{res})");
       exit(29);
     }
   }
 
   # read the server's 220 banner
-  if (!do_smtp_gen($s, undef, '220', $timeout)) {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+  if (!do_smtp_gen(undef, '220')) {
+    do_smtp_gen('QUIT', '221');
     exit(21);
   }
 
   # QUIT here if the user has asked us to do so
   if ($G::quit_after eq 'connect') {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+    do_smtp_gen('QUIT', '221');
     exit(0);
   }
 
   # Send a HELO string
-  if (!do_smtp_helo($s, $helo, $timeout, $ehlo)) {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+  if (!do_smtp_helo($helo, $ehlo)) {
+    do_smtp_gen('QUIT', '221');
     exit(22);
   }
 
   # QUIT here if the user has asked us to do so
   if ($G::quit_after eq 'first-helo') {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+    do_smtp_gen('QUIT', '221');
     exit(0);
   }
 
   # handle TLS here if user has requested it
   if ($G::tls) {
-    if (!do_smtp_tls($s, $timeout, $ehlo) && !$G::tls_optional)
+    if (!do_smtp_tls($ehlo) && !$G::tls_optional)
     {
-      do_smtp_gen($s, 'QUIT', '221', $timeout);
+      do_smtp_gen('QUIT', '221');
       exit(29);
     }
   }
 
   # QUIT here if the user has asked us to do so
   if ($G::quit_after eq 'tls') {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+    do_smtp_gen('QUIT', '221');
     exit(0);
   }
 
-  if ($G::tls_active && $ehlo->{STARTTLS}) {
+  if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
     # According to RFC3207, we need to forget state info and re-EHLO here
     $ehlo = {};
-    if (!do_smtp_helo($s, $helo, $timeout, $ehlo)) {
-      do_smtp_gen($s, 'QUIT', '221', $timeout);
+    if (!do_smtp_helo($helo, $ehlo)) {
+      do_smtp_gen('QUIT', '221');
       exit(32);
     }
   }
 
   # QUIT here if the user has asked us to do so
   if ($G::quit_after eq 'helo') {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+    do_smtp_gen('QUIT', '221');
     exit(0);
   }
 
   # handle auth here if user has requested it
   if ($a_type) {
-    if (!do_smtp_auth($s, $timeout, $ehlo, $a_type, $a_user, $a_pass, $host)
+    if (!do_smtp_auth($ehlo, $a_type, $a_user, $a_pass, $host)
          && !$O{auth_optional})
     {
-      do_smtp_gen($s, 'QUIT', '221', $timeout);
+      do_smtp_gen('QUIT', '221');
       exit(28);
     }
   }
 
   # QUIT here if the user has asked us to do so
   if ($G::quit_after eq 'auth') {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+    do_smtp_gen('QUIT', '221');
     exit(0);
   }
 
   # send MAIL
-  if (!do_smtp_gen($s, "MAIL FROM:<$from>", '250', $timeout)) {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+  if (!do_smtp_gen("MAIL FROM:<$from>", '250')) {
+    do_smtp_gen('QUIT', '221');
     exit(23);
   }
 
   # QUIT here if the user has asked us to do so
   if ($G::quit_after eq 'mail') {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+    do_smtp_gen('QUIT', '221');
     exit(0);
   }
 
   # send RCPT
   my $num_accepted = 0;
   foreach my $r (split(/,/, $to)) {
-    $num_accepted++ if (do_smtp_rcpt($s, $r, $timeout));
+    $num_accepted++ if (do_smtp_rcpt($r));
   }
   if (!$num_accepted) {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+    do_smtp_gen('QUIT', '221');
     exit(24);
   }
 
   # QUIT here if the user has asked us to do so
   if ($G::quit_after eq 'rcpt') {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+    do_smtp_gen('QUIT', '221');
     exit(0);
   }
 
   # send DATA
-  if (!do_smtp_gen($s, "DATA", '354', $timeout)) {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+  if (!do_smtp_gen("DATA", '354')) {
+    do_smtp_gen('QUIT', '221');
     exit(25);
   }
 
   # send the actual data
-  if (!do_smtp_gen($s, "$data", '250', $timeout, undef, $O{supress_data})) {
-    do_smtp_gen($s, 'QUIT', '221', $timeout);
+  if (!do_smtp_gen("$data", '250', undef, $O{supress_data})) {
+    do_smtp_gen('QUIT', '221');
     exit(26);
   }
 
   # send QUIT
-  if (!do_smtp_gen($s, "QUIT", '221', $timeout)) {
+  if (!do_smtp_gen("QUIT", '221')) {
     exit(27);
   }
 
   print_transaction(11,  "Connection closed by foreign host.");
-}
-
-sub start_tls_OLD {
-  my $s = shift;
-  $G::tls_res = undef; # shut up -w
-
-  Net::SSLeay::load_error_strings();
-  Net::SSLeay::SSLeay_add_ssl_algorithms();
-  Net::SSLeay::randomize();
-  $G::tls_con    = Net::SSLeay::CTX_new() || return(0);
-  Net::SSLeay::CTX_set_options($G::tls_con, &Net::SSLeay::OP_ALL); # error check
-  $G::tls_ssl    = Net::SSLeay::new($G::tls_con) || return(0);
-  Net::SSLeay::set_fd($G::tls_ssl, fileno($s)); # error check?
-  $G::tls_active = Net::SSLeay::connect($G::tls_ssl) == 1 ? 1 : 0;
-  $G::tls_res    = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error())
-                       if (!$G::tls_active);
-  $G::tls_cipher = Net::SSLeay::get_cipher($G::tls_ssl);
-
-  return($G::tls_active);
 }
 
 sub start_tls {
@@ -332,14 +298,6 @@ sub start_tls {
   $t{res}    = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error())
                        if (!$t{active});
   $t{cipher} = Net::SSLeay::get_cipher($t{ssl});
-
-  # XXX til the next XXX is temp code while we move over to the link struct
-  $G::tls_con    = $t{con};
-  $G::tls_ssl    = $t{ssl};
-  $G::tls_active = $t{active};
-  $G::tls_res    = $t{res};
-  $G::tls_cipher = $t{cipher};
-  # XXX
 
   return($t{active});
 }
@@ -382,13 +340,13 @@ sub print_transaction {
   # program error
   elsif ($c == 12) { $f = '***'; $o = \*STDERR; }
   # smtp send info
-  elsif ($c == 21) { $f = $G::tls_active ? ' ~>' : ' ->'; }
+  elsif ($c == 21) { $f = $G::link{tls}{active} ? ' ~>' : ' ->'; }
   # smtp send error
-  elsif ($c == 22) { $f = $G::tls_active ? '*~>' : '**>'; }
+  elsif ($c == 22) { $f = $G::link{tls}{active} ? '*~>' : '**>'; }
   # smtp recv info
-  elsif ($c == 31) { $f = $G::tls_active ? '<~ ' : '<- '; }
+  elsif ($c == 31) { $f = $G::link{tls}{active} ? '<~ ' : '<- '; }
   # smtp recv error
-  elsif ($c == 32) { $f = $G::tls_active ? '<~*' : '<**'; }
+  elsif ($c == 32) { $f = $G::link{tls}{active} ? '<~*' : '<**'; }
   # something went unexpectedly
   else { $c = '???'; }
 
@@ -404,27 +362,23 @@ sub print_transaction {
 }
 
 sub do_smtp_tls {
-  my $s  = shift; # socket
-  my $t  = shift; # timeout
   my $e  = shift; # ehlo config hash
 
   if (!$e->{STARTTLS}) {
     print_transaction(12, "STARTTLS not supported");
     return $G::tls_optional ? 1 : 0;
-  } elsif (!do_smtp_gen($s, "STARTTLS", '220', $t)) {
+  } elsif (!do_smtp_gen("STARTTLS", '220')) {
     return $G::tls_optional ? 1 : 0;
-  } elsif (!start_tls($s)) {
-    print_transaction(12, "TLS startup failed ($G::tls_res)");
+  } elsif (!start_tls()) {
+    print_transaction(12, "TLS startup failed ($G::link{tls}{res})");
     return $G::tls_optional ? 1 : 0;
   }
 
-  print_transaction(11, "TLS started w/ cipher $G::tls_cipher");
+  print_transaction(11, "TLS started w/ cipher $G::link{tls}{cipher}");
   return(1);
 }
 
 sub do_smtp_auth {
-  my $s  = shift; # socket
-  my $t  = shift; # timeout
   my $e  = shift; # ehlo config hash
   my $at = shift; # auth type
   my $au = shift; # auth user
@@ -442,32 +396,32 @@ sub do_smtp_auth {
   if ($G::modules{"Digest::MD5"}) {
     foreach my $type (@{$G::auth_map_t{'CRAM-MD5'}}) {
       if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
-        return(1) if (do_smtp_auth_cram($s, $t, $au, $ap, $type));
+        return(1) if (do_smtp_auth_cram($au, $ap, $type));
       }
     }
   }
   if ($G::modules{"Authen::DigestMD5"}) {
     foreach my $type (@{$G::auth_map_t{'DIGEST-MD5'}}) {
       if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
-        return(1) if (do_smtp_auth_digest($s, $t, $au, $ap, $type, $h));
+        return(1) if (do_smtp_auth_digest($au, $ap, $type, $h));
       }
     }
   }
   if ($G::modules{"Authen::NTLM"}) {
     foreach my $type (@{$G::auth_map_t{'NTLM'}}) {
       if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
-        return(1) if (do_smtp_auth_ntlm($s, $t, $au, $ap, $type));
+        return(1) if (do_smtp_auth_ntlm($au, $ap, $type));
       }
     }
   }
   foreach my $type (@{$G::auth_map_t{'PLAIN'}}) {
     if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
-      return(1) if (do_smtp_auth_plain($s, $t, $au, $ap, $type));
+      return(1) if (do_smtp_auth_plain($au, $ap, $type));
     }
   }
   foreach my $type (@{$G::auth_map_t{'LOGIN'}}) {
     if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
-      return(1) if (do_smtp_auth_login($s, $t, $au, $ap, $type));
+      return(1) if (do_smtp_auth_login($au, $ap, $type));
     }
   }
 
@@ -476,8 +430,6 @@ sub do_smtp_auth {
 }
 
 sub do_smtp_auth_ntlm {
-  my $s = shift; # socket
-  my $t = shift; # timeout
   my $u = shift; # auth user
   my $p = shift; # auth password
   my $as = shift; # auth type (since NTLM might be SPA or MSN)
@@ -486,12 +438,12 @@ sub do_smtp_auth_ntlm {
   ($u,$domain) = split(/%/, $u);
   
   my $auth_string = "AUTH $as";
-  do_smtp_gen($s, $auth_string, '334', $t) || return(0);
+  do_smtp_gen($auth_string, '334') || return(0);
 
   my $d = decode_base64(Authen::NTLM::ntlm());
 
   $auth_string = encode_base64("$d", '');
-  do_smtp_gen($s, $auth_string, '334', $t, \$r, '', $G::auth_showpt ? "$d" : '',
+  do_smtp_gen($auth_string, '334', \$r, '', $G::auth_showpt ? "$d" : '',
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
 
   $r =~ s/^....//; # maybe something a little better here?
@@ -501,15 +453,13 @@ sub do_smtp_auth_ntlm {
   $d = decode_base64(Authen::NTLM::ntlm($r));
 
   $auth_string = encode_base64("$d", '');
-  do_smtp_gen($s, $auth_string, '235', $t, \$r, '',
+  do_smtp_gen($auth_string, '235', \$r, '',
               $G::auth_showpt ? "$d" : '') || return(0);
 
   return(1);
 }
 
 sub do_smtp_auth_digest {
-  my $s = shift; # socket
-  my $t = shift; # timeout
   my $u = shift; # auth user
   my $p = shift; # auth password
   my $as = shift; # auth string
@@ -517,7 +467,7 @@ sub do_smtp_auth_digest {
   my $r = '';    # will store smtp response
   
   my $auth_string = "AUTH $as";
-  do_smtp_gen($s, $auth_string, '334', $t, \$r, '', '',
+  do_smtp_gen($auth_string, '334', \$r, '', '',
               $G::auth_showpt ? \&unencode_smtp : '')
       || return(0);
 
@@ -532,7 +482,7 @@ sub do_smtp_auth_digest {
   my $d = $res->output();
   $auth_string = encode_base64("$d", '');
 
-  do_smtp_gen($s, $auth_string, '334', $t, \$r, '', $G::auth_showpt ? "$d" : '',
+  do_smtp_gen($auth_string, '334', \$r, '', $G::auth_showpt ? "$d" : '',
               $G::auth_showpt ? \&unencode_smtp : '')
       || return(0);
   $r =~ s/^....//; # maybe something a little better here?
@@ -540,21 +490,19 @@ sub do_smtp_auth_digest {
   $req->input($r);
   return(0) if (!$req->auth_ok);
 
-  do_smtp_gen($s, "", '235', $t, undef, '',
+  do_smtp_gen("", '235', undef, '',
               $G::auth_showpt ? "" : '') || return(0);
   return(1);
 }
 
 sub do_smtp_auth_cram {
-  my $s  = shift; # socket
-  my $t  = shift; # timeout
   my $u  = shift; # auth user
   my $p  = shift; # auth password
   my $as = shift; # auth string
   my $r  = '';    # will store smtp response
   
   my $auth_string = "AUTH $as";
-  do_smtp_gen($s, $auth_string, '334', $t, \$r, '', '',
+  do_smtp_gen($auth_string, '334', \$r, '', '',
               $G::auth_showpt ? \&unencode_smtp : '')
       || return(0);
 
@@ -562,35 +510,31 @@ sub do_smtp_auth_cram {
   my $d = get_digest($p, $r);
   $auth_string = encode_base64("$u $d", '');
 
-  do_smtp_gen($s, $auth_string, '235', $t, undef, '',
+  do_smtp_gen($auth_string, '235', undef, '',
               $G::auth_showpt ? "$u $d" : '') || return(0);
   return(1);
 }
 
 sub do_smtp_auth_login {
-  my $s = shift; # socket
-  my $t = shift; # timeout
   my $u = shift; # auth user
   my $p = shift; # auth password
   my $as = shift; # auth string
   my $z = '';
   
   my $auth_string = "AUTH $as";
-  do_smtp_gen($s, $auth_string, '334', $t, undef, '', '', 
+  do_smtp_gen($auth_string, '334', undef, '', '', 
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
   $auth_string = encode_base64($u, '');
   $z = $u if ($G::auth_showpt);
-  do_smtp_gen($s, $auth_string, '334', $t, undef, '', $z,
+  do_smtp_gen($auth_string, '334', undef, '', $z,
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
   $auth_string = encode_base64($p, '');
   $z = $p if ($G::auth_showpt);
-  do_smtp_gen($s, $auth_string, '235', $t, undef, '', $z) || return(0);
+  do_smtp_gen($auth_string, '235', undef, '', $z) || return(0);
   return(1);
 }
 
 sub do_smtp_auth_plain {
-  my $s = shift; # socket
-  my $t = shift; # timeout
   my $u = shift; # auth user
   my $p = shift; # auth password
   my $as = shift; # auth string
@@ -600,17 +544,15 @@ sub do_smtp_auth_plain {
   if ($G::auth_showpt) {
     $z = "AUTH $as \\0$u\\0$p";
   }
-  return(do_smtp_gen($s, $auth_string, '235', $t, undef, '', $z));
+  return(do_smtp_gen($auth_string, '235', undef, '', $z));
 }
 
 sub do_smtp_helo {
-  my $s = shift;  # socket
   my $h = shift;  # helo string to use
-  my $t = shift;  # timeout
   my $e = shift;  # this is a hashref that will be populated w/ server options
   my $r = '';     # this'll be populated by do_smtp_gen
 
-  if (do_smtp_gen($s, "EHLO $h", '250', $t, \$r)) {
+  if (do_smtp_gen("EHLO $h", '250', \$r)) {
     # $ehlo is designed to hold the advertised options, but I'm not sure how
     # to store them all - for instance, SIZE is a simple key/value pair, but
     # AUTH lends itself more towards a multilevel hash.  What I'm going to do
@@ -627,7 +569,7 @@ sub do_smtp_helo {
       }
     }
     return(1);
-  } elsif (do_smtp_gen($s, "HELO $h", '250', $t)) {
+  } elsif (do_smtp_gen("HELO $h", '250')) {
     return(1);
   }
 
@@ -635,14 +577,12 @@ sub do_smtp_helo {
 }
 
 sub do_smtp_rcpt {
-  my $s = shift;  # socket
   my $m = shift;  # string of comma separated recipients
-  my $t = shift;  # timeout
   my $f = 0;      # The number of failures we've experienced
 
   my @a = split(/,/, $m);
   foreach my $addr (@a) {
-    $f++ if (!do_smtp_gen($s, "RCPT TO:<$addr>", '250', $t));
+    $f++ if (!do_smtp_gen("RCPT TO:<$addr>", '250'));
   }
 
   # if at least one addr succeeded, we can proceed, else we stop here
@@ -650,10 +590,8 @@ sub do_smtp_rcpt {
 }
 
 sub do_smtp_gen {
-  my $s = shift; # socket
   my $m = shift; # string to send
   my $e = shift; # String we're expecting to get back
-  my $t = shift; # timeout
   my $p = shift; # this is a scalar ref, assign the server return string to it
   my $b = shift; # be brief in the data we send
   my $x = shift; # if this is populated, print this instead of $m
@@ -669,7 +607,7 @@ sub do_smtp_gen {
       $time = time() if ($G::show_time_lapse);
     }
   }
-  $r  = transact($s, $m, '', $t);
+  $r  = transact($m, '');
   $$p = $r;
   
   if ($G::show_time_lapse) {
@@ -693,15 +631,13 @@ sub do_smtp_gen {
 }
 
 sub transact {
-  my $t    = shift;       # this was the socket, but it's a bogus var for now
   my $send = shift;       # This is the string to send
   my $buff = shift;       # we will store and manipulate the return value here.
-  my $alrm = shift || 0;  # change timeout here so we can have it wait forever
   my $s    = $G::link{sock}; # This is my IO::Socket object
 
   eval {
     local $SIG{'ALRM'} = sub {
-      $buff = "Timeout ($alrm secs) waiting for server response";
+      $buff = "Timeout ($G::link{timeout} secs) waiting for server response";
       die;
     };
     if (defined($send)) {
@@ -711,7 +647,7 @@ sub transact {
         print $s $send, "\r\n";
       }
     }
-    alarm($alrm);
+    alarm($G::link{timeout});
     if ($buff) {
       $buff = '';
     } else {
@@ -1018,10 +954,10 @@ sub process_args {
   }
 
   # Handle TLS options
-  $G::tls_optional   = 1 if (defined($o->{tls_optional}));
-  $G::tls            = 1 if (defined($o->{tls}) || $G::tls_optional);
-  $G::tls_on_connect = 1 if (defined($o->{tls_on_connect}));
-  $G::tls_active = 0;
+  $G::tls_optional      = 1 if (defined($o->{tls_optional}));
+  $G::tls               = 1 if (defined($o->{tls}) || $G::tls_optional);
+  $G::tls_on_connect    = 1 if (defined($o->{tls_on_connect}));
+  $G::link{tls}{active} = 0;
   if ($G::tls || $G::tls_on_connect) {
     if (!$G::modules{'Net::SSLeay'}) {
       if ($G::tls_optional) {
