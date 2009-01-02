@@ -294,22 +294,47 @@ sub sendmail {
   # QUIT here if the user has asked us to do so
   do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
 
-  # if auth-optional-strict is set and we previously determined auth is
-  # unavailable and server does offer auth, tell the user here and then
-  # quit
-  if ($G::auth_optional == 2 && $ehlo->{AUTH} && $G::auth_unavailable) {
-    ptrans(12, $G::auth_unavailable . ".  Exiting");
-    do_smtp_quit(1, 28);
-  }
-
   # handle auth here if user has requested it
+#ptrans(11, "\$a_type = $a_type");
   if ($a_type) {
     # XXX test this change - if I read this correctly, we error out here if
     # !optional or optional-strict is in place
     # XXX THIS ISN'T RIGHT!!! we need to know the difference  between
     # auth not avail and auth attempted but not succeeded in do_smtp_auth
-    do_smtp_quit(1, 28) if (!do_smtp_auth($ehlo, $a_type, $a_user, $a_pass)
-                            && $G::auth_optional != 1);
+    #do_smtp_quit(1, 28) if (!do_smtp_auth($ehlo, $a_type, $a_user, $a_pass)
+    #                        && $G::auth_optional != 1);
+
+    # 0 = smtp succeeded
+    # 1 = smtp not advertised
+    # 2 = smtp advertised but not attempted, no matching auth types
+    # 3 = smtp advertised but not attempted, auth not supported
+    # 4 = smtp advertised and attempted but no type succeeded
+    # note there's some duplicate logic here (with process_args) but I think
+    # its best to do as thorough a job covering the options in both places
+    # so as to minimize chance of options falling through the cracks
+    my $result = do_smtp_auth($ehlo, $a_type, $a_user, $a_pass);
+ptrans(11, "do_smtp_auth returned $result");
+    if ($result == 1) {
+      ptrans(12, "Host did not advertise authentication");
+      do_smtp_quit(1, 28) if (!$G::auth_optional);
+    } elsif ($result == 2) {
+      if ($G::auth_type eq 'ANY') {
+        ptrans(12, "Auth not attempted, no advertised types available");
+        do_smtp_quit(1, 28) if ($G::auth_optional != 1);
+      } else {
+        ptrans(12, "Auth not attempted, requested type not available");
+        do_smtp_quit(1, 28) if (!$G::auth_optional);
+      }
+    } elsif ($result == 3) {
+      ptrans(12, "Auth advertised but not supported locally");
+      do_smtp_quit(1, 28) if ($G::auth_optional != 1);
+    } elsif ($result == 4) {
+      ptrans(12, "No authentication type succeeded");
+      do_smtp_quit(1, 28) if ($G::auth_optional != 1);
+    }
+  } elsif ($G::auth_optional == 2 && $ehlo->{AUTH}) {
+    ptrans(12, "Auth requested, advertised, and locally unavailable.  Exiting");
+    do_smtp_quit(1, 28);
   }
 
   # QUIT here if the user has asked us to do so
@@ -469,12 +494,8 @@ sub do_smtp_auth {
   my $au = shift; # auth user
   my $ap = shift; # auth password
 
-  # the auth_optional stuff is handled higher up, so tell the truth about
-  # failing here
-
-  # note that we don't have to check whether the modules are loaded here,
-  # that's done in the option processing - trust that an auth type
-  # wouldn't be in $at if we didn't have the correct tools.
+  return(1) if (!$e->{AUTH});
+  return(3) if ($G::auth_unavailable);
 
   my $auth_attempted = 0; # set to true if we ever attempt auth
 
@@ -484,48 +505,49 @@ sub do_smtp_auth {
 
     foreach my $type (@{$G::auth_map_t{'CRAM-MD5'}}) {
       if ($btype eq $type) {
-        return(1) if (do_smtp_auth_cram($au, $ap, $type));
+        return(0) if (do_smtp_auth_cram($au, $ap, $type));
         $auth_attempted = 1;
       }
     }
     foreach my $type (@{$G::auth_map_t{'CRAM-SHA1'}}) {
       if ($btype eq $type) {
-        return(1) if (do_smtp_auth_cram($au, $ap, $type));
+        return(0) if (do_smtp_auth_cram($au, $ap, $type));
         $auth_attempted = 1;
       }
     }
     foreach my $type (@{$G::auth_map_t{'DIGEST-MD5'}}) {
       if ($btype eq $type) {
-        return(1) if (do_smtp_auth_digest($au, $ap, $type));
+        return(0) if (do_smtp_auth_digest($au, $ap, $type));
         $auth_attempted = 1;
       }
     }
     foreach my $type (@{$G::auth_map_t{'NTLM'}}) {
       if ($btype eq $type) {
-        return(1) if (do_smtp_auth_ntlm($au, $ap, $type));
+        return(0) if (do_smtp_auth_ntlm($au, $ap, $type));
         $auth_attempted = 1;
       }
     }
     foreach my $type (@{$G::auth_map_t{'PLAIN'}}) {
       if ($btype eq $type) {
-        return(1) if (do_smtp_auth_plain($au, $ap, $type));
+        return(0) if (do_smtp_auth_plain($au, $ap, $type));
         $auth_attempted = 1;
       }
     }
     foreach my $type (@{$G::auth_map_t{'LOGIN'}}) {
       if ($btype eq $type) {
-        return(1) if (do_smtp_auth_login($au, $ap, $type));
+        return(0) if (do_smtp_auth_login($au, $ap, $type));
         $auth_attempted = 1;
       }
     }
   }
 
-  if ($auth_attempted) {
-    ptrans(12, "No authentication type succeeded");
-  } else {
-    ptrans(12, "No acceptable authentication types available");
-  }
-  return(0);
+  #if ($auth_attempted) {
+  #  ptrans(12, "No authentication type succeeded");
+  #} else {
+  #  ptrans(12, "No acceptable authentication types available");
+  #}
+  #return(0);
+  return $auth_attempted ? 4 : 2;
 }
 
 sub do_smtp_auth_ntlm {
@@ -1447,6 +1469,7 @@ sub process_args {
   {
     $o->{auth_types}[0] = 'ANY';
     $o->{auth} = 'ANY'; # this is checked below
+    $G::auth_type = 'ANY';
   }
   # if after that processing we've defined some auth type, do some more
   # specific processing
@@ -1473,6 +1496,7 @@ sub process_args {
         # doesn't advertise auth, then it's not really an error.  So just
         # save it in case we need it later
         $G::auth_unavailable = avail_str("auth");
+        ptrans(12, avail_str("auth"));
       } elsif ($G::auth_optional == 1) {
         ptrans(12, avail_str("auth"). ".  Skipping optional AUTH");
       } else {
