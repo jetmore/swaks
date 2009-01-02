@@ -668,7 +668,9 @@ sub transact {
     } else {
       # The 'do' allows for multi-line responses
       if ($G::link{tls}{active}) {
-        $buff = Net::SSLeay::read($G::link{tls}{ssl});
+        do {
+          $buff .= Net::SSLeay::read($G::link{tls}{ssl});
+        } while ($buff !~ /^\d\d\d /m);
       } else {
         do {
           if ($G::link{type} eq 'pipe') {
