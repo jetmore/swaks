@@ -107,6 +107,7 @@ if ($O{get_support}) {
 my $opts = process_args(\%O);
 
 if ($G::dump_args) {
+  test_support();
   print "dump_args        = ", $G::dump_args ? "TRUE" : "FALSE", "\n";
   print "server_only      = ", $G::server_only ? "TRUE" : "FALSE", "\n";
   print "show_time_lapse  = ", $G::show_time_lapse ? "TRUE" : "FALSE", "\n";
