@@ -64,6 +64,7 @@ GetOptions(
   #'ahp|auth-hide-password' => \$O{auth_hidepw}, # hide passwords when possible
   'apt|auth-plaintext' => \$O{auth_showpt}, # translate base64 strings
   'ao|auth-optional:s' => \$O{auth_optional}, # auth optional (ignore failure)
+  'aos|auth-optional-strict:s' => \$O{auth_optional_strict}, # req auth if avail
   'support'         => \$O{get_support},   # report capabilties
   'li|local-interface:s' => \$O{lint},     # local interface to use
   'tls'             => \$O{tls},           # use TLS
@@ -145,9 +146,15 @@ if ($G::dump_args) {
   } else { print "no\n"; }
   print "auth             = ";
   if ($opts->{a_type}) {
-    print $G::auth_optional ? 'optional' : 'yes', " type='",
-          join(',', @{$opts->{a_type}}), "' ",
-          "user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
+    if ($G::auth_optional == 2) {
+      print 'optional-strict';
+    } elsif ($G::auth_optional == 1) {
+      print 'optional';
+    } else {
+      print 'yes';
+    }
+    print " type='", join(',', @{$opts->{a_type}}),
+          "' user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
   } else { print "no\n"; }
   print "auth map         = ", join("\n".' 'x19,
                               map { "$_ = ".
@@ -287,10 +294,22 @@ sub sendmail {
   # QUIT here if the user has asked us to do so
   do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
 
+  # if auth-optional-strict is set and we previously determined auth is
+  # unavailable and server does offer auth, tell the user here and then
+  # quit
+  if ($G::auth_optional == 2 && $ehlo->{AUTH} && $G::auth_unavailable) {
+    ptrans(12, $G::auth_unavailable . ".  Exiting");
+    do_smtp_quit(1, 28);
+  }
+
   # handle auth here if user has requested it
   if ($a_type) {
+    # XXX test this change - if I read this correctly, we error out here if
+    # !optional or optional-strict is in place
+    # XXX THIS ISN'T RIGHT!!! we need to know the difference  between
+    # auth not avail and auth attempted but not succeeded in do_smtp_auth
     do_smtp_quit(1, 28) if (!do_smtp_auth($ehlo, $a_type, $a_user, $a_pass)
-                            && !$G::auth_optional);
+                            && $G::auth_optional != 1);
   }
 
   # QUIT here if the user has asked us to do so
@@ -1110,7 +1129,7 @@ sub process_args {
     exit(1);
   }
   if ($protos{$G::protocol}{auth} && !$o->{auth_user} && !$o->{auth_pass} &&
-      !$o->{auth_optional} && !$o->{auth})
+      !$o->{auth_optional} && !$o->{auth_optional_strict} && !$o->{auth})
   {
     $o->{auth} = ''; # cause auth to be processed below
   }
@@ -1409,10 +1428,18 @@ sub process_args {
   
 
   # Handle AUTH options
+  # auth_optional =>
+  #   0 - no.  auth must be advertised and must succeed, else error
+  #   1 - yes.  success if not advertised, advertised and fails _or_ succeeds
+  #   2 - strict.  satisfied if not advertised, or advertised and succeeded.
+  #                however, if it's advertised and fails, it's an error
   $G::auth_optional = 1 if (defined($o->{auth_optional}));
+  $G::auth_optional = 2 if (defined($o->{auth_optional_strict}));
   $o->{auth_types} = [];
   if ($o->{auth}) {
     @{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth}));
+  } elsif ($o->{auth_optional_strict}) {
+    @{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth_optional_strict}));
   } elsif ($o->{auth_optional}) {
     @{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth_optional}));
   } elsif (defined($o->{auth_user}) || defined($o->{auth_pass}) ||
@@ -1441,7 +1468,12 @@ sub process_args {
       push(@{$G::auth_map_t{$type}}, $alias);
     }
     if (!avail("auth")) { # check for general auth requirements
-      if ($G::auth_optional) {
+      if ($G::auth_optional == 2) {
+        # we don't know yet if this is really an error.  If the server
+        # doesn't advertise auth, then it's not really an error.  So just
+        # save it in case we need it later
+        $G::auth_unavailable = avail_str("auth");
+      } elsif ($G::auth_optional == 1) {
         ptrans(12, avail_str("auth"). ".  Skipping optional AUTH");
       } else {
         ptrans(12, avail_str("auth"). ".  Exiting");
@@ -1492,10 +1524,13 @@ sub process_args {
 
       if (!$valid_auth_found) {
         ptrans(12, "No auth types supported");
-        if (!$G::auth_optional) {
+        if ($G::auth_optional == 2) {
+          $G::auth_unavailable .= "No auth types supported";
+        } elsif ($G::auth_optional == 1) {
+          $n{a_user} = $n{a_pass} = $n{a_type} = undef;
+        } else {
           exit(10);
         }
-        $n{a_user} = $n{a_pass} = $n{a_type} = undef;
       } else {
         $n{a_user}   = $o->{auth_user} if (defined($o->{auth_user}));
         $n{a_user} ||= $fconf->{USER};
