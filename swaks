@@ -194,6 +194,8 @@ sub sendmail {
   if ($G::tls_on_connect) {
     if (start_tls()) {
       ptrans(11, "TLS started w/ cipher $G::link{tls}{cipher}");
+      # QUIT here if the user has asked us to do so
+      do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
     } else {
       ptrans(12, "TLS startup failed ($G::link{tls}{res})");
       exit(29);
@@ -1345,6 +1347,7 @@ sub process_args {
     if ($G::quit_after =~ /^[el]hlo$/)     { $G::quit_after = 'helo';       }
     elsif ($G::quit_after =~ /first-[el]hlo/) { $G::quit_after = 'first-helo'; }
     elsif ($G::quit_after eq 'starttls')   { $G::quit_after = 'tls';        }
+    elsif ($G::quit_after eq 'banner')     { $G::quit_after = 'connect';    }
     elsif ($G::quit_after eq 'from')       { $G::quit_after = 'mail';       }
     elsif ($G::quit_after eq 'to')         { $G::quit_after = 'rcpt';       }
     elsif ($G::quit_after ne 'connect' && $G::quit_after ne 'first-helo' &&
