@@ -1109,12 +1109,12 @@ sub load_args {
     if ($ENV{$v}) { $config_file = "$ENV{$v}/.swaksrc"; last; }
   }
   # then look through the ENV args to see if another file set there
-  if (exists($ENV{SWAKS_ARG_config})) {
-    if (!$ENV{SWAKS_ARG_config}) {
+  if (exists($ENV{SWAKS_OPT_config})) {
+    if (!$ENV{SWAKS_OPT_config}) {
       # if exist but not set, it just means "don't use default file"
       $config_file = "";
     } else {
-      $config_file = $ENV{SWAKS_ARG_config};
+      $config_file = $ENV{SWAKS_OPT_config};
       $config_is_default = 0;
     }
   }
@@ -1160,10 +1160,13 @@ sub load_args {
   fetch_args(\%ARGS) if (scalar(@ARGV));
 
   # OK, %ARGS contains all the settings from the config file.  No do it again
-  # with SWAKS_ARG_* environment variables
+  # with SWAKS_OPT_* environment variables
   @ARGV = ();
   foreach my $v (keys %ENV) {
-    if ($v =~ m|^SWAKS_ARG_(.*)$|) { push(@ARGV, "-$1", $ENV{$v}); }
+    if ($v =~ m|^SWAKS_OPT_(.*)$|) {
+      my $tv = $1; $tv =~ s|_|-|g;
+      push(@ARGV, "-$tv", $ENV{$v});
+    }
   }
   fetch_args(\%ARGS) if (scalar(@ARGV));
   
