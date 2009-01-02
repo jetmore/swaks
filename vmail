@@ -98,63 +98,108 @@ sub sendmail {
   $@ = '';
   $| = 1;
 
-  print "=== Trying $host:$port...\n";
+  print_transaction('===', "Trying $host:$port...");
   die "Can't connect to $host:$port ($@)\n" if (!$s);
-  print "=== Connected to $host.\n";
+  print_transaction('===', "Connected to $host.");
 
   # read the server's 220 banner
-  $buffer = transact($s, '', '', $timeout);
-  print "<-  $buffer\n";
-  $buffer =~ /^220 / || exit;
+  if (!do_gen_smtp($s, '', '220', $timeout)) {
+    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    exit(21);
+  }
 
-  # send HELO - expand to ehlo here later
-  $send = $opt{q} eq 'connect' ? 'QUIT' : "HELO $helo";
-  print " -> $send\n";
-  $buffer = transact($s, $send, '', $timeout);
-  print "<-  $buffer\n";
-  $buffer =~ /^250 / || exit;
+  # QUIT here if the user has asked us to do so
+  if ($opt{q} eq 'connect') {
+    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    exit(0);
+  }
+
+  # Send a HELO string
+  if (!do_gen_smtp($s, "HELO $helo", '250', $timeout)) {
+    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    exit(22);
+  }
+
+  # QUIT here if the user has asked us to do so
+  if ($opt{q} eq 'helo') {
+    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    exit(0);
+  }
 
   # send MAIL
-  $send = $opt{q} eq 'helo' ? 'QUIT' : "MAIL FROM:<$from>";
-  print " -> $send\n";
-  $buffer = transact($s, $send, '', $timeout);
-  print "<-  $buffer\n";
-  $buffer =~ /^250 / || exit;
+  if (!do_gen_smtp($s, "MAIL FROM:<$from>", '250', $timeout)) {
+    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    exit(23);
+  }
+
+  # QUIT here if the user has asked us to do so
+  if ($opt{q} eq 'mail') {
+    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    exit(0);
+  }
 
   # send RCPT
-  $send = $opt{q} eq 'mail' ? 'QUIT' : "RCPT TO:<$to>";
-  print " -> $send\n";
-  $buffer = transact($s, $send, '', $timeout);
-  print "<-  $buffer\n";
-  $buffer =~ /^250 / || exit;
+  if (!do_gen_smtp($s, "RCPT TO:<$to>", '250', $timeout)) {
+    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    exit(24);
+  }
+
+  # QUIT here if the user has asked us to do so
+  if ($opt{q} eq 'rcpt') {
+    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    exit(0);
+  }
 
   # send DATA
-  $send = $opt{q} eq 'rcpt' ? 'QUIT' : "DATA";
-  print " -> $send\n";
-  $buffer = transact($s, $send, '', $timeout);
-  print "<-  $buffer\n";
-  $buffer =~ /^354 / || exit;
+  if (!do_gen_smtp($s, "DATA", '354', $timeout)) {
+    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    exit(25);
+  }
 
   # send the actual data
-  $send = $data;
-  if ($opt{n}) {
-    $data = scalar(split(/\n/ms, $send)) . " lines of DATA sent";
-  } else {
-    $data =~ s/\n/\n -> /msg;
+  if (!do_gen_smtp($s, "$data", '250', $timeout, $opt{n})) {
+    do_gen_smtp($s, 'QUIT', '221', $timeout);
+    exit(26);
   }
-  print " -> $data\n";
-  $buffer = transact($s, $send, '', $timeout);
-  print "<-  $buffer\n";
-  $buffer =~ /^250 / || exit;
 
   # send QUIT
-  $send = "QUIT";
-  print " -> $send\n";
-  $buffer = transact($s, $send, '', $timeout);
-  print "<-  $buffer\n";
-  $buffer =~ /^221 / || exit;
+  if (!do_gen_smtp($s, "QUIT", '221', $timeout)) {
+    exit(27);
+  }
 
-  print "=== Connection closed by foreign host.\n";
+  print_transaction('===',  "Connection closed by foreign host.");
+}
+
+sub print_transaction {
+  my $f = shift;  # transaction flag
+  my $m = shift;  # message to print
+  my $b = shift;  # be breif in what we print
+
+  if ($b) {
+    $m = scalar(split(/\n/ms, $m)) . " lines sent";
+  }
+  $m =~ s/\n/\n$f /msg;
+  print "$f $m\n";
+}
+
+sub do_gen_smtp {
+  my $s = shift;  # socket
+  my $m = shift;  # string to send
+  my $e = shift;  # String we're expecting to get back
+  my $t = shift;  # timeout
+  my $b = shift;  # be brief in the data we send
+  my $r = '';     # This'll be the return value from transact()
+
+  print_transaction(' ->', $m, $b) if ($m);
+  $r = transact($s, $m, '', $t);
+
+  if ($r !~ /^$e /m) {
+    print_transaction('***', $r);
+    return(0);
+  } else {
+    print_transaction('<- ', $r);
+    return(1);
+  }
 }
 
 sub transact {
@@ -173,8 +218,14 @@ sub transact {
     if ($buff) {
       $buff = '';
     } else {
-      $buff = <$s>;
-      $buff =~ s/[\r\n]//msg;
+      # The 'do' allows for multi-line responses
+      do {
+        $buff .= <$s>;
+      } while ($buff !~ /^\d\d\d /m);
+      #$buff = <$s>;
+      #$buff =~ s/[\r\n]//msg;
+      $buff =~ s/\r//msg;
+      chomp($buff);
     }
   };
   return($buff);
