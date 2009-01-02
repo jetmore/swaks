@@ -174,7 +174,10 @@ sub sendmail {
                                        LocalAddr => $lint);
 
   print_transaction('===', "Trying $host:$port...");
-  die "Can't connect to $host:$port ($@)\n" if (!$s);
+  if ($@) {
+    print_transaction('***',"Error connecting $lint to $host:$port:\n\t$@");
+    exit(2);
+  }
   print_transaction('===', "Connected to $host.");
 
   # read the server's 220 banner
@@ -451,8 +454,6 @@ sub transact {
       do {
         $buff .= <$s>;
       } while ($buff !~ /^\d\d\d /m);
-      #$buff = <$s>;
-      #$buff =~ s/[\r\n]//msg;
       $buff =~ s/\r//msg;
       chomp($buff);
     }
