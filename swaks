@@ -135,7 +135,7 @@ GetOptions(
   'au|auth-user:s'  => \$O{auth_user},     # user for auth
   'ap|auth-password:s' => \$O{auth_pass},  # pass for auth
   'am|auth-map=s'   => \$O{auth_map},      # auth type map
-  'ahp|auth-hide-password' => \$O{auth_hidepw}, # hide passwords when possible
+  #'ahp|auth-hide-password' => \$O{auth_hidepw}, # hide passwords when possible
   'apt|auth-plaintext' => \$O{auth_showpt}, # translate base64 strings
   'ao|auth-optional:s' => \$O{auth_optional}, # auth optional (ignore failure)
   'support'         => \$O{get_support},   # report capabilties
@@ -170,29 +170,49 @@ exit(0) if ($O{get_support}); # --support means report capabilities only
 my $opts = process_args(\%O);
 
 if ($G::dump_args) {
-  print "type       = $G::link{type}\n";
-  print "server     = $G::link{server}\n";
-  print "socket     = $G::link{socket}\n";
-  print "process    = $G::link{process}\n";
-  print "from       = $opts->{from}\n";
-  print "to         = $opts->{to}\n";
-  print "helo       = $opts->{helo}\n";
-  print "port       = $G::link{port}\n";
-  print "tls        = ";
+  print "dump_args        = ", $G::dump_args ? "TRUE" : "FALSE", "\n";
+  print "server_only      = ", $G::server_only ? "TRUE" : "FALSE", "\n";
+  print "show_time_lapse  = ", $G::show_time_lapse ? "TRUE" : "FALSE", "\n";
+  print "show_time_hires  = ", $G::show_time_hires ? "TRUE" : "FALSE", "\n";
+  print "auth_showpt      = ", $G::auth_showpt ? "TRUE" : "FALSE", "\n";
+  # XXX needs to be spelled correctly and moved to G:: in process_args()
+  print "supress_data     = ", $O{supress_data} ? "TRUE" : "FALSE", "\n";
+  # XXX needs to be moved to G:: in process_args()
+  print "no_hints         = ", $O{no_hints} ? "TRUE" : "FALSE", "\n";
+  # XXX needs to be moved to G:: in process_args()
+  print "hide_send        = ", $O{hide_send} ? "TRUE" : "FALSE", "\n";
+  # XXX needs to be moved to G:: in process_args()
+  print "hide_receive     = ", $O{hide_receive} ? "TRUE" : "FALSE", "\n";
+  # XXX needs to be moved to G:: in process_args()
+  print "silent           = $O{silent}\n";
+  print "type             = $G::link{type}\n";
+  print "server           = $G::link{server}\n";
+  print "sockfile         = $G::link{sockfile}\n";
+  print "process          = $G::link{process}\n";
+  print "from             = $opts->{from}\n";
+  print "to               = $opts->{to}\n";
+  print "helo             = $opts->{helo}\n";
+  print "port             = $G::link{port}\n";
+  print "tls              = ";
   if ($G::tls) {
     print "starttls (", $G::tls_optional ? 'optional' : 'required', ")\n";
   } elsif ($G::tls_on_connect) {
     print "on connect (required)\n";
   } else { print "no\n"; }
-  print "auth       = ";
+  print "auth             = ";
   if ($opts->{a_type}) {
     print $G::auth_optional ? 'optional' : 'yes', " type='$opts->{a_type}' ",
           "user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
   } else { print "no\n"; }
-  print "quit after = $G::quit_after\n";
-  print "local int  = $G::link{lint}\n";
-  print "timeout    = $G::link{timeout}\n";
-  print "data       = <<.\n$opts->{data}\n";
+  print "auth map         = ", join("\n".' 'x19,
+                              map { "$_ = ".
+                                    join(', ', @{$G::auth_map_t{$_}})
+                                  } (keys %G::auth_map_t)
+                             ), "\n";
+  print "quit after       = $G::quit_after\n";
+  print "local int        = $G::link{lint}\n";
+  print "timeout          = $G::link{timeout}\n";
+  print "data             = <<.\n$opts->{data}\n";
   exit(0);
 }
 
@@ -976,8 +996,9 @@ sub process_args {
 
   # set global flag for -stl flag
   $G::show_time_lapse = time() if (defined($o->{show_time_lapse}));
-  $G::show_time_hires = 1
-      if ($G::modules{'Time::HiRes'} && $o->{show_time_lapse} !~ /^i/i);
+  $G::show_time_hires = 1 if ($G::show_time_lapse &&
+                              $G::modules{'Time::HiRes'} &&
+                              $o->{show_time_lapse} !~ /^i/i);
 
   if ($o->{emulate_mail}) { # set up for -m option
     $n{to} = shift if (!defined($o->{mail_to}));
