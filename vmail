@@ -8,8 +8,10 @@ use Getopt::Std;
 
 my($from, $to, $helo, $data, $server, $port) = (undef);
 my(%opt) = ();
+my($user) = getpwuid($<);
+my($hostname) = get_hostname();
 
-if (!getopts('l:f:t:h:s:p:d:', \%opt)) {
+if (!getopts('l:f:t:h:s:p:d:i:', \%opt)) {
   print STDERR "getopts parsing error\n";
   exit(1);
 }
@@ -20,6 +22,7 @@ if (!getopts('l:f:t:h:s:p:d:', \%opt)) {
 # s - what (s)erver do I send this mail to?
 # p - what (p)ort do I connect to?
 # d - what is the (d)ata section of the email?
+# i - enter interactive mode
 
 process_file($opt{l}) if ($opt{l});
 $from   = $opt{f} if ($opt{f});
@@ -28,19 +31,16 @@ $helo   = $opt{h} if ($opt{h});
 $server = $opt{s} if ($opt{s});
 $port   = $opt{p} if ($opt{p});
 $data   = $opt{d} if ($opt{d});
+process_interact($opt{i}) if ($opt{i});
 
 
-$from   ||= 'jetmore@evansville.net';		# envelope-from
+$from   ||= "$user\@$hostname";			# envelope-from
 $data   ||= 'To: %T\nFrom: %F\nSubject: test\n\nThis is a test mailing\n.';
 						# body (\n translated later)
-$server ||= 'localhost';			# receiving server
-$helo   ||= $server;				# who we claim to be in HELO
+$helo   ||= $hostname;				# who we claim to be in HELO
 $port   ||= 25;					# where's the mail server?
-
-if (!$to) {
-  print STDERR "You must at least provide a to address\n";
-  exit(2);
-}
+$to     || process_interact('t');		# who is the mail to?
+$server ||= get_server($to);			# receiving server
 
 #print "\$from   = $from\n";
 #print "\$to     = $to\n";
@@ -48,11 +48,13 @@ if (!$to) {
 #print "\$data   = $data\n";
 #print "\$server = $server\n";
 #print "\$port   = $port\n";
+#exit;
 
 $data =~ s/([^\.])$/$1\n./;
 $data =~ s/\\n/\r\n/g;
 $data =~ s/%F/$from/g;
 $data =~ s/%T/$to/g;
+$data =~ s/%D/scalar(localtime(time()))/eg;
 #print "after parsing, \$data looks like this:\n#\n$data\n#\n";
 #exit;
 sendmail($from, $to, $helo, $data, $server, $port);
@@ -84,59 +86,59 @@ print "=== Connected to $host.\n";
     alarm $timeout;
     $s->read_until("\n", \$buffer);
 $buffer =~ s/[\r\n]//msg;
-print "<-- $buffer\n";
+print "<-  $buffer\n";
     local $SIG{'ALRM'} = sub {die "Alarm - timeout during transaction"};
     alarm $timeout;
     if ($buffer =~ /^220/) {
       alarm $timeout;
 $send = "HELO $helo";
-print "--> $send\n";
+print " -> $send\n";
       $s->write("$send\r\n");
       $s->read_until("\n", \$buffer);
 $buffer =~ s/[\r\n]//msg;
-print "<-- $buffer\n";
+print "<-  $buffer\n";
       if ($buffer =~ /^250/) {
         alarm $timeout;
 $send = "MAIL FROM:<$from>";
-print "--> $send\n";
+print " -> $send\n";
         $s->write("$send\r\n"); 
         $s->read_until("\n", \$buffer);
 $buffer =~ s/[\r\n]//msg;
-print "<-- $buffer\n";
+print "<-  $buffer\n";
         if ($buffer =~ /^250/) {
           alarm $timeout;
 $send = "RCPT TO:<$to>";
-print "--> $send\n";
+print " -> $send\n";
           $s->write("$send\r\n");
           $s->read_until("\n", \$buffer);
 $buffer =~ s/[\r\n]//msg;
-print "<-- $buffer\n";
+print "<-  $buffer\n";
           if ($buffer =~ /^250/) {
             alarm $timeout;
 $send = "DATA";
-print "--> $send\n";
+print " -> $send\n";
             $s->write("$send\r\n");
             $s->read_until("\n", \$buffer);
 $buffer =~ s/[\r\n]//msg;
-print "<-- $buffer\n";
+print "<-  $buffer\n";
             if ($buffer =~ /^354/) {
               alarm $timeout;
 $send = "$data";
 my($t) = $send;
-$t =~ s/\n/\n--> /msg;
-print "--> $t\n";
+$t =~ s/\n/\n -> /msg;
+print " -> $t\n";
               $s->write("$send\r\n");
               $s->read_until("\n", \$buffer);
 $buffer =~ s/[\r\n]//msg;
-print "<-- $buffer\n";
+print "<-  $buffer\n";
               if ($buffer =~ /^250/) {
                 alarm(0);
 $send = "QUIT";
-print "--> $send\n";
+print " -> $send\n";
                 $s->write("$send\r\n");
                 $s->read_until("\n", \$buffer);
 $buffer =~ s/[\r\n]//msg;
-print "<-- $buffer\n";
+print "<-  $buffer\n";
               } else {
                 alarm(0);
               }
@@ -198,3 +200,77 @@ sub process_file {
   close(I);
   return;
 }
+
+sub process_interact {
+  my($args) = shift;
+  $args = uc($args);
+  my(@args) = split('', $args);
+
+  foreach my $arg (@args) {
+    if ($arg eq 'P') {
+      $port = interact("Port: ", '^\d+$');
+    } elsif ($arg eq 'S') {
+      $server = interact("Server: ", '^[a-zA-Z0-9\-\.]+$');
+    } elsif ($arg eq 'H') {
+      $helo = interact("Helo: ", '^[a-zA-Z0-9\-\.]+$');
+    } elsif ($arg eq 'F') {
+      $from = interact("From: ", '^\S+$');
+    } elsif ($arg eq 'T') {
+      $to = interact("To: ", '^\S+$');
+    } elsif ($arg eq 'D') {
+      $data = interact("Data: ", '^.*$');
+    } else {
+      print "Unknown option $arg, ignoring...\n";
+    }
+  }
+}
+
+sub interact {
+  my($prompt) = shift;
+  my($regexp) = shift;
+  my($response) = '';
+
+  do {
+    print "$prompt";
+    chomp($response = <>);
+  } while ($response !~ /$regexp/);
+
+  return($response);
+}
+
+sub get_hostname {
+  # from hostname(1) on ce-01 (redhat linux 7.1):
+  #	Technically: The FQDN is the name gethostbyname(2) returns
+  #	for the host name returned  by  gethostname(2).   The  DNS
+  #	domain name is the part after the first dot.
+  #my($host) = WCS::Util::gethostname();
+  #print STDERR "\$host = $host\n";
+  #my($fqdn) = gethostbyname($host);
+  #print STDERR "\$fqdn = $fqdn\n";
+  return((gethostbyname(WCS::Util::gethostname()))[0]);
+}
+
+sub get_server {
+  # I'm sure there's a nicer way to do this, but I don't care right now.
+  my($addr) = shift;
+  my($pref) = -1;
+  my($server) = "localhost";
+
+  return($server) if ($addr !~ /\@/);
+
+  $addr =~ s/^.*\@([^\@]*)$/$1/;
+  return($server) if (!$server);
+
+  open(P, "/bin/nslookup -q=mx $addr|") || return($server);
+  while (<P>) {
+    if (/preference = (\d+), mail exchanger = (\S+)\s*$/) {
+      if ($pref == -1 || $1 < $pref) {
+        $server = $2;
+        $pref = $1;
+      }
+    }
+  }
+  close(P);
+  return($server);
+}
+  
