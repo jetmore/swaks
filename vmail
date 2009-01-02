@@ -6,7 +6,8 @@ use IO::Socket qw();
 use Sys::Hostname;
 use Getopt::Long;
 
-my($from, $to, $helo, $data, $server, $port) = (undef);
+my($from,$to,$helo,$data,$server,$port,$a_type,$a_user,$a_pass) = (undef);
+my($fconf)    = {}; # this will hold config info from -l fileif specified
 my($user)     = getpwuid($<);
 my($hostname) = get_hostname();
 
@@ -39,6 +40,11 @@ GetOptions(
 # q - send quit after (valid options are 'helo', 'mail', 'rcpt', and 'connect')
 # n - do (n)ot print all the data portion
 
+# normalize the auth options a bit
+$O::auth = 'ANY' if ((defined($O::auth_user) || defined($O::auth_pass) ||
+                      defined($O::auth_optional)) && !$O::auth);
+$O::auth = 'ANY' if (defined($O::auth) && !$O::auth);
+
 $O::quit_after = lc($O::quit_after) if ($O::quit_after);
 
 if ($O::emulate_mail) {
@@ -48,17 +54,42 @@ if ($O::emulate_mail) {
   $O::mail_data = ''; # define it here so we get it on stdin later
 }
 
-process_file($O::option_file)       if ($O::option_file);
-$from   = $O::mail_from   || interact("From: ", '^\S+$')
-                                     if (defined($O::mail_from));
+# load the $fconf hash if user has specified a -l file
+process_file($O::option_file, $fconf) if ($O::option_file);
+
+#if (defined($O::mail_to)) {
+#  $to = $O::mail_to ||  interact("To: ", '^\S+$');
+#} elsif
 $to     = $O::mail_to     || interact("To: ", '^\S+$')
-                                     if (defined($O::mail_to));
+                                      if (defined($O::mail_to));
+$from   = $O::mail_from   || interact("From: ", '^\S+$')
+                                      if (defined($O::mail_from));
 $helo   = $O::mail_helo   || interact("Helo: ", '^[a-zA-Z0-9\-\.]+$')
-                                     if (defined($O::mail_helo));
+                                      if (defined($O::mail_helo));
 $server = $O::mail_server || interact("Server: ", '^[a-zA-Z0-9\-\.]+$')
-                                     if (defined($O::mail_server));
+                                      if (defined($O::mail_server));
 $port   = $O::mail_port   || interact("Port: ", '^\d+$')
-                                     if (defined($O::mail_port));
+                                      if (defined($O::mail_port));
+if ($O::auth) {
+  # populate the username info
+  if (defined($O::auth_user)) {
+    $a_user = $O::auth_user;
+  } else {
+    $a_user = $fconf->{USER}
+  }
+  $a_user ||= interact("Username: ", 'SKIP');
+
+  # populate the password info
+  if (defined($O::auth_pass)) {
+    $a_pass = $O::auth_pass;
+  } else {
+    $a_pass = $fconf->{PASS};
+  }
+  $a_pass ||= interact("Password: ", 'SKIP');
+
+  $a_type = $O::auth
+}
+
 if (defined($O::mail_data) && !defined($O::data_on_stdin)) {
   if (defined($O::emulate_mail)) {
     $data = "Subject: " . interact("Subject: ", 'SKIP') . "\n\n";
@@ -71,24 +102,32 @@ if (defined($O::mail_data) && !defined($O::data_on_stdin)) {
   }
 }
 
+# By the time we get here, if the user didn't provide info on command line
+# or tell us to prompt for it, we see if it was specified in the -l file,
+# and finally use the default value
+$from   ||= $fconf->{FROM} || "$user\@$hostname"; # envelope-from
+$data   ||= $fconf->{DATA}
+        ||  'To: %T\nFrom: %F\nSubject: test\n\nThis is a test mailing\n.';
+                                                  # body (\n translated later)
+$helo   ||= $fconf->{HELO} || $hostname;          # who we claim to be in HELO
+$port   ||= $fconf->{PORT} || 25;                 # where's the mail server?
+$to     ||= $fconf->{TO}   || interact("To: ", '^\S+$');
+                                                  # who is the mail to?
+$server ||= $fconf->{SERVER} || get_server($to);  # receiving server
 
-$from   ||= "$user\@$hostname";			# envelope-from
-$data   ||= 'To: %T\nFrom: %F\nSubject: test\n\nThis is a test mailing\n.';
-						# body (\n translated later)
-$helo   ||= $hostname;				# who we claim to be in HELO
-$port   ||= 25;					# where's the mail server?
-$to     ||= interact("To: ", '^\S+$');		# who is the mail to?
-$server ||= get_server($to);			# receiving server
-
+# The -g option trumps all other methods of getting the data
 $data     = join('', <STDIN>) if ($O::data_on_stdin);
 
-#print "\$from   = $from\n";
-#print "\$to     = $to\n";
-#print "\$helo   = $helo\n";
-#print "\$data   = $data\n";
-#print "\$server = $server\n";
-#print "\$port   = $port\n";
-#exit;
+print "\$from   = $from\n";
+print "\$to     = $to\n";
+print "\$helo   = $helo\n";
+print "\$data   = $data\n";
+print "\$server = $server\n";
+print "\$port   = $port\n";
+print "\$a_type = $a_type\n";
+print "\$a_user = $a_user\n";
+print "\$a_pass = $a_pass\n";
+exit;
 
 $data =~ s/([^\.])$/$1\n./;
 $data =~ s/\\n/\r\n/g;
@@ -157,7 +196,6 @@ sub sendmail {
 
   # send RCPT
   if (!do_smtp_rcpt($s, $to, $timeout)) {
-print "here 5\n";
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(24);
   }
@@ -294,49 +332,73 @@ sub transact {
 }
 
 sub process_file {
-  my($file) = shift;
-  
-  if (! -e "$file") {
-    print STDERR "File $file does not exist, exiting.\n";
-    exit(10);
-  } elsif (! -f "$file") {
-    print STDERR "File $file is not a file, exiting.\n";
-    exit(11);
-  } elsif (!open(I, "<$file")) {
-    print STDERR "Couldn't open $file: $!\n";
-    exit(12);
+  my $f = shift;
+  my $h = shift;
+
+  if (! -e "$f") {
+    print STDERR "File $f does not exist, skipping...\n";
+    return;
+  } elsif (! -f "$f") {
+    print STDERR "File $f is not a file, skipping...\n";
+    return;
+  } elsif (!open(I, "<$f")) {
+    print STDERR "Couldn't open $f, skipping... ($!)\n";
+    return;
   }
 
-  my($count) = 0;
   while (<I>) {
     chomp;
-    $count++;
     next if (/^#?\s*$/); # skip blank lines and those that start w/ '#'
-    my($key,$value) = split(/\s+/, $_, 2);
-    $key = uc($key);
-    if (!$key) {
-      print STDERR "Error on line $count: no key found\n";
-    } elsif (!$value) {
-      print STDERR "Error on line $count: no value found for key $key...\n";
-    } elsif ($key eq 'FROM') {
-      $from = $value;
-    } elsif ($key eq 'TO') {
-      $to = $value;
-    } elsif ($key eq 'HELO') {
-      $helo = $value;
-    } elsif ($key eq 'DATA') {
-      $data = $value;
-    } elsif ($key eq 'SERVER') {
-      $server = $value;
-    } elsif ($key eq 'PORT') {
-      $port = $value;
-    } else {
-      print STDERR "Error on line $count: unrecognized key $key...\n";
-    }
+    my($key,$value) = split(' ', $_, 2);
+    $h->{uc($key)} = $value;
   }
-  close(I);
   return;
 }
+
+#sub process_file {
+#  my($file) = shift;
+#  
+#  if (! -e "$file") {
+#    print STDERR "File $file does not exist, exiting.\n";
+#    exit(10);
+#  } elsif (! -f "$file") {
+#    print STDERR "File $file is not a file, exiting.\n";
+#    exit(11);
+#  } elsif (!open(I, "<$file")) {
+#    print STDERR "Couldn't open $file: $!\n";
+#    exit(12);
+#  }
+#
+#  my($count) = 0;
+#  while (<I>) {
+#    chomp;
+#    $count++;
+#    next if (/^#?\s*$/); # skip blank lines and those that start w/ '#'
+#    my($key,$value) = split(/\s+/, $_, 2);
+#    $key = uc($key);
+#    if (!$key) {
+#      print STDERR "Error on line $count: no key found\n";
+#    } elsif (!$value) {
+#      print STDERR "Error on line $count: no value found for key $key...\n";
+#    } elsif ($key eq 'FROM') {
+#      $from = $value;
+#    } elsif ($key eq 'TO') {
+#      $to = $value;
+#    } elsif ($key eq 'HELO') {
+#      $helo = $value;
+#    } elsif ($key eq 'DATA') {
+#      $data = $value;
+#    } elsif ($key eq 'SERVER') {
+#      $server = $value;
+#    } elsif ($key eq 'PORT') {
+#      $port = $value;
+#    } else {
+#      print STDERR "Error on line $count: unrecognized key $key...\n";
+#    }
+#  }
+#  close(I);
+#  return;
+#}
 
 sub interact {
   my($prompt) = shift;
