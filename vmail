@@ -93,6 +93,8 @@ if ($O::auth) {
       $a_pass = $fconf->{PASS};
     }
     $a_pass ||= interact("Password: ", 'SKIP');
+    # kludge to allow null passwords on command line
+    $a_pass = '' if ($a_pass eq 'NULLNULL');
 
     $a_type = $O::auth;
     $O::auth_showpt = 1 if (defined($O::auth_showpt));
