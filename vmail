@@ -1,0 +1,200 @@
+#!/usr/bin/perl
+
+use strict; # *gasp*!  A program by jetmore that uses strict?!?!
+
+use LWP::Socket qw();
+use WCS::Util qw();
+use Getopt::Std;
+
+my($from, $to, $helo, $data, $server, $port) = (undef);
+my(%opt) = ();
+
+if (!getopts('l:f:t:h:s:p:d:', \%opt)) {
+  print STDERR "getopts parsing error\n";
+  exit(1);
+}
+# l - specify location of a file containing a (l)ist of data to be used
+# f - specify the (f)rom address
+# t - specify the (t)o address
+# h - who do I claim to be in the (h)elo transaction?
+# s - what (s)erver do I send this mail to?
+# p - what (p)ort do I connect to?
+# d - what is the (d)ata section of the email?
+
+process_file($opt{l}) if ($opt{l});
+$from   = $opt{f} if ($opt{f});
+$to     = $opt{t} if ($opt{t});
+$helo   = $opt{h} if ($opt{h});
+$server = $opt{s} if ($opt{s});
+$port   = $opt{p} if ($opt{p});
+$data   = $opt{d} if ($opt{d});
+
+
+$from   ||= 'jetmore@evansville.net';		# envelope-from
+$data   ||= 'To: %T\nFrom: %F\nSubject: test\n\nThis is a test mailing\n.';
+						# body (\n translated later)
+$server ||= 'localhost';			# receiving server
+$helo   ||= $server;				# who we claim to be in HELO
+$port   ||= 25;					# where's the mail server?
+
+if (!$to) {
+  print STDERR "You must at least provide a to address\n";
+  exit(2);
+}
+
+#print "\$from   = $from\n";
+#print "\$to     = $to\n";
+#print "\$helo   = $helo\n";
+#print "\$data   = $data\n";
+#print "\$server = $server\n";
+#print "\$port   = $port\n";
+
+$data =~ s/([^\.])$/$1\n./;
+$data =~ s/\\n/\r\n/g;
+$data =~ s/%F/$from/g;
+$data =~ s/%T/$to/g;
+#print "after parsing, \$data looks like this:\n#\n$data\n#\n";
+#exit;
+sendmail($from, $to, $helo, $data, $server, $port);
+
+exit;
+
+sub sendmail {
+  my($from) = shift;	# envelope-from
+  my($to)   = shift;	# envelope-to
+  my($helo) = shift;	# who am I?
+  my($data) = shift;	# body of message (content after DATA command)
+  my($host) = shift;	# receiving host
+  my($port) = shift;	# where's the remote smtp process live?
+
+  my($s) = LWP::Socket->new();
+  my($timeout) = 10;
+  my($buffer) = '';
+  my($send) = '';
+  $@ = '';
+  $| = 1;
+
+  eval {
+    local $SIG{'ALRM'} = sub { die "Alarm - Trying to connect\n" };
+    alarm $timeout;
+print "=== Trying $host:$port...\n";
+    $s->connect($host,$port);
+print "=== Connected to $host.\n";
+    local $SIG{'ALRM'} = sub { die "Alarm - No response from server\n" };
+    alarm $timeout;
+    $s->read_until("\n", \$buffer);
+$buffer =~ s/[\r\n]//msg;
+print "<-- $buffer\n";
+    local $SIG{'ALRM'} = sub {die "Alarm - timeout during transaction"};
+    alarm $timeout;
+    if ($buffer =~ /^220/) {
+      alarm $timeout;
+$send = "HELO $helo";
+print "--> $send\n";
+      $s->write("$send\r\n");
+      $s->read_until("\n", \$buffer);
+$buffer =~ s/[\r\n]//msg;
+print "<-- $buffer\n";
+      if ($buffer =~ /^250/) {
+        alarm $timeout;
+$send = "MAIL FROM:<$from>";
+print "--> $send\n";
+        $s->write("$send\r\n"); 
+        $s->read_until("\n", \$buffer);
+$buffer =~ s/[\r\n]//msg;
+print "<-- $buffer\n";
+        if ($buffer =~ /^250/) {
+          alarm $timeout;
+$send = "RCPT TO:<$to>";
+print "--> $send\n";
+          $s->write("$send\r\n");
+          $s->read_until("\n", \$buffer);
+$buffer =~ s/[\r\n]//msg;
+print "<-- $buffer\n";
+          if ($buffer =~ /^250/) {
+            alarm $timeout;
+$send = "DATA";
+print "--> $send\n";
+            $s->write("$send\r\n");
+            $s->read_until("\n", \$buffer);
+$buffer =~ s/[\r\n]//msg;
+print "<-- $buffer\n";
+            if ($buffer =~ /^354/) {
+              alarm $timeout;
+$send = "$data";
+my($t) = $send;
+$t =~ s/\n/\n--> /msg;
+print "--> $t\n";
+              $s->write("$send\r\n");
+              $s->read_until("\n", \$buffer);
+$buffer =~ s/[\r\n]//msg;
+print "<-- $buffer\n";
+              if ($buffer =~ /^250/) {
+                alarm(0);
+$send = "QUIT";
+print "--> $send\n";
+                $s->write("$send\r\n");
+                $s->read_until("\n", \$buffer);
+$buffer =~ s/[\r\n]//msg;
+print "<-- $buffer\n";
+              } else {
+                alarm(0);
+              }
+            } else { die "Command '$send' failed\n"; }
+          } else { die "Command '$send' failed\n"; }
+        } else { die "Command '$send' failed\n"; }
+      } else { die "Command '$send' failed\n"; }
+print "=== Connection closed by foreign host.\n";
+    } else { die "Connection to $host on port $port failed\n"; }
+    alarm 0;
+  };
+#  $buffer =~ s/[\r\n]//msg;
+  $@ =~ s/[\r\n]//msg;
+#print STDERR "\$@ = $@\n";
+#  return($step, $@, $buffer);
+}
+
+sub process_file {
+  my($file) = shift;
+  
+  if (! -e "$file") {
+    print STDERR "File $file does not exist, exiting.\n";
+    exit(10);
+  } elsif (! -f "$file") {
+    print STDERR "File $file is not a file, exiting.\n";
+    exit(11);
+  } elsif (!open(I, "<$file")) {
+    print STDERR "Couldn't open $file: $!\n";
+    exit(12);
+  }
+
+  my($count) = 0;
+  while (<I>) {
+    chomp;
+    $count++;
+    next if (/^#?\s*$/); # skip blank lines and those that start w/ '#'
+    my($key,$value) = split(/\s+/, $_, 2);
+    $key = uc($key);
+    if (!$key) {
+      print STDERR "Error on line $count: no key found\n";
+    } elsif (!$value) {
+      print STDERR "Error on line $count: no value found for key $key...\n";
+    } elsif ($key eq 'FROM') {
+      $from = $value;
+    } elsif ($key eq 'TO') {
+      $to = $value;
+    } elsif ($key eq 'HELO') {
+      $helo = $value;
+    } elsif ($key eq 'DATA') {
+      $data = $value;
+    } elsif ($key eq 'SERVER') {
+      $server = $value;
+    } elsif ($key eq 'PORT') {
+      $port = $value;
+    } else {
+      print STDERR "Error on line $count: unrecognized key $key...\n";
+    }
+  }
+  close(I);
+  return;
+}
