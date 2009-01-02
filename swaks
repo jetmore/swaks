@@ -69,6 +69,7 @@ GetOptions(
   'socket:s'        => \$O{socket},        # unix domain socket to talk to
   'body:s'          => \$O{body_822},      # the content of the body of the DATA
   'attach-type|attach:s' => \@{$O{attach_822}}, # A file to attach
+  'ah|add-header:s' => \@{$O{add_header}}, # replacement for %H DATA token
   'dump'            => \$O{dump_args},     # build options and dump
   'pipeline'        => \$O{pipeline},      # attempt PIPELINING
   'force-getpwuid'  => \$O{force_getpwuid} # use getpwuid building -f
@@ -1155,6 +1156,14 @@ sub process_args {
     $body .= "--$bound--\n";
   }
 
+  # add-header option.  In a strict technical sense all this is is a text
+  # string that will replace %H in the DATA.  Because of where %H is placed
+  # in the default DATA, in practice this is used to add headers to the stock
+  # DATA w/o having to craft a custom DATA portion
+  if (scalar(@{$o->{add_header}})) {
+    $n{add_header} = join("\n", @{$o->{add_header}}) . "\n";
+  }
+
   # SMTP DATA
   # a '-' arg to -d is the same as setting -g
   if ($o->{mail_data} eq '-') {
@@ -1174,14 +1183,19 @@ sub process_args {
   }
   $n{data} ||= $fconf->{DATA}
            || 'Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\n'
-             ."X-Mailer: swaks v$p_version jetmore.org/john/code/#swaks"
-             . ($bound ? '\nMIME-Version: 1.0\nContent-Type: multipart/mixed; boundary="'.$bound.'"' : '')
-             .'\n\n'
+             ."X-Mailer: swaks v$p_version jetmore.org/john/code/#swaks".'\n'
+             . ($bound ?  'MIME-Version: 1.0\n'
+                         .'Content-Type: multipart/mixed; '
+                         .'boundary="'.$bound.'"\n'
+                       : '')
+             .'%H' # newline will be added in replacement if it exists
+             .'\n'
              .'%B\n';
   # The -g option trumps all other methods of getting the data
   $n{data}   = join('', <STDIN>) if ($o->{data_on_stdin});
   if (!$o->{no_data_fixup}) {
     $n{data} =~ s/%B/$body/eg;
+    $n{data} =~ s/%H/$n{add_header}/eg;
     $n{data} =~ s/\\n/\r\n/g;
     $n{data} =~ s/%F/$n{from}/g;
     $n{data} =~ s/%T/$n{to}/g;
@@ -1446,9 +1460,9 @@ Use argument as argument to SMTP EHLO/HELO command, or prompt use if no argument
 
 Use argument as DATA portion of SMTP transaction, or prompt user if no argument specified.  Overridden by -l token DATA.
 
-This string should be on one single line, with a literal \n representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  Very basic token parsing is done.  %F is replaced with the value that will be used for "MAIL FROM", %T is replaced with "RCPT TO" values, %D is replaced with a timestamp, and %B is replaced with the message body.  See the --body option for the default body text.
+This string should be on one single line, with a literal \n representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  Very basic token parsing is done.  %F is replaced with the value that will be used for "MAIL FROM", %T is replaced with "RCPT TO" values, %D is replaced with a timestamp, %H is replaced with the contents of --add-header, and %B is replaced with the message body.  See the --body option for the default body text.
 
-Default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\nX-Mailer: swaks v$p_version jetmore.org/john/code/#swaks\n\n%B\n".
+Default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\nX-Mailer: swaks v$p_version jetmore.org/john/code/#swaks\n%H\n\n%B\n".
 
 =item --body
 
@@ -1465,6 +1479,12 @@ It is legal for '-' (STDIN) to be specified as an argument multiple times (once 
 =item --attach-type
 
 By default, content that gets MIME attached to a message with the --attach option is encoded as application/octet-stream.  --attach-type changes the mime type for every --attach option which follows it.  It can be specified multiple times.
+
+=item -ah, --add-header
+
+In the strictest sense, all this does is provide a value that replaces the %H token in the data.  Because of where %H is located in the default DATA, practically it is used to add custom headers without having to recraft the entire body.
+
+The option can either be specified multiple times or a single time with multiple headers seperated by a literal '\n' string.  So, "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header 'Foo: bar\nBaz: foo'" end up adding the same two headers.
 
 =item --timeout
 
