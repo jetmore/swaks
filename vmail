@@ -39,24 +39,34 @@ GetOptions(
 
 load_modules({
   'Basic AUTH'    => ['MIME::Base64'],
-  'AUTH CRAM-MD5' => ['XDigest::MD5'],
+  'AUTH CRAM-MD5' => ['Digest::MD5'],
   'MX lookups'    => ['Net::DNS'],
-  'TLS'           => ['xNet::SSLeay'],
+  'TLS'           => ['Net::SSLeay'],
 }, \%modules);
 exit(0) if ($O::get_support); # --support means report capabilities only
 
 # normalize the TLS options
 $O::tls_optional = 1 if (defined($O::tls_optional));
 $O::tls = 1 if (defined($O::tls) || $O::tls_optional);
+my %tls = (); # will hold info for TLS transactions
 if ($O::tls) {
   if (!$modules{'Net::SSLeay'}) {
     print STDERR "Net::SSLeay not installed, TLS unavailable, ";
     if ($O::tls_optional) {
+      $O::tls = undef; # so we won't try it later
       print STDERR "skipping\n";
     } else {
       print STDERR "exiting...\n";
       exit(10);
     }
+  } else {
+    # perform a little house cleaning here
+    Net::SSLeay::load_error_strings();
+    Net::SSLeay::SSLeay_add_ssl_algorithms();
+    Net::SSLeay::randomize();
+    $tls{active} = 0;
+    $tls{con} = undef;
+    $tls{ssl} = undef;
   }
 }
 
@@ -242,6 +252,33 @@ sub sendmail {
     exit(0);
   }
 
+  # insert STARTTLS here
+  # (does user want it, is it available, did it work, was it required, 
+  #  does user want to quit afterwords)
+
+  # handle TLS here if user has requested it
+  if ($O::tls) {
+    if (!$ehlo->{STARTTLS}) {
+      print_transaction('===', "STARTTLS not supported");
+      exit(31) if (!$O::tls_optional);
+    } elsif (!do_smtp_gen($s, "STARTTLS", '220', $timeout)) {
+      print_transaction('===', "STARTTLS unsuccessful");
+      if (!$O::tls_optional) {
+        do_smtp_gen($s, 'QUIT', '221', $timeout);
+        exit(29);
+      }
+    } elsif (!start_tls($s, \%tls)) {
+      print_transaction('===', "TLS startup failed");
+      if (!$O::tls_optional) {
+        do_smtp_gen($s, 'QUIT', '221', $timeout);
+        exit(30);
+      }
+    } else {
+      print_transaction('===', "TLS started w/ cipher $tls{cipher}");
+      # don't I need another helo here?
+    }
+  }
+
   # handle auth here if user has requested it
   if ($a_type) {
     if (!do_smtp_auth($s, $timeout, $ehlo, $a_type, $a_user, $a_pass)
@@ -300,6 +337,21 @@ sub sendmail {
   }
 
   print_transaction('===',  "Connection closed by foreign host.");
+}
+
+sub start_tls {
+  my $s = shift;
+  my $t = shift;
+
+  $t->{con} = Net::SSLeay::CTX_new() || return(0);
+  Net::SSLeay::CTX_set_options($t->{con}, &Net::SSLeay::OP_ALL); # error check
+  $t->{ssl} = Net::SSLeay::new($t->{con}) || return(0);
+  Net::SSLeay::set_fd($t->{ssl}, fileno($s)); # error check?
+  $t->{res} = Net::SSLeay::connect($t->{ssl}); # error check
+  $t->{cipher} = Net::SSLeay::get_cipher($t->{ssl});
+  $t->{active} = 1;
+
+  return(1);
 }
 
 sub print_transaction {
@@ -422,6 +474,8 @@ sub do_smtp_helo {
       $l =~ s/^....//;
       if ($l =~ /^AUTH(.*)$/) {
         map { $e->{AUTH}{$_} = 1 } (split(' ', $1));
+      } elsif ($l =~ /^STARTTLS$/) {
+        $e->{STARTTLS} = 1;
       }
     }
     return(1);
@@ -483,15 +537,33 @@ sub transact {
       $buff = "Timeout ($alrm secs) waiting for server response";
       die;
     };
-    print $s $send, "\r\n" if (defined($send)); # $send being undef means read
+    #print $s $send, "\r\n" if (defined($send)); # $send being undef means read
+    if (defined($send)) {
+      if ($tls{active}) {
+        #print STDERR "sending tls\n";
+        my $res = Net::SSLeay::write($tls{ssl}, "$send\r\n");
+      } else {
+        #print STDERR "sending plain\n";
+        print $s $send, "\r\n";
+      }
+    }
     alarm($alrm);
     if ($buff) {
       $buff = '';
     } else {
       # The 'do' allows for multi-line responses
-      do {
-        $buff .= <$s>;
-      } while ($buff !~ /^\d\d\d /m);
+      if ($tls{active}) {
+        #print STDERR "reading tls\n";
+        $buff = Net::SSLeay::read($tls{ssl});
+      } else {
+        #print STDERR "reading plain\n";
+        do {
+          $buff .= <$s>;
+        } while ($buff !~ /^\d\d\d /m);
+      }
+      #do {
+      #  $buff .= <$s>;
+      #} while ($buff !~ /^\d\d\d /m);
       $buff =~ s/\r//msg;
       chomp($buff);
     }
