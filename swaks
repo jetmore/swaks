@@ -1092,26 +1092,38 @@ sub process_args {
   $G::silent        = $o->{silent} ? $o->{silent} : 0;
 
 ####
-  $G::protocol      = lc($o->{mail_protocol}) || 'esmtp';
-  if ($G::protocol !~ /^(e?s|l)mtp/) {
+  #$G::protocol      = lc($o->{mail_protocol}) || 'esmtp';
+  #if ($G::protocol !~ /^(e?s|l)mtp/) {
+  #  ptrans(12, "Unknown protocol $G::protocol specified, exiting");
+  #  exit(1);
+  #}
+####
+  my %protos = ( 
+    smtp    => { proto => 'smtp',  auth => 0, tls => '0' },
+    ssmtp   => { proto => 'esmtp', auth => 0, tls => 'c' },
+    ssmtpa  => { proto => 'esmtp', auth => 1, tls => 'c' },
+    smtps   => { proto => 'smtp',  auth => 0, tls => 'c' },
+    esmtp   => { proto => 'esmtp', auth => 0, tls => '0' },
+    esmtpa  => { proto => 'esmtp', auth => 1, tls => '0' },
+    esmtps  => { proto => 'esmtp', auth => 0, tls => 's' },
+    esmtpsa => { proto => 'esmtp', auth => 1, tls => 's' },
+    lmtp    => { proto => 'lmtp',  auth => 0, tls => '0' },
+    lmtpa   => { proto => 'lmtp',  auth => 1, tls => '0' },
+    lmtps   => { proto => 'lmtp',  auth => 0, tls => 's' },
+    lmtpsa  => { proto => 'lmtp',  auth => 1, tls => 's' },
+  );
+  $G::protocol = lc($o->{mail_protocol}) || 'esmtp';
+  if (!$protos{$G::protocol}) {
     ptrans(12, "Unknown protocol $G::protocol specified, exiting");
     exit(1);
   }
-####
-  #my $protos = ( 
-  #  smtp    => { proto => 'smtp',  auth => 0, tls => 0 },
-  #  ssmtp   => { proto => 'esmtp', auth => 0, tls => c },
-  #  ssmtpa  => { proto => 'esmtp', auth => 1, tls => c },
-  #  smtps   => { proto => 'smtp',  auth => 0, tls => c },
-  #  esmtp   => { proto => 'esmtp', auth => 0, tls => 0 },
-  #  esmtpa  => { proto => 'esmtp', auth => 1, tls => 0 },
-  #  esmtps  => { proto => 'esmtp', auth => 0, tls => s },
-  #  esmtpsa => { proto => 'esmtp', auth => 1, tls => s },
-  #  lmtp    => { proto => 'lmtp',  auth => 0, tls => 0 },
-  #  lmtpa   => { proto => 'lmtp',  auth => 1, tls => 0 },
-  #  lmtps   => { proto => 'lmtp',  auth => 0, tls => s },
-  #  lmtpsa  => { proto => 'lmtp',  auth => 1, tls => s },
-  #);
+  # if proto->{auth} and _no_ other auth options set, set -a
+  # if no other tls options && proto->{tls}
+  #  if proto->tls eq 'c'
+  #    set --tls-on-connect
+  #  elsif proto->tls eq 's'
+  #    set --tls
+  $G::protocol = $protos{$G::protocol}{proto};
 ##
 
   # set global option of -q option
