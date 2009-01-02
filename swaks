@@ -959,6 +959,14 @@ sub try_load {
   return $@ ? 0 : 1;
 }
 
+sub load {
+  my $m = shift;
+
+  return $G::modules{$m} if (exists($G::modules{$m}));
+  eval("use $m");
+  return $G::modules{$m} = $@ ? 0 : 1;
+}
+
 sub get_digest {
   my $secr = shift;
   my $chal = shift;
