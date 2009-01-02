@@ -531,6 +531,35 @@ sub do_smtp_auth_ntlm {
   my $r = '';    # will store smtp response
   
   my $auth_string = "AUTH NTLM";
+  do_smtp_gen($s, $auth_string, '334', $t) || return(0);
+
+  Authen::NTLM::ntlm_domain();
+  Authen::NTLM::ntlm_user($u);
+  Authen::NTLM::ntlm_password($p);
+  my $d = decode_base64(Authen::NTLM::ntlm());
+
+  $auth_string = encode_base64("$d", '');
+  do_smtp_gen($s, $auth_string, '334', $t, \$r, '',
+              $O::auth_showpt ? "$d" : '') || return(0);
+
+  $r =~ s/^....//; # maybe something a little better here?
+  $d = decode_base64(Authen::NTLM::ntlm($r));
+
+  $auth_string = encode_base64("$d", '');
+  do_smtp_gen($s, $auth_string, '235', $t, \$r, '',
+              $O::auth_showpt ? "$d" : '') || return(0);
+
+  return(1);
+}
+
+sub do_smtp_auth_ntlm_OFF {
+  my $s = shift; # socket
+  my $t = shift; # timeout
+  my $u = shift; # auth user
+  my $p = shift; # auth password
+  my $r = '';    # will store smtp response
+  
+  my $auth_string = "AUTH NTLM";
   do_smtp_gen($s, $auth_string, '334', $t, \$r, '', '',
               $O::auth_showpt ? \&unencode_smtp : '')
       || return(0);
