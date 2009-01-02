@@ -5,6 +5,7 @@ use strict;
 use IO::Socket qw();
 use Sys::Hostname;
 use Getopt::Long;
+use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
 my $p_version = "20031201.1";
@@ -876,13 +877,14 @@ sub process_args {
     }
   }
   $n{data} ||= $fconf->{DATA}
-           || 'To: %T\nFrom: %F\nSubject: test %D\n\nThis is a test mailing\n';
+           || 'Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\n\n'
+             .'This is a test mailing\n';
   # The -g option trumps all other methods of getting the data
   $n{data}     = join('', <STDIN>) if ($o->{data_on_stdin});
   $n{data} =~ s/\\n/\r\n/g;
   $n{data} =~ s/%F/$n{from}/g;
   $n{data} =~ s/%T/$n{to}/g;
-  $n{data} =~ s/%D/scalar(localtime(time()))/eg;
+  $n{data} =~ s/%D/get_date_string()/eg;
   $n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
   $n{data} =~ s/\n\.\n?$//s; # If there was a trailing dot, remove it
   $n{data} =~ s/\n\./\n../g; # quote any other leading dots
@@ -995,6 +997,20 @@ sub process_args {
   return(\%n);
 }
 
+sub get_date_string {
+  return($G::date_string) if (length($G::date_string) > 0);
+
+  my @l = localtime();
+  my @g = gmtime();
+  $G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
+                     qw(Sun Mon Tue Wed Thu Fri Sat)[$l[6]],
+                     $l[3],
+                     qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)[$l[4]],
+                     $l[5]+1900, $l[2], $l[1], $l[0],
+                     (timelocal(@l) - timelocal(@g))/36
+                    );
+}
+
 sub ext_usage {
   if ($ARGV[0] =~ /^--help$/i) {
     require Config;
@@ -1058,7 +1074,7 @@ Use argument as DATA portion of SMTP transaction, or prompt user if no argument 
 
 This string should be on one single line, with a literal \n representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  Very basic token parsing is done.  %F is replaced with the value that will be used for "MAIL FROM", %T is replaced with "RCPT TO" values, and %D is replaced with a timestamp.
 
-Default value for this option is "To: %T\nFrom: %F\nSubject: test %D\n\nThis is a test mailing\n".
+Default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\n\nThis is a test mailing\n".
 
 =item --timeout
 
@@ -1180,7 +1196,7 @@ This program was written because I was testing a new MTA on an alternate port.  
 
 =head1 REQUIRES
 
-=item IO::Socket, Sys::Hostname, Getop::Long
+=item IO::Socket, Sys::Hostname, Getop::Long, Time::Local
 
 These modules are all required for the program to run at all.  This shouldn't be an issue as I believe these are all core modules.
 
