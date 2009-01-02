@@ -54,7 +54,8 @@ GetOptions(
   'nsf|no-strip-from' => \$O{no_strip_from}, # Don't strip From_ line from DATA
   'nth|no-hints'    => \$O{no_hints},      # Don't show transaction hints
   'hr|hide-receive' => \$O{hide_receive},  # Don't show reception lines
-  'hs|hide-send'    => \$O{hide_send}      # Don't show sending lines
+  'hs|hide-send'    => \$O{hide_send},     # Don't show sending lines
+  'stl|show-time-lapse' => \$O{show_time_lapse} # print lapse between send/recv
 ) || exit(1);
 
 load_modules({
@@ -509,8 +510,14 @@ sub do_smtp_gen {
   my $r = '';    # This'll be the return value from transact()
 
   print_transaction(21, $x ? $x : $m, $b) if (defined($m));
+  my $time = time() if ($G::show_time_lapse);
   $r  = transact($s, $m, '', $t);
   $$p = $r;
+  
+  if ($G::show_time_lapse) {
+    $time = time() - $time;
+    print_transaction(11, "response in ${time}s");
+  }
 
   $r = &$c($r) if (ref($c) eq 'CODE');
   if ($r !~ /^$e /m) {
@@ -729,6 +736,9 @@ sub process_args {
   
   # set global option of -q option
   $G::quit_after = lc($o->{quit_after}) if ($o->{quit_after});
+
+  # set global flag for -stl flag
+  $G::show_time_lapse = time() if ($o->{show_time_lapse});
 
   if ($o->{emulate_mail}) { # set up for -m option
     $n{to} = shift if (!defined($o->{mail_to}));
@@ -1029,6 +1039,10 @@ Don't display reception lines
 =item -hs, --hide-send
 
 Don't display sending lines
+
+=item -stl, --show-time-lapse
+
+Display time lapse between send/receive pairs
 
 =item --help
 
