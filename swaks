@@ -1,16 +1,5 @@
 #!/usr/bin/perl
 
-my $foo =<<'EOM';
-This is a private, limited release and as such is not guaranteed to work.
-
-Things left to do:
-
-* intelligence between tiers?  For instance, as designed setting --auth-user
-  (-au) causes swaks to assume --auth also presented.  Maybe you don't want
-  that though.  Maybe you want to be able to have -au in .swaksrc _always_,
-  but only used when --auth given?
-EOM
-
 # use 'swaks --help' to view documentation for this program
 # if you want to be notified about future releases of this program,
 #	please send an email to updates-swaks@jetmore.net
@@ -1305,6 +1294,15 @@ sub process_args {
   $G::hide_receive  = 1 if ($o->{hide_receive});
   $G::pipeline      = 1 if ($o->{pipeline});
   $G::silent        = $o->{silent} ? $o->{silent} : 0;
+
+  # it is an error if >1 of --server, --socket, or --pipe is specified
+  if ((defined($o->{mail_server}) && defined($o->{socket}))   ||
+      (defined($o->{mail_server}) && defined($o->{pipe_cmd})) ||
+      (defined($o->{pipe_cmd})    && defined($o->{socket})))
+  {
+    ptrans(12, "Multiple transport types specified, exiting");
+    exit(1);
+  }
 
   my %protos = ( 
     smtp    => { proto => 'smtp',  auth => 0, tls => '0' },
