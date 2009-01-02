@@ -682,9 +682,14 @@ sub do_smtp_gen {
 # to still be reading, come in here to error and die.  Abstracted because
 # the error message will vary depending on the type of connection
 sub handle_disconnect {
-  # XXX assign a real exit code and make the error message conditional
-  print_transaction(12, "Connection unexpectedly ended FIXME");
-  exit(37)
+  if ($G::link{type} eq 'socket-inet') {
+    print_transaction(12, "Remote host closed connection unexpectedly.");
+  } elsif ($G::link{type} eq 'socket-unix') {
+    print_transaction(12, "Socket closed connection unexpectedly.");
+  } elsif ($G::link{type} eq 'pipe') {
+    print_transaction(12, "Child process closed connection unexpectedly.");
+  }
+  exit(37);
 }
 
 # write a bunch of data to whatever is listening on the end.  We don't 
@@ -1528,6 +1533,14 @@ while running with connection type of "pipe", fatal problem writing to or readin
 =item 5
 
 while running with connection type of "pipe", child process died unexpectedly.  This can mean that the program specified with --pipe doesn't exist.
+
+=item 6
+
+Connection closed unexpectedly.  If the close is detected in response to the 'QUIT' swaks sends following an unexpected response, the error code for that unexpected response is used instead.
+
+For instance, if a mail server returns a 550 response to a MAIL FROM: and then immediately closes the connection, swaks detects that the connection is closed, but uses the more specific exit code 23 to detail the nature of the failure.
+
+If instead the server return a 250 code and then immediately closes the connection, swaks will use the exit code 6 because there is not a more specific exit code.
 
 =item 10
 
