@@ -1629,6 +1629,15 @@ In the strictest sense, all this does is provide a value that replaces the %H to
 
 The option can either be specified multiple times or a single time with multiple headers seperated by a literal '\n' string.  So, "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header 'Foo: bar\nBaz: foo'" end up adding the same two headers.
 
+=item --header, --h-Header
+
+These options allow a way to change headers that already exist in the DATA.  These two calls do the same thing:
+
+--header "Subject: foo"
+--h-Subject foo
+
+Subject is the example used.  If the header does not exist in the body already, these calls behave identically to --add-header.  The purpose of this option it to provide a fast way to change the nature of the default DATA for specific tests.  For instance if you wanted to test a subject filer in a mail system, you could use --h-Subject "SPAM STRING" to test rather than having to craft and entire new DATA string to pass to --data.
+
 =item --timeout
 
 Use argument as the SMTP transaction timeout, or prompt user if no argument given.  Overridden by the -l token TIMEOUT.  Argument can either be a pure digit, which will be interpretted as seconds, or can have a specifier s or m (5s = 5 seconds, 3m = 180 seconds).  As a special case, 0 means don't timeout the transactions.  Default value is 30s.
