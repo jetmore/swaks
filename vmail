@@ -59,7 +59,7 @@ if ($O::tls) {
   if (!$modules{'XNet::SSLeay'}) {
     if ($O::tls_optional) {
       $O::tls = undef; # so we won't try it later
-      print_transaction(11,
+      print_transaction(12,
           'TLS requirement Net::SSLeay not installed, skipping optional TLS');
     } else {
       print_transaction(12,
@@ -116,7 +116,7 @@ if ($O::auth) {
   if (!$modules{"MIME::Base64"}) {
     if ($O::auth_optional) {
       $a_type = ''; # So we won't attempt it later
-      print_transaction(11,
+      print_transaction(12,
         'AUTH requirement MIME::Base64 not installed, skipping optional AUTH');
     } else {
       print_transaction(12,
@@ -126,11 +126,11 @@ if ($O::auth) {
   } elsif (!$modules{"Digest::MD5"} && $O::auth =~ /^cram(-md5)?$/i) {
     if ($O::auth_optional) {
       $a_type = ''; # So we won't attempt it later
-      print_transaction(11,
+      print_transaction(12,
         'AUTH:CRAM-MD5 requirement Digest::MD5 not installed, ' .
         'skipping optional AUTH:CRAM-MD5');
     } else {
-      print_transaction(11,
+      print_transaction(12,
         'AUTH:CRAM-MD5 requirement Digest::MD5 not installed, exiting');
       exit(10);
     }
@@ -241,7 +241,7 @@ sub sendmail {
 
   print_transaction(11, "Trying $host:$port...");
   if ($@) {
-    print_transaction('***',"Error connecting $lint to $host:$port:\n\t$@");
+    print_transaction(12,"Error connecting $lint to $host:$port:\n\t$@");
     exit(2);
   }
   print_transaction(11, "Connected to $host.");
@@ -277,16 +277,16 @@ sub sendmail {
   # handle TLS here if user has requested it
   if ($O::tls) {
     if (!$ehlo->{STARTTLS}) {
-      print_transaction(11, "STARTTLS not supported");
+      print_transaction(12, "STARTTLS not supported");
       exit(31) if (!$O::tls_optional);
     } elsif (!do_smtp_gen($s, "STARTTLS", '220', $timeout)) {
-      print_transaction(11, "STARTTLS unsuccessful");
+      print_transaction(12, "STARTTLS unsuccessful");
       if (!$O::tls_optional) {
         do_smtp_gen($s, 'QUIT', '221', $timeout);
         exit(29);
       }
     } elsif (!start_tls($s, \%tls)) {
-      print_transaction(11, "TLS startup failed");
+      print_transaction(12, "TLS startup failed");
       if (!$O::tls_optional) {
         do_smtp_gen($s, 'QUIT', '221', $timeout);
         exit(30);
@@ -386,27 +386,23 @@ sub print_transaction {
   my $b = shift;  # be brief in what we print
   my $o = \*STDOUT;
 
-  # this is temporary until we get all of the calls translated to use a code
-  # instead of a literal flag XXX
-  if ($f =~ /^\d+$/) {
-    # 1x is program messages
-    # 2x is smtp send
-    # 3x is smtp recv
-    # program info
-    if ($f == 11) { $f = '==='; }
-    # program error
-    elsif ($f == 12) { $f = '***'; $o = \*STDERR; }
-    # smtp send info
-    elsif ($f == 21) { $f = ' ->'; }
-    # smtp send error
-    elsif ($f == 22) { $f = '**>'; }
-    # smtp recv info
-    elsif ($f == 31) { $f = '<- '; }
-    # smtp recv error
-    elsif ($f == 32) { $f = '<**'; }
-    # something went unexpectedly
-    else { $f = '???'; }
-  }
+  # 1x is program messages
+  # 2x is smtp send
+  # 3x is smtp recv
+  # program info
+  if ($f == 11) { $f = '==='; }
+  # program error
+  elsif ($f == 12) { $f = '***'; $o = \*STDERR; }
+  # smtp send info
+  elsif ($f == 21) { $f = ' ->'; }
+  # smtp send error
+  elsif ($f == 22) { $f = '**>'; }
+  # smtp recv info
+  elsif ($f == 31) { $f = '<- '; }
+  # smtp recv error
+  elsif ($f == 32) { $f = '<**'; }
+  # something went unexpectedly
+  else { $f = '???'; }
 
   if ($b) {
     $m = scalar(split(/\n/ms, $m)) . " lines sent";
@@ -427,7 +423,7 @@ sub do_smtp_auth {
   # failing here
 
   if (($at ne 'ANY' && !$e->{AUTH}{$at}) || !$e->{AUTH}) {
-    print_transaction(11, "$at authentication not supported");
+    print_transaction(12, "$at authentication not supported");
     return(0);
   }
 
@@ -445,7 +441,7 @@ sub do_smtp_auth {
     return(1) if (do_smtp_auth_login($s, $t, $au, $ap));
   }
 
-  print_transaction(11, "No authentication type succeeded");
+  print_transaction(12, "No authentication type succeeded");
   return(0);
 }
 
@@ -634,13 +630,13 @@ sub process_file {
   my $h = shift;
 
   if (! -e "$f") {
-    print_transaction(11, "File $f does not exist, skipping");
+    print_transaction(12, "File $f does not exist, skipping");
     return;
   } elsif (! -f "$f") {
-    print_transaction(11, "File $f is not a file, skipping");
+    print_transaction(12, "File $f is not a file, skipping");
     return;
   } elsif (!open(I, "<$f")) {
-    print_transaction(11, "Couldn't open $f, skipping... ($!)");
+    print_transaction(12, "Couldn't open $f, skipping... ($!)");
     return;
   }
 
@@ -681,7 +677,7 @@ sub get_server {
   my $server = "localhost";
   
   if (!$modules{"Net::DNS"}) {
-    print_transaction(11,
+    print_transaction(12,
       "MX requirement Net::DNS not installed, using $server as mail server");
     return($server);
   }
