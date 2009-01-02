@@ -13,6 +13,7 @@ my $user     = getpwuid($<);
 my $hostname = get_hostname();
 my %modules  = ();
 
+Getopt::Long::Configure("bundling_override");
 GetOptions(
   'l=s'  => \$O::option_file,   # (l)ocation of input data
   'f:s'  => \$O::mail_from,     # envelope-(f)rom address
@@ -35,7 +36,8 @@ GetOptions(
   'support' => \$O::get_support,# report capabilties
   'li:s' => \$O::lint,          # local interface to use for connection
   'tls'  => \$O::tls,           # use TLS
-  'tlso' => \$O::tls_optional   # use tls if available
+  'tlso' => \$O::tls_optional,  # use tls if available
+  'S+'   => \$O::silent         # suppress output to varying degrees
 ) || exit(1);
 
 load_modules({
@@ -54,13 +56,14 @@ $O::tls_optional = 1 if (defined($O::tls_optional));
 $O::tls = 1 if (defined($O::tls) || $O::tls_optional);
 my %tls = (); # will hold info for TLS transactions
 if ($O::tls) {
-  if (!$modules{'Net::SSLeay'}) {
-    print STDERR "Net::SSLeay not installed, TLS unavailable, ";
+  if (!$modules{'XNet::SSLeay'}) {
     if ($O::tls_optional) {
       $O::tls = undef; # so we won't try it later
-      print STDERR "skipping\n";
+      print_transaction(11,
+          'TLS requirement Net::SSLeay not installed, skipping optional TLS');
     } else {
-      print STDERR "exiting...\n";
+      print_transaction(12,
+          'TLS requirement Net::SSLeay not installed, exiting');
       exit(10);
     }
   } else {
@@ -111,21 +114,24 @@ if ($O::auth) {
   # make sure we can support it before we go any farther
 
   if (!$modules{"MIME::Base64"}) {
-    print STDERR "MIME::Base64 not installed, ";
     if ($O::auth_optional) {
-      print STDERR "skipping AUTH attempts...\n";
       $a_type = ''; # So we won't attempt it later
+      print_transaction(11,
+        'AUTH requirement MIME::Base64 not installed, skipping optional AUTH');
     } else {
-      print STDERR "exiting...\n";
+      print_transaction(12,
+        'AUTH requirement MIME::Base64 not installed, exiting');
       exit(10);
     }
   } elsif (!$modules{"Digest::MD5"} && $O::auth =~ /^cram(-md5)?$/i) {
-    print STDERR "Digest::MD5 not installed, ";
     if ($O::auth_optional) {
-      print STDERR "skipping AUTH attempts...\n";
       $a_type = ''; # So we won't attempt it later
+      print_transaction(11,
+        'AUTH:CRAM-MD5 requirement Digest::MD5 not installed, ' .
+        'skipping optional AUTH:CRAM-MD5');
     } else {
-      print STDERR "exiting...\n";
+      print_transaction(11,
+        'AUTH:CRAM-MD5 requirement Digest::MD5 not installed, exiting');
       exit(10);
     }
   } else {
@@ -233,12 +239,12 @@ sub sendmail {
 		                       Proto     => 'tcp', Timeout  => $timeout,
                                        LocalAddr => $lint);
 
-  print_transaction('===', "Trying $host:$port...");
+  print_transaction(11, "Trying $host:$port...");
   if ($@) {
     print_transaction('***',"Error connecting $lint to $host:$port:\n\t$@");
     exit(2);
   }
-  print_transaction('===', "Connected to $host.");
+  print_transaction(11, "Connected to $host.");
 
   # read the server's 220 banner
   if (!do_smtp_gen($s, undef, '220', $timeout)) {
@@ -271,22 +277,22 @@ sub sendmail {
   # handle TLS here if user has requested it
   if ($O::tls) {
     if (!$ehlo->{STARTTLS}) {
-      print_transaction('===', "STARTTLS not supported");
+      print_transaction(11, "STARTTLS not supported");
       exit(31) if (!$O::tls_optional);
     } elsif (!do_smtp_gen($s, "STARTTLS", '220', $timeout)) {
-      print_transaction('===', "STARTTLS unsuccessful");
+      print_transaction(11, "STARTTLS unsuccessful");
       if (!$O::tls_optional) {
         do_smtp_gen($s, 'QUIT', '221', $timeout);
         exit(29);
       }
     } elsif (!start_tls($s, \%tls)) {
-      print_transaction('===', "TLS startup failed");
+      print_transaction(11, "TLS startup failed");
       if (!$O::tls_optional) {
         do_smtp_gen($s, 'QUIT', '221', $timeout);
         exit(30);
       }
     } else {
-      print_transaction('===', "TLS started w/ cipher $tls{cipher}");
+      print_transaction(11, "TLS started w/ cipher $tls{cipher}");
       # don't I need another helo here?
     }
   }
@@ -356,7 +362,7 @@ sub sendmail {
     exit(27);
   }
 
-  print_transaction('===',  "Connection closed by foreign host.");
+  print_transaction(11,  "Connection closed by foreign host.");
 }
 
 sub start_tls {
@@ -378,12 +384,35 @@ sub print_transaction {
   my $f = shift;  # transaction flag
   my $m = shift;  # message to print
   my $b = shift;  # be brief in what we print
+  my $o = \*STDOUT;
+
+  # this is temporary until we get all of the calls translated to use a code
+  # instead of a literal flag XXX
+  if ($f =~ /^\d+$/) {
+    # 1x is program messages
+    # 2x is smtp send
+    # 3x is smtp recv
+    # program info
+    if ($f == 11) { $f = '==='; }
+    # program error
+    elsif ($f == 12) { $f = '***'; $o = \*STDERR; }
+    # smtp send info
+    elsif ($f == 21) { $f = ' ->'; }
+    # smtp send error
+    elsif ($f == 22) { $f = '**>'; }
+    # smtp recv info
+    elsif ($f == 31) { $f = '<- '; }
+    # smtp recv error
+    elsif ($f == 32) { $f = '<**'; }
+    # something went unexpectedly
+    else { $f = '???'; }
+  }
 
   if ($b) {
     $m = scalar(split(/\n/ms, $m)) . " lines sent";
   }
   $m =~ s/\n/\n$f /msg;
-  print "$f $m\n";
+  print $o "$f $m\n";
 }
 
 sub do_smtp_auth {
@@ -398,7 +427,7 @@ sub do_smtp_auth {
   # failing here
 
   if (($at ne 'ANY' && !$e->{AUTH}{$at}) || !$e->{AUTH}) {
-    print_transaction('===', "$at authentication not supported");
+    print_transaction(11, "$at authentication not supported");
     return(0);
   }
 
@@ -416,7 +445,7 @@ sub do_smtp_auth {
     return(1) if (do_smtp_auth_login($s, $t, $au, $ap));
   }
 
-  print_transaction('===', "No authentication type succeeded");
+  print_transaction(11, "No authentication type succeeded");
   return(0);
 }
 
@@ -532,16 +561,16 @@ sub do_smtp_gen {
   my $c = shift; # if this is a code ref, call it on the return value b4 print
   my $r = '';    # This'll be the return value from transact()
 
-  print_transaction(' ->', $x ? $x : $m, $b) if (defined($m));
+  print_transaction(21, $x ? $x : $m, $b) if (defined($m));
   $r  = transact($s, $m, '', $t);
   $$p = $r;
 
   $r = &$c($r) if (ref($c) eq 'CODE');
   if ($r !~ /^$e /m) {
-    print_transaction('***', $r);
+    print_transaction(32, $r);
     return(0);
   } else {
-    print_transaction('<- ', $r);
+    print_transaction(31, $r);
     return(1);
   }
 }
@@ -605,13 +634,13 @@ sub process_file {
   my $h = shift;
 
   if (! -e "$f") {
-    print STDERR "File $f does not exist, skipping...\n";
+    print_transaction(11, "File $f does not exist, skipping");
     return;
   } elsif (! -f "$f") {
-    print STDERR "File $f is not a file, skipping...\n";
+    print_transaction(11, "File $f is not a file, skipping");
     return;
   } elsif (!open(I, "<$f")) {
-    print STDERR "Couldn't open $f, skipping... ($!)\n";
+    print_transaction(11, "Couldn't open $f, skipping... ($!)");
     return;
   }
 
@@ -652,7 +681,8 @@ sub get_server {
   my $server = "localhost";
   
   if (!$modules{"Net::DNS"}) {
-    print STDERR "Net::DNS not installed, using $server as mail server\n";
+    print_transaction(11,
+      "MX requirement Net::DNS not installed, using $server as mail server");
     return($server);
   }
   my $res = new Net::DNS::Resolver;
@@ -717,23 +747,19 @@ sub load_modules {
   my $l = shift;
 
   foreach my $act (keys %$s) {
-    my $failed = 0;
+    my @failed = ();
     foreach my $m (@{$s->{$act}}) {
       if (try_load($m)) {
         $l->{$m}++;
       } else {
-        if (!$failed) {
-          print STDERR "$act not available: requires $m" if ($O::get_support);
-        } else {
-          print STDERR ", $m" if ($O::get_support);
-        }
-        $failed++;
+        push(@failed, $m);
       }
     }
-    if ($failed) {
-      print STDERR "\n" if ($O::get_support);
+    if (scalar(@failed) > 0) {
+      print_transaction(12, "$act not available: requires " .
+          join(', ', @failed));
     } else {
-      print "$act supported\n" if ($O::get_support);
+      print_transaction(11, "$act supported");
     }
   }
 }
