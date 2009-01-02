@@ -11,7 +11,7 @@ use Sys::Hostname;
 use Getopt::Long;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "XXXXXXXX.X";
+my $p_version = "20031111.0";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
 Copyright (c) 2003
