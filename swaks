@@ -8,7 +8,7 @@ use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20031210.0";
+my $p_version = "20031211.0";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003 John Jetmore <jj33\@pobox.com>
@@ -1015,11 +1015,11 @@ sub get_date_string {
   my @l = localtime();
   my @g = gmtime();
   $G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
-                     qw(Sun Mon Tue Wed Thu Fri Sat)[$l[6]],
-                     $l[3],
-                     qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)[$l[4]],
-                     $l[5]+1900, $l[2], $l[1], $l[0],
-                     (timelocal(@l) - timelocal(@g))/36
+                 (qw(Sun Mon Tue Wed Thu Fri Sat))[$l[6]],
+                 $l[3],
+                 (qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec))[$l[4]],
+                 $l[5]+1900, $l[2], $l[1], $l[0],
+                 (timelocal(@l) - timelocal(@g))/36
                     );
 }
 
@@ -1028,7 +1028,8 @@ sub ext_usage {
     require Config;
     $ENV{PATH} .= ":" unless $ENV{PATH} eq "";
     $ENV{PATH} = "$ENV{PATH}$Config::Config{'installscript'}";
-    exec("perldoc", "-F", "-U", $0) || exit 1;
+    #exec("perldoc", "-F", "-U", $0) || exit 1;
+    exec("perldoc", $0) || exit 1;
     # make parser happy
     %Config::Config = ();
   } elsif ($ARGV[0] =~ /^--version$/i) {
