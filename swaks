@@ -31,6 +31,12 @@ ext_usage(); # before we do anything else, check for --help
 my %O        = ();
 $|           = 1;
 
+# need to rewrite header-HEADER opts before std option parsing
+for (my $i = 0; $i < scalar(@ARGV); $i++) {
+  if ($ARGV[$i] =~ /^--h(?:eader)?-(.*)$/) {
+    $ARGV[$i] = "--header";  $ARGV[$i+1] = "$1: $ARGV[$i+1]";
+  }
+}
 if (!load("Getopt::Long")) {
     ptrans(12, "Unable to load Getopt::Long for option processing, Exiting");
     exit(1);
@@ -74,6 +80,7 @@ GetOptions(
   'body:s'          => \$O{body_822},      # the content of the body of the DATA
   'attach-type|attach:s' => \@{$O{attach_822}}, # A file to attach
   'ah|add-header:s' => \@{$O{add_header}}, # replacement for %H DATA token
+  'header:s'        => \@{$O{header}},     # replace header if exist, else add
   'dump'            => \$O{dump_args},     # build options and dump
   'pipeline'        => \$O{pipeline},      # attempt PIPELINING
   'force-getpwuid'  => \$O{force_getpwuid} # use getpwuid building -f
@@ -1259,9 +1266,10 @@ sub process_args {
   # string that will replace %H in the DATA.  Because of where %H is placed
   # in the default DATA, in practice this is used to add headers to the stock
   # DATA w/o having to craft a custom DATA portion
-  if (scalar(@{$o->{add_header}})) {
-    $n{add_header} = join("\n", @{$o->{add_header}}) . "\n";
-  }
+  #if (scalar(@{$o->{add_header}})) {
+  #  $n{add_header} = join("\n", @{$o->{add_header}}) . "\n";
+  #}
+  @{$o->{add_header}} = map { split(/\\n/) } @{$o->{add_header}};
 
   # SMTP DATA
   # a '-' arg to -d is the same as setting -g
@@ -1294,6 +1302,21 @@ sub process_args {
   $n{data}   = join('', <STDIN>) if ($o->{data_on_stdin});
   if (!$o->{no_data_fixup}) {
     $n{data} =~ s/%B/$body/eg;
+    if (scalar(@{$o->{header}})) {
+      my %matched = ();
+      foreach my $l (map { split(/\\n/) } @{$o->{header}}) {
+        if ($l =~ /^([^:]+):/) {
+          my $h = $1;
+          if (!$matched{$h} && $n{data} =~ s/(^|\\n)$h:.*?($|\\n)/$1$l$2/) {
+            $matched{$h} = 1;
+          } else {
+            push(@{$o->{add_header}}, $l);
+          }
+        } else { push(@{$o->{add_header}}, $l); }
+      }
+    }
+    $n{add_header} = join('\n', @{$o->{add_header}}) . "\n"
+        if (@{$o->{add_header}});
     $n{data} =~ s/%H/$n{add_header}/eg;
     $n{data} =~ s/\\n/\r\n/g;
     $n{data} =~ s/%F/$n{from}/g;
