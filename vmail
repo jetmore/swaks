@@ -139,7 +139,7 @@ if (defined($O::mail_data) && !defined($O::data_on_stdin)) {
 # and finally use the default value
 $from   ||= $fconf->{FROM}   || "$user\@$hostname"; # envelope-from
 $data   ||= $fconf->{DATA}
-        ||  'To: %T\nFrom: %F\nSubject: test\n\nThis is a test mailing\n.';
+        ||  'To: %T\nFrom: %F\nSubject: test\n\nThis is a test mailing\n';
                                                   # body (\n translated later)
 $helo   ||= $fconf->{HELO}   || $hostname;        # who we claim to be in HELO
 $port   ||= $fconf->{PORT}   || 25;               # where's the mail server?
