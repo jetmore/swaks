@@ -360,11 +360,11 @@ sub ptrans {
   if ($G::silent > 0) {
     return if ($G::silent >= 3);
     return if ($G::silent == 2 && $c%2 != 0);
-    if ($G::silent == 1) {
+    if ($G::silent == 1 && !$G::ptrans_seen_error) {
       if ($c%2 != 0) {
         return();
       } else {
-        $G::silent = 0;
+        $G::ptrans_seen_error = 1;
       }
     }
   }
@@ -1248,7 +1248,8 @@ sub fetch_args {
     # use tls if available
     'tlsc|tls-on-connect'         => \$r->{tls_on_connect},
     # suppress output to varying degrees
-    'S|silent+'                   => \$r->{silent},
+    'S|silent:i'                  => sub { $r->{silent} = $_[1] ||
+                                               $r->{silent} + 1; },
     # Don't strip From_ line from DATA
     'nsf|no-strip-from'           => \$r->{no_strip_from},
     # Don't show transaction hints
@@ -1303,7 +1304,7 @@ sub process_args {
   $G::hide_informational = 1 if ($o->{hide_informational});
   $G::hide_all           = 1 if ($o->{hide_all});
   $G::pipeline           = 1 if ($o->{pipeline});
-  $G::silent             = $o->{silent} ? $o->{silent} : 0;
+  $G::silent             = $o->{silent} || 0;
 
   # it is an error if >1 of --server, --socket, or --pipe is specified
   if ((defined($o->{mail_server}) && defined($o->{socket}))   ||
