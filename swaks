@@ -7,7 +7,7 @@
 use strict;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20061116.0";
+my $p_version = "20061116.0-dev";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003-2006 John Jetmore <jj33\@pobox.com>
@@ -33,7 +33,7 @@ $|           = 1;
 
 # need to rewrite header-HEADER opts before std option parsing
 for (my $i = 0; $i < scalar(@ARGV); $i++) {
-  if ($ARGV[$i] =~ /^--h(?:eader)?-(.*)$/) {
+  if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
     $ARGV[$i] = "--header";  $ARGV[$i+1] = "$1: $ARGV[$i+1]";
   }
 }
