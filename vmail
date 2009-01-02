@@ -59,11 +59,12 @@ GetOptions(
 ) || exit(1);
 
 load_modules({
-  'Basic AUTH'    => ['MIME::Base64'],
-  'AUTH CRAM-MD5' => ['Digest::MD5'],
-  'AUTH NTLM'     => ['Authen::NTLM'],
-  'MX lookups'    => ['Net::DNS'],
-  'TLS'           => ['Net::SSLeay'],
+  'Basic AUTH'      => ['MIME::Base64'],
+  'AUTH CRAM-MD5'   => ['Digest::MD5'],
+  'AUTH NTLM'       => ['Authen::NTLM'],
+  'AUTH DIGEST-MD5' => ['Authen::DigestMD5'],
+  'MX lookups'      => ['Net::DNS'],
+  'TLS'             => ['Net::SSLeay'],
 }, \%G::modules);
 exit(0) if ($O{get_support}); # --support means report capabilities only
 
@@ -165,7 +166,7 @@ sub sendmail {
 
   # handle auth here if user has requested it
   if ($a_type) {
-    if (!do_smtp_auth($s, $timeout, $ehlo, $a_type, $a_user, $a_pass)
+    if (!do_smtp_auth($s, $timeout, $ehlo, $a_type, $a_user, $a_pass, $host)
          && !$O{auth_optional})
     {
       do_smtp_gen($s, 'QUIT', '221', $timeout);
@@ -329,6 +330,7 @@ sub do_smtp_auth {
   my $at = shift; # auth type
   my $au = shift; # auth user
   my $ap = shift; # auth password
+  my $h  = shift; # host (used by digest-md5)
 
   # the auth_optional stuff is handled higher up, so tell the truth about
   # failing here
@@ -341,6 +343,13 @@ sub do_smtp_auth {
   if (($at eq 'ANY' || $at eq 'CRAM-MD5') && $e->{AUTH}{'CRAM-MD5'}) {
     if ($G::modules{"Digest::MD5"}) {
       return(1) if (do_smtp_auth_cram($s, $t, $au, $ap));
+    } else {
+      # debug?
+    }
+  }
+  if (($at eq 'ANY' || $at eq 'DIGEST-MD5') && $e->{AUTH}{'DIGEST-MD5'}) {
+    if ($G::modules{"Authen::DigestMD5"}) {
+      return(1) if (do_smtp_auth_digest($s, $t, $au, $ap, $h));
     } else {
       # debug?
     }
@@ -381,8 +390,8 @@ sub do_smtp_auth_ntlm {
   my $d = decode_base64(Authen::NTLM::ntlm());
 
   $auth_string = encode_base64("$d", '');
-  do_smtp_gen($s, $auth_string, '334', $t, \$r, '',
-              $G::auth_showpt ? "$d" : '') || return(0);
+  do_smtp_gen($s, $auth_string, '334', $t, \$r, '', $G::auth_showpt ? "$d" : '',
+              $G::auth_showpt ? \&unencode_smtp : '') || return(0);
 
   $r =~ s/^....//; # maybe something a little better here?
   Authen::NTLM::ntlm_domain($domain);
@@ -394,6 +403,43 @@ sub do_smtp_auth_ntlm {
   do_smtp_gen($s, $auth_string, '235', $t, \$r, '',
               $G::auth_showpt ? "$d" : '') || return(0);
 
+  return(1);
+}
+
+sub do_smtp_auth_digest {
+  my $s = shift; # socket
+  my $t = shift; # timeout
+  my $u = shift; # auth user
+  my $p = shift; # auth password
+  my $h = shift; # host (used in digest-uri)
+  my $r = '';    # will store smtp response
+  
+  my $auth_string = "AUTH DIGEST-MD5";
+  do_smtp_gen($s, $auth_string, '334', $t, \$r, '', '',
+              $G::auth_showpt ? \&unencode_smtp : '')
+      || return(0);
+
+  $r =~ s/^....//; # maybe something a little better here?
+  $r = decode_base64($r);
+  my $req = Authen::DigestMD5::Request->new($r);
+  my $res = Authen::DigestMD5::Response->new();
+  $res->got_request($req);
+  $res->set('username' => $u, 'realm' => '',
+            'digest-uri' => "smtp/$h");
+  $res->add_digest(password => $p);
+  my $d = $res->output();
+  $auth_string = encode_base64("$d", '');
+
+  do_smtp_gen($s, $auth_string, '334', $t, \$r, '', $G::auth_showpt ? "$d" : '',
+              $G::auth_showpt ? \&unencode_smtp : '')
+      || return(0);
+  $r =~ s/^....//; # maybe something a little better here?
+  $r = decode_base64($r);
+  $req->input($r);
+  return(0) if (!$req->auth_ok);
+
+  do_smtp_gen($s, "", '235', $t, undef, '',
+              $G::auth_showpt ? "" : '') || return(0);
   return(1);
 }
 
@@ -1008,7 +1054,9 @@ Attempt to use STARTTLS if possible, continue t/ normal transaction if TLS unava
 
 Require authentication.  If Authentication fails or is unavailable, stop transaction.  -a can take an argument specifying which type of authentication to use.  vmail currently supports PLAIN, LOGIN, and CRAM-MD5.  If no argument is given any available authentication type is used.  If neither password (-ap) or username (-au) is supplied on command line, vmail will prompt on STDIN.
 
-SPA (NTLM/MSN) authentication is now supported.  Tested as a client against Exim, but implementation may be complete.  Authen::NTLM is currently required.  Note that CPAN hosts two different Authen::NTLM modules.  Current implementation requires Mark Bush's implementation (Authen/NTLM-1.02.tar.gz).  Plan to reimplement directly at some point to avoid confusion.
+SPA (NTLM/MSN) authentication is now supported.  Tested as a client against Exim and Stalker's CommuniGate, but implementation may be incomplete.  Authen::NTLM is currently required.  Note that CPAN hosts two different Authen::NTLM modules.  Current implementation requires Mark Bush's implementation (Authen/NTLM-1.02.tar.gz).  Plan to reimplement directly at some point to avoid confusion.
+
+DIGEST-MD5 is now supported.  Tested as a client only against Stalker's Communigate, so implementation may be incomplete.  Requires Authen::DigestMD5 module.
 
 =item -ao, --auth-optional
 
