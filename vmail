@@ -97,17 +97,17 @@ if ($O::emulate_mail) {
 # load the $fconf hash if user has specified a -l file
 process_file($O::option_file, $fconf) if ($O::option_file);
 
-$to     = $O::mail_to     || interact("To: ", '^\S+$')
+$to     = $O::mail_to     || interact("To: ", '^.*$')
                                       if (defined($O::mail_to));
-$from   = $O::mail_from   || interact("From: ", '^\S+$')
+$from   = $O::mail_from   || interact("From: ", '^.*$')
                                       if (defined($O::mail_from));
-$helo   = $O::mail_helo   || interact("Helo: ", '^[a-zA-Z0-9\-\.]+$')
+$helo   = $O::mail_helo   || interact("Helo: ", '^.*$')
                                       if (defined($O::mail_helo));
-$server = $O::mail_server || interact("Server: ", '^[a-zA-Z0-9\-\.]+$')
+$server = $O::mail_server || interact("Server: ", '^.*$')
                                       if (defined($O::mail_server));
 $port   = $O::mail_port   || interact("Port: ", '^\d+$')
                                       if (defined($O::mail_port));
-$lint   = $O::lint        || interact("Interface: ", '^[\-\da-zA-Z\.]+')
+$lint   = $O::lint        || interact("Interface: ", '^.*$')
                                       if (defined($O::lint));
 $timeout= $O::timeout     || interact("Timeout: ", '^\d+[hHmMsS]?$')
                                       if (defined($O::timeout));
@@ -185,11 +185,11 @@ if (defined($O::mail_data) && !defined($O::data_on_stdin)) {
 $from   ||= $fconf->{FROM}   || "$user\@$hostname"; # envelope-from
 $from     = '' if ($from eq 'NULLNULL');
 $data   ||= $fconf->{DATA}
-        ||  'To: %T\nFrom: %F\nSubject: test\n\nThis is a test mailing\n';
+        ||  'To: %T\nFrom: %F\nSubject: test %D\n\nThis is a test mailing\n';
                                                   # body (\n translated later)
 $helo   ||= $fconf->{HELO}   || $hostname;        # who we claim to be in HELO
 $port   ||= $fconf->{PORT}   || 25;               # where's the mail server?
-$to     ||= $fconf->{TO}     || interact("To: ", '^\S+$');
+$to     ||= $fconf->{TO}     || interact("To: ", '^.*$');
                                                   # who is the mail to?
 $server ||= $fconf->{SERVER} || get_server($to);  # receiving server
 $lint   ||= $fconf->{INTERFACE} || '0.0.0.0';     # local interface
@@ -215,7 +215,7 @@ $data     = join('', <STDIN>) if ($O::data_on_stdin);
 #exit;
 
 $data .= "\n.";
-$data =~ s/\\n/\r\n/g;
+$data =~ s/\\n/\n/g;
 $data =~ s/%F/$from/g;
 $data =~ s/%T/$to/g;
 $data =~ s/%D/scalar(localtime(time()))/eg;
