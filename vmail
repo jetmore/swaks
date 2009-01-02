@@ -12,7 +12,7 @@ my(%opt) = ();
 my($user) = getpwuid($<);
 my($hostname) = get_hostname();
 
-if (!getopts('l:f:t:h:s:p:d:i:gm', \%opt)) {
+if (!getopts('l:f:t:h:s:p:d:i:q:gm', \%opt)) {
   print STDERR "getopts parsing error\n";
   exit(1);
 }
@@ -26,6 +26,9 @@ if (!getopts('l:f:t:h:s:p:d:i:gm', \%opt)) {
 # i - enter interactive mode
 # g - (g)et data on STDIN
 # m - emulate basic "Mail -v" functionality
+# q - send quit after (valid options are 'helo', 'mail', 'rcpt', and 'connect')
+
+$opt{q} = lc($opt{q}) if ($opt{q});
 
 if ($opt{m}) {
   if ($opt{i} !~ /t/i && !$opt{t}) {
@@ -114,6 +117,7 @@ print "<-  $buffer\n";
     if ($buffer =~ /^220/) {
       alarm $timeout;
 $send = "HELO $helo";
+$send = "QUIT" if ($opt{q} eq 'connect');
 print " -> $send\n";
       #$s->write("$send\r\n");
       #$s->read_until("\n", \$buffer);
@@ -124,6 +128,7 @@ print "<-  $buffer\n";
       if ($buffer =~ /^250/) {
         alarm $timeout;
 $send = "MAIL FROM:<$from>";
+$send = "QUIT" if ($opt{q} eq 'helo');
 print " -> $send\n";
         #$s->write("$send\r\n"); 
         #$s->read_until("\n", \$buffer);
@@ -134,6 +139,7 @@ print "<-  $buffer\n";
         if ($buffer =~ /^250/) {
           alarm $timeout;
 $send = "RCPT TO:<$to>";
+$send = "QUIT" if ($opt{q} eq 'mail');
 print " -> $send\n";
           #$s->write("$send\r\n");
           #$s->read_until("\n", \$buffer);
@@ -144,6 +150,7 @@ print "<-  $buffer\n";
           if ($buffer =~ /^250/) {
             alarm $timeout;
 $send = "DATA";
+$send = "QUIT" if ($opt{q} eq 'rcpt');
 print " -> $send\n";
             #$s->write("$send\r\n");
             #$s->read_until("\n", \$buffer);
