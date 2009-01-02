@@ -8,7 +8,7 @@ use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20031201.1";
+my $p_version = "20031210.0";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003 John Jetmore <jj33\@pobox.com>
@@ -112,14 +112,14 @@ sub sendmail {
   my $a_type  = shift;	# what kind of auth (this must be set to to attempt)
   my $lint    = shift;	# what local interface to use
   my $timeout = shift;	# timeout for all transactions
-
   my $ehlo    = {};	# If server is esmtp, save advertised features here
   $|          = 1;
+
+  print_transaction(11, "Trying $host:$port...");
   my $s       = IO::Socket::INET->new( PeerAddr  => $host, PeerPort => $port,
 		                       Proto     => 'tcp', Timeout  => $timeout,
                                        LocalAddr => $lint);
 
-  print_transaction(11, "Trying $host:$port...");
   if ($@) {
     print_transaction(12,"Error connecting $lint to $host:$port:\n\t$@");
     exit(2);
@@ -698,6 +698,18 @@ sub get_server {
   my $addr   = shift;
   my $pref   = -1;
   my $server = "localhost";
+
+  if ($addr =~ /\@\[(\d+\.\d+\.\d+\.\d+)\]$/) {
+    # handle automatic routing of domain literals (user@[1.2.3.4])
+    return($1);
+  } elsif ($addr =~ /\@\#(\d+)$/) {
+    # handle automatic routing of decimal domain literals (user@#16909060)
+    $addr = $1;
+    return(($addr/(2**24))%(2**8) . '.' . ($addr/(2**16))%(2**8) . '.'
+          .($addr/(2**8))%(2**8)  . '.' . ($addr/(2**0))%(2**8));
+  }
+
+    
   
   if (!$G::modules{"Net::DNS"}) {
     print_transaction(12,
