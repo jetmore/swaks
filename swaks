@@ -8,7 +8,7 @@ use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20031211.2-dev";
+my $p_version = "20031218.0";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003 John Jetmore <jj33\@pobox.com>
@@ -699,11 +699,11 @@ sub interact {
 }
 
 sub get_hostname {
-  # from hostname(1) on ce-01 (redhat linux 7.1):
-  #	Technically: The FQDN is the name gethostbyname(2) returns
-  #	for the host name returned  by  gethostname(2).   The  DNS
-  #	domain name is the part after the first dot.
-  return((gethostbyname(hostname()))[0]);
+  # in some cases hostname returns value but gethostbyname doesn't.
+  my $h = hostname();
+  return("") if (!$h);
+  my $l = (gethostbyname($h))[0];
+  return($l || $h);
 }
 
 sub get_server {
