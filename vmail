@@ -11,7 +11,7 @@ my(%opt) = ();
 my($user) = getpwuid($<);
 my($hostname) = get_hostname();
 
-if (!getopts('l:f:t:h:s:p:d:i:q:gm', \%opt)) {
+if (!getopts('l:f:t:h:s:p:d:i:q:gmn', \%opt)) {
   print STDERR "getopts parsing error\n";
   exit(1);
 }
@@ -26,6 +26,7 @@ if (!getopts('l:f:t:h:s:p:d:i:q:gm', \%opt)) {
 # g - (g)et data on STDIN
 # m - emulate basic "Mail -v" functionality
 # q - send quit after (valid options are 'helo', 'mail', 'rcpt', and 'connect')
+# n - do (n)ot print all the data portion
 
 $opt{q} = lc($opt{q}) if ($opt{q});
 
@@ -136,7 +137,11 @@ sub sendmail {
 
   # send the actual data
   $send = $data;
-  $data =~ s/\n/\n -> /msg;
+  if ($opt{n}) {
+    $data = scalar(split(/\n/ms, $send)) . " lines of DATA sent";
+  } else {
+    $data =~ s/\n/\n -> /msg;
+  }
   print " -> $data\n";
   $buffer = transact($s, $send, '', $timeout);
   print "<-  $buffer\n";
