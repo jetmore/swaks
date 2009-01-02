@@ -309,10 +309,18 @@ sub sendmail {
   }
 
   # send RCPT
-  if (!do_smtp_rcpt($s, $to, $timeout)) {
+  my $num_accepted = 0;
+  foreach my $r (split(/,/, $to)) {
+    $num_accepted++ if (do_smtp_rcpt($s, $r, $timeout));
+  }
+  if (!$num_accepted) {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(24);
   }
+  #if (!do_smtp_rcpt($s, $to, $timeout)) {
+  #  do_smtp_gen($s, 'QUIT', '221', $timeout);
+  #  exit(24);
+  #}
 
   # QUIT here if the user has asked us to do so
   if ($O::quit_after eq 'rcpt') {
