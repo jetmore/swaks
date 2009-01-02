@@ -425,7 +425,7 @@ sub do_smtp_auth {
   if ($G::modules{"Digest::MD5"}) {
     foreach my $type (@{$G::auth_map_t{'CRAM-MD5'}}) {
       if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
-        return(1) if (do_smtp_auth_cram($au, $ap, $type));
+        return(1) if (do_smtp_auth_cram_md5($au, $ap, $type));
       }
     }
   }
@@ -525,7 +525,7 @@ sub do_smtp_auth_digest {
   return(1);
 }
 
-sub do_smtp_auth_cram {
+sub do_smtp_auth_cram_md5 {
   my $u  = shift; # auth user
   my $p  = shift; # auth password
   my $as = shift; # auth string
@@ -537,7 +537,7 @@ sub do_smtp_auth_cram {
       || return(0);
 
   $r =~ s/^....//; # maybe something a little better here?
-  my $d = get_digest($p, $r);
+  my $d = get_digest($p, $r, 'md5');
   $auth_string = encode_base64("$u $d", '');
 
   do_smtp_gen($auth_string, '235', undef, '',
@@ -811,29 +811,30 @@ sub try_load {
 sub get_digest {
   my $secr = shift;
   my $chal = shift;
-  my $retr = '';
-  my $ipad = chr(0x36);
-  my $opad = chr(0x5c);
-  my($isec, $osec) = undef;
+  my $type = shift || 'md5';
+  my $ipad = chr(0x36) x 64;
+  my $opad = chr(0x5c) x 64;
 
   if ($chal !~ /^</) {
     chomp($chal = decode_base64($chal));
   }
 
   if (length($secr) > 64) {
-    $secr = Digest::MD5::md5($secr);
+    if ($type eq 'md5') {
+      $secr = Digest::MD5::md5($secr);
+    } elsif ($type eq 'sha1') {
+      $secr = Digest::SHA1::sha1($secr);
+    }
   } else {
     $secr .= chr(0) x (64 - length($secr));
   }
 
-  foreach my $char (split(//, $secr)) {
-    $isec .= $char ^ $ipad;
-    $osec .= $char ^ $opad;
-  }
-
-  map { $retr .= sprintf("%02x", ord($_)) }
-            split(//,Digest::MD5::md5($osec.Digest::MD5::md5($isec . $chal)));
-  return($retr);
+  my $digest = $type eq 'md5'
+               ? Digest::MD5::md5_hex(($secr ^ $opad),
+                 Digest::MD5::md5(($secr ^ $ipad), $chal))
+               : Digest::SHA1::sha1_hex(($secr ^ $opad),
+                 Digest::SHA1::sha1(($secr ^ $ipad), $chal));
+  return($digest);
 }
 
 sub load_modules {
