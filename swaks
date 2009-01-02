@@ -45,7 +45,7 @@ GetOptions(
   'g'               => \$O{data_on_stdin}, # (g)et data on stdin 
   'm'               => \$O{emulate_mail},  # emulate (M)ail command
   'q|quit|quit-after=s' => \$O{quit_after}, # (q)uit after
-  'n|suppress-data' => \$O{supress_data},  # do (n)ot print data portion
+  'n|suppress-data' => \$O{suppress_data}, # do (n)ot print data portion
   'a|auth:s'        => \$O{auth},          # force auth, exit if not supported
   'au|auth-user:s'  => \$O{auth_user},     # user for auth
   'ap|auth-password:s' => \$O{auth_pass},  # pass for auth
@@ -93,16 +93,11 @@ if ($G::dump_args) {
   print "show_time_lapse  = ", $G::show_time_lapse ? "TRUE" : "FALSE", "\n";
   print "show_time_hires  = ", $G::show_time_hires ? "TRUE" : "FALSE", "\n";
   print "auth_showpt      = ", $G::auth_showpt ? "TRUE" : "FALSE", "\n";
-  # XXX needs to be spelled correctly and moved to G:: in process_args()
-  print "supress_data     = ", $O{supress_data} ? "TRUE" : "FALSE", "\n";
-  # XXX needs to be moved to G:: in process_args()
-  print "no_hints         = ", $O{no_hints} ? "TRUE" : "FALSE", "\n";
-  # XXX needs to be moved to G:: in process_args()
-  print "hide_send        = ", $O{hide_send} ? "TRUE" : "FALSE", "\n";
-  # XXX needs to be moved to G:: in process_args()
-  print "hide_receive     = ", $O{hide_receive} ? "TRUE" : "FALSE", "\n";
-  # XXX needs to be moved to G:: in process_args()
-  print "silent           = $O{silent}\n";
+  print "suppress_data    = ", $G::suppress_data ? "TRUE" : "FALSE", "\n";
+  print "no_hints         = ", $G::no_hints ? "TRUE" : "FALSE", "\n";
+  print "hide_send        = ", $G::hide_send ? "TRUE" : "FALSE", "\n";
+  print "hide_receive     = ", $G::hide_receive ? "TRUE" : "FALSE", "\n";
+  print "silent           = $G::silent\n";
   print "type             = $G::link{type}\n";
   print "server           = $G::link{server}\n";
   print "sockfile         = $G::link{sockfile}\n";
@@ -192,12 +187,6 @@ sub open_link {
     print_transaction(11, "Connected to $G::link{sockfile}.");
   } elsif ($G::link{type} eq 'pipe') {
     $SIG{PIPE} = 'IGNORE';
-    #$SIG{PIPE} = sub {
-    #  print_transaction(12, "Child process went away unexpectedly, exiting");
-    #  exit(4);
-    #};
-    # Treat a child like a socket and only find out it's gone when you try 
-    # to read from a socket
     $SIG{CHLD} = 'IGNORE';
     print_transaction(11, "Trying pipe to $G::link{process}...");
     if (!try_load("IPC::Open2")) {
@@ -294,7 +283,7 @@ sub sendmail {
   do_smtp_gen('DATA', '354') || do_smtp_quit(1, 25);
 
   # send the actual data
-  do_smtp_gen($data, '250', undef, $O{supress_data}) || do_smtp_quit(1, 26);
+  do_smtp_gen($data, '250', undef, $G::suppress_data) || do_smtp_quit(1, 26);
 
   # send QUIT
   do_smtp_quit(0) || do_smtp_quit(1, 27);
@@ -326,8 +315,8 @@ sub print_transaction {
   my $o = \*STDOUT;
   my $f;
 
-  return if (($O{hide_send}    && int($c/10) == 2) ||
-             ($O{hide_receive} && int($c/10) == 3));
+  return if (($G::hide_send    && int($c/10) == 2) ||
+             ($G::hide_receive && int($c/10) == 3));
 
   # global option silent controls what we echo to the terminal
   # 0 - print everything
@@ -335,14 +324,14 @@ sub print_transaction {
   #     received after that (done by setting option to 0 on first error)
   # 2 - don't show anything but errors
   # >=3 - don't print anything
-  if ($O{silent} > 0) {
-    return if ($O{silent} >= 3);
-    return if ($O{silent} == 2 && $c%2 != 0);
-    if ($O{silent} == 1) {
+  if ($G::silent > 0) {
+    return if ($G::silent >= 3);
+    return if ($G::silent == 2 && $c%2 != 0);
+    if ($G::silent == 1) {
       if ($c%2 != 0) {
         return();
       } else {
-        $O{silent} = 0;
+        $G::silent = 0;
       }
     }
   }
@@ -368,7 +357,7 @@ sub print_transaction {
   else { $c = '???'; }
 
   $f .= ' ';
-  $f = '' if ($O{no_hints} && int($c/10) != 1);
+  $f = '' if ($G::no_hints && int($c/10) != 1);
 
   if ($b) {
     # split to tmp list to prevent -w gripe
@@ -949,7 +938,12 @@ sub process_args {
   # load the $fconf hash if user has specified a -l file
   process_file($o->{option_file}, $fconf) if ($o->{option_file});
 
-  $G::dump_args = 1 if ($o->{dump_args});
+  $G::dump_args     = 1 if ($o->{dump_args});
+  $G::suppress_data = 1 if ($o->{suppress_data});
+  $G::no_hints      = 1 if ($o->{no_hints});
+  $G::hide_send     = 1 if ($o->{hide_send});
+  $G::hide_receive  = 1 if ($o->{hide_receive});
+  $G::silent        = $o->{silent} ? $o->{silent} : 0;
   
   # set global option of -q option
   if ($o->{quit_after}) {
@@ -1022,7 +1016,9 @@ sub process_args {
       if (defined($o->{mail_to}));
   $n{to}           ||= $fconf->{TO};
   $n{to}             = interact("To: ", '^.*$')
-      if (!$n{to} && !($G::server_only && $G::link{server}));
+      if (!$n{to} && !($G::server_only && ($G::link{server} ||
+                                           $G::link{type} eq 'socket-unix' ||
+                                           $G::link{type} eq 'pipe')));
   if (!$G::link{type}) {
     $G::link{server} = get_server($n{to}) if (!$G::link{server});
     $G::link{type}   = "socket-inet";
@@ -1291,6 +1287,8 @@ swaks [--help|--version] | (see description of options below)
 =item --pipe
 
 This option takes as its argument a program and the program's arguments.  If this option is present, swaks opens a pipe to the program and enters an SMTP transaction over that pipe rather than connecting to a remote server.  Some MTAs have testing modes using stdin/stdout.  This option allows you to tie into those options.  For example, if you implemented DNSBL checking with exim and you wanted to make sure it was working, you could run 'swaks --pipe "exim -bh 127.0.0.2"'.
+
+In an ideal world the process you are talking to should behave exactly like an SMTP server on stdin and stdout.  Any debugging should be sent to stderr, which will be directed to your terminal.  In the real world swaks can generally handle some debug on the child's stdout, but there are no guarantees on how much it can handle.
 
 =item --socket
 
