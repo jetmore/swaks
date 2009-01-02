@@ -168,8 +168,8 @@ $data =~ s/\\n/\r\n/g;
 $data =~ s/%F/$from/g;
 $data =~ s/%T/$to/g;
 $data =~ s/%D/scalar(localtime(time()))/eg;
-print "after parsing, \$data looks like this:\n#\n$data\n#\n";
-exit;
+#print "after parsing, \$data looks like this:\n#\n$data\n#\n";
+#exit;
 sendmail($from, $to, $helo, $data, $server, $port, $a_user, $a_pass, $a_type,
          $lint);
 
