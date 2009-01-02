@@ -1085,7 +1085,7 @@ sub load_dependencies {
 sub get_option_struct {
   @G::raw_option_data = (
     # location of config file
-    { opts => ['config'],                         suffix => '=s',
+    { opts => ['config'],                         suffix => ':s',
       okey => 'config_file',                      type => 'scalar', },
     # (l)ocation of input data
     { opts => ['l', 'input-file'],                suffix => '=s',
@@ -1282,30 +1282,35 @@ sub load_args {
   # containing the one and only config file we will use.
   # the long term plan is that we could store other stuff in here too so
   # we may move processing somewhere else, but for now just handle here
-  if (open(C, "<$config_file")) {
-    # we only pay attention to file between ^<OPTIONS>$ and ^</OPTIONS>$ here.
-    # each line is one arg and optional value. "#" in col 0 is a comment
-    while (defined(my $l = <C>)) {
-      if ($l =~ /^<OPTIONS>\s*$/) {
-        while (defined(my $m = <C>)) {
-          last if ($m =~ m|^</OPTIONS>\s*$|);
-          next if ($m =~ m|^#|);
-          chomp($m);
-          $m = '-' . $m if ($m !~ /^-/);
-          push(@ARGV, split(/\s/, $m, 2));
+  if ($config_file) {
+    foreach my $configf ('&DATA', $config_file) {
+      if (open(C, "<$configf")) {
+        # we only pay attention to file between ^<OPTIONS>$ and ^</OPTIONS>$
+        # here.  "#" in col 0 is a comment
+        while (defined(my $l = <C>)) {
+          if ($l =~ /^<OPTIONS>\s*$/) {
+            while (defined(my $m = <C>)) {
+              last if ($m =~ m|^</OPTIONS>\s*$|);
+              next if ($m =~ m|^#|);
+              chomp($m);
+              $m = '-' . $m if ($m !~ /^-/);
+              push(@ARGV, split(/\s/, $m, 2));
+            }
+          }
         }
+        close(C);
+      } elsif (!$config_is_default && $configf eq $config_file) {
+#} else {
+        # we only print an error if the config was specified explicitly
+        ptrans(12, "Config file $configf could not be opened ($!).  Exiting");
+        exit(1);
       }
-    }
-    close(C);
-  } elsif (!$config_is_default) {
-    # we only print an error if the config was specified explicitly
-    ptrans(12, "Config file $config_file could not be opened ($!).  Exiting");
-    exit(1);
-  }
 
-  # OK, all that work to load @ARGV with values from the config file.  Now
-  # we just need to process it.  (don't call if nothing set in @ARGV)
-  fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
+      # OK, all that work to load @ARGV with values from the config file.  Now
+      # we just need to process it.  (don't call if nothing set in @ARGV)
+      fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
+    }
+  }
 
   # OK, %ARGS contains all the settings from the config file.  No do it again
   # with SWAKS_OPT_* environment variables
@@ -1673,7 +1678,9 @@ sub process_args {
     }
     $n{add_header} = join('\n', @{$o->{add_header}}) . "\n"
         if (@{$o->{add_header}});
-    $n{data} =~ s/%H/$n{add_header}/g;
+    if ($n{data} !~ s/%H/$n{add_header}/g) {
+      $n{data} =~ s/(\n|\\n)(\r?\n|\\n)/$1$n{add_header}$2/;
+    }
     $n{data} =~ s/\\n/\r\n/g;
     $n{data} =~ s/%F/$n{from}/g;
     $n{data} =~ s/%T/$n{to}/g;
