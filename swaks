@@ -8,10 +8,10 @@ use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20040404.1-dev";
+my $p_version = "20050605.2";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
-        Copyright (c) 2003-2004 John Jetmore <jj33\@pobox.com>
+        Copyright (c) 2003-2005 John Jetmore <jj33\@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,9 +29,10 @@ my $p_cp      = <<EOM;
 EOM
 ext_usage(); # before we do anything else, check for --help
 
-my($from,$to,$helo,$data,$server,$port,$a_type,$a_user,$a_pass,
-   $lint,$timeout,%O) = (undef);
-my $user     = getpwuid($<);
+my($from, $to, $helo, $data, $server, $port, $a_type, $a_user, $a_pass,
+   $lint, $timeout, %O)
+             = (undef);
+my $user     = get_username();
 my $hostname = get_hostname();
 
 Getopt::Long::Configure("bundling_override");
@@ -1083,6 +1084,14 @@ sub process_args {
   return(\%n);
 }
 
+sub get_username {
+  if ($^O eq 'MSWin32') {
+    require Win32;
+    return Win32::LoginName();
+  }
+  return getpwuid($<);
+}
+
 sub get_date_string {
   return($G::date_string) if (length($G::date_string) > 0);
 
@@ -1320,6 +1329,24 @@ This module is required for DIGEST-MD5 authentication.
 =item Time::HiRes
 
 This module is required for high resolution timing.  If unavailable only integer timing is available.
+
+=back
+
+=head1 PORTABILITY
+
+=over 4
+
+=item Operating Systems
+
+This program was primarily intended for use on unix-like operating systems, and it should work on any reasonable version thereof.  It has been developed and tested on Solaris, Linux, and Mac OS X and is feature complete on all of these.
+
+This program is known to demonstrate basic functionality on Windows using ActiveState's Perl.  It has not been fully tested.  Known to work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5 auth types.  Unknown is any TLS functionality and the NTLM/SPA and Digest-MD5 auth types.
+
+Because this program should work anywhere Perl works, I would appreciate knowing about any new operating systems you've thoroughly used swaks on as well as any problems encountered on a new OS.
+
+=item Mail Servers
+
+This program was almost exclusively developed against Exim mail servers.  It was been used casually by the author, though not thoroughly tested, with sendmail, smail, and Communigate.  Because all functionality in swaks is based off of known standards it should work with any fairly modern mail server.  If a problem is found, please alert the author at the address below.
 
 =back
 
