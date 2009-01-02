@@ -34,7 +34,6 @@ GetOptions(
 # s - what (s)erver do I send this mail to?
 # p - what (p)ort do I connect to?
 # d - what is the (d)ata section of the email?
-# i - enter interactive mode
 # g - (g)et data on STDIN
 # m - emulate basic "Mail -v" functionality
 # q - send quit after (valid options are 'helo', 'mail', 'rcpt', and 'connect')
@@ -78,10 +77,10 @@ $data   ||= 'To: %T\nFrom: %F\nSubject: test\n\nThis is a test mailing\n.';
 						# body (\n translated later)
 $helo   ||= $hostname;				# who we claim to be in HELO
 $port   ||= 25;					# where's the mail server?
-$to     ||  process_interact('t');		# who is the mail to?
+$to     ||= interact("To: ", '^\S+$');		# who is the mail to?
 $server ||= get_server($to);			# receiving server
 
-$data     = join('', <>) if ($O::data_on_stdin);
+$data     = join('', <STDIN>) if ($O::data_on_stdin);
 
 #print "\$from   = $from\n";
 #print "\$to     = $to\n";
@@ -158,6 +157,7 @@ sub sendmail {
 
   # send RCPT
   if (!do_smtp_rcpt($s, $to, $timeout)) {
+print "here 5\n";
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(24);
   }
