@@ -717,8 +717,6 @@ sub do_smtp_data {
 
   # now be a little messy - lmtp is not a lockstep after data - we need to
   # listen for as many calls as we had accepted recipients
-  # XXX UNTESTED (ok for e?smtp as it is never used, but LMTP multiple
-  # XXX           recips need to be tested)
   if ($G::protocol eq 'lmtp') {
     foreach my $c (1..($calls-1)) { # -1 because we already got 1 above
       $ok += transact(cxn_string => undef, expect => '250');
@@ -1179,15 +1177,18 @@ sub process_args {
   # SMTP mail from
   $n{from} = $o->{mail_from} || interact("From: ", '^.*$')
       if (defined($o->{mail_from}));
-  $n{from} ||= $fconf->{FROM} || ($hostname ? "$user\@$hostname" :
-                                             interact("From: ", '^.*$'));
+  $n{from} ||= $fconf->{FROM} || ($hostname || ($G::server_only &&
+                                                $G::quit_after ne 'mail')
+                                    ? "$user\@$hostname"
+                                    : interact("From: ", '^.*$'));
   $n{from} = '' if ($n{from} eq '<>');
 
   # SMTP helo/ehlo
   $n{helo}   = $o->{mail_helo} || interact("Helo: ", '^.*$')
       if (defined($o->{mail_helo}));
-  $n{helo} ||= $fconf->{HELO} || ($hostname ? $hostname :
-                                             interact("Helo: ", '^.*$'));
+  $n{helo} ||= $fconf->{HELO} || ($hostname || ($G::quit_after eq 'connect')
+                                    ? $hostname
+                                    : interact("Helo: ", '^.*$'));
 
   # SMTP server and rcpt to are interdependant, so they are handled together
   $G::link{server}   = $o->{mail_server} || interact("Server: ", '^.*$')
