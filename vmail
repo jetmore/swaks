@@ -59,12 +59,13 @@ GetOptions(
 ) || exit(1);
 
 load_modules({
-  'Basic AUTH'      => ['MIME::Base64'],
-  'AUTH CRAM-MD5'   => ['Digest::MD5'],
-  'AUTH NTLM'       => ['Authen::NTLM'],
-  'AUTH DIGEST-MD5' => ['Authen::DigestMD5'],
-  'MX lookups'      => ['Net::DNS'],
-  'TLS'             => ['Net::SSLeay'],
+  'Basic AUTH'             => ['MIME::Base64'],
+  'AUTH CRAM-MD5'          => ['Digest::MD5'],
+  'AUTH NTLM'              => ['Authen::NTLM'],
+  'AUTH DIGEST-MD5'        => ['Authen::DigestMD5'],
+  'MX lookups'             => ['Net::DNS'],
+  'High resolution timing' => ['Time::HiRes'],
+  'TLS'                    => ['Net::SSLeay'],
 }, \%G::modules);
 exit(0) if ($O{get_support}); # --support means report capabilities only
 
@@ -556,12 +557,14 @@ sub do_smtp_gen {
   my $r = '';    # This'll be the return value from transact()
 
   print_transaction(21, $x ? $x : $m, $b) if (defined($m));
-  my $time = time() if ($G::show_time_lapse);
+  #my $time = time() if ($G::show_time_lapse);
+  my $time = [Time::HiRes::gettimeofday()] if ($G::show_time_lapse);
   $r  = transact($s, $m, '', $t);
   $$p = $r;
   
   if ($G::show_time_lapse) {
-    $time = time() - $time;
+    #$time = time() - $time;
+    $time = Time::HiRes::tv_interval($time, [Time::HiRes::gettimeofday()]);
     print_transaction(11, "response in ${time}s");
   }
 
@@ -785,6 +788,7 @@ sub process_args {
 
   # set global flag for -stl flag
   $G::show_time_lapse = time() if ($o->{show_time_lapse});
+  $G::show_time_hires = 1 if ($G::modules{'Time::HiRes'});
 
   if ($o->{emulate_mail}) { # set up for -m option
     $n{to} = shift if (!defined($o->{mail_to}));
