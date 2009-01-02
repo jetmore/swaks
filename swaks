@@ -8,7 +8,7 @@ use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20040128.1";
+my $p_version = "20040404.0";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003 John Jetmore <jj33\@pobox.com>
@@ -66,6 +66,7 @@ GetOptions(
   'hr|hide-receive' => \$O{hide_receive},  # Don't show reception lines
   'hs|hide-send'    => \$O{hide_send},     # Don't show sending lines
   'stl|show-time-lapse:s' => \$O{show_time_lapse}, # print lapse for send/recv
+  'ndf|no-data-fixup' => \$O{no_data_fixup}, # don't touch the data
   'dump'            => \$O{dump_args}      # build options and dump
 ) || exit(1);
 
@@ -869,7 +870,7 @@ sub process_args {
       print_transaction(12, "Unknown quit value $G::quit_after, exiting");
       exit(1);
     }
-    # only rcpt _require_ a to address
+    # only rcpt _requires_ a to address
     $G::server_only = 1 if ($G::quit_after ne 'rcpt');
   } else {
     $G::quit_after = '';
@@ -943,15 +944,19 @@ sub process_args {
              ."X-Mailer: swaks v$p_version jetmore.org/john/code/#swaks".'\n\n'
              .'This is a test mailing\n';
   # The -g option trumps all other methods of getting the data
-  $n{data}     = join('', <STDIN>) if ($o->{data_on_stdin});
-  $n{data} =~ s/\\n/\r\n/g;
-  $n{data} =~ s/%F/$n{from}/g;
-  $n{data} =~ s/%T/$n{to}/g;
-  $n{data} =~ s/%D/get_date_string()/eg;
-  $n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
-  $n{data} =~ s/\n\.\n?$//s; # If there was a trailing dot, remove it
-  $n{data} =~ s/\n\./\n../g; # quote any other leading dots
-  $n{data} .= "\n.";         # add a trailing dot
+  $n{data}   = join('', <STDIN>) if ($o->{data_on_stdin});
+  if (!$o->{no_data_fixup}) {
+    $n{data} =~ s/\\n/\r\n/g;
+    $n{data} =~ s/%F/$n{from}/g;
+    $n{data} =~ s/%T/$n{to}/g;
+    $n{data} =~ s/%D/get_date_string()/eg;
+    $n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
+    $n{data} =~ s/\r?\n\.\r?\n?$//s;  # If there was a trailing dot, remove it
+    $n{data} =~ s/\n\./\n../g;        # quote any other leading dots
+    # translate line endings - use while to fake out /g
+    while ($n{data} =~ s/([^\r])\n/$1\r\n/s) { 1; } 
+    $n{data} .= "\r\n.";              # add a trailing dot
+  }
 
   # Handle TLS options
   $G::tls_optional   = 1 if (defined($o->{tls_optional}));
