@@ -1091,13 +1091,6 @@ sub process_args {
   $G::pipeline      = 1 if ($o->{pipeline});
   $G::silent        = $o->{silent} ? $o->{silent} : 0;
 
-####
-  #$G::protocol      = lc($o->{mail_protocol}) || 'esmtp';
-  #if ($G::protocol !~ /^(e?s|l)mtp/) {
-  #  ptrans(12, "Unknown protocol $G::protocol specified, exiting");
-  #  exit(1);
-  #}
-####
   my %protos = ( 
     smtp    => { proto => 'smtp',  auth => 0, tls => '0' },
     ssmtp   => { proto => 'esmtp', auth => 0, tls => 'c' },
@@ -1117,14 +1110,21 @@ sub process_args {
     ptrans(12, "Unknown protocol $G::protocol specified, exiting");
     exit(1);
   }
-  # if proto->{auth} and _no_ other auth options set, set -a
-  # if no other tls options && proto->{tls}
-  #  if proto->tls eq 'c'
-  #    set --tls-on-connect
-  #  elsif proto->tls eq 's'
-  #    set --tls
+  if ($protos{$G::protocol}{auth} && !$o->{auth_user} && !$o->{auth_pass} &&
+      !$o->{auth_optional} && !$o->{auth})
+  {
+    $o->{auth} = ''; # cause auth to be processed below
+  }
+  if ($protos{$G::protocol}{tls} && !$o->{tls} && !$o->{tls_optional} &&
+      !$o->{tls_on_connect})
+  {
+    if ($protos{$G::protocol}{tls} eq 's') {
+      $o->{tls} = '';
+    } elsif ($protos{$G::protocol}{tls} eq 'c') {
+      $o->{tls_on_connect} = '';
+    }
+  }
   $G::protocol = $protos{$G::protocol}{proto};
-##
 
   # set global option of -q option
   if ($o->{quit_after}) {
