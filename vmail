@@ -26,30 +26,30 @@ my %modules  = ();
 
 Getopt::Long::Configure("bundling_override");
 GetOptions(
-  'l=s'  => \$O::option_file,   # (l)ocation of input data
-  'f:s'  => \$O::mail_from,     # envelope-(f)rom address
-  't:s'  => \$O::mail_to,       # envelope-(t)o address
-  'h:s'  => \$O::mail_helo,     # (h)elo string
-  's:s'  => \$O::mail_server,   # (s)erver to use
-  'p:i'  => \$O::mail_port,     # (p)ort to use
-  'd:s'  => \$O::mail_data,     # (d)ata portion ('\n' for newlines)
-  'to:s' => \$O::timeout,       # timeout for smtp trans. in seconds (def 30)
+  'l|input-file=s'  => \$O::option_file,   # (l)ocation of input data
+  'f|from:s'  => \$O::mail_from,     # envelope-(f)rom address
+  't|to:s'  => \$O::mail_to,       # envelope-(t)o address
+  'h|helo|ehlo:s'  => \$O::mail_helo,     # (h)elo string
+  's|server:s'  => \$O::mail_server,   # (s)erver to use
+  'p|port:i'  => \$O::mail_port,     # (p)ort to use
+  'd|data:s'  => \$O::mail_data,     # (d)ata portion ('\n' for newlines)
+  'timeout:s' => \$O::timeout,  # timeout for smtp trans. in seconds (def 30)
   'g'    => \$O::data_on_stdin, # (g)et data on stdin 
   'm'    => \$O::emulate_mail,  # emulate (M)ail command
-  'q=s'  => \$O::quit_after,    # (q)uit after (connect,helo,mail,rcpt,auth)
-  'n'    => \$O::supress_data,  # do (n)ot print data portion
-  'a:s'  => \$O::auth,          # force auth, exit if not supported
-  'au:s' => \$O::auth_user,     # user for auth
-  'ap:s' => \$O::auth_pass,     # pass for auth
-  'ahp'  => \$O::auth_hidepw,   # hide passwords when possible
-  'apt'  => \$O::auth_showpt,   # translate base64 strings
-  'ao'   => \$O::auth_optional, # make auth optional (ignore auth failure)
+  'q|quit|quit-after=s'  => \$O::quit_after,    # (q)uit after (connect,helo,mail,rcpt,auth)
+  'n|supress-data'    => \$O::supress_data,  # do (n)ot print data portion
+  'a|auth:s'  => \$O::auth,          # force auth, exit if not supported
+  'au|auth-user:s' => \$O::auth_user,     # user for auth
+  'ap|auth-password:s' => \$O::auth_pass,     # pass for auth
+  'ahp|auth-hide-password'  => \$O::auth_hidepw,   # hide passwords when possible
+  'apt|auth-plaintext'  => \$O::auth_showpt,   # translate base64 strings
+  'ao|auth-optional'   => \$O::auth_optional, # make auth optional (ignore auth failure)
   'support' => \$O::get_support,# report capabilties
-  'li:s' => \$O::lint,          # local interface to use for connection
+  'li|local-interface:s' => \$O::lint,          # local interface to use for connection
   'tls'  => \$O::tls,           # use TLS
-  'tlso' => \$O::tls_optional,  # use tls if available
-  'S+'   => \$O::silent,        # suppress output to varying degrees
-  'nsf'  => \$O::no_strip_from  # Don't strip From_ line from DATA
+  'tlso|tls-optional' => \$O::tls_optional,  # use tls if available
+  'S|silent+'   => \$O::silent,        # suppress output to varying degrees
+  'nsf|no-strip-from'  => \$O::no_strip_from  # Don't strip From_ line from DATA
 ) || exit(1);
 
 load_modules({
@@ -896,7 +896,7 @@ This string should be on one single line, with a literal \n representing where l
 
 Default value for this option is "To: %T\nFrom: %F\nSubject: test %D\n\nThis is a test mailing\n".
 
-=item -to
+=item -timeout
 
 Use argument as the SMTP transaction timeout, or prompt user if no argument given.  Overridden by the -l token TIMEOUT.  Argument can either be a pure digit, which will be interpretted as seconds, or can have a specifier s or m (5s = 5 seconds, 3m = 180 seconds).  As a special case, 0 means don't timeout the transactions.  Default value is 30s.
 
