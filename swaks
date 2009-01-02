@@ -50,6 +50,8 @@ if ($G::dump_args) {
   print "no_hints         = ", $G::no_hints ? "TRUE" : "FALSE", "\n";
   print "hide_send        = ", $G::hide_send ? "TRUE" : "FALSE", "\n";
   print "hide_receive     = ", $G::hide_receive ? "TRUE" : "FALSE", "\n";
+  print "hide_informational = ", $G::hide_informational ? "TRUE" : "FALSE","\n";
+  print "hide_all         = ", $G::hide_all ? "TRUE" : "FALSE", "\n";
   print "pipeline         = ", $G::pipeline ? "TRUE" : "FALSE", "\n";
   print "silent           = $G::silent\n";
   print "protocol         = $G::protocol\n";
@@ -345,7 +347,9 @@ sub ptrans {
   my $f;
 
   return if (($G::hide_send    && int($c/10) == 2) ||
-             ($G::hide_receive && int($c/10) == 3));
+             ($G::hide_receive && int($c/10) == 3) ||
+             ($G::hide_informational && $c == 11)  ||
+             ($G::hide_all));
 
   # global option silent controls what we echo to the terminal
   # 0 - print everything
@@ -1253,6 +1257,10 @@ sub fetch_args {
     'hr|hide-receive'             => \$r->{hide_receive},
     # Don't show sending lines
     'hs|hide-send'                => \$r->{hide_send},
+    # Don't show any swaks-generated, non-error informational lines
+    'hi|hide-informational'       => \$r->{hide_informational},
+    # Don't send any output to the terminal
+    'ha|hide-all'                 => \$r->{hide_all},
     # print lapse for send/recv
     'stl|show-time-lapse:s'       => \$r->{show_time_lapse},
     # don't touch the data
@@ -1287,13 +1295,15 @@ sub process_args {
   # load the $fconf hash if user has specified a -l file
   process_file($o->{option_file}, $fconf) if ($o->{option_file});
 
-  $G::dump_args     = 1 if ($o->{dump_args});
-  $G::suppress_data = 1 if ($o->{suppress_data});
-  $G::no_hints      = 1 if ($o->{no_hints});
-  $G::hide_send     = 1 if ($o->{hide_send});
-  $G::hide_receive  = 1 if ($o->{hide_receive});
-  $G::pipeline      = 1 if ($o->{pipeline});
-  $G::silent        = $o->{silent} ? $o->{silent} : 0;
+  $G::dump_args          = 1 if ($o->{dump_args});
+  $G::suppress_data      = 1 if ($o->{suppress_data});
+  $G::no_hints           = 1 if ($o->{no_hints});
+  $G::hide_send          = 1 if ($o->{hide_send});
+  $G::hide_receive       = 1 if ($o->{hide_receive});
+  $G::hide_informational = 1 if ($o->{hide_informational});
+  $G::hide_all           = 1 if ($o->{hide_all});
+  $G::pipeline           = 1 if ($o->{pipeline});
+  $G::silent             = $o->{silent} ? $o->{silent} : 0;
 
   # it is an error if >1 of --server, --socket, or --pipe is specified
   if ((defined($o->{mail_server}) && defined($o->{socket}))   ||
