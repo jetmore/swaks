@@ -8,7 +8,7 @@ use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20031211.2";
+my $p_version = "20031211.2-dev";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003 John Jetmore <jj33\@pobox.com>
@@ -59,6 +59,7 @@ GetOptions(
   'li|local-interface:s' => \$O{lint},     # local interface to use
   'tls'             => \$O{tls},           # use TLS
   'tlso|tls-optional' => \$O{tls_optional}, # use tls if available
+  'tlsc|tls-on-connect' => \$O{tls_on_connect}, # use tls if available
   'S|silent+'       => \$O{silent},        # suppress output to varying degrees
   'nsf|no-strip-from' => \$O{no_strip_from}, # Don't strip From_ line from DATA
   'nth|no-hints'    => \$O{no_hints},      # Don't show transaction hints
@@ -126,6 +127,16 @@ sub sendmail {
   }
   print_transaction(11, "Connected to $host.");
 
+  # start up tls if -tlsc specified
+  if ($G::tls_on_connect) {
+    if (start_tls($s)) {
+      print_transaction(11, "TLS started w/ cipher $G::tls_cipher");
+    } else {
+      print_transaction(12, "TLS startup failed ($G::tls_res)");
+      exit(29);
+    }
+  }
+
   # read the server's 220 banner
   if (!do_smtp_gen($s, undef, '220', $timeout)) {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
@@ -165,7 +176,7 @@ sub sendmail {
     exit(0);
   }
 
-  if ($G::tls_active) {
+  if ($G::tls_active && $ehlo->{STARTTLS}) {
     # According to RFC3207, we need to forget state info and re-EHLO here
     $ehlo = {};
     if (!do_smtp_helo($s, $helo, $timeout, $ehlo)) {
@@ -245,15 +256,16 @@ sub start_tls {
   Net::SSLeay::load_error_strings();
   Net::SSLeay::SSLeay_add_ssl_algorithms();
   Net::SSLeay::randomize();
-  $G::tls_con = Net::SSLeay::CTX_new() || return(0);
+  $G::tls_con    = Net::SSLeay::CTX_new() || return(0);
   Net::SSLeay::CTX_set_options($G::tls_con, &Net::SSLeay::OP_ALL); # error check
-  $G::tls_ssl = Net::SSLeay::new($G::tls_con) || return(0);
+  $G::tls_ssl    = Net::SSLeay::new($G::tls_con) || return(0);
   Net::SSLeay::set_fd($G::tls_ssl, fileno($s)); # error check?
-  $G::tls_res = Net::SSLeay::connect($G::tls_ssl); # error check
+  $G::tls_active = Net::SSLeay::connect($G::tls_ssl) == 1 ? 1 : 0;
+  $G::tls_res    = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error())
+                       if (!$G::tls_active);
   $G::tls_cipher = Net::SSLeay::get_cipher($G::tls_ssl);
-  $G::tls_active = 1;
 
-  return(1);
+  return($G::tls_active);
 }
 
 sub print_transaction {
@@ -325,7 +337,7 @@ sub do_smtp_tls {
   } elsif (!do_smtp_gen($s, "STARTTLS", '220', $timeout)) {
     return $G::tls_optional ? 1 : 0;
   } elsif (!start_tls($s)) {
-    print_transaction(12, "TLS startup failed");
+    print_transaction(12, "TLS startup failed ($G::tls_res)");
     return $G::tls_optional ? 1 : 0;
   }
 
@@ -836,7 +848,8 @@ sub process_args {
   # SMTP mail from
   $n{from} = $o->{mail_from} || interact("From: ", '^.*$')
       if (defined($o->{mail_from}));
-  $n{from} ||= $fconf->{FROM} || "$user\@$hostname";
+  $n{from} ||= $fconf->{FROM} || $hostname ? "$user\@$hostname" :
+                                             interact("From: ", '^.*$');
   $n{from} = '' if ($n{from} eq '<>');
 
   # SMTP rcpt to
@@ -847,12 +860,8 @@ sub process_args {
   # SMTP helo/ehlo
   $n{helo} = $o->{mail_helo} || interact("Helo: ", '^.*$')
       if (defined($o->{mail_helo}));
-  $n{helo} ||= $fconf->{HELO} || $hostname;
-
-  # SMTP port
-  $n{port} = $o->{mail_port} || interact("Port: ", '^\d+$')
-      if (defined($o->{mail_port}));
-  $n{port} ||= $fconf->{PORT} || 25;
+  $n{helo} ||= $fconf->{HELO} || $hostname ? $hostname :
+                                             interact("Helo: ", '^.*$');;
 
   # SMTP server
   $n{server} = $o->{mail_server} || interact("Server: ", '^.*$')
@@ -889,7 +898,8 @@ sub process_args {
     }
   }
   $n{data} ||= $fconf->{DATA}
-           || 'Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\n\n'
+           || 'Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\n'
+             ."X-Mailer: swaks v$p_version jetmore.org/john/code/#swaks".'\n\n'
              .'This is a test mailing\n';
   # The -g option trumps all other methods of getting the data
   $n{data}     = join('', <STDIN>) if ($o->{data_on_stdin});
@@ -903,10 +913,11 @@ sub process_args {
   $n{data} .= "\n.";         # add a trailing dot
 
   # Handle TLS options
-  $G::tls_optional = 1 if (defined($o->{tls_optional}));
-  $G::tls = 1 if (defined($o->{tls}) || $G::tls_optional);
+  $G::tls_optional   = 1 if (defined($o->{tls_optional}));
+  $G::tls            = 1 if (defined($o->{tls}) || $G::tls_optional);
+  $G::tls_on_connect = 1 if (defined($o->{tls_on_connect}));
   $G::tls_active = 0;
-  if ($G::tls) {
+  if ($G::tls || $G::tls_on_connect) {
     if (!$G::modules{'Net::SSLeay'}) {
       if ($G::tls_optional) {
         $G::tls = undef; # so we won't try it later
@@ -919,6 +930,11 @@ sub process_args {
       }
     }
   }
+
+  # SMTP port
+  $n{port} = $o->{mail_port} || interact("Port: ", '^\d+$')
+      if (defined($o->{mail_port}));
+  $n{port} ||= $fconf->{PORT} || ($G::tls_on_connect ? 465 : 25);
 
   # Handle AUTH options
   $G::auth_optional = 1 if (defined($o->{auth_optional}));
@@ -1133,6 +1149,10 @@ Require connection to use STARTTLS.  Exit if TLS not available for any reason (n
 =item -tlso, --tls-optional
 
 Attempt to use STARTTLS if possible, continue t/ normal transaction if TLS unavailable.
+
+=item -tlsc, --tls-on-connect
+
+Initiate a TLS connection immediately on connection.  Use to test smtps/ssmtp servers.  If this options is specified, the default port changes from 25 to 465, though this can still be overridden with the -p option.
 
 =item -a, --auth
 
