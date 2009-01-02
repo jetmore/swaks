@@ -1043,18 +1043,17 @@ sub process_args {
 # %B token
 # --body option
 
-# XXX attachment/body handling here
-# Build the body from any body of attach options and store, the change the
-# default DATA 
-  my $body = 'This is a test mailing'; # default message body
+  my $body  = 'This is a test mailing'; # default message body
   my $bound = "";
+  my $stdin = undef;
   if (defined($o->{body_822})) {
     # the --body option is the entire 822 body and trumps and other options
     # that mess with the body
     if (!$o->{body_822}) {
       $body = interact("Body: ", '.+');
     } elsif ($o->{body_822} eq '-') {
-      $body = join('', <STDIN>);
+      $stdin = join('', <STDIN>);
+      $body  = $stdin;
     } else {
       $body = $o->{body_822};
     }
@@ -1062,22 +1061,11 @@ sub process_args {
       $body = join('', <I>);
       close(I);
     }
-  } elsif (scalar(@{$o->{attach_822}})) {
+  }
+  if (scalar(@{$o->{attach_822}})) {
     # this option is a list of files (or STDIN) to attach.  In this case,
-    # the message become a mime message and the std test message goes in the
+    # the message become a mime message and the "body" goes in the
     # first text/plain part
-
-# problems with this
-# 1 need to tell the DATA processing below that it needs to add MIME headers
-# 2 what about the message mime part? - always have multipart/mixed?
-# how tell mime type of individual files (there's a default type, but a new
-#	option (--attach-type, pointing to same attach_822 obj) that must
-#	appear before each --attach arg?  Actually, it persists until it
-#	appears again
-# 3 need charset on text/plain?
-# 4 maybe --body and --attach should be mutually exclusive?  We still have the
-#	text body below
-
     my $mime_type = 'application/octet-stream';
     my @parts = ( { body => $body, type => 'text/plain' } );
     $bound = "----=_MIME_BOUNDARY_000_$$";
@@ -1085,10 +1073,9 @@ sub process_args {
       if ($t =~ m|^[^/]+/[^/]+$| && !stat($t)) {
         $mime_type = $t;
       } else {
-        push(@parts, { body => $t, type => $mime_type });
+        push(@parts, { body => "$t", type => $mime_type });
       }
     }
-    my $stdin = undef;
     $body = '';
     foreach my $p (@parts) {
       if ($p->{body} eq '-') {
@@ -1096,6 +1083,7 @@ sub process_args {
           $p->{body} = $stdin;
         } else {
           $p->{body} = join('', <STDIN>);
+          $stdin     = $p->{body};
         }
       } elsif (open(I, "<$p->{body}")) {
         $p->{body} = join('', <I>);
@@ -1112,6 +1100,7 @@ sub process_args {
               .  encode_base64($p->{body}) . "\n";
       }
     }
+    $body .= "--$bound--\n";
   }
 
   # SMTP DATA
@@ -1405,9 +1394,25 @@ Use argument as argument to SMTP EHLO/HELO command, or prompt use if no argument
 
 Use argument as DATA portion of SMTP transaction, or prompt user if no argument specified.  Overridden by -l token DATA.
 
-This string should be on one single line, with a literal \n representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  Very basic token parsing is done.  %F is replaced with the value that will be used for "MAIL FROM", %T is replaced with "RCPT TO" values, and %D is replaced with a timestamp.
+This string should be on one single line, with a literal \n representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  Very basic token parsing is done.  %F is replaced with the value that will be used for "MAIL FROM", %T is replaced with "RCPT TO" values, %D is replaced with a timestamp, and %B is replaced with the message body.  See the --body option for the default body text.
 
-Default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\nX-Mailer: swaks v$p_version jetmore.org/john/code/#swaks\n\nThis is a test mailing\n".
+Default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\nX-Mailer: swaks v$p_version jetmore.org/john/code/#swaks\n\n%B\n".
+
+=item --body
+
+Specify the body of the email.  The default is "This is a test mailing".  If no argument to --body, you will be prompted to supply one.  If '-' is supplied, body will be read from standard input.  If any other text is provided and the text represents an openable file, the content of that file is used as the body.  If it does not respresent an openable file, the text itself is used as the body.
+
+=item --attach
+
+When one or more --attach option is supplied, the message is changed into a multipart/mixed MIME message.  The arguments to --attach are processed the same as --body with regard to stdin, file contents, etc.  --attach can be supplie multiple times to create multiple attachments.  By default each attachment is attached as a application/octet-stream file.  See --attach-type for changing this behaviour.
+
+When the message changes to MIME format, the previous body (%B) is attached as a text/plain type as the first attachment.  --body can still be used to specify the contents of this body attachment.
+
+It is legal for '-' (STDIN) to be specified as an argument multiple times (once for --body and multiple times for --attach).  In this case, the same content will be attached each time it is specified.  This is useful for attaching the same content with multiple MIME types.
+
+=item --attach-type
+
+By default, content that gets MIME attached to a message with the --attach option is encoded as application/octet-stream.  --attach-type changes the mime type for every --attach option which follows it.  It can be specified multiple times.
 
 =item --timeout
 
