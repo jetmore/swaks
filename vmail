@@ -33,15 +33,32 @@ GetOptions(
   'ao'   => \$O::auth_optional, # make auth optional (ignore auth failure)
   'support' => \$O::get_support,# report capabilties
   'li:s' => \$O::lint,          # local interface to use for connection
+  'tls'  => \$O::tls,           # use TLS
+  'tlso' => \$O::tls_optional   # use tls if available
 ) || exit(1);
 
 load_modules({
   'Basic AUTH'    => ['MIME::Base64'],
   'AUTH CRAM-MD5' => ['XDigest::MD5'],
   'MX lookups'    => ['Net::DNS'],
-  'TLS'           => ['Net::SSLeay'],
+  'TLS'           => ['xNet::SSLeay'],
 }, \%modules);
 exit(0) if ($O::get_support); # --support means report capabilities only
+
+# normalize the TLS options
+$O::tls_optional = 1 if (defined($O::tls_optional));
+$O::tls = 1 if (defined($O::tls) || $O::tls_optional);
+if ($O::tls) {
+  if (!$modules{'Net::SSLeay'}) {
+    print STDERR "Net::SSLeay not installed, TLS unavailable, ";
+    if ($O::tls_optional) {
+      print STDERR "skipping\n";
+    } else {
+      print STDERR "exiting...\n";
+      exit(10);
+    }
+  }
+}
 
 # normalize the auth options a bit
 $O::auth_optional = 1 if (defined($O::auth_optional));
@@ -161,7 +178,7 @@ $data     = join('', <STDIN>) if ($O::data_on_stdin);
 #print "\$a_user = $a_user\n";
 #print "\$a_pass = $a_pass\n";
 #print "\$lint   = $lint\n";
-#exit;
+exit;
 
 $data .= "\n.";
 $data =~ s/\\n/\r\n/g;
