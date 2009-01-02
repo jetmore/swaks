@@ -1530,6 +1530,10 @@ The option can either be specified multiple times or a single time with multiple
 
 Use argument as the SMTP transaction timeout, or prompt user if no argument given.  Overridden by the -l token TIMEOUT.  Argument can either be a pure digit, which will be interpretted as seconds, or can have a specifier s or m (5s = 5 seconds, 3m = 180 seconds).  As a special case, 0 means don't timeout the transactions.  Default value is 30s.
 
+=item --protocol
+
+Specify which protocol to use in the transaction.  Valid options are 'smtp', 'esmtp', and 'lmtp'.  'esmtp' is the default.  'smtp' causes swaks to only send a HELO string, and all STMP extensions are therefore disabled.  'esmtp' causes swaks to try an EHLO and fall back to HELO is EHLO is unrecognized.  'lmtp' causes swaks to greet the server with LHLO and use the LMTP protocol in the transaction (see RFC 2033).
+
 =item -li, --local-interface
 
 Use argument as the local interface for the SMTP connection, or prompt user if no argument given.  Overridden by the -l token INTERFACE.  Argument can be an IP or a hostname.  Default action is to let OS choose local interface.
@@ -1549,6 +1553,8 @@ If this option is specified, swaks summarizes the DATA portion of the SMTP trans
 =item -q, --quit-after
 
 The argument to this option is used as an indicator of where to quit the SMTP transaction.  It can be thought of as "quit after", with valid arguments CONNECT, FISRT-HELO, TLS, HELO, AUTH, MAIL, and RCPT.  In a non-STARTTLS session, FIRST-HELO and HELO behave the same way.  In a STARTTLS session, FIRST-HELO quits after the first HELO sent, while HELO quits after the second HELO is sent.
+
+For convenience, LHLO and EHLO are synonyms for HELO, FIRST-EHLO and FIRST-LHLO for FIRST-HELO, FROM for MAIL, and TO for RCPT.
 
 =item -m
 
