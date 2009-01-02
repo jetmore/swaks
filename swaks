@@ -1336,11 +1336,13 @@ sub fetch_args {
 #print "\$i = $i, $ARGV[$i]\n";
     if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
       $ARGV[$i] = "--header";  $ARGV[$i+1] = "$1: $ARGV[$i+1]";
-    } elsif ($ARGV[$i] =~ /^-?-no-(.*)$/) {
-      my $opt_name = $1;
+    } elsif ($ARGV[$i] =~ /^-?-(no-(.*))$/) {
+      my $whole_name = $1; my $opt_name = $2;
       # loop through each of the options and see if it matches
       foreach my $e (@$l) {
-        if (grep /^$opt_name$/, @{$e->{opts}}) {
+        if (grep /^$whole_name$/, @{$e->{opts}}) {
+          next RUNOPTS; #XXX# this is a validopt that begins with "no-", skip
+        } elsif (grep /^$opt_name$/, @{$e->{opts}}) {
           splice(@ARGV, $i, 1);
           delete($r->{$e->{okey}});
           redo RUNOPTS; # since we're messing with the list, redo this element
