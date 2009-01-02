@@ -278,8 +278,27 @@ sub do_smtp_auth {
   my $au = shift; # auth user
   my $ap = shift; # auth password
 
-  print_transaction('===', "doing auth here");
-  return(1);  # dummy right now
+  # I need to handle $a_type here correctly (specific or any), bu just get
+  # something to work right now
+  #print_transaction('===', "doing auth here");
+  #return(1);  # dummy right now
+
+  if (do_smtp_auth_plain($s, $t, $au, $ap)) {
+    return(1);
+  }
+
+  return(0);
+}
+
+sub do_smtp_auth_plain {
+  my $s = shift; # socket
+  my $t = shift; # timeout
+  my $u = shift; # auth user
+  my $p = shift; # auth password
+  
+  my $auth_string = "AUTH PLAIN " . encode_base64("\0$u\0$p");
+  chomp($auth_string);
+  return(do_smtp_gen($s, $auth_string, '235', $t));
 }
 
 sub do_smtp_helo {
