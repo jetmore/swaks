@@ -8,7 +8,7 @@ use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20031218.0-dev";
+my $p_version = "20040128.1";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003 John Jetmore <jj33\@pobox.com>
@@ -104,7 +104,7 @@ if ($G::dump_args) {
   print "local int  = $opts->{lint}\n";
   print "timeout    = $opts->{timeout}\n";
   print "data       = <<.\n$opts->{data}\n";
-  exit;
+  exit(0);
 }
 
 sendmail($opts->{from}, $opts->{to}, $opts->{helo}, $opts->{data},
@@ -338,7 +338,8 @@ sub print_transaction {
   $f = '' if ($O{no_hints} && int($c/10) != 1);
 
   if ($b) {
-    $m = scalar(split(/\n/ms, $m)) . " lines sent";
+    # split to tmp list to prevent -w gripe
+    my @t = split(/\n/ms, $m); $m = scalar(@t) . " lines sent";
   }
   $m =~ s/\n/\n$f/msg;
   print $o "$f$m\n";
@@ -853,7 +854,26 @@ sub process_args {
   $G::dump_args = 1 if ($o->{dump_args});
   
   # set global option of -q option
-  $G::quit_after = lc($o->{quit_after}) if ($o->{quit_after});
+  if ($o->{quit_after}) {
+    $G::quit_after = lc($o->{quit_after});
+    if ($G::quit_after eq 'ehlo')          { $G::quit_after = 'helo';       }
+    elsif ($G::quit_after eq 'first-ehlo') { $G::quit_after = 'first-helo'; }
+    elsif ($G::quit_after eq 'starttls')   { $G::quit_after = 'tls';        }
+    elsif ($G::quit_after eq 'from')       { $G::quit_after = 'mail';       }
+    elsif ($G::quit_after eq 'to')         { $G::quit_after = 'rcpt';       }
+    elsif ($G::quit_after ne 'connect' && $G::quit_after ne 'first-helo' &&
+           $G::quit_after ne 'tls'     && $G::quit_after ne 'helo'       &&
+           $G::quit_after ne 'auth'    && $G::quit_after ne 'mail'       &&
+           $G::quit_after ne 'rcpt')
+    {
+      print_transaction(12, "Unknown quit value $G::quit_after, exiting");
+      exit(1);
+    }
+    # only rcpt _require_ a to address
+    $G::server_only = 1 if ($G::quit_after ne 'rcpt');
+  } else {
+    $G::quit_after = '';
+  }
 
   # set global flag for -stl flag
   $G::show_time_lapse = time() if (defined($o->{show_time_lapse}));
@@ -872,21 +892,22 @@ sub process_args {
                                              interact("From: ", '^.*$'));
   $n{from} = '' if ($n{from} eq '<>');
 
-  # SMTP rcpt to
-  $n{to} = $o->{mail_to} || interact("To: ", '^.*$')
-      if (defined($o->{mail_to}));
-  $n{to} ||= $fconf->{TO} || interact("To: ", '^.*$');
-
   # SMTP helo/ehlo
   $n{helo} = $o->{mail_helo} || interact("Helo: ", '^.*$')
       if (defined($o->{mail_helo}));
   $n{helo} ||= $fconf->{HELO} || ($hostname ? $hostname :
                                              interact("Helo: ", '^.*$'));
 
-  # SMTP server
+  # SMTP server and rcpt to are interdependant, so they are handled together
   $n{server} = $o->{mail_server} || interact("Server: ", '^.*$')
       if (defined($o->{mail_server}));
-  $n{server} ||= $fconf->{SERVER} || get_server($n{to});
+  $n{server} ||= $fconf->{SERVER};
+  $n{to} = $o->{mail_to} || interact("To: ", '^.*$')
+      if (defined($o->{mail_to}));
+  $n{to} ||= $fconf->{TO};
+  $n{to} = interact("To: ", '^.*$') if (!$n{to} &&
+                                        !($G::server_only && $n{server}));
+  $n{server} = get_server($n{to}) if (!$n{server});
 
   # local interface to connect from
   $n{lint} = $o->{lint} || interact("Interface: ", '^.*$')
@@ -1065,9 +1086,8 @@ sub ext_usage {
     require Config;
     $ENV{PATH} .= ":" unless $ENV{PATH} eq "";
     $ENV{PATH} = "$ENV{PATH}$Config::Config{'installscript'}";
-    #exec("perldoc", "-F", "-U", $0) || exit 1;
     $< = $> = 1 if ($> == 0 || $< == 0);
-    exec("perldoc", $0) || exit 1;
+    exec("perldoc", $0) || exit(1);
     # make parser happy
     %Config::Config = ();
   } elsif ($ARGV[0] =~ /^--version$/i) {
