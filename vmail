@@ -4,17 +4,29 @@ use strict; # *gasp*!  A program by jetmore that uses strict?!?!
 
 use IO::Socket qw();
 use Sys::Hostname;
-use Getopt::Std;
+use Getopt::Long;
 
 my($from, $to, $helo, $data, $server, $port) = (undef);
-my(%opt) = ();
-my($user) = getpwuid($<);
+my($user)     = getpwuid($<);
 my($hostname) = get_hostname();
 
-if (!getopts('l:f:t:h:s:p:d:i:q:gmn', \%opt)) {
-  print STDERR "getopts parsing error\n";
-  exit(1);
-}
+GetOptions(
+  'l=s'  => \$O::option_file,
+  'f:s'  => \$O::mail_from,
+  't:s'  => \$O::mail_to,
+  'h:s'  => \$O::mail_helo,
+  's:s'  => \$O::mail_server,
+  'p:i'  => \$O::mail_port,
+  'd:s'  => \$O::mail_data,
+  'g'    => \$O::data_on_stdin,
+  'm'    => \$O::emulate_mail,
+  'q=s'  => \$O::quit_after,
+  'n'    => \$O::supress_data,
+  'a:s'  => \$O::auth,          # force auth, exit if not supported
+  'au:s' => \$O::auth_user,     # user for auth
+  'ap:s' => \$O::auth_pass,     # pass for auth
+  'ao'   => \$O::auth_optional, # make auth optional (ignore auth failure)
+) || exit(1);
 # l - specify location of a file containing a (l)ist of data to be used
 # f - specify the (f)rom address
 # t - specify the (t)o address
@@ -28,25 +40,37 @@ if (!getopts('l:f:t:h:s:p:d:i:q:gmn', \%opt)) {
 # q - send quit after (valid options are 'helo', 'mail', 'rcpt', and 'connect')
 # n - do (n)ot print all the data portion
 
-$opt{q} = lc($opt{q}) if ($opt{q});
+$O::quit_after = lc($O::quit_after) if ($O::quit_after);
 
-if ($opt{m}) {
-  if ($opt{i} !~ /t/i && !$opt{t}) {
+if ($O::emulate_mail) {
+  if (!defined($O::mail_to)) {
     $to = shift;
   }
-  if ($opt{i} !~ /d/i) {
-    $opt{i} .= 'd';
-  }
+  $O::mail_data = ''; # define it here so we get it on stdin later
 }
 
-process_file($opt{l})     if ($opt{l});
-$from   = $opt{f}         if ($opt{f});
-$to     = $opt{t}         if ($opt{t});
-$helo   = $opt{h}         if ($opt{h});
-$server = $opt{s}         if ($opt{s});
-$port   = $opt{p}         if ($opt{p});
-$data   = $opt{d}         if ($opt{d});
-process_interact($opt{i}) if ($opt{i});
+process_file($O::option_file)       if ($O::option_file);
+$from   = $O::mail_from   || interact("From: ", '^\S+$')
+                                     if (defined($O::mail_from));
+$to     = $O::mail_to     || interact("To: ", '^\S+$')
+                                     if (defined($O::mail_to));
+$helo   = $O::mail_helo   || interact("Helo: ", '^[a-zA-Z0-9\-\.]+$')
+                                     if (defined($O::mail_helo));
+$server = $O::mail_server || interact("Server: ", '^[a-zA-Z0-9\-\.]+$')
+                                     if (defined($O::mail_server));
+$port   = $O::mail_port   || interact("Port: ", '^\d+$')
+                                     if (defined($O::mail_port));
+if (defined($O::mail_data) && !defined($O::data_on_stdin)) {
+  if (defined($O::emulate_mail)) {
+    $data = "Subject: " . interact("Subject: ", 'SKIP') . "\n\n";
+    do {
+      $data .= interact('', 'SKIP') . "\n";
+    } while ($data !~ /\n\.\n$/ms);
+    $data =~ s/\n\.\n$//ms;
+  } else {
+    $data = $O::mail_data || interact("Data: ", '^.*$');
+  }
+}
 
 
 $from   ||= "$user\@$hostname";			# envelope-from
@@ -57,7 +81,7 @@ $port   ||= 25;					# where's the mail server?
 $to     ||  process_interact('t');		# who is the mail to?
 $server ||= get_server($to);			# receiving server
 
-$data     = join('', <>) if ($opt{g});
+$data     = join('', <>) if ($O::data_on_stdin);
 
 #print "\$from   = $from\n";
 #print "\$to     = $to\n";
@@ -79,24 +103,18 @@ sendmail($from, $to, $helo, $data, $server, $port);
 exit;
 
 sub sendmail {
-  my($from) = shift;	# envelope-from
-  my($to)   = shift;	# envelope-to
-  my($helo) = shift;	# who am I?
-  my($data) = shift;	# body of message (content after DATA command)
-  my($host) = shift;	# receiving host
-  my($port) = shift;	# where's the remote smtp process live?
+  my $from    = shift;	# envelope-from
+  my $to      = shift;	# envelope-to
+  my $helo    = shift;	# who am I?
+  my $data    = shift;	# body of message (content after DATA command)
+  my $host    = shift;	# receiving host
+  my $port    = shift;	# where's the remote smtp process live?
 
-  my($timeout) = 10;
-  my($s) = IO::Socket::INET->new(
-		PeerAddr => $host,
-		PeerPort => $port,
-		Proto    => 'tcp',
-		Timeout  => $timeout,
-           );
-  my($buffer) = '';
-  my($send) = '';
-  $@ = '';
-  $| = 1;
+  my $ehlo    = {};	# If server is esmtp, save advertised features here
+  my $timeout = 10;	# timeout for all transactions
+  $|          = 1;
+  my $s       = IO::Socket::INET->new( PeerAddr => $host, PeerPort => $port,
+		                       Proto    => 'tcp', Timeout  => $timeout);
 
   print_transaction('===', "Trying $host:$port...");
   die "Can't connect to $host:$port ($@)\n" if (!$s);
@@ -109,19 +127,19 @@ sub sendmail {
   }
 
   # QUIT here if the user has asked us to do so
-  if ($opt{q} eq 'connect') {
+  if ($O::quit_after eq 'connect') {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(0);
   }
 
   # Send a HELO string
-  if (!do_smtp_gen($s, "HELO $helo", '250', $timeout)) {
+  if (!do_smtp_helo($s, $helo, $timeout, $ehlo)) {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(22);
   }
 
   # QUIT here if the user has asked us to do so
-  if ($opt{q} eq 'helo') {
+  if ($O::quit_after eq 'helo') {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(0);
   }
@@ -133,20 +151,19 @@ sub sendmail {
   }
 
   # QUIT here if the user has asked us to do so
-  if ($opt{q} eq 'mail') {
+  if ($O::quit_after eq 'mail') {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(0);
   }
 
   # send RCPT
-  #if (!do_smtp_gen($s, "RCPT TO:<$to>", '250', $timeout)) {
   if (!do_smtp_rcpt($s, $to, $timeout)) {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(24);
   }
 
   # QUIT here if the user has asked us to do so
-  if ($opt{q} eq 'rcpt') {
+  if ($O::quit_after eq 'rcpt') {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(0);
   }
@@ -158,7 +175,7 @@ sub sendmail {
   }
 
   # send the actual data
-  if (!do_smtp_gen($s, "$data", '250', $timeout, $opt{n})) {
+  if (!do_smtp_gen($s, "$data", '250', $timeout, undef, $O::supress_data)) {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(26);
   }
@@ -183,6 +200,33 @@ sub print_transaction {
   print "$f $m\n";
 }
 
+sub do_smtp_helo {
+  my $s = shift;  # socket
+  my $h = shift;  # helo string to use
+  my $t = shift;  # timeout
+  my $e = shift;  # this is a hashref that will be populated w/ server options
+  my $r = '';     # this'll be populated by do_smtp_gen
+
+  if (do_smtp_gen($s, "EHLO $h", '250', $t, \$r)) {
+    # $ehlo is designed to hold the advertised options, but I'm not sure how
+    # to store them all - for instance, SIZE is a simple key/value pair, but
+    # AUTH lends itself more towards a multilevel hash.  What I'm going to do
+    # is come here and add each key in the way that makes most sense in each
+    # case.  I only need auth for now.
+    foreach my $l (split(/\n/, $r)) {
+      $l =~ s/^....//;
+      if ($l =~ /^AUTH(.*)$/) {
+        map { $e->{AUTH}{$_} = 1 } (split(' ', $1));
+      }
+    }
+    return(1);
+  } elsif (do_smtp_gen($s, "HELO $h", '250', $t)) {
+    return(1);
+  }
+
+  return(0);
+}
+
 sub do_smtp_rcpt {
   my $s = shift;  # socket
   my $m = shift;  # string of comma separated recipients
@@ -203,11 +247,13 @@ sub do_smtp_gen {
   my $m = shift;  # string to send
   my $e = shift;  # String we're expecting to get back
   my $t = shift;  # timeout
+  my $p = shift;  # this is a scalar ref, assign the server return string to it
   my $b = shift;  # be brief in the data we send
-  my $r = '';     # This'll be the return value from transact()
+  my $r = '';  # This'll be the return value from transact()
 
   print_transaction(' ->', $m, $b) if ($m);
-  $r = transact($s, $m, '', $t);
+  $r  = transact($s, $m, '', $t);
+  $$p = $r;
 
   if ($r !~ /^$e /m) {
     print_transaction('***', $r);
@@ -229,7 +275,7 @@ sub transact {
       $buff = "Timeout ($alrm secs) waiting for server response";
       die;
     };
-    print $s $send, "\n" if ($send); # $send being null means we want to read
+    print $s $send, "\r\n" if ($send); # $send being null means we want to read
     alarm($alrm);
     if ($buff) {
       $buff = '';
@@ -292,38 +338,6 @@ sub process_file {
   return;
 }
 
-sub process_interact {
-  my($args) = shift;
-  $args = uc($args);
-  my(@args) = split('', $args);
-
-  foreach my $arg (@args) {
-    if ($arg eq 'P') {
-      $port = interact("Port: ", '^\d+$');
-    } elsif ($arg eq 'S') {
-      $server = interact("Server: ", '^[a-zA-Z0-9\-\.]+$');
-    } elsif ($arg eq 'H') {
-      $helo = interact("Helo: ", '^[a-zA-Z0-9\-\.]+$');
-    } elsif ($arg eq 'F') {
-      $from = interact("From: ", '^\S+$');
-    } elsif ($arg eq 'T') {
-      $to = interact("To: ", '^\S+$');
-    } elsif ($arg eq 'D' && !$opt{g}) {
-      if ($opt{m}) {
-        $data = "Subject: " . interact("Subject: ", 'SKIP') . "\n\n";
-        do {
-          $data .= interact('', 'SKIP') . "\n";
-        } while ($data !~ /\n\.\n$/ms);
-        $data =~ s/\n\.\n$//ms;
-      } else {
-        $data = interact("Data: ", '^.*$');
-      }
-    } else {
-      print "Unknown option $arg, ignoring...\n";
-    }
-  }
-}
-
 sub interact {
   my($prompt) = shift;
   my($regexp) = shift;
@@ -332,7 +346,7 @@ sub interact {
 
   do {
     print "$prompt";
-    chomp($response = <>);
+    chomp($response = <STDIN>);
   } while ($regexp ne 'SKIP' && $response !~ /$regexp/);
 
   return($response);
