@@ -8,9 +8,10 @@ use Getopt::Long;
 
 my($from,$to,$helo,$data,$server,$port,$a_type,$a_user,$a_pass,
    $lint) = (undef);
-my($fconf)    = {}; # this will hold config info from -l fileif specified
-my($user)     = getpwuid($<);
-my($hostname) = get_hostname();
+my $fconf    = {}; # this will hold config info from -l fileif specified
+my $user     = getpwuid($<);
+my $hostname = get_hostname();
+my %modules  = ();
 
 GetOptions(
   'l=s'  => \$O::option_file,   # (l)ocation of input data
@@ -30,8 +31,17 @@ GetOptions(
   'ahp:s'=> \$O::auth_hidepw,   # hide passwords when possible
   'apt:s'=> \$O::auth_showpt,   # translate base64 strings
   'ao'   => \$O::auth_optional, # make auth optional (ignore auth failure)
+  'support' => \$O::get_support,# report capabilties
   'li:s' => \$O::lint,          # local interface to use for connection
 ) || exit(1);
+
+load_modules({
+  'AUTH'          => ['MIME::Base64'],
+  'AUTH CRAM-MD5' => ['Digest::MD5'],
+  'MX lookups'    => ['Net::DNS'],
+  'TLS'           => ['Net::SSLeay'],
+});
+exit(0) if ($O::get_support); # --support means report capabilities only
 
 # normalize the auth options a bit
 $O::auth_optional = 1 if (defined($O::auth_optional));
@@ -67,8 +77,8 @@ $lint   = $O::lint        || interact("Interface: ", '^[\-\da-zA-Z\.]+')
 if ($O::auth) {
   # make sure we can support it before we go any farther
 
-  try_load("Digest::MD5 qw(md5)");
-  if (!try_load("MIME::Base64")) {
+  #try_load("Digest::MD5 qw(md5)");
+  if (!$modules{"MIME::Base64"}) {
     print STDERR "MIME::Base64 not installed, ";
     if ($O::auth_optional) {
       print STDERR "skipping AUTH attempts...\n";
@@ -523,7 +533,7 @@ sub get_server {
   my $pref   = -1;
   my $server = "localhost";
   
-  if (!try_load("Net::DNS")) {
+  if (!modules{"Net::DNS"}) {
     print STDERR "Net::DNS not installed, using $server as mail server\n";
     return($server);
   }
@@ -580,6 +590,38 @@ sub get_digest {
   }
 
   map { $retr .= sprintf("%02x", ord($_)) }
-            split(//, md5($osec . md5($isec . $chal)));
+            split(//,Digest::MD5::md5($osec.Digest::MD5::md5($isec . $chal)));
   return($retr);
 }
+
+sub load_modules {
+  my $s = shift;
+  my $l = shift;
+
+  foreach my $act (keys %$s) {
+    my $failed = 0;
+    foreach my $m (@{$s->{$act}}) {
+      if (try_load($m)) {
+        $l->{$m}++;
+      } else {
+        if (!$failed) {
+          print STDERR "$act not available: requires $m" if ($O::get_support);
+        } else {
+          print STDERR ", $m" if ($O::get_support);
+        }
+        $failed++;
+      }
+    }
+    if ($failed) {
+      print STDERR "\n" if ($O::get_support);
+    } else {
+      print "$act supported\n" if ($O::get_support);
+    }
+  }
+}
+
+
+
+
+
+
