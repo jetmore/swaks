@@ -12,7 +12,7 @@ use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20060621.0";
+my $p_version = "20060621.0-dev";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003-2006 John Jetmore <jj33\@pobox.com>
@@ -1779,6 +1779,10 @@ Please use this address for general contact, questions, patches, requests, etc.
 =item updates-swaks@jetmore.net
 
 If you would like to be put on a list to receive notifications when a new version of swaks is released, please send an email to this address.
+
+=item jetmore.org/john/code/#swaks
+
+Change logs, this help, and the latest version is found at this link.
 
 =back
 
