@@ -102,7 +102,6 @@ if ($O::tls) {
 # normalize the auth options a bit
 $O::auth_optional = 1 if (defined($O::auth_optional));
 $O::auth = uc($O::auth) if ($O::auth);
-$O::auth = 'NTLM' if ($O::auth =~ /^(SPA|MSN)$/);
 $O::auth = 'ANY' if ((defined($O::auth_user) || defined($O::auth_pass) ||
                       $O::auth_optional) && !$O::auth);
 $O::auth = 'ANY' if (defined($O::auth) && !$O::auth);
@@ -506,11 +505,13 @@ sub do_smtp_auth {
       # debug?
     }
   }
-  if (($at eq 'ANY' || $at eq 'NTLM') && $e->{AUTH}{'NTLM'}) {
-    if ($modules{"Authen::NTLM"}) {
-      return(1) if (do_smtp_auth_ntlm($s, $t, $au, $ap));
-    } else {
-      # debug?
+  foreach ('MSN', 'SPA', 'NTLM') {
+    if (($at eq 'ANY' || $at eq $_) && $e->{AUTH}{$_}) {
+      if ($modules{"Authen::NTLM"}) {
+        return(1) if (do_smtp_auth_ntlm($s, $t, $au, $ap, $_));
+      } else {
+        # debug?
+      }
     }
   }
   if (($at eq 'ANY' || $at eq 'PLAIN') && $e->{AUTH}{PLAIN}) {
@@ -529,11 +530,12 @@ sub do_smtp_auth_ntlm {
   my $t = shift; # timeout
   my $u = shift; # auth user
   my $p = shift; # auth password
+  my $at = shift; # auth type (since NTLM might be SPA or MSN)
   my $r = '';    # will store smtp response
   my $domain;
   ($u,$domain) = split(/%/, $u);
   
-  my $auth_string = "AUTH NTLM";
+  my $auth_string = "AUTH $at";
   do_smtp_gen($s, $auth_string, '334', $t) || return(0);
 
   Authen::NTLM::ntlm_domain($domain);
@@ -629,7 +631,6 @@ sub do_smtp_helo {
       $l =~ s/^....//;
       if ($l =~ /^AUTH(.*)$/) {
         map { $e->{AUTH}{$_} = 1 } (split(' ', $1));
-        $e->{AUTH}{NTLM} = 1 if ($e->{AUTH}{SPA} || $e->{AUTH}{MSN});
       } elsif ($l =~ /^STARTTLS$/) {
         $e->{STARTTLS} = 1;
       }
