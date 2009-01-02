@@ -98,98 +98,59 @@ sub sendmail {
   $@ = '';
   $| = 1;
 
-  eval {
-    print "=== Trying $host:$port...\n";
-    die "Can't connect to $host:$port ($@)\n" if (!$s);
-    print "=== Connected to $host.\n";
+  print "=== Trying $host:$port...\n";
+  die "Can't connect to $host:$port ($@)\n" if (!$s);
+  print "=== Connected to $host.\n";
 
-    # read the server's 220 banner
-    $buffer = transact($s, '', '', $timeout);
-    print "<- $buffer\n";
-    $buffer =~ /^220 / || exit;
+  # read the server's 220 banner
+  $buffer = transact($s, '', '', $timeout);
+  print "<-  $buffer\n";
+  $buffer =~ /^220 / || exit;
 
-    # send HELO - expand to ehlo here later
-    $send = $opt{q} eq 'connect' ? 'QUIT' : "HELO $helo";
-    print " -> $send\n";
-    $buffer = transact($s, $send, '', $timeout);
-    print "<- $buffer\n";
-    $buffer =~ /^250 / || exit;
+  # send HELO - expand to ehlo here later
+  $send = $opt{q} eq 'connect' ? 'QUIT' : "HELO $helo";
+  print " -> $send\n";
+  $buffer = transact($s, $send, '', $timeout);
+  print "<-  $buffer\n";
+  $buffer =~ /^250 / || exit;
 
+  # send MAIL
+  $send = $opt{q} eq 'helo' ? 'QUIT' : "MAIL FROM:<$from>";
+  print " -> $send\n";
+  $buffer = transact($s, $send, '', $timeout);
+  print "<-  $buffer\n";
+  $buffer =~ /^250 / || exit;
 
-    #local $SIG{'ALRM'} = sub { die "Alarm - No response from server\n" };
-    
-    #alarm $timeout;
-    #$buffer = <$s>;
-    #$buffer =~ s/[\r\n]//msg;
-    #print "<-  $buffer\n";
-    local $SIG{'ALRM'} = sub {die "Alarm - timeout during transaction"};
-    alarm $timeout;
-    #if ($buffer =~ /^220/) {
-      alarm $timeout;
-      #$send = "HELO $helo";
-      #$send = "QUIT" if ($opt{q} eq 'connect');
-      #print " -> $send\n";
-      #print $s "$send\r\n";
-      #$buffer = <$s>;
-      #$buffer =~ s/[\r\n]//msg;
-      #print "<-  $buffer\n";
-      #if ($buffer =~ /^250/) {
-        alarm $timeout;
-        $send = "MAIL FROM:<$from>";
-        $send = "QUIT" if ($opt{q} eq 'helo');
-        print " -> $send\n";
-        print $s "$send\r\n";
-        $buffer = <$s>;
-        $buffer =~ s/[\r\n]//msg;
-        print "<-  $buffer\n";
-        if ($buffer =~ /^250/) {
-          alarm $timeout;
-          $send = "RCPT TO:<$to>";
-          $send = "QUIT" if ($opt{q} eq 'mail');
-          print " -> $send\n";
-          print $s "$send\r\n";
-          $buffer = <$s>;
-          $buffer =~ s/[\r\n]//msg;
-          print "<-  $buffer\n";
-          if ($buffer =~ /^250/) {
-            alarm $timeout;
-            $send = "DATA";
-            $send = "QUIT" if ($opt{q} eq 'rcpt');
-            print " -> $send\n";
-            print $s "$send\r\n";
-            $buffer = <$s>;
-            $buffer =~ s/[\r\n]//msg;
-            print "<-  $buffer\n";
-            if ($buffer =~ /^354/) {
-              alarm $timeout;
-              $send = "$data";
-              my($t) = $send;
-              $t =~ s/\n/\n -> /msg;
-              print " -> $t\n";
-              print $s "$send\r\n";
-              $buffer = <$s>;
-              $buffer =~ s/[\r\n]//msg;
-              print "<-  $buffer\n";
-              if ($buffer =~ /^250/) {
-                alarm(0);
-                $send = "QUIT";
-                print " -> $send\n";
-                print $s "$send\r\n";
-                $buffer = <$s>;
-                $buffer =~ s/[\r\n]//msg;
-                print "<-  $buffer\n";
-              } else {
-                alarm(0);
-              }
-            } else { die "Command '$send' failed\n"; }
-          } else { die "Command '$send' failed\n"; }
-        } else { die "Command '$send' failed\n"; }
-      #} else { die "Command '$send' failed\n"; }
-        #print "=== Connection closed by foreign host.\n";
-    #} else { die "Connection to $host on port $port failed\n"; }
-    alarm 0;
-  };
-  $@ =~ s/[\r\n]//msg;
+  # send RCPT
+  $send = $opt{q} eq 'mail' ? 'QUIT' : "RCPT TO:<$to>";
+  print " -> $send\n";
+  $buffer = transact($s, $send, '', $timeout);
+  print "<-  $buffer\n";
+  $buffer =~ /^250 / || exit;
+
+  # send DATA
+  $send = $opt{q} eq 'rcpt' ? 'QUIT' : "DATA";
+  print " -> $send\n";
+  $buffer = transact($s, $send, '', $timeout);
+  print "<-  $buffer\n";
+  $buffer =~ /^354 / || exit;
+
+  # send the actual data
+  $send = $data;
+  $data =~ s/\n/\n -> /msg;
+  print " -> $data\n";
+  $buffer = transact($s, $send, '', $timeout);
+  print "<-  $buffer\n";
+  $buffer =~ /^250 / || exit;
+
+  # send QUIT
+  $send = "QUIT";
+  print " -> $send\n";
+  $buffer = transact($s, $send, '', $timeout);
+  print "<-  $buffer\n";
+  $buffer =~ /^221 / || exit;
+
+  print "=== Connection closed by foreign host.\n";
 }
 
 sub transact {
