@@ -1,88 +1,5 @@
 #!/usr/bin/perl
 
-# exim pipelining trans
-# send packet:
-#	MAIL FROM:<jetmore@wembley.cinergycom.net> SIZE=1568
-#	RCPT TO:<jetmore@rizzo.cinergycom.net>
-#	RCPT TO:<devnull@rizzo.cinergycom.net>
-#	RCPT TO:<blackhole@rizzo.cinergycom.net>
-#	DATA
-# recv packet:
-#	250 OK
-#	250 Accepted
-#	550 unknown user <devnull@rizzo.cinergycom.net> (0x05)
-#	250 Accepted
-#	354 Enter message, ending with "." on a line by itself
-#
-# see below for rfc client issues.  server lists bundling explicitly and client
-# doesn;t, implying that the client doesn;t have to batch into a single packet
-#
-# so, packet concerns...  exim sends and receives pipelining bundles in a
-# single packet (or at least a single write statement).  Is this important?
-# it probably is, for testing.
-
-# 1) implement pipelining naively (multiple writes, then multiple reads)
-# 2) implement a new option which changes the write behaviour.  if specified,
-#    the send code will buffer until a read call is made, then the whole cache
-#    will be sent at once, which should all be in one packet.
-#
-# smtp_gen does or should have the capability to just write and just read,
-# all pipelining commands use gen except rcpt, but rcpt is stupid and should
-# also use gen, fix
-
-# RFC 2920 client considerations (see this rfc for some example transastions)
-#   Once the client SMTP has confirmed that support exists for the
-#   pipelining extension, the client SMTP may then elect to transmit
-#   groups of SMTP commands in batches without waiting for a response to
-#   each individual command. In particular, the commands RSET, MAIL FROM,
-#   SEND FROM, SOML FROM, SAML FROM, and RCPT TO can all appear anywhere
-#   in a pipelined command group.  The EHLO, DATA, VRFY, EXPN, TURN,
-#   QUIT, and NOOP commands can only appear as the last command in a
-#   group since their success or failure produces a change of state which
-#   the client SMTP must accommodate. (NOOP is included in this group so
-#   it can be used as a synchronization point.)
-#
-#   Additional commands added by other SMTP extensions may only appear as
-#   the last command in a group unless otherwise specified by the
-#   extensions that define the commands.
-#
-#   The actual transfer of message content is explicitly allowed to be
-#   the first "command" in a group. That is, a RSET/MAIL FROM sequence
-#   used to initiate a new message transaction can be placed in the same
-#   group as the final transfer of the headers and body of the previous
-#   message.
-#
-#   Client SMTP implementations that employ pipelining MUST check ALL
-#   statuses associated with each command in a group. For example, if
-#   none of the RCPT TO recipient addresses were accepted the client must
-#   then check the response to the DATA command -- the client cannot
-#   assume that the DATA command will be rejected just because none of
-#   the RCPT TO commands worked.  If the DATA command was properly
-#   rejected the client SMTP can just issue RSET, but if the DATA command
-#   was accepted the client SMTP should send a single dot.
-#
-#   Command statuses MUST be coordinated with responses by counting each
-#   separate response and correlating that count with the number of
-#   commands known to have been issued.  Multiline responses MUST be
-#   supported. Matching on the basis of either the error code value or
-#   associated text is expressly forbidden.
-#
-#   Client SMTP implementations MAY elect to operate in a nonblocking
-#   fashion, processing server responses immediately upon receipt, even
-#   if there is still data pending transmission from the client's
-#   previous TCP send operation. If nonblocking operation is not
-#   supported, however, client SMTP implementations MUST also check the
-#   TCP window size and make sure that each group of commands fits
-#   entirely within the window. The window size is usually, but not
-#   always, 4K octets.  Failure to perform this check can lead to
-#   deadlock conditions.
-#
-#   Clients MUST NOT confuse responses to multiple commands with
-#   multiline responses. Each command requires one or more lines of
-#   response, the last line not containing a dash between the response
-#   code and the response string.
-
-
 use strict;
 
 use IO::Socket;
@@ -1171,7 +1088,7 @@ sub process_args {
           'AUTH:NTLM requirement Authen::NTLM not installed, exiting');
         exit(10);
       }
-    } elsif (!$G::modules{"Authen::DIGEST-MD5"} &&
+    } elsif (!$G::modules{"Authen::DigestMD5"} &&
               $G::auth_map_f{$o->{auth}} eq 'DIGEST-MD5') {
       if ($G::auth_optional) {
         $n{a_type} = ''; # So we won't attempt it later
