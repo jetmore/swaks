@@ -70,6 +70,7 @@ GetOptions(
   'body:s'          => \$O{body_822},      # the content of the body of the DATA
   'attach-type|attach:s' => \@{$O{attach_822}}, # A file to attach
   'dump'            => \$O{dump_args},     # build options and dump
+  'pipeline'        => \$O{pipeline},      # attempt PIPELINING
   'force-getpwuid'  => \$O{force_getpwuid} # use getpwuid building -f
 ) || exit(1);
 
@@ -98,6 +99,7 @@ if ($G::dump_args) {
   print "no_hints         = ", $G::no_hints ? "TRUE" : "FALSE", "\n";
   print "hide_send        = ", $G::hide_send ? "TRUE" : "FALSE", "\n";
   print "hide_receive     = ", $G::hide_receive ? "TRUE" : "FALSE", "\n";
+  print "pipeline         = ", $G::pipeline ? "TRUE" : "FALSE", "\n";
   print "silent           = $G::silent\n";
   print "type             = $G::link{type}\n";
   print "server           = $G::link{server}\n";
@@ -149,19 +151,19 @@ sub teardown_link {
   if ($G::link{type} eq 'socket-inet' || $G::link{type} eq 'socket-unix') {
     # XXX need anything special for tls teardown?
     close($G::link{sock});
-    print_transaction(11,  "Connection closed with remote host.");
+    ptrans(11,  "Connection closed with remote host.");
   } elsif ($G::link{type} eq 'pipe') {
     delete($SIG{PIPE});
     $SIG{CHLD} = 'IGNORE';
     close($G::link{sock}{wr});
     close($G::link{sock}{re});
-    print_transaction(11,  "Connection closed with child process.");
+    ptrans(11,  "Connection closed with child process.");
   }
 }
 
 sub open_link {
   if ($G::link{type} eq 'socket-inet') {
-    print_transaction(11, "Trying $G::link{server}:$G::link{port}...");
+    ptrans(11, "Trying $G::link{server}:$G::link{port}...");
     $@ = "";
     $G::link{sock} = IO::Socket::INET->new(PeerAddr => $G::link{server},
                             PeerPort  => $G::link{port}, Proto => 'tcp',
@@ -169,13 +171,13 @@ sub open_link {
                             LocalAddr => $G::link{lint});
 
     if ($@) {
-      print_transaction(12, "Error connecting $G::link{lint} " .
+      ptrans(12, "Error connecting $G::link{lint} " .
                             "to $G::link{server}:$G::link{port}:\n\t$@");
       exit(2);
     }
-    print_transaction(11, "Connected to $G::link{server}.");
+    ptrans(11, "Connected to $G::link{server}.");
   } elsif ($G::link{type} eq 'socket-unix') {
-    print_transaction(11, "Trying $G::link{sockfile}...");
+    ptrans(11, "Trying $G::link{sockfile}...");
     $SIG{PIPE} = 'IGNORE';
     $@ = "";
     $G::link{sock} = IO::Socket::UNIX->new(Peer => $G::link{sockfile},
@@ -183,28 +185,28 @@ sub open_link {
                             Type => SOCK_STREAM);
 
     if ($@) {
-      print_transaction(12, "Error connecting to $G::link{sockfile}:\n\t$@");
+      ptrans(12, "Error connecting to $G::link{sockfile}:\n\t$@");
       exit(2);
     }
-    print_transaction(11, "Connected to $G::link{sockfile}.");
+    ptrans(11, "Connected to $G::link{sockfile}.");
   } elsif ($G::link{type} eq 'pipe') {
     $SIG{PIPE} = 'IGNORE';
     $SIG{CHLD} = 'IGNORE';
-    print_transaction(11, "Trying pipe to $G::link{process}...");
+    ptrans(11, "Trying pipe to $G::link{process}...");
     if (!try_load("IPC::Open2")) {
-      print_transaction(12, "Couldn't load IPC::Open2 for pipe, exiting");
+      ptrans(12, "Couldn't load IPC::Open2 for pipe, exiting");
       exit(2);
     }
     eval{
       open2($G::link{sock}{re}, $G::link{sock}{wr}, $G::link{process});
     };
     if ($@) {
-      print_transaction(12, "Error connecting to $G::link{process}:\n\t$@");
+      ptrans(12, "Error connecting to $G::link{process}:\n\t$@");
       exit(2);
     }
-    print_transaction(11, "Connected to $G::link{process}.");
+    ptrans(11, "Connected to $G::link{process}.");
   } else {
-    print_transaction(12, "Unknown or unimplemented connection type " .
+    ptrans(12, "Unknown or unimplemented connection type " .
                           "$G::link{type}");
     exit(3);
   }
@@ -223,9 +225,9 @@ sub sendmail {
   # start up tls if -tlsc specified
   if ($G::tls_on_connect) {
     if (start_tls()) {
-      print_transaction(11, "TLS started w/ cipher $G::link{tls}{cipher}");
+      ptrans(11, "TLS started w/ cipher $G::link{tls}{cipher}");
     } else {
-      print_transaction(12, "TLS startup failed ($G::link{tls}{res})");
+      ptrans(12, "TLS startup failed ($G::link{tls}{res})");
       exit(29);
     }
   }
@@ -270,13 +272,15 @@ sub sendmail {
   do_smtp_quit(1, 0) if ($G::quit_after eq 'auth');
 
   # send MAIL
-  do_smtp_gen("MAIL FROM:<$from>", '250') || do_smtp_quit(1, 23);
+  #do_smtp_gen("MAIL FROM:<$from>", '250') || do_smtp_quit(1, 23);
+  do_smtp_mail($from); # failures in this handled by smtp_mail_callback
 
   # QUIT here if the user has asked us to do so
   do_smtp_quit(1, 0) if ($G::quit_after eq 'mail');
 
   # send RCPT (sub handles multiple, comma-delimited recips
-  do_smtp_rcpt($to) || do_smtp_quit(1, 24);
+  #do_smtp_rcpt($to) || do_smtp_quit(1, 24);
+  do_smtp_rcpt($to); # failures in this handled by smtp_rcpt_callback
 
   # QUIT here if the user has asked us to do so
   do_smtp_quit(1, 0) if ($G::quit_after eq 'rcpt');
@@ -310,7 +314,7 @@ sub start_tls {
   return($t{active});
 }
 
-sub print_transaction {
+sub ptrans {
   my $c = shift;  # transaction flag
   my $m = shift;  # message to print
   my $b = shift;  # be brief in what we print
@@ -391,16 +395,16 @@ sub do_smtp_tls {
   my $e  = shift; # ehlo config hash
 
   if (!$e->{STARTTLS}) {
-    print_transaction(12, "STARTTLS not supported");
+    ptrans(12, "STARTTLS not supported");
     return $G::tls_optional ? 1 : 0;
   } elsif (!do_smtp_gen("STARTTLS", '220')) {
     return $G::tls_optional ? 1 : 0;
   } elsif (!start_tls()) {
-    print_transaction(12, "TLS startup failed ($G::link{tls}{res})");
+    ptrans(12, "TLS startup failed ($G::link{tls}{res})");
     return $G::tls_optional ? 1 : 0;
   }
 
-  print_transaction(11, "TLS started w/ cipher $G::link{tls}{cipher}");
+  ptrans(11, "TLS started w/ cipher $G::link{tls}{cipher}");
   return(1);
 }
 
@@ -462,9 +466,9 @@ sub do_smtp_auth {
   }
 
   if ($auth_attempted) {
-    print_transaction(12, "No authentication type succeeded");
+    ptrans(12, "No authentication type succeeded");
   } else {
-    print_transaction(12, "No acceptable authentication types available");
+    ptrans(12, "No acceptable authentication types available");
   }
   return(0);
 }
@@ -609,6 +613,9 @@ sub do_smtp_helo {
         map { $e->{AUTH}{$_} = 1 } (split(' ', $1));
       } elsif ($l =~ /^STARTTLS$/) {
         $e->{STARTTLS} = 1;
+      } elsif ($l =~ /^PIPELINING$/) {
+        $e->{PIPELINING} = 1;
+        $G::pipeline_adv = 1;
       }
     }
     return(1);
@@ -619,17 +626,48 @@ sub do_smtp_helo {
   return(0);
 }
 
+sub do_smtp_mail {
+  my $m = shift;  # from address
+
+  transact(cxn_string => "MAIL FROM:<$m>", expect => '250', defer => 1,
+           fail_callback => \&smtp_mail_callback);
+
+  return(1); # the callback handles failures, so just return here
+}
+
+# this only really needs to exist until I figure out a clever way of making
+# do_smtp_quit the callback while still preserving the exit codes
+sub smtp_mail_callback {
+  do_smtp_quit(1, 23);
+}
+
 sub do_smtp_rcpt {
   my $m = shift;  # string of comma separated recipients
   my $f = 0;      # The number of failures we've experienced
 
   my @a = split(/,/, $m);
+  $G::smtp_rcpt_total = scalar(@a);
   foreach my $addr (@a) {
-    $f++ if (!do_smtp_gen("RCPT TO:<$addr>", '250'));
+    #$f++ if (!do_smtp_gen("RCPT TO:<$addr>", '250'));
+    transact(cxn_string => "RCPT TO:<$addr>", expect => '250', defer => 1,
+             fail_callback => \&smtp_rcpt_callback);
   }
 
-  # if at least one addr succeeded, we can proceed, else we stop here
-  return $f == scalar(@a) ? 0 : 1;
+  return(1); # the callback handles failures, so just return here
+
+#  # if at least one addr succeeded, we can proceed, else we stop here
+#  return $f == scalar(@a) ? 0 : 1;
+}
+
+sub smtp_rcpt_callback {
+  # record that a failure occurred
+  $G::smtp_rcpt_failures++;
+
+  # if the number of failures is the same as the total rcpts (if every rcpt
+  # rejected), quit.
+  if ($G::smtp_rcpt_failures == $G::smtp_rcpt_total) {
+    do_smtp_quit(1, 24);
+  }
 }
 
 sub do_smtp_gen {
@@ -642,7 +680,23 @@ sub do_smtp_gen {
   my $r = '';    # This'll be the return value from transact()
   my $time;
 
-  print_transaction(21, $x ? $x : $m, $b) if (defined($m));
+#print "in do_smtp_gen($m)\n";
+  return transact(cxn_string => $m, expect => $e, return_text => $p,
+                  summarize_output => $b, show_string => $x,
+                  print_callback => $c);
+}
+
+sub do_smtp_gen_OLD {
+  my $m = shift; # string to send
+  my $e = shift; # String we're expecting to get back
+  my $p = shift; # this is a scalar ref, assign the server return string to it
+  my $b = shift; # be brief in the data we send
+  my $x = shift; # if this is populated, print this instead of $m
+  my $c = shift; # if this is a code ref, call it on the return value b4 print
+  my $r = '';    # This'll be the return value from transact()
+  my $time;
+
+  ptrans(21, $x ? $x : $m, $b) if (defined($m));
   if ($G::show_time_lapse) {
     if ($G::show_time_hires) {
       $time = [Time::HiRes::gettimeofday()]
@@ -650,7 +704,7 @@ sub do_smtp_gen {
       $time = time() if ($G::show_time_lapse);
     }
   }
-  $r  = transact($m, '');
+  $r  = transact_OLD($m, '');
   $$p = $r;
   
   if ($G::show_time_lapse) {
@@ -660,14 +714,14 @@ sub do_smtp_gen {
     } else {
       $time = time() - $time;
     }
-    print_transaction(11, "response in ${time}s");
+    ptrans(11, "response in ${time}s");
   }
 
   $r = &$c($r) if (ref($c) eq 'CODE');
   my($ret,$ptc) = $r !~ /^$e /m ? (0,32) : (1,31);
 
   if ($G::link{lost_cxn}) {
-    print_transaction($ptc, $r) if ($r);
+    ptrans($ptc, $r) if ($r);
     if ($G::link{allow_lost_cxn}) {
       # this means the calling code wants to handle a lost cxn itself
       return($ret);
@@ -676,7 +730,7 @@ sub do_smtp_gen {
       handle_disconnect();
     }
   } else {
-    print_transaction($ptc, $r);
+    ptrans($ptc, $r);
     return($ret);
   }
 }
@@ -687,20 +741,36 @@ sub do_smtp_gen {
 sub handle_disconnect {
   my $e = shift || 6; # this is the code we will exit with
   if ($G::link{type} eq 'socket-inet') {
-    print_transaction(12, "Remote host closed connection unexpectedly.");
+    ptrans(12, "Remote host closed connection unexpectedly.");
   } elsif ($G::link{type} eq 'socket-unix') {
-    print_transaction(12, "Socket closed connection unexpectedly.");
+    ptrans(12, "Socket closed connection unexpectedly.");
   } elsif ($G::link{type} eq 'pipe') {
-    print_transaction(12, "Child process closed connection unexpectedly.");
+    ptrans(12, "Child process closed connection unexpectedly.");
   }
   exit($e);
+}
+
+sub flush_send_buffer {
+  my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{wr} : $G::link{sock};
+  return if (!$G::send_buffer);
+  if ($G::link{tls}{active}) {
+    my $res = Net::SSLeay::write($G::link{tls}{ssl}, $G::send_buffer);
+  } else {
+    print $s $G::send_buffer;
+  }
+  $G::send_buffer = '';
+}
+
+sub send_data {
+  my $d = shift; # data to write
+  $G::send_buffer .= "$d\r\n";
 }
 
 # write a bunch of data to whatever is listening on the end.  We don't 
 # have any requirements about the data except that we will be writing
 # \r\n onto the end of it.  Any connection level details will be handled
 # in here
-sub send_data {
+sub send_data_OLD {
   my $d = shift; # data to write
   # Either an IO::Socket obj or a FH to my child - the thing to write to
   my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{wr} : $G::link{sock};
@@ -712,11 +782,26 @@ sub send_data {
   }
 }
 
+sub recv_line {
+  # Either an IO::Socket obj or a FH to my child - the thing to read from
+  my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{re} : $G::link{sock};
+  my $r = undef;
+
+  if ($G::link{tls}{active}) {
+    $r = Net::SSLeay::read($G::link{tls}{ssl});
+  } else {
+    $r = <$s>;
+  }
+  $r =~ s|\r||msg;
+#print "in recv_line, returning \$r = $r\n";
+  return($r);
+}
+
 # read data from the other end, possibly more than one line at a time.
 # If more than one line returned, return one line of data at a time.
 # If not a whole line returned, read until newline.  Any connection level
 # details will be handled in here.
-sub recv_line {
+sub recv_line_OLD {
   # Either an IO::Socket obj or a FH to my child - the thing to read from
   my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{re} : $G::link{sock};
   my $r = undef;
@@ -730,7 +815,91 @@ sub recv_line {
   return($r);
 }
 
+# any request which has immediate set will be checking the return code.
+# any non-immediate request will handle results through fail_callback().
+# therefore, only return the state of the last transaction attempted,
+# which will always be immediate
+# We still need to reimplement timing
 sub transact {
+  my %h        = @_; # this is an smtp transaction element
+  my $ret      = 1;  # this is our return value
+  my @handlers = (); # will hold and fail_handlers we need to run
+  my $time     = ''; # used in time lapse calculations
+  
+  push(@G::pending_send, \%h); # push onto send queue
+  if (!($G::pipeline && $G::pipeline_adv) || !$h{defer}) {
+
+    if ($G::show_time_lapse) {
+      if ($G::show_time_hires) { $time = [Time::HiRes::gettimeofday()];   }
+      else                     { $time = time(); }
+    }
+
+    while (my $i = shift(@G::pending_send)) {
+      if ($i->{cxn_string}) {
+        ptrans(21,$i->{show_string}||$i->{cxn_string},$i->{summarize_output});
+        send_data($i->{cxn_string});
+      }
+      push(@G::pending_recv, $i);
+    }
+    flush_send_buffer();
+    while (my $i = shift(@G::pending_recv)) {
+      my $buff = '';
+      eval {
+        local $SIG{'ALRM'} = sub {
+          $buff ="Timeout ($G::link{timeout} secs) waiting for server response";
+          die;
+        }; 
+        alarm($G::link{timeout});
+        while ($buff !~ /^\d\d\d /m) {
+          my $l = recv_line();
+          $buff .= $l;
+          if (!defined($l)) {
+            $G::link{lost_cxn} = 1;
+            last;
+          }
+        }
+        chomp($buff);
+        alarm(0);
+      };
+
+      if ($G::show_time_lapse) {
+        if ($G::show_time_hires) {
+          $time = sprintf("%0.03f", Time::HiRes::tv_interval($time,
+                                   [Time::HiRes::gettimeofday()]));
+          ptrans(11, "response in ${time}s");
+          $time = [Time::HiRes::gettimeofday()];
+        } else {
+          $time = time() - $time;
+          ptrans(11, "response in ${time}s");
+          $time = time();
+        }
+      }
+
+      ${$i->{return_text}} = $buff;
+      $buff = &{$i->{print_callback}}($buff)
+          if (ref($i->{print_callback}) eq 'CODE');
+      my $ptc;
+      ($ret,$ptc) = $buff !~ /^$i->{expect} /m ? (0,32) : (1,31);
+      ptrans($ptc, $buff) if ($buff);
+      if ($G::link{lost_cxn}) {
+        if ($G::link{allow_lost_cxn}) {
+          # this means the calling code wants to handle a lost cxn itself
+          return($ret);
+        } else {
+          # if caller didn't want to handle, we'll handle a lost cxn ourselves
+          handle_disconnect();
+        }
+      }
+      if (!$ret && ref($i->{fail_callback}) eq 'CODE') {
+        push(@handlers, $i->{fail_callback});
+      }
+    }
+  }
+  foreach my $h (@handlers) { &{$h}(); }
+  return($ret);
+}
+
+sub transact_OLD {
   my $send    = shift;     # This is the string to send
   my $buff    = shift;     # we will store and manipulate the return value here.
 
@@ -739,14 +908,14 @@ sub transact {
       $buff = "Timeout ($G::link{timeout} secs) waiting for server response";
       die;
     };
-    send_data($send) if (defined($send));
+    send_data_OLD($send) if (defined($send));
     alarm($G::link{timeout});
 
     if ($buff) {
       $buff = '';
     } else {
       while ($buff !~ /^\d\d\d /m) {
-        my $l = recv_line();
+        my $l = recv_line_OLD();
         $buff .= $l;
         if (!defined($l)) {
           $G::link{lost_cxn} = 1;
@@ -772,13 +941,13 @@ sub process_file {
   my $h = shift;
 
   if (! -e "$f") {
-    print_transaction(12, "File $f does not exist, skipping");
+    ptrans(12, "File $f does not exist, skipping");
     return;
   } elsif (! -f "$f") {
-    print_transaction(12, "File $f is not a file, skipping");
+    ptrans(12, "File $f is not a file, skipping");
     return;
   } elsif (!open(I, "<$f")) {
-    print_transaction(12, "Couldn't open $f, skipping... ($!)");
+    ptrans(12, "Couldn't open $f, skipping... ($!)");
     return;
   }
 
@@ -831,7 +1000,7 @@ sub get_server {
     
   
   if (!$G::modules{"Net::DNS"}) {
-    print_transaction(12,
+    ptrans(12,
       "MX requirement Net::DNS not installed, using $server as mail server");
     return($server);
   }
@@ -904,10 +1073,10 @@ sub load_modules {
     }
     if ($O{get_support}) {
       if (scalar(@failed) > 0) {
-        print_transaction(12, "$act not available: requires " .
+        ptrans(12, "$act not available: requires " .
             join(', ', @failed));
       } else {
-        print_transaction(11, "$act supported");
+        ptrans(11, "$act supported");
       }
     }
   }
@@ -945,6 +1114,7 @@ sub process_args {
   $G::no_hints      = 1 if ($o->{no_hints});
   $G::hide_send     = 1 if ($o->{hide_send});
   $G::hide_receive  = 1 if ($o->{hide_receive});
+  $G::pipeline      = 1 if ($o->{pipeline});
   $G::silent        = $o->{silent} ? $o->{silent} : 0;
   
   # set global option of -q option
@@ -960,7 +1130,7 @@ sub process_args {
            $G::quit_after ne 'auth'    && $G::quit_after ne 'mail'       &&
            $G::quit_after ne 'rcpt')
     {
-      print_transaction(12, "Unknown quit value $G::quit_after, exiting");
+      ptrans(12, "Unknown quit value $G::quit_after, exiting");
       exit(1);
     }
     # only rcpt _requires_ a to address
@@ -1037,11 +1207,6 @@ sub process_args {
       if (defined($o->{timeout}));
   $G::link{timeout} ||= $fconf->{TIMEOUT} || '30s';
   $G::link{timeout}   = time_to_seconds($G::link{timeout});
-
-# XXX DOC changes
-# new default DATA
-# %B token
-# --body option
 
   my $body  = 'This is a test mailing'; # default message body
   my $bound = "";
@@ -1152,10 +1317,10 @@ sub process_args {
     if (!$G::modules{'Net::SSLeay'}) {
       if ($G::tls_optional) {
         $G::tls = undef; # so we won't try it later
-        print_transaction(12,
+        ptrans(12,
             'TLS requirement Net::SSLeay not installed, skipping optional TLS');
       } else {
-        print_transaction(12,
+        ptrans(12,
             'TLS requirement Net::SSLeay not installed, exiting');
         exit(10);
       }
@@ -1203,10 +1368,10 @@ sub process_args {
       # MIME::Base64 is required for any auth type, so check it first
       # and skip rest of processing if unfound
       if ($G::auth_optional) {
-        print_transaction(12,
+        ptrans(12,
          'AUTH requirement MIME::Base64 not installed, skipping optional AUTH');
       } else {
-        print_transaction(12,
+        ptrans(12,
          'AUTH requirement MIME::Base64 not installed, exiting');
         exit(10);
       }
@@ -1222,14 +1387,14 @@ sub process_args {
         # specified by the user
 
         if (!$G::auth_map_f{$type}) {
-          print_transaction(12,
+          ptrans(12,
             "$type is not a recognized auth type, skipping");
         }
 
         elsif ($G::auth_map_f{$type} eq 'CRAM-MD5' &&
                !$G::modules{"Digest::MD5"})
         {
-          print_transaction(12,
+          ptrans(12,
             "AUTH:$type requirement Digest::MD5 not installed")
             if ($o->{auth} ne 'ANY');
         }
@@ -1237,7 +1402,7 @@ sub process_args {
         elsif ($G::auth_map_f{$type} eq 'CRAM-SHA1' &&
                !$G::modules{"Digest::SHA1"})
         {
-          print_transaction(12,
+          ptrans(12,
             "AUTH:$type requirement Digest::SHA1 not installed")
             if ($o->{auth} ne 'ANY');
         }
@@ -1245,7 +1410,7 @@ sub process_args {
         elsif ($G::auth_map_f{$type} eq 'NTLM' &&
                !$G::modules{"Authen::NTLM"})
         {
-          print_transaction(12,
+          ptrans(12,
             "AUTH:$type requirement Authen::NTLM not installed")
             if ($o->{auth} ne 'ANY');
         }
@@ -1253,7 +1418,7 @@ sub process_args {
         elsif ($G::auth_map_f{$type} eq 'DIGEST-MD5' &&
                !$G::modules{"Authen::DigestMD5"})
         {
-          print_transaction(12,
+          ptrans(12,
             "AUTH:$type requirement Authen::DigestMD5 not installed")
             if ($o->{auth} ne 'ANY');
         }
@@ -1266,7 +1431,7 @@ sub process_args {
       } # foreach
 
       if (!$valid_auth_found) {
-        print_transaction(12, "No auth types supported");
+        ptrans(12, "No auth types supported");
         if (!$G::auth_optional) {
           exit(10);
         }
@@ -1449,6 +1614,10 @@ Cause swaks to print its capabilities and exit.  Certain features require non-st
 =item -S, --silent
 
 Cause swaks to be silent.  "-S" causes swaks to print no output until an error occurs, after which all output is shown.  "-S -S" causes swaks to only show error conditions.  "-S -S -S" shows no output.
+
+=item --pipeline
+
+If the remote server supports it, attempt SMTP PIPELINING (RFC 2920).  This is a younger option, if you experience problems with it please notify the author.  Potential problem areas include servers accepting DATA even though there were no valid recipients (swaks should send empty body in that case, not QUIT) and deadlocks caused by sending packets outside the tcp window size.
 
 =item -tls
 
