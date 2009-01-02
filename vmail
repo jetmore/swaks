@@ -629,6 +629,7 @@ sub get_server {
 
   $addr =~ s/^.*\@([^\@]*)$/$1/;
   return($server) if (!$addr);
+  $server = $addr;
 
   my @mx = mx($res, $addr);
   foreach my $rr (@mx) {
@@ -738,7 +739,7 @@ sub process_args {
   $n{from} = $o->{mail_from} || interact("From: ", '^.*$')
       if (defined($o->{mail_from}));
   $n{from} ||= $fconf->{FROM} || "$user\@$hostname";
-  $n{from} = '' if ($n{from} eq 'NULLNULL');
+  $n{from} = '' if ($n{from} eq '<>');
 
   # SMTP rcpt to
   $n{to} = $o->{mail_to} || interact("To: ", '^.*$')
@@ -863,12 +864,12 @@ sub process_args {
       $n{a_user}   = $o->{auth_user} if (defined($o->{auth_user}));
       $n{a_user} ||= $fconf->{USER};
       $n{a_user} ||= interact("Username: ", 'SKIP');
-      $n{a_user}   = '' if ($a_user eq 'NULLNULL');
+      $n{a_user}   = '' if ($a_user eq '<>');
 
       $n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
       $n{a_pass} ||= $fconf->{PASS};
       $n{a_pass} ||= interact("Password: ", 'SKIP');
-      $n{a_pass}   = '' if ($a_pass eq 'NULLNULL');
+      $n{a_pass}   = '' if ($a_pass eq '<>');
   
       $n{a_type} = $o->{auth};
       $G::auth_showpt = 1 if (defined($o->{auth_showpt}));
@@ -927,11 +928,11 @@ There is no default for this option.  If no to addess is specified with -t or TO
 
 =item -f, --from
 
-Use argument as "MAIL FROM" address, or prompt user if no argument specified.  Overridden by -l token FROM.  If no from address is specified, default is user@host, where user is the best guess at user currently running program, and host is best guess at DNS hostname of local host.
+Use argument as "MAIL FROM" address, or prompt user if no argument specified.  Overridden by -l token FROM.  If no from address is specified, default is user@host, where user is the best guess at user currently running program, and host is best guess at DNS hostname of local host.  The string <> can be supplied to mean the null sender.
 
 =item -s, --server
 
-Use argument as mail server to which to connect, or prompt user if no argument specified.  Overridden by -l token SERVER.  If unspecified, vmail tries to determine primary MX of destination address.  If Net::DNS module is not available, tries to connect to localhost.
+Use argument as mail server to which to connect, or prompt user if no argument specified.  Overridden by -l token SERVER.  If unspecified, vmail tries to determine primary MX of destination address.  If Net::DNS module is not available, tries to connect to A record for recipient's domain.
 
 =item -p, --port
 
@@ -1005,13 +1006,13 @@ Same as -a, but if authentication is unavailable or fails, attempts to continue 
 
 =item -au, --auth-user
 
-Supply the username for authentication.
+Supply the username for authentication.  The string <> can be supplied to mean an empty username.
 
 For SPA authentication, a "domain" can be specified after the regular username with a % seperator.  For instance, if "-ap user@example.com%NTDOM" is passed, "user@example.com" is the username and "NTDOM" is the domain.  NOTE: I don't actually have access to a mail server where the domain isn't ignored, so this may be implemented incorrectly.
 
 =item -ap, --auth-password
 
-Supply the password for authentication.
+Supply the password for authentication.  The string <> can be supplied to mean an empty password.
 
 =item -apt, --auth-plaintext
 
