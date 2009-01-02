@@ -10,8 +10,8 @@ $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
 my $p_version = "20070921.0-dev";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
-my $p_cp      = <<EOM;
-        Copyright (c) 2003-2007 John Jetmore <jj33\@pobox.com>
+my $p_cp      = <<'EOM';
+        Copyright (c) 2003-2008 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1666,7 +1666,9 @@ sub process_args {
       close(I);
     }
   }
-  if (scalar(@{$o->{attach_822}})) {
+  if (defined($o->{attach_822}) && ref($o->{attach_822}) eq 'ARRAY'
+                                && scalar(@{$o->{attach_822}}))
+  {
     # this option is a list of files (or STDIN) to attach.  In this case,
     # the message become a mime message and the "body" goes in the
     # first text/plain part
@@ -1747,7 +1749,9 @@ sub process_args {
   $n{data}   = join('', <STDIN>) if ($o->{data_on_stdin});
   if (!$o->{no_data_fixup}) {
     $n{data} =~ s/%B/$body/g;
-    if (scalar(@{$o->{header}})) {
+    if (defined($o->{header}) && ref($o->{header}) eq 'ARRAY'
+                              && scalar(@{$o->{header}}))
+    {
       my %matched = ();
       foreach my $l (map { split(/\\n/) } @{$o->{header}}) {
         if (my($h) = $l =~ /^([^:]+):/) {
