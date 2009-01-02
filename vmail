@@ -185,7 +185,7 @@ sub sendmail {
   print_transaction('===', "Connected to $host.");
 
   # read the server's 220 banner
-  if (!do_smtp_gen($s, '', '220', $timeout)) {
+  if (!do_smtp_gen($s, undef, '220', $timeout)) {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(21);
   }
@@ -420,7 +420,7 @@ sub do_smtp_gen {
   my $c = shift; # if this is a code ref, call it on the return value b4 print
   my $r = '';    # This'll be the return value from transact()
 
-  print_transaction(' ->', $x ? $x : $m, $b) if ($m);
+  print_transaction(' ->', $x ? $x : $m, $b) if (defined($m));
   $r  = transact($s, $m, '', $t);
   $$p = $r;
 
@@ -445,7 +445,7 @@ sub transact {
       $buff = "Timeout ($alrm secs) waiting for server response";
       die;
     };
-    print $s $send, "\r\n" if ($send); # $send being null means we want to read
+    print $s $send, "\r\n" if (defined($send)); # $send being undef means read
     alarm($alrm);
     if ($buff) {
       $buff = '';
