@@ -1120,6 +1120,36 @@ send the contents of "mailfile" to user@example.com, using TLS if available, req
 
 This program was written because I was testing a new MTA on an alternate port.  I did so much testing that using interactive telnet grew tiresome.  Over the next several years this program was fleshed out and every single option was added as a direct need of some testing I was doing as the mail admin of a medium sized ISP, with the exception of TLS support which was added on a whim.  As such, all options are reasonably well thought out and fairly well tested (though TLS could use more testing).
 
+=head1 REQUIRES
+
+=item IO::Socket, Sys::Hostname, Getop::Long
+
+These modules are all required for the program to run at all.  This shouldn't be an issue as I believe these are all core modules.
+
+=item Net::DNS
+
+This module is required to look up MX records for domains.  If unavailable the -s option can be used to statically route the message.
+
+=item Net::SSLeay
+
+This module is required for TLS sessions.  STARTTLS will not be supported if module is unavailable.
+
+=item MIME::Base64
+
+This module is required for all SMTP AUTH transactions.  If it is unavailable no AUTH methods will be supported.
+
+=item Digest::MD5
+
+This module is required for CRAM-MD5 authentication.
+
+=item Authen::NTLM
+
+This module is required for SPA/MSN/NTLM authentication.  Note that there are two modules using the Authen::NTLM namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.02.tar.gz) is the version required here.
+
+=item Authen::DigestMD5
+
+This module is required for DIGEST-MD5 authentication.
+
 =head1 EXIT CODES
 
 =item 0
