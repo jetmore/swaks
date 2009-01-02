@@ -27,6 +27,8 @@ GetOptions(
   'a:s'  => \$O::auth,          # force auth, exit if not supported
   'au:s' => \$O::auth_user,     # user for auth
   'ap:s' => \$O::auth_pass,     # pass for auth
+  'ahp:s'=> \$O::auth_hidepw,   # hide passwords when possible
+  'apt:s'=> \$O::auth_showpt,   # translate base64 strings
   'ao'   => \$O::auth_optional, # make auth optional (ignore auth failure)
   'li:s' => \$O::lint,          # local interface to use for connection
 ) || exit(1);
@@ -92,7 +94,9 @@ if ($O::auth) {
     }
     $a_pass ||= interact("Password: ", 'SKIP');
 
-    $a_type = $O::auth
+    $a_type = $O::auth;
+    $O::auth_showpt = 1 if (defined($O::auth_showpt));
+    $O::auth_hidepw = 1 if (defined($O::auth_hidepw));
   }
 }
 
@@ -267,7 +271,7 @@ sub sendmail {
 sub print_transaction {
   my $f = shift;  # transaction flag
   my $m = shift;  # message to print
-  my $b = shift;  # be breif in what we print
+  my $b = shift;  # be brief in what we print
 
   if ($b) {
     $m = scalar(split(/\n/ms, $m)) . " lines sent";
@@ -304,24 +308,6 @@ sub do_smtp_auth {
 
   print_transaction('===', "No authentication type succeeded");
   return(0);
-
-
-  # I need to handle $a_type here correctly (specific or any), bu just get
-  # something to work right now
-  #print_transaction('===', "doing auth here");
-  #return(1);  # dummy right now
-
-  #if (do_smtp_auth_plain($s, $t, $au, $ap)) {
-  #  return(1);
-  #}
-  #if (do_smtp_auth_login($s, $t, $au, $ap)) {
-  #  return(1);
-  #}
-  #if (do_smtp_auth_cram($s, $t, $au, $ap)) {
-  #  return(1);
-  #}
-  #
-  #return(0);
 }
 
 sub do_smtp_auth_cram {
@@ -332,13 +318,16 @@ sub do_smtp_auth_cram {
   my $r = '';    # will store smtp response
   
   my $auth_string = "AUTH CRAM-MD5";
-  do_smtp_gen($s, $auth_string, '334', $t, \$r) || return(0);
+  do_smtp_gen($s, $auth_string, '334', $t, \$r, '', '',
+              $O::auth_showpt ? \&unencode_smtp : '')
+      || return(0);
 
   $r =~ s/^....//; # maybe something a little better here?
   my $d = get_digest($p, $r);
   $auth_string = encode_base64("$u $d", '');
 
-  do_smtp_gen($s, $auth_string, '235', $t) || return(0);
+  do_smtp_gen($s, $auth_string, '235', $t, undef, '',
+              $O::auth_showpt ? "$u $d" : '') || return(0);
   return(1);
 }
 
@@ -347,13 +336,18 @@ sub do_smtp_auth_login {
   my $t = shift; # timeout
   my $u = shift; # auth user
   my $p = shift; # auth password
+  my $z = '';
   
   my $auth_string = "AUTH LOGIN";
-  do_smtp_gen($s, $auth_string, '334', $t) || return(0);
+  do_smtp_gen($s, $auth_string, '334', $t, undef, '', '', 
+              $O::auth_showpt ? \&unencode_smtp : '') || return(0);
   $auth_string = encode_base64($u, '');
-  do_smtp_gen($s, $auth_string, '334', $t) || return(0);
+  $z = $u if ($O::auth_showpt);
+  do_smtp_gen($s, $auth_string, '334', $t, undef, '', $z,
+              $O::auth_showpt ? \&unencode_smtp : '') || return(0);
   $auth_string = encode_base64($p, '');
-  do_smtp_gen($s, $auth_string, '235', $t) || return(0);
+  $z = $p if ($O::auth_showpt);
+  do_smtp_gen($s, $auth_string, '235', $t, undef, '', $z) || return(0);
   return(1);
 }
 
@@ -364,8 +358,11 @@ sub do_smtp_auth_plain {
   my $p = shift; # auth password
   
   my $auth_string = "AUTH PLAIN " . encode_base64("\0$u\0$p", '');
-  $auth_string;
-  return(do_smtp_gen($s, $auth_string, '235', $t));
+  my $z = '';
+  if ($O::auth_showpt) {
+    $z = "AUTH PLAIN \\0$u\\0$p";
+  }
+  return(do_smtp_gen($s, $auth_string, '235', $t, undef, '', $z));
 }
 
 sub do_smtp_helo {
@@ -413,18 +410,21 @@ sub do_smtp_rcpt {
 }
 
 sub do_smtp_gen {
-  my $s = shift;  # socket
-  my $m = shift;  # string to send
-  my $e = shift;  # String we're expecting to get back
-  my $t = shift;  # timeout
-  my $p = shift;  # this is a scalar ref, assign the server return string to it
-  my $b = shift;  # be brief in the data we send
-  my $r = '';  # This'll be the return value from transact()
+  my $s = shift; # socket
+  my $m = shift; # string to send
+  my $e = shift; # String we're expecting to get back
+  my $t = shift; # timeout
+  my $p = shift; # this is a scalar ref, assign the server return string to it
+  my $b = shift; # be brief in the data we send
+  my $x = shift; # if this is populated, print this instead of $m
+  my $c = shift; # if this is a code ref, call it on the return value b4 print
+  my $r = '';    # This'll be the return value from transact()
 
-  print_transaction(' ->', $m, $b) if ($m);
+  print_transaction(' ->', $x ? $x : $m, $b) if ($m);
   $r  = transact($s, $m, '', $t);
   $$p = $r;
 
+  $r = &$c($r) if (ref($c) eq 'CODE');
   if ($r !~ /^$e /m) {
     print_transaction('***', $r);
     return(0);
@@ -459,6 +459,13 @@ sub transact {
     }
   };
   return($buff);
+}
+
+sub unencode_smtp {
+  my $t = shift;
+
+  my @t = split(' ', $t);
+  return("$t[0] " . decode_base64($t[1]));
 }
 
 sub process_file {
