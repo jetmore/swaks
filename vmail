@@ -11,7 +11,7 @@ my(%opt) = ();
 my($user) = getpwuid($<);
 my($hostname) = get_hostname();
 
-if (!getopts('l:f:t:h:s:p:d:i:', \%opt)) {
+if (!getopts('l:f:t:h:s:p:d:i:g', \%opt)) {
   print STDERR "getopts parsing error\n";
   exit(1);
 }
@@ -23,6 +23,7 @@ if (!getopts('l:f:t:h:s:p:d:i:', \%opt)) {
 # p - what (p)ort do I connect to?
 # d - what is the (d)ata section of the email?
 # i - enter interactive mode
+# g - (g)et data on STDIN
 
 process_file($opt{l}) if ($opt{l});
 $from   = $opt{f} if ($opt{f});
@@ -39,8 +40,10 @@ $data   ||= 'To: %T\nFrom: %F\nSubject: test\n\nThis is a test mailing\n.';
 						# body (\n translated later)
 $helo   ||= $hostname;				# who we claim to be in HELO
 $port   ||= 25;					# where's the mail server?
-$to     || process_interact('t');		# who is the mail to?
+$to     ||  process_interact('t');		# who is the mail to?
 $server ||= get_server($to);			# receiving server
+
+$data     = join('', <>) if ($opt{g});
 
 #print "\$from   = $from\n";
 #print "\$to     = $to\n";
@@ -217,7 +220,7 @@ sub process_interact {
       $from = interact("From: ", '^\S+$');
     } elsif ($arg eq 'T') {
       $to = interact("To: ", '^\S+$');
-    } elsif ($arg eq 'D') {
+    } elsif ($arg eq 'D' && !$opt{g}) {
       $data = interact("Data: ", '^.*$');
     } else {
       print "Unknown option $arg, ignoring...\n";
