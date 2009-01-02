@@ -3,8 +3,7 @@
 use strict; # *gasp*!  A program by jetmore that uses strict?!?!
 
 use IO::Socket qw();
-use Net::DNS;
-use WCS::Util qw();
+use Sys::Hostname;
 use Getopt::Std;
 
 my($from, $to, $helo, $data, $server, $port) = (undef);
@@ -39,13 +38,13 @@ if ($opt{m}) {
   }
 }
 
-process_file($opt{l}) if ($opt{l});
-$from   = $opt{f} if ($opt{f});
-$to     = $opt{t} if ($opt{t});
-$helo   = $opt{h} if ($opt{h});
-$server = $opt{s} if ($opt{s});
-$port   = $opt{p} if ($opt{p});
-$data   = $opt{d} if ($opt{d});
+process_file($opt{l})     if ($opt{l});
+$from   = $opt{f}         if ($opt{f});
+$to     = $opt{t}         if ($opt{t});
+$helo   = $opt{h}         if ($opt{h});
+$server = $opt{s}         if ($opt{s});
+$port   = $opt{p}         if ($opt{p});
+$data   = $opt{d}         if ($opt{d});
 process_interact($opt{i}) if ($opt{i});
 
 
@@ -272,18 +271,19 @@ sub get_hostname {
   #	Technically: The FQDN is the name gethostbyname(2) returns
   #	for the host name returned  by  gethostname(2).   The  DNS
   #	domain name is the part after the first dot.
-  #my($host) = WCS::Util::gethostname();
-  #print STDERR "\$host = $host\n";
-  #my($fqdn) = gethostbyname($host);
-  #print STDERR "\$fqdn = $fqdn\n";
-  return((gethostbyname(WCS::Util::gethostname()))[0]);
+  return((gethostbyname(hostname()))[0]);
 }
 
 sub get_server {
   my $addr   = shift;
   my $pref   = -1;
   my $server = "localhost";
-  my $res    = new Net::DNS::Resolver;
+  
+  if (!try_load("Net::DNS")) {
+    print STDERR "Net::DNS not installed, using $server as mail server\n";
+    return($server);
+  }
+  my $res = new Net::DNS::Resolver;
 
   return($server) if ($addr !~ /\@/);
 
@@ -298,4 +298,16 @@ sub get_server {
     }
   }
   return($server);
+}
+
+sub try_load {
+  my $mod = shift;
+
+  eval("use $mod");
+
+  if ($@) {
+    return(0);
+  } else {
+    return(1);
+  }
 }
