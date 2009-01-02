@@ -41,9 +41,10 @@ GetOptions(
   'l|input-file=s'  => \$O{option_file},   # (l)ocation of input data
   'f|from:s'        => \$O{mail_from},     # envelope-(f)rom address
   't|to:s'          => \$O{mail_to},       # envelope-(t)o address
-  'h|helo|ehlo:s'   => \$O{mail_helo},     # (h)elo string
+  'h|helo|ehlo|lhlo:s' => \$O{mail_helo},  # (h)elo string
   's|server:s'      => \$O{mail_server},   # (s)erver to use
   'p|port:i'        => \$O{mail_port},     # (p)ort to use
+  'protocol:s'      => \$O{mail_protocol}, # protocol to use (smtp, esmtp, lmtp)
   'd|data:s'        => \$O{mail_data},     # (d)ata portion ('\n' for newlines)
   'timeout:s'       => \$O{timeout},       # timeout for each trans (def 30s)
   'g'               => \$O{data_on_stdin}, # (g)et data on stdin 
@@ -106,6 +107,7 @@ if ($G::dump_args) {
   print "hide_receive     = ", $G::hide_receive ? "TRUE" : "FALSE", "\n";
   print "pipeline         = ", $G::pipeline ? "TRUE" : "FALSE", "\n";
   print "silent           = $G::silent\n";
+  print "protocol         = $G::protocol\n";
   print "type             = $G::link{type}\n";
   print "server           = $G::link{server}\n";
   print "sockfile         = $G::link{sockfile}\n";
@@ -1008,12 +1010,17 @@ sub process_args {
   $G::hide_receive  = 1 if ($o->{hide_receive});
   $G::pipeline      = 1 if ($o->{pipeline});
   $G::silent        = $o->{silent} ? $o->{silent} : 0;
+  $G::protocol      = lc($o->{mail_protocol}) || 'esmtp';
+  if ($G::protocol !~ /^(e?s|l)mtp/) {
+    ptrans(12, "Unknown protocol $G::protocol specified, exiting");
+    exit(1);
+  }
   
   # set global option of -q option
   if ($o->{quit_after}) {
     $G::quit_after = lc($o->{quit_after});
-    if ($G::quit_after eq 'ehlo')          { $G::quit_after = 'helo';       }
-    elsif ($G::quit_after eq 'first-ehlo') { $G::quit_after = 'first-helo'; }
+    if ($G::quit_after =~ /^[el]hlo$/)     { $G::quit_after = 'helo';       }
+    elsif ($G::quit_after =~ /first-[el]hlo/) { $G::quit_after = 'first-helo'; }
     elsif ($G::quit_after eq 'starttls')   { $G::quit_after = 'tls';        }
     elsif ($G::quit_after eq 'from')       { $G::quit_after = 'mail';       }
     elsif ($G::quit_after eq 'to')         { $G::quit_after = 'rcpt';       }
