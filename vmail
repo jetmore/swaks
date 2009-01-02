@@ -1,5 +1,9 @@
 #!/usr/bin/perl
 
+# %O hash holds options (organized in sub hashes (auth, tls, etc)
+# G:: holds global options; only _very_ necessary variables, like $G::tls_active
+# all "normalization" of variables should be in subroutines
+
 use strict; # *gasp*!  A program by jetmore that uses strict?!?!
 
 use IO::Socket qw();
