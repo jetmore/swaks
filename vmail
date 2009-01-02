@@ -6,6 +6,17 @@ use IO::Socket qw();
 use Sys::Hostname;
 use Getopt::Long;
 
+my($p_name)   = $0 =~ m|/?([^/]+)$|;
+my $p_version = "XXXXXXXX.X";
+my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
+my $p_cp      = <<EOM;
+Copyright (c) 2003
+      John Jetmore <jj33\@pobox.com>.  All rights reserved.
+This code freely redistributable provided my name and this copyright notice
+are not removed.  Send email to the contact address if you use this program.
+EOM
+ext_usage(); # before we do anything else, check for --help
+
 my($from,$to,$helo,$data,$server,$port,$a_type,$a_user,$a_pass,
    $lint,$timeout) = (undef);
 my $fconf    = {}; # this will hold config info from -l fileif specified
@@ -214,18 +225,22 @@ $data     = join('', <STDIN>) if ($O::data_on_stdin);
 #print "\$timeout= $timeout\n";
 #exit;
 
-$data .= "\n.";
-$data =~ s/\\n/\n/g;
+$data =~ s/\\n/\r\n/g;
 $data =~ s/%F/$from/g;
 $data =~ s/%T/$to/g;
 $data =~ s/%D/scalar(localtime(time()))/eg;
 $data =~ s/^From [^\n]*\n// if (!$O::no_strip_from);
-#print "after parsing, \$data looks like this:\n#\n$data\n#\n";
+
+# dot processing
+$data =~ s/\n\.\n?$//s; # If there was a trailing dot, remove it
+$data =~ s/\n\./\n../g; # quote any other leading dots
+$data .= "\n.";         # add a trailing dot
+#print "after parsing, \$data looks like this:\n#\n$data#\n";
 #exit;
 sendmail($from, $to, $helo, $data, $server, $port, $a_user, $a_pass, $a_type,
          $lint, $timeout);
 
-exit;
+exit(0);
 
 sub sendmail {
   my $from    = shift;	# envelope-from
@@ -815,3 +830,230 @@ sub time_to_seconds {
     }
   }
 }
+
+sub ext_usage {
+  if ($ARGV[0] =~ /^--help$/i) {
+    require Config;
+    $ENV{PATH} .= ":" unless $ENV{PATH} eq "";
+    $ENV{PATH} = "$ENV{PATH}$Config::Config{'installscript'}";
+    exec("perldoc", "-F", "-U", $0) || exit 1;
+    # make parser happy
+    %Config::Config = ();
+  } elsif ($ARGV[0] =~ /^--version$/i) {
+    print "$p_name version $p_version\n\n$p_cp\n";
+  } else {
+    return;
+  }
+
+  exit(0);
+}
+
+__END__
+
+=head1 NAME
+
+vmail - SMTP transaction tester
+
+=head1 USAGE
+
+vmail [--help|--version] | (see description of options below)
+
+=head1 OPTIONS
+
+=over 4
+
+=item -l
+
+Argument to -l must be a path to a file containing TOKEN->VALUE pairs.  The TOKEN and VALUE must be separated by whitespace.  These tokens set values which would otherwise be set by command line arguments.  See the description of the corresponding command line argument for details of each token.  Valid tokens are FROM (-f), TO (-t), SERVER (-s), DATA (-d), HELO (-h), PORT (-p), INTERFACE (-li), and TIMEOUT (-to)
+
+=item -t
+
+Use argument as "RCPT TO" address, or prompt user if no argument specified.  Overridden by -l token TO.  Multiple recipients can be specified by supplying as one comma-delimited argument.
+
+There is no default for this option.  If no to addess is specified with -t or TO token, user will be prompted for To: address on STDIN.
+
+=item -f
+
+Use argument as "MAIL FROM" address, or prompt user if no argument specified.  Overridden by -l token FROM.  If no from address is specified, default is user@host, where user is the best guess at user currently running program, and host is best guess at DNS hostname of local host.
+
+=item -s
+
+Use argument as mail server to which to connect, or prompt user if no argument specified.  Overridden by -l token SERVER.  If unspecified, vmail tries to determine primary MX of destination address.  If Net::DNS module is not available, tries to connect to localhost.
+
+=item -p
+
+Use argument as port to connect to on server, or prompt user if no argument is specified.  Overridden by -l token PORT.  If unspecified, vmail will try to connect to port 25.
+
+=item -h
+
+Use argument as argument to SMTP EHLO/HELO command, or prompt use if no argument is specified.  Overridden by -l token HELO.  If unspecified, vmail uses best guess at DNS hostname of local host.
+
+=item -d
+
+Use argument as DATA portion of SMTP transaction, or prompt user if no argument specified.  Overridden by -l token DATA.
+
+This string should be on one single line, with a literal \n representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  Very basic token parsing is done.  %F is replaced with the value that will be used for "MAIL FROM", %T is replaced with "RCPT TO" values, and %D is replaced with a timestamp.
+
+Default value for this option is "To: %T\nFrom: %F\nSubject: test %D\n\nThis is a test mailing\n".
+
+=item -to
+
+Use argument as the SMTP transaction timeout, or prompt user if no argument given.  Overridden by the -l token TIMEOUT.  Argument can either be a pure digit, which will be interpretted as seconds, or can have a specifier s or m (5s = 5 seconds, 3m = 180 seconds).  As a special case, 0 means don't timeout the transactions.  Default value is 30s.
+
+=item -li
+
+Use argument as the local interface for the SMTP connection, or prompt user if no argument given.  Overridden by the -l token INTERFACE.  Argument can be an IP or a hostname.  Default action is to let OS choose local interface.
+
+=item -g
+
+If specified, vmail will read the DATA value for the mail from STDIN.  If there is a From_ line in the email, it will be removed (but see -nsf option).  Useful for delivering real message (stored in files) instead of using example messages.
+
+=item -nsf
+
+Don't strip the From_ line from the DATA portion, if present.
+
+=item -n
+
+If this option is specified, vmail summarizes the DATA portion of the SMTP transaction instead of printing every line.
+
+=item -q
+
+The argument to this option is used as an indicator of where to quit the SMTP transaction.  It can be thought of as "quit after", with valid arguments CONNECT, HELO, TLS, AUTH, MAIL, and RCPT.
+
+=item -m
+
+Emulate Mail command.  Least used option in vmail.
+
+=item -support
+
+Cause vmail to print its capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and lets you know which functionality is present.
+
+=item -S
+
+Cause vmail to be silent.  "-S" causes vmail to print no output until an error occurs, after which all output is shown.  "-S -S" causes vmail to only show error conditions.  "-S -S -S" shows no output.
+
+=item -tls
+
+Require connection to use STARTTLS.  Exit if TLS not available for any reason (not advertised, negotiations failed, etc).
+
+=item -tlso
+
+Attempt to use STARTTLS if possible, continue t/ normal transaction if TLS unavailable.
+
+=item -a
+
+Require authentication.  If Authentication fails or is unavailable, stop transaction.  -a can take an argument specifying which type of authentication to use.  vmail currently supports PLAIN, LOGIN, and CRAM-MD5.  If no argument is given any available authentication type is used.  If neither password (-ap) or username (-au) is supplied on command line, vmail will prompt on STDIN.
+
+=item -ao
+
+Same as -a, but if authentication is unavailable or fails, attempts to continue transaction.
+
+=item -au
+
+Supply the username for authentication.
+
+=item -ap
+
+Supply the password for authentication.
+
+=item -apt
+
+Instead of showing AUTH strings literally (in base64), translate them to plaintext before printing on screen
+
+=item --help
+
+This screen.
+
+=item --version
+
+Version info.
+
+=back
+
+=head1 EXAMPLES
+
+=over 4
+
+=item vmail
+
+prompt user for to address and send a default email.
+
+=item cat mailfile | vmail -g -n -t user@example.com -tlso -a -au user -ap password
+
+send the contents of "mailfile" to user@example.com, using TLS if available, requiring authentication, using user/password as authentication information.
+
+=back
+
+=head1 COMMENTS
+
+This program was written because I was testing a new MTA on an alternate port.  I did so much testing that using interactive telnet grew tiresome.  Over the next several years this program was fleshed out and every single option was added as a direct need of some testing I was doing as the mail admin of a medium sized ISP, with the exception of TLS support which was added on a whim.  As such, all options are reasonably well thought out and fairly well tested (though TLS could use more testing).
+
+=head1 EXIT CODES
+
+=item 0
+
+no errors occurred
+
+=item 1
+
+error parsing command line options
+
+=item 2
+
+error connecting to remote server
+
+=item 10
+
+error in prerequisites (needed module not available)
+
+=item 21
+
+error reading initial banner from server
+
+=item 22
+
+error in HELO transaction
+
+=item 23
+
+error in MAIL transaction
+
+=item 24
+
+no RCPTs accepted
+
+=item 25
+
+server returned error to DATA request
+
+=item 26
+
+server did not accept mail following data
+
+=item 27
+
+server returned error after normal-session quit request
+
+=item 28
+
+error in AUTH transaction
+
+=item 29
+
+unexpected response from server after STARTTLS requested
+
+=item 30
+
+TLS negotiation failed
+
+=item 31
+
+STARTTLS requested but not advertised by server
+
+=item 32
+
+error in EHLO following TLS negotiation
+
+=head1 CONTACT
+
+=item proj-vmail@jetmore.net
