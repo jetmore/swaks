@@ -6,11 +6,6 @@
 
 use strict;
 
-use IO::Socket;
-use Sys::Hostname;
-use Getopt::Long;
-use Time::Local;
-
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
 my $p_version = "20060621.0-dev";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
@@ -36,6 +31,10 @@ ext_usage(); # before we do anything else, check for --help
 my %O        = ();
 $|           = 1;
 
+if (!load("Getopt::Long")) {
+    ptrans(12, "Unable to load Getopt::Long for option processing, Exiting");
+    exit(1);
+}
 Getopt::Long::Configure("bundling_override");
 GetOptions(
   'l|input-file=s'  => \$O{option_file},   # (l)ocation of input data
@@ -90,6 +89,11 @@ GetOptions(
                        list => ['Authen::DigestMD5'] },
   dns             => { name => "MX Routing",     list => ['Net::DNS'] },
   tls             => { name => "TLS",            list => ['Net::SSLeay'] },
+  pipe            => { name => "Pipe Transport", list => ['IPC::Open2'] },
+  socket          => { name => "Socket Transport", list => ['IO::Socket'] },
+  date_manip      => { name => "Date manipulation", list => ['Time::Local'] },
+  hostname        => { name => "Local hostname detection",
+                       list => ['Sys::Hostname'] },
   hires_timing    => { name => "Hi resolution timing",
                        list => ['Time::HiRes'] },
 );
@@ -195,8 +199,7 @@ sub open_link {
     $SIG{PIPE} = 'IGNORE';
     $@ = "";
     $G::link{sock} = IO::Socket::UNIX->new(Peer => $G::link{sockfile},
-                            Timeout   => $G::link{timeout},
-                            Type => SOCK_STREAM);
+                            Timeout   => $G::link{timeout});
 
     if ($@) {
       ptrans(12, "Error connecting to $G::link{sockfile}:\n\t$@");
@@ -207,10 +210,6 @@ sub open_link {
     $SIG{PIPE} = 'IGNORE';
     $SIG{CHLD} = 'IGNORE';
     ptrans(11, "Trying pipe to $G::link{process}...");
-    if (!load("IPC::Open2")) {
-      ptrans(12, "Couldn't load IPC::Open2 for pipe, exiting");
-      exit(2);
-    }
     eval{
       open2($G::link{sock}{re}, $G::link{sock}{wr}, $G::link{process});
     };
@@ -913,6 +912,7 @@ sub interact {
 
 sub get_hostname {
   # in some cases hostname returns value but gethostbyname doesn't.
+  return("") if (!avail("hostname"));
   my $h = hostname();
   return("") if (!$h);
   my $l = (gethostbyname($h))[0];
@@ -1147,6 +1147,19 @@ sub process_args {
   if (!$G::link{type}) {
     $G::link{server} = get_server($n{to}) if (!$G::link{server});
     $G::link{type}   = "socket-inet";
+  }
+
+  # Verify we are able to handle the requested transport
+  if ($G::link{type} eq 'pipe') {
+    if (!avail("pipe")) {
+      ptrans(12, avail_err("pipe").".  Exiting");
+      exit(2);
+    }
+  } else {
+    if (!avail("socket")) {
+      ptrans(12, avail_err("socket").".  Exiting");
+      exit(2);
+    }
   }
 
   # local interface to connect from
@@ -1425,13 +1438,21 @@ sub get_date_string {
   return($G::date_string) if (length($G::date_string) > 0);
 
   my @l = localtime();
-  my @g = gmtime();
+  my $o = 0;
+  
+  if (!avail("date_manip")) {
+    ptrans(12, avail_err("date_manip").".  Date strings will be in GMT");
+  } else {
+    my @g = gmtime();
+    $o = (timelocal(@l) - timelocal(@g))/36;
+  }
   $G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
                  (qw(Sun Mon Tue Wed Thu Fri Sat))[$l[6]],
                  $l[3],
                  (qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec))[$l[4]],
                  $l[5]+1900, $l[2], $l[1], $l[0],
-                 (timelocal(@l) - timelocal(@g))/36
+                 $o
+                 #(timelocal(@l) - timelocal(@g))/36
                     );
 }
 
