@@ -1374,105 +1374,7 @@ sub fetch_args {
     exit(1);
   }  
   Getopt::Long::Configure("bundling_override");
-  GetOptions(
-     %options
-#    # location of config file (noop, just here so GO::L not barf)
-#    'config=s'                    => \$r->{config_file},
-#
-#    # (l)ocation of input data
-#    'l|input-file=s'              => \$r->{option_file},
-#    # envelope-(f)rom address
-#    'f|from:s'                    => \$r->{mail_from},
-#    # envelope-(t)o address
-#    't|to:s'                      => \$r->{mail_to},
-#    # (h)elo string
-#    'h|helo|ehlo|lhlo:s'          => \$r->{mail_helo},
-#    # (s)erver to use
-#    's|server:s'                  => \$r->{mail_server},
-#    # copy MX/routing from another domain
-#    'copy-routing:s'              => \$r->{copy_routing},
-#    # (p)ort to use
-#    'p|port:s'                    => \$r->{mail_port},
-#    # protocol to use (smtp, esmtp, lmtp)
-#    'protocol:s'                  => \$r->{mail_protocol},
-#    # (d)ata portion ('\n' for newlines)
-#    'd|data:s'                    => \$r->{mail_data},
-#    # timeout for each trans (def 30s)
-#    'timeout:s'                   => \$r->{timeout},
-#    # (g)et data on stdin
-#    'g'                           => \$r->{data_on_stdin},
-#    # emulate (M)ail command
-#    'm'                           => \$r->{emulate_mail},
-#    # (q)uit after
-#    'q|quit|quit-after=s'         => \$r->{quit_after},
-#    # do (n)ot print data portion
-#    'n|suppress-data'             => \$r->{suppress_data},
-#    # force auth, exit if not supported
-#    'a|auth:s'                    => \$r->{auth},
-#    # user for auth
-#    'au|auth-user:s'              => \$r->{auth_user},
-#    # pass for auth
-#    'ap|auth-password:s'          => \$r->{auth_pass},
-#    # auth type map
-#    'am|auth-map=s'               => \$r->{auth_map},
-#    # hide passwords when possible
-#    #'ahp|auth-hide-password'     => \$r->{auth_hidepw},
-#    # translate base64 strings
-#    'apt|auth-plaintext'          => \$r->{auth_showpt},
-#    # auth optional (ignore failure)
-#    'ao|auth-optional:s'          => \$r->{auth_optional},
-#    # req auth if avail
-#    'aos|auth-optional-strict:s'  => \$r->{auth_optional_strict},
-#    # report capabilties
-#    'support'                     => \$r->{get_support},
-#    # local interface to use
-#    'li|local-interface:s'        => \$r->{lint},
-#    # use TLS
-#    'tls'                         => \$r->{tls},
-#    # use tls if available
-#    'tlso|tls-optional'           => \$r->{tls_optional},
-#    # req tls if avail
-#    'tlsos|tls-optional-strict:s' => \$r->{tls_optional_strict},
-#    # use tls if available
-#    'tlsc|tls-on-connect'         => \$r->{tls_on_connect},
-#    # suppress output to varying degrees
-#    'S|silent:i'                  => sub { $r->{silent} = $_[1] ||
-#                                               $r->{silent} + 1; },
-#    # Don't strip From_ line from DATA
-#    'nsf|no-strip-from'           => \$r->{no_strip_from},
-#    # Don't show transaction hints
-#    'nth|no-hints'                => \$r->{no_hints},
-#    # Don't show reception lines
-#    'hr|hide-receive'             => \$r->{hide_receive},
-#    # Don't show sending lines
-#    'hs|hide-send'                => \$r->{hide_send},
-#    # Don't show any swaks-generated, non-error informational lines
-#    'hi|hide-informational'       => \$r->{hide_informational},
-#    # Don't send any output to the terminal
-#    'ha|hide-all'                 => \$r->{hide_all},
-#    # print lapse for send/recv
-#    'stl|show-time-lapse:s'       => \$r->{show_time_lapse},
-#    # don't touch the data
-#    'ndf|no-data-fixup'           => \$r->{no_data_fixup},
-#    # command to communicate with
-#    'pipe:s'                      => \$r->{pipe_cmd},
-#    # unix domain socket to talk to
-#    'socket:s'                    => \$r->{socket},
-#    # the content of the body of the DATA
-#    'body:s'                      => \$r->{body_822},
-#    # A file to attach
-#    'attach-type|attach:s'        => \@{$r->{attach_822}},
-#    # replacement for %H DATA token
-#    'ah|add-header:s'             => \@{$r->{add_header}},
-#    # replace header if exist, else add
-#    'header:s'                    => \@{$r->{header}},
-#    # build options and dump
-#    'dump'                        => \$r->{dump_args},
-#    # attempt PIPELINING
-#    'pipeline'                    => \$r->{pipeline},
-#    # use getpwuid building -f
-#    'force-getpwuid'              => \$r->{force_getpwuid}
-  ) || exit(1);
+  GetOptions(%options) || exit(1);
 }
 
 # A couple of global options are set in here, they will be in the G:: namespace
@@ -1609,6 +1511,7 @@ sub process_args {
   $G::link{server}   = $o->{mail_server} || interact("Server: ", '^.*$')
       if (defined($o->{mail_server}));
   $G::link{server} ||= $fconf->{SERVER};
+  $o->{mail_port}  ||= $1 if ($G::link{server} =~ s|:([^:]+)$||);
   $n{to}             = $o->{mail_to} || interact("To: ", '^.*$')
       if (defined($o->{mail_to}));
   $n{to}           ||= $fconf->{TO};
