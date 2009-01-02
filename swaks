@@ -1301,7 +1301,7 @@ sub process_args {
   # The -g option trumps all other methods of getting the data
   $n{data}   = join('', <STDIN>) if ($o->{data_on_stdin});
   if (!$o->{no_data_fixup}) {
-    $n{data} =~ s/%B/$body/eg;
+    $n{data} =~ s/%B/$body/g;
     if (scalar(@{$o->{header}})) {
       my %matched = ();
       foreach my $l (map { split(/\\n/) } @{$o->{header}}) {
@@ -1314,7 +1314,7 @@ sub process_args {
     }
     $n{add_header} = join('\n', @{$o->{add_header}}) . "\n"
         if (@{$o->{add_header}});
-    $n{data} =~ s/%H/$n{add_header}/eg;
+    $n{data} =~ s/%H/$n{add_header}/g;
     $n{data} =~ s/\\n/\r\n/g;
     $n{data} =~ s/%F/$n{from}/g;
     $n{data} =~ s/%T/$n{to}/g;
