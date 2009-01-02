@@ -37,7 +37,7 @@ GetOptions(
   'g'    => \$O::data_on_stdin, # (g)et data on stdin 
   'm'    => \$O::emulate_mail,  # emulate (M)ail command
   'q|quit|quit-after=s'  => \$O::quit_after,    # (q)uit after (connect,helo,mail,rcpt,auth)
-  'n|supress-data'    => \$O::supress_data,  # do (n)ot print data portion
+  'n|suppress-data'    => \$O::supress_data,  # do (n)ot print data portion
   'a|auth:s'  => \$O::auth,          # force auth, exit if not supported
   'au|auth-user:s' => \$O::auth_user,     # user for auth
   'ap|auth-password:s' => \$O::auth_pass,     # pass for auth
@@ -62,6 +62,12 @@ exit(0) if ($O::get_support); # --support means report capabilities only
 
 # because we use raw truth below, convert a 0 value to timeout to 0s
 $O::timeout = '0s' if ($O::timeout eq '0'); # used 'eq' for numeric on purpose
+
+# a '-' arg to -d is the same as setting -g
+if ($O::mail_data eq '-') {
+  undef($O::mail_data);
+  $O::data_on_stdin = 1;
+}
 
 # normalize the TLS options
 $O::tls_optional = 1 if (defined($O::tls_optional));
@@ -294,37 +300,25 @@ sub sendmail {
 
   # handle TLS here if user has requested it
   if ($O::tls) {
-    if (!$ehlo->{STARTTLS}) {
-      print_transaction(12, "STARTTLS not supported");
+    if (!do_smtp_tls($s, $timeout, $ehlo) && !$O::tls_optional)
+    {
       do_smtp_gen($s, 'QUIT', '221', $timeout);
-      exit(31) if (!$O::tls_optional);
-    } elsif (!do_smtp_gen($s, "STARTTLS", '220', $timeout)) {
-      print_transaction(12, "STARTTLS unsuccessful");
-      if (!$O::tls_optional) {
-        do_smtp_gen($s, 'QUIT', '221', $timeout);
-        exit(29);
-      }
-    } elsif (!start_tls($s, \%tls)) {
-      print_transaction(12, "TLS startup failed");
-      if (!$O::tls_optional) {
-        do_smtp_gen($s, 'QUIT', '221', $timeout);
-        exit(30);
-      }
-    } else {
-      print_transaction(11, "TLS started w/ cipher $tls{cipher}");
+      exit(29);
+    }
+  }
 
-      # QUIT here if the user has asked us to do so
-      if ($O::quit_after eq 'tls') {
-        do_smtp_gen($s, 'QUIT', '221', $timeout);
-        exit(0);
-      }
+  # QUIT here if the user has asked us to do so
+  if ($O::quit_after eq 'tls') {
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
+    exit(0);
+  }
 
-      # According to RFC3207, we need to forget state info and re-EHLO here
-      $ehlo = {};
-      if (!do_smtp_helo($s, $helo, $timeout, $ehlo)) {
-        do_smtp_gen($s, 'QUIT', '221', $timeout);
-        exit(32);
-      }
+  if ($tls{active}) {
+    # According to RFC3207, we need to forget state info and re-EHLO here
+    $ehlo = {};
+    if (!do_smtp_helo($s, $helo, $timeout, $ehlo)) {
+      do_smtp_gen($s, 'QUIT', '221', $timeout);
+      exit(32);
     }
   }
 
@@ -365,10 +359,6 @@ sub sendmail {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(24);
   }
-  #if (!do_smtp_rcpt($s, $to, $timeout)) {
-  #  do_smtp_gen($s, 'QUIT', '221', $timeout);
-  #  exit(24);
-  #}
 
   # QUIT here if the user has asked us to do so
   if ($O::quit_after eq 'rcpt') {
@@ -460,6 +450,25 @@ sub print_transaction {
   }
   $m =~ s/\n/\n$f /msg;
   print $o "$f $m\n";
+}
+
+sub do_smtp_tls {
+  my $s  = shift; # socket
+  my $t  = shift; # timeout
+  my $e  = shift; # ehlo config hash
+
+  if (!$e->{STARTTLS}) {
+    print_transaction(12, "STARTTLS not supported");
+    return $O::tls_optional ? 1 : 0;
+  } elsif (!do_smtp_gen($s, "STARTTLS", '220', $timeout)) {
+    return $O::tls_optional ? 1 : 0;
+  } elsif (!start_tls($s, \%tls)) {
+    print_transaction(12, "TLS startup failed");
+    return $O::tls_optional ? 1 : 0;
+  }
+
+  print_transaction(11, "TLS started w/ cipher $tls{cipher}");
+  return(1);
 }
 
 sub do_smtp_auth {
@@ -862,33 +871,33 @@ vmail [--help|--version] | (see description of options below)
 
 =over 4
 
-=item -l
+=item -l, --input-file
 
-Argument to -l must be a path to a file containing TOKEN->VALUE pairs.  The TOKEN and VALUE must be separated by whitespace.  These tokens set values which would otherwise be set by command line arguments.  See the description of the corresponding command line argument for details of each token.  Valid tokens are FROM (-f), TO (-t), SERVER (-s), DATA (-d), HELO (-h), PORT (-p), INTERFACE (-li), and TIMEOUT (-to)
+Argument to -l must be a path to a file containing TOKEN->VALUE pairs.  The TOKEN and VALUE must be separated by whitespace.  These tokens set values which would otherwise be set by command line arguments.  See the description of the corresponding command line argument for details of each token.  Valid tokens are FROM (-f), TO (-t), SERVER (-s), DATA (-d), HELO (-h), PORT (-p), INTERFACE (-li), and TIMEOUT (-to).
 
-=item -t
+=item -t, --to
 
 Use argument as "RCPT TO" address, or prompt user if no argument specified.  Overridden by -l token TO.  Multiple recipients can be specified by supplying as one comma-delimited argument.
 
 There is no default for this option.  If no to addess is specified with -t or TO token, user will be prompted for To: address on STDIN.
 
-=item -f
+=item -f, --from
 
 Use argument as "MAIL FROM" address, or prompt user if no argument specified.  Overridden by -l token FROM.  If no from address is specified, default is user@host, where user is the best guess at user currently running program, and host is best guess at DNS hostname of local host.
 
-=item -s
+=item -s, --server
 
 Use argument as mail server to which to connect, or prompt user if no argument specified.  Overridden by -l token SERVER.  If unspecified, vmail tries to determine primary MX of destination address.  If Net::DNS module is not available, tries to connect to localhost.
 
-=item -p
+=item -p, --port
 
 Use argument as port to connect to on server, or prompt user if no argument is specified.  Overridden by -l token PORT.  If unspecified, vmail will try to connect to port 25.
 
-=item -h
+=item -h, --helo, --ehlo
 
 Use argument as argument to SMTP EHLO/HELO command, or prompt use if no argument is specified.  Overridden by -l token HELO.  If unspecified, vmail uses best guess at DNS hostname of local host.
 
-=item -d
+=item -d, --data
 
 Use argument as DATA portion of SMTP transaction, or prompt user if no argument specified.  Overridden by -l token DATA.
 
@@ -896,11 +905,11 @@ This string should be on one single line, with a literal \n representing where l
 
 Default value for this option is "To: %T\nFrom: %F\nSubject: test %D\n\nThis is a test mailing\n".
 
-=item -timeout
+=item --timeout
 
 Use argument as the SMTP transaction timeout, or prompt user if no argument given.  Overridden by the -l token TIMEOUT.  Argument can either be a pure digit, which will be interpretted as seconds, or can have a specifier s or m (5s = 5 seconds, 3m = 180 seconds).  As a special case, 0 means don't timeout the transactions.  Default value is 30s.
 
-=item -li
+=item -li, --local-interface
 
 Use argument as the local interface for the SMTP connection, or prompt user if no argument given.  Overridden by the -l token INTERFACE.  Argument can be an IP or a hostname.  Default action is to let OS choose local interface.
 
@@ -908,15 +917,15 @@ Use argument as the local interface for the SMTP connection, or prompt user if n
 
 If specified, vmail will read the DATA value for the mail from STDIN.  If there is a From_ line in the email, it will be removed (but see -nsf option).  Useful for delivering real message (stored in files) instead of using example messages.
 
-=item -nsf
+=item -nsf, --no-strip-from
 
 Don't strip the From_ line from the DATA portion, if present.
 
-=item -n
+=item -n, --suppress-data
 
 If this option is specified, vmail summarizes the DATA portion of the SMTP transaction instead of printing every line.
 
-=item -q
+=item -q, --quit-after
 
 The argument to this option is used as an indicator of where to quit the SMTP transaction.  It can be thought of as "quit after", with valid arguments CONNECT, HELO, TLS, AUTH, MAIL, and RCPT.
 
@@ -924,11 +933,11 @@ The argument to this option is used as an indicator of where to quit the SMTP tr
 
 Emulate Mail command.  Least used option in vmail.
 
-=item -support
+=item --support
 
 Cause vmail to print its capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and lets you know which functionality is present.
 
-=item -S
+=item -S, --silent
 
 Cause vmail to be silent.  "-S" causes vmail to print no output until an error occurs, after which all output is shown.  "-S -S" causes vmail to only show error conditions.  "-S -S -S" shows no output.
 
@@ -936,29 +945,29 @@ Cause vmail to be silent.  "-S" causes vmail to print no output until an error o
 
 Require connection to use STARTTLS.  Exit if TLS not available for any reason (not advertised, negotiations failed, etc).
 
-=item -tlso
+=item -tlso, --tls-optional
 
 Attempt to use STARTTLS if possible, continue t/ normal transaction if TLS unavailable.
 
-=item -a
+=item -a, --auth
 
 Require authentication.  If Authentication fails or is unavailable, stop transaction.  -a can take an argument specifying which type of authentication to use.  vmail currently supports PLAIN, LOGIN, and CRAM-MD5.  If no argument is given any available authentication type is used.  If neither password (-ap) or username (-au) is supplied on command line, vmail will prompt on STDIN.
 
-=item -ao
+=item -ao, --auth-optional
 
 Same as -a, but if authentication is unavailable or fails, attempts to continue transaction.
 
-=item -au
+=item -au, --auth-user
 
 Supply the username for authentication.
 
-=item -ap
+=item -ap, --auth-password
 
 Supply the password for authentication.
 
-=item -apt
+=item -apt, --auth-plaintext
 
-Instead of showing AUTH strings literally (in base64), translate them to plaintext before printing on screen
+Instead of showing AUTH strings literally (in base64), translate them to plaintext before printing on screen.
 
 =item --help
 
@@ -1040,15 +1049,7 @@ error in AUTH transaction
 
 =item 29
 
-unexpected response from server after STARTTLS requested
-
-=item 30
-
-TLS negotiation failed
-
-=item 31
-
-STARTTLS requested but not advertised by server
+error in TLS transaction
 
 =item 32
 
