@@ -1,13 +1,80 @@
 #!/usr/bin/perl
 
+my $foo =<<'EOM';
+This is a private, limited release and as such is not guaranteed to work.
+
+Things left to do:
+
+* intelligence between tiers?  For instance, as designed setting --auth-user
+  (-au) causes swaks to assume --auth also presented.  Maybe you don't want
+  that though.  Maybe you want to be able to have -au in .swaksrc _always_,
+  but only used when --auth given?
+* do we currently have any additive args?  I know -S is.  How do they behave?
+  Should they be additive always, or each new tier overwrite previous, or
+  should that be configurable?
+* we need a global "--no-" prefix to completely undef an argument.  This
+  would be needed if you set an arg in a default file but you want to unset
+  it for a specific run.
+* fix ENV processing so that underscores are raised to hyphens (because
+  SWAKS_ARG_auth-optional isn't a valid variable name)
+* deprecate -l.  support for 3 releases or 1 year, whichever is longer, start
+  printing warning when used in the release following the next release
+* need to document new behaviours:
+** args can be specified in multiple ways.  config file, environment variables,
+   and command line arguments.  They are parsed in the order just listed, and
+   any later data overwrites earlier data.  So, if a config file lists
+   "--to foo@example.com" and SWAKS_ARG_to=bar@example.com, bar@example.com
+   would be used because environment variables are parsed after config files.
+** a config file can be used.  No matter how many exist or how many are
+   specified, only one file is ever used per swaks run
+** The _default_ config file is looked for in the following places:
+*** $SWAKS_HOME/.swaksrc
+*** $HOME/.swaksrc
+*** $LOGDIR/.swaksrc
+** if any of the files above exist, the first one found (searched in the order
+   listed above) is used.  If the file is not openable, it is skipped with
+   no error.
+** a non-default config file can be specified with either the --config arg
+   or the SWAKS_ARG_config environment variable.  If either of this is set
+   to an empty value, it overrides and previous setting, including the default,
+   and no config file is used.  If a non-default config file is given and
+   it can not be opened or read, an error is thrown and swaks will exit.
+** The format of a config file is not fully defined, it is designed for future
+   expansion.  Currently all that is honored from a config file is every line
+   between ^<ARGS>\s*$ and ^</ARGS>\s*$ that doesn't begin with a hash (#).
+** each of the lines that meet the above criteria is expected to contain
+   exactly one command line flag and, optionally, an argument to that flag.
+   So, here is an example of a config file:
+   <ARGS>
+   # always use this sender, no matter server or logged in user
+   --from fred@example.com
+   # my spam filter doesn't like it when I don't have a name in the To: header
+   --h-To: "Fred Example" <fred@example.com>
+   </ARGS>
+   note that everything after the first space is assumed to be the arg and is
+   not shell processed, so any quoting is usually unneeded and will not
+   be stripped off by the shell.
+** after config file processing is environment variable processing.  This
+   simply looks for any environment variables beginning with "SWAKS_ARG_"
+   and treats the remained or the name as a command line flag with the contents
+   of the variable.  If an option has a hyhen in it, replace it with an
+   underscore
+     SWAKS_ARG_to=fred@example.com; SWAKS_ARG_auth_optional=""
+      are equivilent to
+     --to fred@example.com --auth-optional
+** after environment variable processing, the original command line supplied
+   to swaks is evaluated
+EOM
+
 # use 'swaks --help' to view documentation for this program
 # if you want to be notified about future releases of this program,
 #	please send an email to updates-swaks@jetmore.net
 
 use strict;
 
+$|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20061116.0-dev";
+my $p_version = "20070921.0-dev";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003-2007 John Jetmore <jj33\@pobox.com>
@@ -28,91 +95,12 @@ my $p_cp      = <<EOM;
 EOM
 ext_usage(); # before we do anything else, check for --help
 
-my %O        = ();
-$|           = 1;
+# Get all input provided to our program, via file, env, command line, etc
+my %O = %{ load_args() };
 
-# need to rewrite header-HEADER opts before std option parsing
-for (my $i = 0; $i < scalar(@ARGV); $i++) {
-  if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
-    $ARGV[$i] = "--header";  $ARGV[$i+1] = "$1: $ARGV[$i+1]";
-  }
-}
-if (!load("Getopt::Long")) {
-    ptrans(12, "Unable to load Getopt::Long for option processing, Exiting");
-    exit(1);
-}
-Getopt::Long::Configure("bundling_override");
-GetOptions(
-  'l|input-file=s'  => \$O{option_file},   # (l)ocation of input data
-  'f|from:s'        => \$O{mail_from},     # envelope-(f)rom address
-  't|to:s'          => \$O{mail_to},       # envelope-(t)o address
-  'h|helo|ehlo|lhlo:s' => \$O{mail_helo},  # (h)elo string
-  's|server:s'      => \$O{mail_server},   # (s)erver to use
-  'copy-routing:s'  => \$O{copy_routing},  # copy MX/routing from another domain
-  'p|port:s'        => \$O{mail_port},     # (p)ort to use
-  'protocol:s'      => \$O{mail_protocol}, # protocol to use (smtp, esmtp, lmtp)
-  'd|data:s'        => \$O{mail_data},     # (d)ata portion ('\n' for newlines)
-  'timeout:s'       => \$O{timeout},       # timeout for each trans (def 30s)
-  'g'               => \$O{data_on_stdin}, # (g)et data on stdin
-  'm'               => \$O{emulate_mail},  # emulate (M)ail command
-  'q|quit|quit-after=s' => \$O{quit_after}, # (q)uit after
-  'n|suppress-data' => \$O{suppress_data}, # do (n)ot print data portion
-  'a|auth:s'        => \$O{auth},          # force auth, exit if not supported
-  'au|auth-user:s'  => \$O{auth_user},     # user for auth
-  'ap|auth-password:s' => \$O{auth_pass},  # pass for auth
-  'am|auth-map=s'   => \$O{auth_map},      # auth type map
-  #'ahp|auth-hide-password' => \$O{auth_hidepw}, # hide passwords when possible
-  'apt|auth-plaintext' => \$O{auth_showpt}, # translate base64 strings
-  'ao|auth-optional:s' => \$O{auth_optional}, # auth optional (ignore failure)
-  'aos|auth-optional-strict:s' => \$O{auth_optional_strict}, # req auth if avail
-  'support'         => \$O{get_support},   # report capabilties
-  'li|local-interface:s' => \$O{lint},     # local interface to use
-  'tls'             => \$O{tls},           # use TLS
-  'tlso|tls-optional' => \$O{tls_optional}, # use tls if available
-  'tlsos|tls-optional-strict:s' => \$O{tls_optional_strict}, # req tls if avail
-  'tlsc|tls-on-connect' => \$O{tls_on_connect}, # use tls if available
-  'S|silent+'       => \$O{silent},        # suppress output to varying degrees
-  'nsf|no-strip-from' => \$O{no_strip_from}, # Don't strip From_ line from DATA
-  'nth|no-hints'    => \$O{no_hints},      # Don't show transaction hints
-  'hr|hide-receive' => \$O{hide_receive},  # Don't show reception lines
-  'hs|hide-send'    => \$O{hide_send},     # Don't show sending lines
-  'stl|show-time-lapse:s' => \$O{show_time_lapse}, # print lapse for send/recv
-  'ndf|no-data-fixup' => \$O{no_data_fixup}, # don't touch the data
-  'pipe:s'          => \$O{pipe_cmd},      # command to communicate with
-  'socket:s'        => \$O{socket},        # unix domain socket to talk to
-  'body:s'          => \$O{body_822},      # the content of the body of the DATA
-  'attach-type|attach:s' => \@{$O{attach_822}}, # A file to attach
-  'ah|add-header:s' => \@{$O{add_header}}, # replacement for %H DATA token
-  'header:s'        => \@{$O{header}},     # replace header if exist, else add
-  'dump'            => \$O{dump_args},     # build options and dump
-  'pipeline'        => \$O{pipeline},      # attempt PIPELINING
-  'force-getpwuid'  => \$O{force_getpwuid} # use getpwuid building -f
-) || exit(1);
-
-# lists of dependencies for features
-%G::dependencies = (
-  auth            => { name => "Basic AUTH",     opt => ['MIME::Base64'],
-                       req  => [] },
-  auth_cram_md5   => { name => "AUTH CRAM-MD5",  req => ['Digest::MD5'] },
-  auth_cram_sha1  => { name => "AUTH CRAM-SHA1", req => ['Digest::SHA1'] },
-  auth_ntlm       => { name => "AUTH NTLM",      req => ['Authen::NTLM'] },
-  auth_digest_md5 => { name => "AUTH DIGEST-MD5",
-                       req  => ['Authen::DigestMD5'] },
-  dns             => { name => "MX Routing",     req => ['Net::DNS'] },
-  tls             => { name => "TLS",            req => ['Net::SSLeay'] },
-  pipe            => { name => "Pipe Transport", req => ['IPC::Open2'] },
-  socket          => { name => "Socket Transport", req => ['IO::Socket'] },
-  date_manip      => { name => "Date Manipulation", req => ['Time::Local'] },
-  hostname        => { name => "Local Hostname Detection",
-                       req  => ['Sys::Hostname'] },
-  hires_timing    => { name => "High Resolution Timing",
-                       req  => ['Time::HiRes'] },
-);
-
-if ($O{get_support}) {
-  test_support();
-  exit(0);
-}
+# Get our functional dependencies and then print and exit early if requested
+load_dependencies();
+if ($O{get_support}) { test_support(); exit(0); }
 
 # We need to fix things up a bit and set a couple of global options
 my $opts = process_args(\%O);
@@ -1131,6 +1119,234 @@ sub time_to_seconds {
       return($r);
     }
   }
+}
+
+sub load_dependencies {
+  %G::dependencies = (
+    auth            => { name => "Basic AUTH",     opt => ['MIME::Base64'],
+                         req  => [] },
+    auth_cram_md5   => { name => "AUTH CRAM-MD5",  req => ['Digest::MD5'] },
+    auth_cram_sha1  => { name => "AUTH CRAM-SHA1", req => ['Digest::SHA1'] },
+    auth_ntlm       => { name => "AUTH NTLM",      req => ['Authen::NTLM'] },
+    auth_digest_md5 => { name => "AUTH DIGEST-MD5",
+                         req  => ['Authen::DigestMD5'] },
+    dns             => { name => "MX Routing",     req => ['Net::DNS'] },
+    tls             => { name => "TLS",            req => ['Net::SSLeay'] },
+    pipe            => { name => "Pipe Transport", req => ['IPC::Open2'] },
+    socket          => { name => "Socket Transport", req => ['IO::Socket'] },
+    date_manip      => { name => "Date Manipulation", req => ['Time::Local'] },
+    hostname        => { name => "Local Hostname Detection",
+                         req  => ['Sys::Hostname'] },
+    hires_timing    => { name => "High Resolution Timing",
+                         req  => ['Time::HiRes'] },
+  );
+}
+
+# returns %O, the large raw option hash
+sub load_args {
+  # this sub is a jumping point.  What we will do is repeatedly massage
+  # @ARGV and call GetOptions multiple times.  We are essentially "layering"
+  # options.  First we load from a config file (if exists/specified), then
+  # from any environment variables, then the actual command line.
+  
+  # First, save a copy of the real @ARGV, because that's actually what 
+  # gets processed last
+  my @real_ARGV = @ARGV; @ARGV = ();
+  my %ARGS      = ();
+  
+  # we want to process config files first.  There's a default config file in
+  # ~/.swaksrc, but it is possible for the user to override this with the
+  # --config options.  So, find the one and only file we will use here.
+  # If we encounter --config in later processing it is a noop.  
+  # first find the default file
+  my $config_file = ''; my $config_is_default = 1;
+  foreach my $v (qw(SWAKS_HOME HOME LOGDIR)) {
+    if ($ENV{$v}) { $config_file = "$ENV{$v}/.swaksrc"; last; }
+  }
+  # then look through the ENV args to see if another file set there
+  if (exists($ENV{SWAKS_ARG_config})) {
+    if (!$ENV{SWAKS_ARG_config}) {
+      # if exist but not set, it just means "don't use default file"
+      $config_file = "";
+    } else {
+      $config_file = $ENV{SWAKS_ARG_config};
+      $config_is_default = 0;
+    }
+  }
+  # lastly go through original command line looking for config file
+  for (my $i = 0; $i < scalar(@real_ARGV); $i++) {
+    if ($real_ARGV[$i] =~ /^-?-config$/) {
+      if ($real_ARGV[$i+1] =~ /^-/) {
+        $config_file = "";
+      } else {
+        $config_file = $real_ARGV[$i+1];
+        $config_is_default = 0;
+      }
+    }
+  }
+
+  # All of the above will result in $config_file either being empty or
+  # containing the one and only config file we will use.
+  # the long term plan is that we could store other stuff in here too so
+  # we may move processing somewhere else, but for now just handle here
+  if (open(C, "<$config_file")) {
+    # we only pay attention to file between ^<ARGS>$ and ^</ARGS>$ here.
+    # each line is one arg and optional value. "#" in col 0 is a comment
+    while (defined(my $l = <C>)) {
+      if ($l =~ /^<ARGS>\s*$/) {
+        while (defined(my $m = <C>)) {
+          last if ($m =~ m|^</ARGS>\s*$|);
+          next if ($m =~ m|^#|);
+          chomp($m);
+          push(@ARGV, split(/\s+/, $m, 2));
+        }
+      }
+    }
+    close(C);
+  } elsif (!$config_is_default) {
+    # we only print an error if the config was specified explicitly
+    ptrans(12, "Config file $config_file could not be opened ($!).  Exiting");
+    exit(1);
+  }
+  #print "After processing $config_file, @ARGV = \n", join("\n", @ARGV), "\n";
+  
+#use Data::Dumper;
+#print "before conf\n\%ARGS = ", Dumper(\%ARGS), "\@ARGV = ",
+#      Dumper(\@ARGV), '#'x76, "\n";
+
+  # OK, all that work to load @ARGV with values from the config file.  Now
+  # we just need to process it.  (don't call if nothing set in @ARGV)
+  fetch_args(\%ARGS) if (scalar(@ARGV));
+
+  # OK, %ARGS contains all the settings from the config file.  No do it again
+  # with SWAKS_ARG_* environment variables
+  @ARGV = ();
+  foreach my $v (keys %ENV) {
+    if ($v =~ m|^SWAKS_ARG_(.*)$|) { push(@ARGV, "-$1", $ENV{$v}); }
+  }
+#print "before ENV\n\%ARGS = ", Dumper(\%ARGS), "\@ARGV = ",
+#      Dumper(\@ARGV), '#'x76, "\n";
+  fetch_args(\%ARGS) if (scalar(@ARGV));
+  
+  # and now, after all of that, process the actual cmdline args
+  @ARGV = @real_ARGV;
+#print "before cmdline\n\%ARGS = ", Dumper(\%ARGS), "\@ARGV = ",
+#      Dumper(\@ARGV), '#'x76, "\n";
+  fetch_args(\%ARGS) if (scalar(@ARGV));
+#print "after cmdline\n\%ARGS = ", Dumper(\%ARGS), "\@ARGV = ",
+#      Dumper(\@ARGV), '#'x76, "\n";
+
+  return(\%ARGS);
+}
+
+sub fetch_args {
+  my $r = shift;
+
+  # need to rewrite header-HEADER opts before std option parsing
+  for (my $i = 0; $i < scalar(@ARGV); $i++) {
+    if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
+      $ARGV[$i] = "--header";  $ARGV[$i+1] = "$1: $ARGV[$i+1]";
+    }
+  }
+
+  if (!load("Getopt::Long")) {
+    ptrans(12, "Unable to load Getopt::Long for option processing, Exiting");
+    exit(1);
+  }  
+  Getopt::Long::Configure("bundling_override");
+  GetOptions(
+    # location of config file (noop, just here so GO::L not barf)
+    'config=s'                    => \$r->{config_file},
+
+    # (l)ocation of input data
+    'l|input-file=s'              => \$r->{option_file},
+    # envelope-(f)rom address
+    'f|from:s'                    => \$r->{mail_from},
+    # envelope-(t)o address
+    't|to:s'                      => \$r->{mail_to},
+    # (h)elo string
+    'h|helo|ehlo|lhlo:s'          => \$r->{mail_helo},
+    # (s)erver to use
+    's|server:s'                  => \$r->{mail_server},
+    # copy MX/routing from another domain
+    'copy-routing:s'              => \$r->{copy_routing},
+    # (p)ort to use
+    'p|port:s'                    => \$r->{mail_port},
+    # protocol to use (smtp, esmtp, lmtp)
+    'protocol:s'                  => \$r->{mail_protocol},
+    # (d)ata portion ('\n' for newlines)
+    'd|data:s'                    => \$r->{mail_data},
+    # timeout for each trans (def 30s)
+    'timeout:s'                   => \$r->{timeout},
+    # (g)et data on stdin
+    'g'                           => \$r->{data_on_stdin},
+    # emulate (M)ail command
+    'm'                           => \$r->{emulate_mail},
+    # (q)uit after
+    'q|quit|quit-after=s'         => \$r->{quit_after},
+    # do (n)ot print data portion
+    'n|suppress-data'             => \$r->{suppress_data},
+    # force auth, exit if not supported
+    'a|auth:s'                    => \$r->{auth},
+    # user for auth
+    'au|auth-user:s'              => \$r->{auth_user},
+    # pass for auth
+    'ap|auth-password:s'          => \$r->{auth_pass},
+    # auth type map
+    'am|auth-map=s'               => \$r->{auth_map},
+    # hide passwords when possible
+    #'ahp|auth-hide-password'     => \$r->{auth_hidepw},
+    # translate base64 strings
+    'apt|auth-plaintext'          => \$r->{auth_showpt},
+    # auth optional (ignore failure)
+    'ao|auth-optional:s'          => \$r->{auth_optional},
+    # req auth if avail
+    'aos|auth-optional-strict:s'  => \$r->{auth_optional_strict},
+    # report capabilties
+    'support'                     => \$r->{get_support},
+    # local interface to use
+    'li|local-interface:s'        => \$r->{lint},
+    # use TLS
+    'tls'                         => \$r->{tls},
+    # use tls if available
+    'tlso|tls-optional'           => \$r->{tls_optional},
+    # req tls if avail
+    'tlsos|tls-optional-strict:s' => \$r->{tls_optional_strict},
+    # use tls if available
+    'tlsc|tls-on-connect'         => \$r->{tls_on_connect},
+    # suppress output to varying degrees
+    'S|silent+'                   => \$r->{silent},
+    # Don't strip From_ line from DATA
+    'nsf|no-strip-from'           => \$r->{no_strip_from},
+    # Don't show transaction hints
+    'nth|no-hints'                => \$r->{no_hints},
+    # Don't show reception lines
+    'hr|hide-receive'             => \$r->{hide_receive},
+    # Don't show sending lines
+    'hs|hide-send'                => \$r->{hide_send},
+    # print lapse for send/recv
+    'stl|show-time-lapse:s'       => \$r->{show_time_lapse},
+    # don't touch the data
+    'ndf|no-data-fixup'           => \$r->{no_data_fixup},
+    # command to communicate with
+    'pipe:s'                      => \$r->{pipe_cmd},
+    # unix domain socket to talk to
+    'socket:s'                    => \$r->{socket},
+    # the content of the body of the DATA
+    'body:s'                      => \$r->{body_822},
+    # A file to attach
+    'attach-type|attach:s'        => \@{$r->{attach_822}},
+    # replacement for %H DATA token
+    'ah|add-header:s'             => \@{$r->{add_header}},
+    # replace header if exist, else add
+    'header:s'                    => \@{$r->{header}},
+    # build options and dump
+    'dump'                        => \$r->{dump_args},
+    # attempt PIPELINING
+    'pipeline'                    => \$r->{pipeline},
+    # use getpwuid building -f
+    'force-getpwuid'              => \$r->{force_getpwuid}
+  ) || exit(1);
 }
 
 # A couple of global options are set in here, they will be in the G:: namespace
