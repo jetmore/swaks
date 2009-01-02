@@ -9,61 +9,6 @@ Things left to do:
   (-au) causes swaks to assume --auth also presented.  Maybe you don't want
   that though.  Maybe you want to be able to have -au in .swaksrc _always_,
   but only used when --auth given?
-* do we currently have any additive args?  I know -S is.  How do they behave?
-  Should they be additive always, or each new tier overwrite previous, or
-  should that be configurable?
-* we need a global "--no-" prefix to completely undef an argument.  This
-  would be needed if you set an arg in a default file but you want to unset
-  it for a specific run.
-* fix ENV processing so that underscores are raised to hyphens (because
-  SWAKS_ARG_auth-optional isn't a valid variable name)
-* deprecate -l.  support for 3 releases or 1 year, whichever is longer, start
-  printing warning when used in the release following the next release
-* need to document new behaviours:
-** args can be specified in multiple ways.  config file, environment variables,
-   and command line arguments.  They are parsed in the order just listed, and
-   any later data overwrites earlier data.  So, if a config file lists
-   "--to foo@example.com" and SWAKS_ARG_to=bar@example.com, bar@example.com
-   would be used because environment variables are parsed after config files.
-** a config file can be used.  No matter how many exist or how many are
-   specified, only one file is ever used per swaks run
-** The _default_ config file is looked for in the following places:
-*** $SWAKS_HOME/.swaksrc
-*** $HOME/.swaksrc
-*** $LOGDIR/.swaksrc
-** if any of the files above exist, the first one found (searched in the order
-   listed above) is used.  If the file is not openable, it is skipped with
-   no error.
-** a non-default config file can be specified with either the --config arg
-   or the SWAKS_ARG_config environment variable.  If either of this is set
-   to an empty value, it overrides and previous setting, including the default,
-   and no config file is used.  If a non-default config file is given and
-   it can not be opened or read, an error is thrown and swaks will exit.
-** The format of a config file is not fully defined, it is designed for future
-   expansion.  Currently all that is honored from a config file is every line
-   between ^<ARGS>\s*$ and ^</ARGS>\s*$ that doesn't begin with a hash (#).
-** each of the lines that meet the above criteria is expected to contain
-   exactly one command line flag and, optionally, an argument to that flag.
-   So, here is an example of a config file:
-   <ARGS>
-   # always use this sender, no matter server or logged in user
-   --from fred@example.com
-   # my spam filter doesn't like it when I don't have a name in the To: header
-   --h-To: "Fred Example" <fred@example.com>
-   </ARGS>
-   note that everything after the first space is assumed to be the arg and is
-   not shell processed, so any quoting is usually unneeded and will not
-   be stripped off by the shell.
-** after config file processing is environment variable processing.  This
-   simply looks for any environment variables beginning with "SWAKS_ARG_"
-   and treats the remained or the name as a command line flag with the contents
-   of the variable.  If an option has a hyhen in it, replace it with an
-   underscore
-     SWAKS_ARG_to=fred@example.com; SWAKS_ARG_auth_optional=""
-      are equivilent to
-     --to fred@example.com --auth-optional
-** after environment variable processing, the original command line supplied
-   to swaks is evaluated
 EOM
 
 # use 'swaks --help' to view documentation for this program
@@ -1190,15 +1135,16 @@ sub load_args {
   # the long term plan is that we could store other stuff in here too so
   # we may move processing somewhere else, but for now just handle here
   if (open(C, "<$config_file")) {
-    # we only pay attention to file between ^<ARGS>$ and ^</ARGS>$ here.
+    # we only pay attention to file between ^<OPTIONS>$ and ^</OPTIONS>$ here.
     # each line is one arg and optional value. "#" in col 0 is a comment
     while (defined(my $l = <C>)) {
-      if ($l =~ /^<ARGS>\s*$/) {
+      if ($l =~ /^<OPTIONS>\s*$/) {
         while (defined(my $m = <C>)) {
-          last if ($m =~ m|^</ARGS>\s*$|);
+          last if ($m =~ m|^</OPTIONS>\s*$|);
           next if ($m =~ m|^#|);
           chomp($m);
-          push(@ARGV, split(/\s+/, $m, 2));
+          $m = '-' . $m if ($m !~ /^-/);
+          push(@ARGV, split(/\s/, $m, 2));
         }
       }
     }
@@ -1208,11 +1154,6 @@ sub load_args {
     ptrans(12, "Config file $config_file could not be opened ($!).  Exiting");
     exit(1);
   }
-  #print "After processing $config_file, @ARGV = \n", join("\n", @ARGV), "\n";
-  
-#use Data::Dumper;
-#print "before conf\n\%ARGS = ", Dumper(\%ARGS), "\@ARGV = ",
-#      Dumper(\@ARGV), '#'x76, "\n";
 
   # OK, all that work to load @ARGV with values from the config file.  Now
   # we just need to process it.  (don't call if nothing set in @ARGV)
@@ -1224,17 +1165,11 @@ sub load_args {
   foreach my $v (keys %ENV) {
     if ($v =~ m|^SWAKS_ARG_(.*)$|) { push(@ARGV, "-$1", $ENV{$v}); }
   }
-#print "before ENV\n\%ARGS = ", Dumper(\%ARGS), "\@ARGV = ",
-#      Dumper(\@ARGV), '#'x76, "\n";
   fetch_args(\%ARGS) if (scalar(@ARGV));
   
   # and now, after all of that, process the actual cmdline args
   @ARGV = @real_ARGV;
-#print "before cmdline\n\%ARGS = ", Dumper(\%ARGS), "\@ARGV = ",
-#      Dumper(\@ARGV), '#'x76, "\n";
   fetch_args(\%ARGS) if (scalar(@ARGV));
-#print "after cmdline\n\%ARGS = ", Dumper(\%ARGS), "\@ARGV = ",
-#      Dumper(\@ARGV), '#'x76, "\n";
 
   return(\%ARGS);
 }
