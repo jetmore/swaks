@@ -66,7 +66,9 @@ GetOptions(
   'stl|show-time-lapse:s' => \$O{show_time_lapse}, # print lapse for send/recv
   'ndf|no-data-fixup' => \$O{no_data_fixup}, # don't touch the data
   'pipe:s'          => \$O{pipe_cmd},      # command to communicate with
-  'socket:s'        => \$O{socket},        # unix doain socket to talk to
+  'socket:s'        => \$O{socket},        # unix domain socket to talk to
+  'body:s'          => \$O{body_822},      # the content of the body of the DATA
+  'attach-type|attach:s' => \@{$O{attach_822}}, # A file to attach
   'dump'            => \$O{dump_args},     # build options and dump
   'force-getpwuid'  => \$O{force_getpwuid} # use getpwuid building -f
 ) || exit(1);
@@ -1036,6 +1038,82 @@ sub process_args {
   $G::link{timeout} ||= $fconf->{TIMEOUT} || '30s';
   $G::link{timeout}   = time_to_seconds($G::link{timeout});
 
+# XXX DOC changes
+# new default DATA
+# %B token
+# --body option
+
+# XXX attachment/body handling here
+# Build the body from any body of attach options and store, the change the
+# default DATA 
+  my $body = 'This is a test mailing'; # default message body
+  my $bound = "";
+  if (defined($o->{body_822})) {
+    # the --body option is the entire 822 body and trumps and other options
+    # that mess with the body
+    if (!$o->{body_822}) {
+      $body = interact("Body: ", '.+');
+    } elsif ($o->{body_822} eq '-') {
+      $body = join('', <STDIN>);
+    } else {
+      $body = $o->{body_822};
+    }
+    if (open(I, "<$body")) {
+      $body = join('', <I>);
+      close(I);
+    }
+  } elsif (scalar(@{$o->{attach_822}})) {
+    # this option is a list of files (or STDIN) to attach.  In this case,
+    # the message become a mime message and the std test message goes in the
+    # first text/plain part
+
+# problems with this
+# 1 need to tell the DATA processing below that it needs to add MIME headers
+# 2 what about the message mime part? - always have multipart/mixed?
+# how tell mime type of individual files (there's a default type, but a new
+#	option (--attach-type, pointing to same attach_822 obj) that must
+#	appear before each --attach arg?  Actually, it persists until it
+#	appears again
+# 3 need charset on text/plain?
+# 4 maybe --body and --attach should be mutually exclusive?  We still have the
+#	text body below
+
+    my $mime_type = 'application/octet-stream';
+    my @parts = ( { body => $body, type => 'text/plain' } );
+    $bound = "----=_MIME_BOUNDARY_000_$$";
+    while (defined(my $t = shift(@{$o->{attach_822}}))) {
+      if ($t =~ m|^[^/]+/[^/]+$| && !stat($t)) {
+        $mime_type = $t;
+      } else {
+        push(@parts, { body => $t, type => $mime_type });
+      }
+    }
+    my $stdin = undef;
+    $body = '';
+    foreach my $p (@parts) {
+      if ($p->{body} eq '-') {
+        if ($stdin) {
+          $p->{body} = $stdin;
+        } else {
+          $p->{body} = join('', <STDIN>);
+        }
+      } elsif (open(I, "<$p->{body}")) {
+        $p->{body} = join('', <I>);
+        close(I);
+      }
+      $body .= "--$bound\n"
+            .  "Content-Type: $p->{type}\n";
+      if ($p->{type} =~ m|^text/plain$|i) {
+        $body .= "\n" . $p->{body} . "\n";
+      } else {
+        $body .= "Content-Transfer-Encoding: BASE64\n"
+              .  "Content-Disposition: attachment\n"
+              .  "\n"
+              .  encode_base64($p->{body}) . "\n";
+      }
+    }
+  }
+
   # SMTP DATA
   # a '-' arg to -d is the same as setting -g
   if ($o->{mail_data} eq '-') {
@@ -1055,11 +1133,14 @@ sub process_args {
   }
   $n{data} ||= $fconf->{DATA}
            || 'Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\n'
-             ."X-Mailer: swaks v$p_version jetmore.org/john/code/#swaks".'\n\n'
-             .'This is a test mailing\n';
+             ."X-Mailer: swaks v$p_version jetmore.org/john/code/#swaks"
+             . ($bound ? '\nMIME-Version: 1.0\nContent-Type: multipart/mixed; boundary="'.$bound.'"' : '')
+             .'\n\n'
+             .'%B\n';
   # The -g option trumps all other methods of getting the data
   $n{data}   = join('', <STDIN>) if ($o->{data_on_stdin});
   if (!$o->{no_data_fixup}) {
+    $n{data} =~ s/%B/$body/eg;
     $n{data} =~ s/\\n/\r\n/g;
     $n{data} =~ s/%F/$n{from}/g;
     $n{data} =~ s/%T/$n{to}/g;
