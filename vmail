@@ -73,6 +73,7 @@ $port   = $O::mail_port   || interact("Port: ", '^\d+$')
 if ($O::auth) {
   # make sure we can support it before we go any farther
 
+  try_load("Digest::MD5 qw(md5)");
   if (!try_load("MIME::Base64")) {
     print STDERR "MIME::Base64 not installed, ";
     if (defined($O::auth_optional)) {
@@ -283,11 +284,50 @@ sub do_smtp_auth {
   #print_transaction('===', "doing auth here");
   #return(1);  # dummy right now
 
-  if (do_smtp_auth_plain($s, $t, $au, $ap)) {
+  #if (do_smtp_auth_plain($s, $t, $au, $ap)) {
+  #  return(1);
+  #}
+  #if (do_smtp_auth_login($s, $t, $au, $ap)) {
+  #  return(1);
+  #}
+  if (do_smtp_auth_cram($s, $t, $au, $ap)) {
     return(1);
   }
 
   return(0);
+}
+
+sub do_smtp_auth_cram {
+  my $s = shift; # socket
+  my $t = shift; # timeout
+  my $u = shift; # auth user
+  my $p = shift; # auth password
+  my $r = '';    # will store smtp response
+  
+  my $auth_string = "AUTH CRAM-MD5";
+  do_smtp_gen($s, $auth_string, '334', $t, \$r) || return(0);
+
+  $r =~ s/^....//; # maybe something a little better here?
+  my $d = get_digest($p, $r);
+  chomp($auth_string = encode_base64("$u $d"));
+
+  do_smtp_gen($s, $auth_string, '235', $t) || return(0);
+  return(1);
+}
+
+sub do_smtp_auth_login {
+  my $s = shift; # socket
+  my $t = shift; # timeout
+  my $u = shift; # auth user
+  my $p = shift; # auth password
+  
+  my $auth_string = "AUTH LOGIN";
+  do_smtp_gen($s, $auth_string, '334', $t) || return(0);
+  chomp($auth_string = encode_base64($u));
+  do_smtp_gen($s, $auth_string, '334', $t) || return(0);
+  chomp($auth_string = encode_base64($p));
+  do_smtp_gen($s, $auth_string, '235', $t) || return(0);
+  return(1);
 }
 
 sub do_smtp_auth_plain {
@@ -476,4 +516,32 @@ sub try_load {
   } else {
     return(1);
   }
+}
+
+sub get_digest {
+  my $secr = shift;
+  my $chal = shift;
+  my $retr = '';
+  my $ipad = chr(0x36);
+  my $opad = chr(0x5c);
+  my($isec, $osec) = undef;
+
+  if ($chal !~ /^</) {
+    chomp($chal = decode_base64($chal));
+  }
+
+  if (length($secr) > 64) {
+    $secr = Digest::MD5::md5($secr);
+  } else {
+    $secr .= chr(0) x (64 - length($secr));
+  }
+
+  foreach my $char (split(//, $secr)) {
+    $isec .= $char ^ $ipad;
+    $osec .= $char ^ $opad;
+  }
+
+  map { $retr .= sprintf("%02x", ord($_)) }
+            split(//, md5($osec . md5($isec . $chal)));
+  return($retr);
 }
