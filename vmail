@@ -378,9 +378,6 @@ sub do_smtp_auth_ntlm {
   my $auth_string = "AUTH $at";
   do_smtp_gen($s, $auth_string, '334', $t) || return(0);
 
-  Authen::NTLM::ntlm_domain($domain);
-  Authen::NTLM::ntlm_user($u);
-  Authen::NTLM::ntlm_password($p);
   my $d = decode_base64(Authen::NTLM::ntlm());
 
   $auth_string = encode_base64("$d", '');
@@ -388,6 +385,9 @@ sub do_smtp_auth_ntlm {
               $G::auth_showpt ? "$d" : '') || return(0);
 
   $r =~ s/^....//; # maybe something a little better here?
+  Authen::NTLM::ntlm_domain($domain);
+  Authen::NTLM::ntlm_user($u);
+  Authen::NTLM::ntlm_password($p);
   $d = decode_base64(Authen::NTLM::ntlm($r));
 
   $auth_string = encode_base64("$d", '');
