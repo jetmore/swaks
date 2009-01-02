@@ -7,7 +7,7 @@ use Sys::Hostname;
 use Getopt::Long;
 
 my($from,$to,$helo,$data,$server,$port,$a_type,$a_user,$a_pass,
-   $lint) = (undef);
+   $lint,$timeout) = (undef);
 my $fconf    = {}; # this will hold config info from -l fileif specified
 my $user     = getpwuid($<);
 my $hostname = get_hostname();
@@ -21,6 +21,7 @@ GetOptions(
   's:s'  => \$O::mail_server,   # (s)erver to use
   'p:i'  => \$O::mail_port,     # (p)ort to use
   'd:s'  => \$O::mail_data,     # (d)ata portion ('\n' for newlines)
+  'to:s' => \$O::timeout,       # timeout for smtp trans. in seconds (def 30)
   'g'    => \$O::data_on_stdin, # (g)et data on stdin 
   'm'    => \$O::emulate_mail,  # emulate (M)ail command
   'q=s'  => \$O::quit_after,    # (q)uit after (connect,helo,mail,rcpt,auth)
@@ -44,6 +45,9 @@ load_modules({
   'TLS'           => ['Net::SSLeay'],
 }, \%modules);
 exit(0) if ($O::get_support); # --support means report capabilities only
+
+# because we use raw truth below, convert a 0 value to timeout to 0s
+$O::timeout = '0s' if ($O::timeout eq '0'); # used 'eq' for numeric on purpose
 
 # normalize the TLS options
 $O::tls_optional = 1 if (defined($O::tls_optional));
@@ -101,6 +105,8 @@ $port   = $O::mail_port   || interact("Port: ", '^\d+$')
                                       if (defined($O::mail_port));
 $lint   = $O::lint        || interact("Interface: ", '^[\-\da-zA-Z\.]+')
                                       if (defined($O::lint));
+$timeout= $O::timeout     || interact("Timeout: ", '^\d+[hHmMsS]?$')
+                                      if (defined($O::timeout));
 if ($O::auth) {
   # make sure we can support it before we go any farther
 
@@ -175,6 +181,10 @@ $to     ||= $fconf->{TO}     || interact("To: ", '^\S+$');
                                                   # who is the mail to?
 $server ||= $fconf->{SERVER} || get_server($to);  # receiving server
 $lint   ||= $fconf->{INTERFACE} || '0.0.0.0';     # local interface
+$timeout||= $fconf->{TIMEOUT} || '30s';           # SMTP transaction timeout
+
+# turn timeout into raw seconds
+$timeout = time_to_seconds($timeout);
 
 # The -g option trumps all other methods of getting the data
 $data     = join('', <STDIN>) if ($O::data_on_stdin);
@@ -189,6 +199,7 @@ $data     = join('', <STDIN>) if ($O::data_on_stdin);
 #print "\$a_user = $a_user\n";
 #print "\$a_pass = $a_pass\n";
 #print "\$lint   = $lint\n";
+#print "\$timeout= $timeout\n";
 #exit;
 
 $data .= "\n.";
@@ -199,7 +210,7 @@ $data =~ s/%D/scalar(localtime(time()))/eg;
 #print "after parsing, \$data looks like this:\n#\n$data\n#\n";
 #exit;
 sendmail($from, $to, $helo, $data, $server, $port, $a_user, $a_pass, $a_type,
-         $lint);
+         $lint, $timeout);
 
 exit;
 
@@ -214,9 +225,9 @@ sub sendmail {
   my $a_pass  = shift;	# what pass to auth with
   my $a_type  = shift;	# what kind of auth (this must be set to to attempt)
   my $lint    = shift;	# what local interface to use
+  my $timeout = shift;	# timeout for all transactions
 
   my $ehlo    = {};	# If server is esmtp, save advertised features here
-  my $timeout = 100;	# timeout for all transactions
   $|          = 1;
   my $s       = IO::Socket::INET->new( PeerAddr  => $host, PeerPort => $port,
 		                       Proto     => 'tcp', Timeout  => $timeout,
@@ -539,7 +550,8 @@ sub transact {
   my $s    = shift;       # This is my IO::Socket object
   my $send = shift;       # This is the string to send
   my $buff = shift;       # we will store and manipulate the return value here.
-  my $alrm = shift || 60; # transaction timeout
+  #my $alrm = shift || 60; # transaction timeout
+  my $alrm = shift || 0; # change timeout here so we can have it wait forever
 
   eval {
     local $SIG{'ALRM'} = sub {
@@ -576,6 +588,7 @@ sub transact {
       $buff =~ s/\r//msg;
       chomp($buff);
     }
+    alarm(0);
   };
   return($buff);
 }
@@ -725,3 +738,20 @@ sub load_modules {
   }
 }
 
+sub time_to_seconds {
+  my $t = shift || 30;
+
+  if ($t !~ /^(\d+)([hms])?/i) {
+    return(30); # error condition - just use default value
+  } else {
+    my $r = $1;
+    my $u = lc($2);
+    if ($u eq 'h') {
+      return($r * 3600);
+    } elsif ($u eq 'm') {
+      return($r * 60);
+    } else {
+      return($r);
+    }
+  }
+}
