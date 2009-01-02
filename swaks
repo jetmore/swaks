@@ -1082,6 +1082,155 @@ sub load_dependencies {
   );
 }
 
+sub get_option_struct {
+  @G::raw_option_data = (
+    # location of config file
+    { opts => ['config'],                         suffix => '=s',
+      okey => 'config_file',                      type => 'scalar', },
+    # (l)ocation of input data
+    { opts => ['l', 'input-file'],                suffix => '=s',
+      okey => 'option_file',                      type => 'scalar', },
+    # envelope-(f)rom address
+    { opts => ['f', 'from'],                      suffix => ':s',
+      okey => 'mail_from',                        type => 'scalar', },
+    # envelope-(t)o address
+    { opts => ['t', 'to'],                        suffix => ':s',
+      okey => 'mail_to',                          type => 'scalar', },
+    # (h)elo string
+    { opts => ['h', 'helo', 'ehlo', 'lhlo'],      suffix => ':s',
+      okey => 'mail_helo',                        type => 'scalar', },
+    # (s)erver to use
+    { opts => ['s', 'server'],                    suffix => ':s',
+      okey => 'mail_server',                      type => 'scalar', },
+    # copy MX/routing from another domain
+    { opts => ['copy-routing'],                   suffix => ':s',
+      okey => 'copy_routing',                     type => 'scalar', },
+    # (p)ort to use
+    { opts => ['p', 'port'],                      suffix => ':s',
+      okey => 'mail_port',                        type => 'scalar', },
+    # protocol to use (smtp, esmtp, lmtp)
+    { opts => ['protocol'],                       suffix => ':s',
+      okey => 'mail_protocol',                    type => 'scalar', },
+    # (d)ata portion ('\n' for newlines)
+    { opts => ['d', 'data'],                      suffix => ':s',
+      okey => 'mail_data',                        type => 'scalar', },
+    # timeout for each trans (def 30s)
+    { opts => ['timeout'],                        suffix => ':s',
+      okey => 'timeout',                          type => 'scalar', },
+    # (g)et data on stdin
+    { opts => ['g'],                              suffix => '',
+      okey => 'data_on_stdin',                    type => 'scalar', },
+    # emulate (M)ail command
+    { opts => ['m'],                              suffix => '',
+      okey => 'emulate_mail',                     type => 'scalar', },
+    # (q)uit after
+    { opts => ['q', 'quit', 'quit-after'],        suffix => '=s',
+      okey => 'quit_after',                       type => 'scalar', },
+    # do (n)ot print data portion
+    { opts => ['n', 'suppress-data'],             suffix => '',
+      okey => 'suppress_data',                    type => 'scalar', },
+    # force auth, exit if not supported
+    { opts => ['a', 'auth'],                      suffix => ':s',
+      okey => 'auth',                             type => 'scalar', },
+    # user for auth
+    { opts => ['au', 'auth-user'],                suffix => ':s',
+      okey => 'auth_user',                        type => 'scalar', },
+    # pass for auth
+    { opts => ['ap', 'auth-password'],            suffix => ':s',
+      okey => 'auth_pass',                        type => 'scalar', },
+    # auth type map
+    { opts => ['am', 'auth-map'],                 suffix => '=s',
+      okey => 'auth_map',                         type => 'scalar', },
+    # hide passwords when possible
+    #{ opts => ['ahp', 'auth-hide-password'],      suffix => '',
+    #  okey => 'auth_hidepw',                      type => 'scalar', },
+    # translate base64 strings
+    { opts => ['apt', 'auth-plaintext'],          suffix => '',
+      okey => 'auth_showpt',                      type => 'scalar', },
+    # auth optional (ignore failure)
+    { opts => ['ao', 'auth-optional'],            suffix => ':s',
+      okey => 'auth_optional',                    type => 'scalar', },
+    # req auth if avail
+    { opts => ['aos', 'auth-optional-strict'],    suffix => ':s',
+      okey => 'auth_optional_strict',             type => 'scalar', },
+    # report capabilties
+    { opts => ['support'],                        suffix => '',
+      okey => 'get_support',                      type => 'scalar', },
+    # local interface to use
+    { opts => ['li', 'local-interface'],          suffix => ':s',
+      okey => 'lint',                             type => 'scalar', },
+    # use TLS
+    { opts => ['tls'],                            suffix => '',
+      okey => 'tls',                              type => 'scalar', },
+    # use tls if available
+    { opts => ['tlso', 'tls-optional'],           suffix => '',
+      okey => 'tls_optional',                     type => 'scalar', },
+    # req tls if avail
+    { opts => ['tlsos', 'tls-optional-strict'],   suffix => ':s',
+      okey => 'tls_optional_strict',              type => 'scalar', },
+    # use tls if available
+    { opts => ['tlsc', 'tls-on-connect'],         suffix => '',
+      okey => 'tls_on_connect',                   type => 'scalar', },
+    # suppress output to varying degrees
+    { opts => ['S', 'silent'],                    suffix => ':i',
+      okey => 'silent',                           type => 'sub',
+      literal => 'sub { $r->{silent} = $_[1] || $r->{silent} + 1; }', },
+    # Don't strip From_ line from DATA
+    { opts => ['nsf', 'no-strip-from'],           suffix => '',
+      okey => 'no_strip_from',                    type => 'scalar', },
+    # Don't show transaction hints
+    { opts => ['nth', 'no-hints'],                suffix => '',
+      okey => 'no_hints',                         type => 'scalar', },
+    # Don't show reception lines
+    { opts => ['hr', 'hide-receive'],             suffix => '',
+      okey => 'hide_receive',                     type => 'scalar', },
+    # Don't show sending lines
+    { opts => ['hs', 'hide-send'],                suffix => '',
+      okey => 'hide_send',                        type => 'scalar', },
+    # Don't show any swaks-generated, non-error informational lines
+    { opts => ['hi', 'hide-informational'],       suffix => '',
+      okey => 'hide_informational',               type => 'scalar', },
+    # Don't send any output to the terminal
+    { opts => ['ha', 'hide-all'],                 suffix => '',
+      okey => 'hide_all',                         type => 'scalar', },
+    # print lapse for send/recv
+    { opts => ['stl', 'show-time-lapse'],         suffix => ':s',
+      okey => 'show_time_lapse',                  type => 'scalar', },
+    # don't touch the data
+    { opts => ['ndf', 'no-data-fixup'],           suffix => '',
+      okey => 'no_data_fixup',                    type => 'scalar', },
+    # command to communicate with
+    { opts => ['pipe'],                           suffix => ':s',
+      okey => 'pipe_cmd',                         type => 'scalar', },
+    # unix domain socket to talk to
+    { opts => ['socket'],                         suffix => ':s',
+      okey => 'socket',                           type => 'scalar', },
+    # the content of the body of the DATA
+    { opts => ['body'],                           suffix => ':s',
+      okey => 'body_822',                         type => 'scalar', },
+    # A file to attach
+    { opts => ['attach-type', 'attach'],          suffix => ':s',
+      okey => 'attach_822',                       type => 'list', },
+    # replacement for %H DATA token
+    { opts => ['ah', 'add-header'],               suffix => ':s',
+      okey => 'add_header',                       type => 'list', },
+    # replace header if exist, else add
+    { opts => ['header'],                         suffix => ':s',
+      okey => 'header',                           type => 'list', },
+    # build options and dump
+    { opts => ['dump'],                           suffix => '',
+      okey => 'dump_args',                        type => 'scalar', },
+    # attempt PIPELINING
+    { opts => ['pipeline'],                       suffix => '',
+      okey => 'pipeline',                         type => 'scalar', },
+    # use getpwuid building -f
+    { opts => ['force-getpwuid'],                 suffix => '',
+      okey => 'force_getpwuid',                   type => 'scalar', },
+  );
+
+  return(\@G::raw_option_data);
+}
+
 # returns %O, the large raw option hash
 sub load_args {
   # this sub is a jumping point.  What we will do is repeatedly massage
@@ -1093,6 +1242,10 @@ sub load_args {
   # gets processed last
   my @real_ARGV = @ARGV; @ARGV = ();
   my %ARGS      = ();
+
+  # we load our options processing hash here.  We abstract it back from the
+  # native getopt-format because we need to be able to intercept "no-" options
+  my $option_list = get_option_struct();
   
   # we want to process config files first.  There's a default config file in
   # ~/.swaksrc, but it is possible for the user to override this with the
@@ -1152,7 +1305,7 @@ sub load_args {
 
   # OK, all that work to load @ARGV with values from the config file.  Now
   # we just need to process it.  (don't call if nothing set in @ARGV)
-  fetch_args(\%ARGS) if (scalar(@ARGV));
+  fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
 
   # OK, %ARGS contains all the settings from the config file.  No do it again
   # with SWAKS_OPT_* environment variables
@@ -1163,23 +1316,55 @@ sub load_args {
       push(@ARGV, "-$tv", $ENV{$v});
     }
   }
-  fetch_args(\%ARGS) if (scalar(@ARGV));
+  fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
   
   # and now, after all of that, process the actual cmdline args
   @ARGV = @real_ARGV;
-  fetch_args(\%ARGS) if (scalar(@ARGV));
+  fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
 
   return(\%ARGS);
 }
 
 sub fetch_args {
   my $r = shift;
+  my $l = shift;
 
   # need to rewrite header-HEADER opts before std option parsing
+  # also see if there are any --no- options that need to be processed
+  RUNOPTS:
   for (my $i = 0; $i < scalar(@ARGV); $i++) {
+#print "\$i = $i, $ARGV[$i]\n";
     if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
       $ARGV[$i] = "--header";  $ARGV[$i+1] = "$1: $ARGV[$i+1]";
+    } elsif ($ARGV[$i] =~ /^-?-no-(.*)$/) {
+      my $opt_name = $1;
+      # loop through each of the options and see if it matches
+      foreach my $e (@$l) {
+        if (grep /^$opt_name$/, @{$e->{opts}}) {
+          splice(@ARGV, $i, 1);
+          delete($r->{$e->{okey}});
+          redo RUNOPTS; # since we're messing with the list, redo this element
+        }
+      }
+      ptrans(12, "Unknown option $ARGV[$i], Exiting");
+      exit(1);
     }
+  }
+
+  # build the actual hash we will pass to GetOptions from our config list ($l):
+  # In the end I decided to build this at each call of this sub to that $r
+  # is defined.  It's not much of a performance issue.
+  my %options = ();
+  foreach my $e (@$l) {
+    my $k = join('|', @{$e->{opts}}) . $e->{suffix};
+    if ($e->{type} eq 'scalar') {
+      $options{$k} = \$r->{$e->{okey}};
+    } elsif ($e->{type} eq 'list') {
+      $options{$k} = \@{$r->{$e->{okey}}};
+    } elsif ($e->{type} eq 'sub') {
+      eval("\$options{\$k} = $e->{literal};");
+    }
+    #print "\$k = $k, $options{$k}\n";
   }
 
   if (!load("Getopt::Long")) {
@@ -1188,102 +1373,103 @@ sub fetch_args {
   }  
   Getopt::Long::Configure("bundling_override");
   GetOptions(
-    # location of config file (noop, just here so GO::L not barf)
-    'config=s'                    => \$r->{config_file},
-
-    # (l)ocation of input data
-    'l|input-file=s'              => \$r->{option_file},
-    # envelope-(f)rom address
-    'f|from:s'                    => \$r->{mail_from},
-    # envelope-(t)o address
-    't|to:s'                      => \$r->{mail_to},
-    # (h)elo string
-    'h|helo|ehlo|lhlo:s'          => \$r->{mail_helo},
-    # (s)erver to use
-    's|server:s'                  => \$r->{mail_server},
-    # copy MX/routing from another domain
-    'copy-routing:s'              => \$r->{copy_routing},
-    # (p)ort to use
-    'p|port:s'                    => \$r->{mail_port},
-    # protocol to use (smtp, esmtp, lmtp)
-    'protocol:s'                  => \$r->{mail_protocol},
-    # (d)ata portion ('\n' for newlines)
-    'd|data:s'                    => \$r->{mail_data},
-    # timeout for each trans (def 30s)
-    'timeout:s'                   => \$r->{timeout},
-    # (g)et data on stdin
-    'g'                           => \$r->{data_on_stdin},
-    # emulate (M)ail command
-    'm'                           => \$r->{emulate_mail},
-    # (q)uit after
-    'q|quit|quit-after=s'         => \$r->{quit_after},
-    # do (n)ot print data portion
-    'n|suppress-data'             => \$r->{suppress_data},
-    # force auth, exit if not supported
-    'a|auth:s'                    => \$r->{auth},
-    # user for auth
-    'au|auth-user:s'              => \$r->{auth_user},
-    # pass for auth
-    'ap|auth-password:s'          => \$r->{auth_pass},
-    # auth type map
-    'am|auth-map=s'               => \$r->{auth_map},
-    # hide passwords when possible
-    #'ahp|auth-hide-password'     => \$r->{auth_hidepw},
-    # translate base64 strings
-    'apt|auth-plaintext'          => \$r->{auth_showpt},
-    # auth optional (ignore failure)
-    'ao|auth-optional:s'          => \$r->{auth_optional},
-    # req auth if avail
-    'aos|auth-optional-strict:s'  => \$r->{auth_optional_strict},
-    # report capabilties
-    'support'                     => \$r->{get_support},
-    # local interface to use
-    'li|local-interface:s'        => \$r->{lint},
-    # use TLS
-    'tls'                         => \$r->{tls},
-    # use tls if available
-    'tlso|tls-optional'           => \$r->{tls_optional},
-    # req tls if avail
-    'tlsos|tls-optional-strict:s' => \$r->{tls_optional_strict},
-    # use tls if available
-    'tlsc|tls-on-connect'         => \$r->{tls_on_connect},
-    # suppress output to varying degrees
-    'S|silent:i'                  => sub { $r->{silent} = $_[1] ||
-                                               $r->{silent} + 1; },
-    # Don't strip From_ line from DATA
-    'nsf|no-strip-from'           => \$r->{no_strip_from},
-    # Don't show transaction hints
-    'nth|no-hints'                => \$r->{no_hints},
-    # Don't show reception lines
-    'hr|hide-receive'             => \$r->{hide_receive},
-    # Don't show sending lines
-    'hs|hide-send'                => \$r->{hide_send},
-    # Don't show any swaks-generated, non-error informational lines
-    'hi|hide-informational'       => \$r->{hide_informational},
-    # Don't send any output to the terminal
-    'ha|hide-all'                 => \$r->{hide_all},
-    # print lapse for send/recv
-    'stl|show-time-lapse:s'       => \$r->{show_time_lapse},
-    # don't touch the data
-    'ndf|no-data-fixup'           => \$r->{no_data_fixup},
-    # command to communicate with
-    'pipe:s'                      => \$r->{pipe_cmd},
-    # unix domain socket to talk to
-    'socket:s'                    => \$r->{socket},
-    # the content of the body of the DATA
-    'body:s'                      => \$r->{body_822},
-    # A file to attach
-    'attach-type|attach:s'        => \@{$r->{attach_822}},
-    # replacement for %H DATA token
-    'ah|add-header:s'             => \@{$r->{add_header}},
-    # replace header if exist, else add
-    'header:s'                    => \@{$r->{header}},
-    # build options and dump
-    'dump'                        => \$r->{dump_args},
-    # attempt PIPELINING
-    'pipeline'                    => \$r->{pipeline},
-    # use getpwuid building -f
-    'force-getpwuid'              => \$r->{force_getpwuid}
+     %options
+#    # location of config file (noop, just here so GO::L not barf)
+#    'config=s'                    => \$r->{config_file},
+#
+#    # (l)ocation of input data
+#    'l|input-file=s'              => \$r->{option_file},
+#    # envelope-(f)rom address
+#    'f|from:s'                    => \$r->{mail_from},
+#    # envelope-(t)o address
+#    't|to:s'                      => \$r->{mail_to},
+#    # (h)elo string
+#    'h|helo|ehlo|lhlo:s'          => \$r->{mail_helo},
+#    # (s)erver to use
+#    's|server:s'                  => \$r->{mail_server},
+#    # copy MX/routing from another domain
+#    'copy-routing:s'              => \$r->{copy_routing},
+#    # (p)ort to use
+#    'p|port:s'                    => \$r->{mail_port},
+#    # protocol to use (smtp, esmtp, lmtp)
+#    'protocol:s'                  => \$r->{mail_protocol},
+#    # (d)ata portion ('\n' for newlines)
+#    'd|data:s'                    => \$r->{mail_data},
+#    # timeout for each trans (def 30s)
+#    'timeout:s'                   => \$r->{timeout},
+#    # (g)et data on stdin
+#    'g'                           => \$r->{data_on_stdin},
+#    # emulate (M)ail command
+#    'm'                           => \$r->{emulate_mail},
+#    # (q)uit after
+#    'q|quit|quit-after=s'         => \$r->{quit_after},
+#    # do (n)ot print data portion
+#    'n|suppress-data'             => \$r->{suppress_data},
+#    # force auth, exit if not supported
+#    'a|auth:s'                    => \$r->{auth},
+#    # user for auth
+#    'au|auth-user:s'              => \$r->{auth_user},
+#    # pass for auth
+#    'ap|auth-password:s'          => \$r->{auth_pass},
+#    # auth type map
+#    'am|auth-map=s'               => \$r->{auth_map},
+#    # hide passwords when possible
+#    #'ahp|auth-hide-password'     => \$r->{auth_hidepw},
+#    # translate base64 strings
+#    'apt|auth-plaintext'          => \$r->{auth_showpt},
+#    # auth optional (ignore failure)
+#    'ao|auth-optional:s'          => \$r->{auth_optional},
+#    # req auth if avail
+#    'aos|auth-optional-strict:s'  => \$r->{auth_optional_strict},
+#    # report capabilties
+#    'support'                     => \$r->{get_support},
+#    # local interface to use
+#    'li|local-interface:s'        => \$r->{lint},
+#    # use TLS
+#    'tls'                         => \$r->{tls},
+#    # use tls if available
+#    'tlso|tls-optional'           => \$r->{tls_optional},
+#    # req tls if avail
+#    'tlsos|tls-optional-strict:s' => \$r->{tls_optional_strict},
+#    # use tls if available
+#    'tlsc|tls-on-connect'         => \$r->{tls_on_connect},
+#    # suppress output to varying degrees
+#    'S|silent:i'                  => sub { $r->{silent} = $_[1] ||
+#                                               $r->{silent} + 1; },
+#    # Don't strip From_ line from DATA
+#    'nsf|no-strip-from'           => \$r->{no_strip_from},
+#    # Don't show transaction hints
+#    'nth|no-hints'                => \$r->{no_hints},
+#    # Don't show reception lines
+#    'hr|hide-receive'             => \$r->{hide_receive},
+#    # Don't show sending lines
+#    'hs|hide-send'                => \$r->{hide_send},
+#    # Don't show any swaks-generated, non-error informational lines
+#    'hi|hide-informational'       => \$r->{hide_informational},
+#    # Don't send any output to the terminal
+#    'ha|hide-all'                 => \$r->{hide_all},
+#    # print lapse for send/recv
+#    'stl|show-time-lapse:s'       => \$r->{show_time_lapse},
+#    # don't touch the data
+#    'ndf|no-data-fixup'           => \$r->{no_data_fixup},
+#    # command to communicate with
+#    'pipe:s'                      => \$r->{pipe_cmd},
+#    # unix domain socket to talk to
+#    'socket:s'                    => \$r->{socket},
+#    # the content of the body of the DATA
+#    'body:s'                      => \$r->{body_822},
+#    # A file to attach
+#    'attach-type|attach:s'        => \@{$r->{attach_822}},
+#    # replacement for %H DATA token
+#    'ah|add-header:s'             => \@{$r->{add_header}},
+#    # replace header if exist, else add
+#    'header:s'                    => \@{$r->{header}},
+#    # build options and dump
+#    'dump'                        => \$r->{dump_args},
+#    # attempt PIPELINING
+#    'pipeline'                    => \$r->{pipeline},
+#    # use getpwuid building -f
+#    'force-getpwuid'              => \$r->{force_getpwuid}
   ) || exit(1);
 }
 
