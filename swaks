@@ -119,7 +119,8 @@ if ($G::dump_args) {
   } else { print "no\n"; }
   print "auth             = ";
   if ($opts->{a_type}) {
-    print $G::auth_optional ? 'optional' : 'yes', " type='$opts->{a_type}' ",
+    print $G::auth_optional ? 'optional' : 'yes', " type='",
+          join(',', @{$opts->{a_type}}), "' ", 
           "user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
   } else { print "no\n"; }
   print "auth map         = ", join("\n".' 'x19,
@@ -418,51 +419,59 @@ sub do_smtp_auth {
   # the auth_optional stuff is handled higher up, so tell the truth about
   # failing here
 
-  if (($at ne 'ANY' && !$e->{AUTH}{$at}) || !$e->{AUTH}) {
-    print_transaction(12, "$at authentication not supported");
-    return(0);
-  }
+  # note that we don't have to check whether the modules are loaded here,
+  # that's done in the option processing - trust that an auth type
+  # wouldn't be in $at if we didn't have the correct tools.
 
-  if ($G::modules{"Digest::MD5"}) {
+  my $auth_attempted = 0; # set to true if we ever attempt auth
+
+  foreach my $btype (@$at) {
+    # if server doesn't support, skip type (may change in future)
+    next if (!$e->{AUTH}{$btype});
+
     foreach my $type (@{$G::auth_map_t{'CRAM-MD5'}}) {
-      if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
+      if ($btype eq $type) {
         return(1) if (do_smtp_auth_cram($au, $ap, $type));
+        $auth_attempted = 1;
       }
     }
-  }
-  if ($G::modules{"Digest::SHA1"}) {
     foreach my $type (@{$G::auth_map_t{'CRAM-SHA1'}}) {
-      if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
+      if ($btype eq $type) {
         return(1) if (do_smtp_auth_cram($au, $ap, $type));
+        $auth_attempted = 1;
       }
     }
-  }
-  if ($G::modules{"Authen::DigestMD5"}) {
     foreach my $type (@{$G::auth_map_t{'DIGEST-MD5'}}) {
-      if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
+      if ($btype eq $type) {
         return(1) if (do_smtp_auth_digest($au, $ap, $type));
+        $auth_attempted = 1;
       }
     }
-  }
-  if ($G::modules{"Authen::NTLM"}) {
     foreach my $type (@{$G::auth_map_t{'NTLM'}}) {
-      if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
+      if ($btype eq $type) {
         return(1) if (do_smtp_auth_ntlm($au, $ap, $type));
+        $auth_attempted = 1;
       }
     }
-  }
-  foreach my $type (@{$G::auth_map_t{'PLAIN'}}) {
-    if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
-      return(1) if (do_smtp_auth_plain($au, $ap, $type));
+    foreach my $type (@{$G::auth_map_t{'PLAIN'}}) {
+      if ($btype eq $type) {
+        return(1) if (do_smtp_auth_plain($au, $ap, $type));
+        $auth_attempted = 1;
+      }
     }
-  }
-  foreach my $type (@{$G::auth_map_t{'LOGIN'}}) {
-    if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
-      return(1) if (do_smtp_auth_login($au, $ap, $type));
+    foreach my $type (@{$G::auth_map_t{'LOGIN'}}) {
+      if ($btype eq $type) {
+        return(1) if (do_smtp_auth_login($au, $ap, $type));
+        $auth_attempted = 1;
+      }
     }
   }
 
-  print_transaction(12, "No authentication type succeeded");
+  if ($auth_attempted) {
+    print_transaction(12, "No authentication type succeeded");
+  } else {
+    print_transaction(12, "No acceptable authentication types available");
+  }
   return(0);
 }
 
@@ -1049,25 +1058,40 @@ sub process_args {
 
   # Handle AUTH options
   $G::auth_optional = 1 if (defined($o->{auth_optional}));
-  $o->{auth} = uc($o->{auth}) if ($o->{auth});
-  $o->{auth} = uc($o->{auth_optional}) if ($o->{auth_optional} && !$o->{auth});
-  $o->{auth} = 'ANY' if (!$o->{auth} && (defined($o->{auth_user}) ||
-                         defined($o->{auth_pass}) || $G::auth_optional));
-  $o->{auth} = 'ANY' if (defined($o->{auth}) && !$o->{auth});
+  $o->{auth_types} = [];
   if ($o->{auth}) {
+    @{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth}));
+  } elsif ($o->{auth_optional}) {
+    @{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth_optional}));
+  } elsif (defined($o->{auth_user}) || defined($o->{auth_pass}) ||
+           $G::auth_optional || (defined($o->{auth}) && !$o->{auth}))
+  {
+    $o->{auth_types}[0] = 'ANY';
+    $o->{auth} = 'ANY'; # this is checked below
+  }
+  # if after that processing we've defined some auth type, do some more
+  # specific processing
+  if ($o->{auth_types}) {
+    # there's a lot of option processing below.  If any type looks like it
+    # will succeed later, set this to true
+    my $valid_auth_found = 0;
+
+    # handle the --auth-map options plus our default mappings
     foreach (split(/\s+,\s+/, $o->{auth_map}),"PLAIN=PLAIN","LOGIN=LOGIN",
-             "CRAM-MD5=CRAM-MD5","DIGEST-MD5=DIGEST-MD5",
-             "CRAM-SHA1=CRAM-SHA1",
+             "CRAM-MD5=CRAM-MD5","DIGEST-MD5=DIGEST-MD5","CRAM-SHA1=CRAM-SHA1",
              "NTLM=NTLM","SPA=NTLM","MSN=NTLM")
     {
       my($alias,$type) = split(/=/, uc($_), 2);
+      # this gives us a list of all aliases and what the alias
       $G::auth_map_f{$alias} = $type;
+      # this gives a list of all base types and any aliases for it.
       $G::auth_map_t{$type} ||= [];
       push(@{$G::auth_map_t{$type}}, $alias);
     }
     if (!$G::modules{"MIME::Base64"}) {
+      # MIME::Base64 is required for any auth type, so check it first
+      # and skip rest of processing if unfound
       if ($G::auth_optional) {
-        $n{a_type} = ''; # So we won't attempt it later
         print_transaction(12,
          'AUTH requirement MIME::Base64 not installed, skipping optional AUTH');
       } else {
@@ -1075,65 +1099,88 @@ sub process_args {
          'AUTH requirement MIME::Base64 not installed, exiting');
         exit(10);
       }
-    } elsif (!$G::modules{"Digest::MD5"} &&
-              $G::auth_map_f{$o->{auth}} eq 'CRAM-MD5')
-    {
-      if ($G::auth_optional) {
-        $n{a_type} = ''; # So we won't attempt it later
-        print_transaction(12,
-          'AUTH:CRAM-MD5 requirement Digest::MD5 not installed, ' .
-          'skipping optional AUTH:CRAM-MD5');
-      } else {
-        print_transaction(12,
-          'AUTH:CRAM-MD5 requirement Digest::MD5 not installed, exiting');
-        exit(10);
-      }
-    } elsif (!$G::modules{"Authen::NTLM"} &&
-              $G::auth_map_f{$o->{auth}} eq 'NTLM') {
-      if ($G::auth_optional) {
-        $n{a_type} = ''; # So we won't attempt it later
-        print_transaction(12,
-          'AUTH:NTLM requirement Authen::NTLM not installed, ' .
-          'skipping optional AUTH:NTLM');
-      } else {
-        print_transaction(12,
-          'AUTH:NTLM requirement Authen::NTLM not installed, exiting');
-        exit(10);
-      }
-    } elsif (!$G::modules{"Authen::DigestMD5"} &&
-              $G::auth_map_f{$o->{auth}} eq 'DIGEST-MD5') {
-      if ($G::auth_optional) {
-        $n{a_type} = ''; # So we won't attempt it later
-        print_transaction(12,
-          'AUTH:DIGEST-MD5 requirement Authen::DigestMD5 not installed, ' .
-          'skipping optional AUTH:DIGEST-MD5');
-      } else {
-        print_transaction(12,
-          'AUTH:DIGEST-MD5 requirement Authen::DigestMD5 not installed, ' .
-          'exiting');
-        exit(10);
-      }
     } else {
-      $n{a_user}   = $o->{auth_user} if (defined($o->{auth_user}));
-      $n{a_user} ||= $fconf->{USER};
-      $n{a_user} ||= interact("Username: ", 'SKIP');
-      $n{a_user}   = '' if ($n{a_user} eq '<>');
+      # if the user doesn't specify an auth type, create a list from our
+      # auth-map data.  Simplifies processing later
+      if ($o->{auth_types}[0] eq 'ANY') {
+        $o->{auth_types} = [sort keys %G::auth_map_f];
+      }
 
-      $n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
-      $n{a_pass} ||= $fconf->{PASS};
-      $n{a_pass} ||= interact("Password: ", 'SKIP');
-      $n{a_pass}   = '' if ($n{a_pass} eq '<>');
+      foreach my $type (@{$o->{auth_types}}) {
+        # we need to evaluate whether we will be able to run the auth types
+        # specified by the user
+
+        if (!$G::auth_map_f{$type}) {
+          print_transaction(12,
+            "$type is not a recognized auth type, skipping");
+        }
+
+        elsif ($G::auth_map_f{$type} eq 'CRAM-MD5' &&
+               !$G::modules{"Digest::MD5"})
+        {
+          print_transaction(12,
+            "AUTH:$type requirement Digest::MD5 not installed")
+            if ($o->{auth} ne 'ANY');
+        }
+
+        elsif ($G::auth_map_f{$type} eq 'CRAM-SHA1' &&
+               !$G::modules{"Digest::SHA1"})
+        {
+          print_transaction(12,
+            "AUTH:$type requirement Digest::SHA1 not installed")
+            if ($o->{auth} ne 'ANY');
+        }
+
+        elsif ($G::auth_map_f{$type} eq 'NTLM' &&
+               !$G::modules{"Authen::NTLM"})
+        {
+          print_transaction(12,
+            "AUTH:$type requirement Authen::NTLM not installed")
+            if ($o->{auth} ne 'ANY');
+        }
+
+        elsif ($G::auth_map_f{$type} eq 'DIGEST-MD5' &&
+               !$G::modules{"Authen::DigestMD5"})
+        {
+          print_transaction(12,
+            "AUTH:$type requirement Authen::DigestMD5 not installed")
+            if ($o->{auth} ne 'ANY');
+        }
+        
+        else {
+          $valid_auth_found = 1;
+          push(@{$n{a_type}}, $type);
+        }
+
+      } # foreach
+
+      if (!$valid_auth_found) {
+        print_transaction(12, "No auth types supported");
+        if (!$G::auth_optional) {
+          exit(10);
+        }
+        $n{a_user} = $n{a_pass} = $n{a_type} = undef;
+      } else {
+        $n{a_user}   = $o->{auth_user} if (defined($o->{auth_user}));
+        $n{a_user} ||= $fconf->{USER};
+        $n{a_user} ||= interact("Username: ", 'SKIP');
+        $n{a_user}   = '' if ($n{a_user} eq '<>');
   
-      $n{a_type} = $o->{auth};
-      $G::auth_showpt = 1 if (defined($o->{auth_showpt}));
-      # This option is designed to hide passwords - turn echo off when 
-      # supplying at PW prompt, star out the PW strings in AUTH transactions.
-      # Not implementing right now - the echo might be a portability issue, 
-      # and starring out is hard because the smtp transaction is abstracted 
-      # beyond where this is easy to do.  Maybe sometime in the future
-      #$G::auth_hidepw = 1 if (defined($o->{auth_hidepw}));
-    }
-  }
+        $n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
+        $n{a_pass} ||= $fconf->{PASS};
+        $n{a_pass} ||= interact("Password: ", 'SKIP');
+        $n{a_pass}   = '' if ($n{a_pass} eq '<>');
+    
+        $G::auth_showpt = 1 if (defined($o->{auth_showpt}));
+        # This option is designed to hide passwords - turn echo off when 
+        # supplying at PW prompt, star out the PW strings in AUTH transactions.
+        # Not implementing right now - the echo might be a portability issue, 
+        # and starring out is hard because the smtp transaction is abstracted 
+        # beyond where this is easy to do.  Maybe sometime in the future
+        #$G::auth_hidepw = 1 if (defined($o->{auth_hidepw}));
+      }
+    } # end Base64 support tests
+  } # end auth parsing
 
   return(\%n);
 }
@@ -1284,7 +1331,7 @@ Initiate a TLS connection immediately on connection.  Use to test smtps/ssmtp se
 
 =item -a, --auth
 
-Require authentication.  If Authentication fails or is unavailable, stop transaction.  -a can take an argument specifying which type of authentication to use.  swaks currently supports PLAIN, LOGIN, and CRAM-MD5.  If no argument is given any available authentication type is used.  If neither password (-ap) or username (-au) is supplied on command line, swaks will prompt on STDIN.
+Require authentication.  If Authentication fails or is unavailable, stop transaction.  -a can take an argument specifying which type(s) of authentication to try.  If multiple, comma-delimited arguments are given, each specified auth type is tried in order until one succeeds or they all fail.  swaks currently supports PLAIN, LOGIN, and CRAM-MD5.  If no argument is given any available authentication type is used.  If neither password (-ap) or username (-au) is supplied on command line, swaks will prompt on STDIN.
 
 SPA (NTLM/MSN) authentication is now supported.  Tested as a client against Exim and Stalker's CommuniGate, but implementation may be incomplete.  Authen::NTLM is currently required.  Note that CPAN hosts two different Authen::NTLM modules.  Current implementation requires Mark Bush's implementation (Authen/NTLM-1.02.tar.gz).  Plan to reimplement directly at some point to avoid confusion.
 
