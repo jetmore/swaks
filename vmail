@@ -12,7 +12,7 @@ my(%opt) = ();
 my($user) = getpwuid($<);
 my($hostname) = get_hostname();
 
-if (!getopts('l:f:t:h:s:p:d:i:g', \%opt)) {
+if (!getopts('l:f:t:h:s:p:d:i:gm', \%opt)) {
   print STDERR "getopts parsing error\n";
   exit(1);
 }
@@ -26,6 +26,15 @@ if (!getopts('l:f:t:h:s:p:d:i:g', \%opt)) {
 # i - enter interactive mode
 # g - (g)et data on STDIN
 # m - emulate basic "Mail -v" functionality
+
+if ($opt{m}) {
+  if ($opt{i} !~ /t/i && !$opt{t}) {
+    $to = shift;
+  }
+  if ($opt{i} !~ /d/i) {
+    $opt{i} .= 'd';
+  }
+}
 
 process_file($opt{l}) if ($opt{l});
 $from   = $opt{f} if ($opt{f});
@@ -243,7 +252,15 @@ sub process_interact {
     } elsif ($arg eq 'T') {
       $to = interact("To: ", '^\S+$');
     } elsif ($arg eq 'D' && !$opt{g}) {
-      $data = interact("Data: ", '^.*$');
+      if ($opt{m}) {
+        $data = "Subject: " . interact("Subject: ", 'SKIP') . "\n\n";
+        do {
+          $data .= interact('', 'SKIP') . "\n";
+        } while ($data !~ /\n\.\n$/ms);
+        $data =~ s/\n\.\n$//ms;
+      } else {
+        $data = interact("Data: ", '^.*$');
+      }
     } else {
       print "Unknown option $arg, ignoring...\n";
     }
@@ -253,12 +270,13 @@ sub process_interact {
 sub interact {
   my($prompt) = shift;
   my($regexp) = shift;
+  my($continue) = shift;
   my($response) = '';
 
   do {
     print "$prompt";
     chomp($response = <>);
-  } while ($response !~ /$regexp/);
+  } while ($regexp ne 'SKIP' && $response !~ /$regexp/);
 
   return($response);
 }
