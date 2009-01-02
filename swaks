@@ -686,55 +686,6 @@ sub do_smtp_gen {
                   print_callback => $c);
 }
 
-sub do_smtp_gen_OLD {
-  my $m = shift; # string to send
-  my $e = shift; # String we're expecting to get back
-  my $p = shift; # this is a scalar ref, assign the server return string to it
-  my $b = shift; # be brief in the data we send
-  my $x = shift; # if this is populated, print this instead of $m
-  my $c = shift; # if this is a code ref, call it on the return value b4 print
-  my $r = '';    # This'll be the return value from transact()
-  my $time;
-
-  ptrans(21, $x ? $x : $m, $b) if (defined($m));
-  if ($G::show_time_lapse) {
-    if ($G::show_time_hires) {
-      $time = [Time::HiRes::gettimeofday()]
-    } else {
-      $time = time() if ($G::show_time_lapse);
-    }
-  }
-  $r  = transact_OLD($m, '');
-  $$p = $r;
-  
-  if ($G::show_time_lapse) {
-    if ($G::show_time_hires) {
-      $time = sprintf("%0.03f", Time::HiRes::tv_interval($time,
-                               [Time::HiRes::gettimeofday()]));
-    } else {
-      $time = time() - $time;
-    }
-    ptrans(11, "response in ${time}s");
-  }
-
-  $r = &$c($r) if (ref($c) eq 'CODE');
-  my($ret,$ptc) = $r !~ /^$e /m ? (0,32) : (1,31);
-
-  if ($G::link{lost_cxn}) {
-    ptrans($ptc, $r) if ($r);
-    if ($G::link{allow_lost_cxn}) {
-      # this means the calling code wants to handle a lost cxn itself
-      return($ret);
-    } else {
-      # if caller didn't want to handle, we'll handle a lost cxn ourselves
-      handle_disconnect();
-    }
-  } else {
-    ptrans($ptc, $r);
-    return($ret);
-  }
-}
-
 # If we detect that the other side has gone away when we were expecting
 # to still be reading, come in here to error and die.  Abstracted because
 # the error message will vary depending on the type of connection
@@ -766,22 +717,6 @@ sub send_data {
   $G::send_buffer .= "$d\r\n";
 }
 
-# write a bunch of data to whatever is listening on the end.  We don't 
-# have any requirements about the data except that we will be writing
-# \r\n onto the end of it.  Any connection level details will be handled
-# in here
-sub send_data_OLD {
-  my $d = shift; # data to write
-  # Either an IO::Socket obj or a FH to my child - the thing to write to
-  my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{wr} : $G::link{sock};
-
-  if ($G::link{tls}{active}) {
-    my $res = Net::SSLeay::write($G::link{tls}{ssl}, "$d\r\n");
-  } else {
-    print $s $d, "\r\n";
-  }
-}
-
 sub recv_line {
   # Either an IO::Socket obj or a FH to my child - the thing to read from
   my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{re} : $G::link{sock};
@@ -794,24 +729,6 @@ sub recv_line {
   }
   $r =~ s|\r||msg;
 #print "in recv_line, returning \$r = $r\n";
-  return($r);
-}
-
-# read data from the other end, possibly more than one line at a time.
-# If more than one line returned, return one line of data at a time.
-# If not a whole line returned, read until newline.  Any connection level
-# details will be handled in here.
-sub recv_line_OLD {
-  # Either an IO::Socket obj or a FH to my child - the thing to read from
-  my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{re} : $G::link{sock};
-  my $r = undef;
-
-  if ($G::link{tls}{active}) {
-    $r = Net::SSLeay::read($G::link{tls}{ssl});
-  } else {
-    $r = <$s>;
-  }
-  $r =~ s|\r||msg;
   return($r);
 }
 
@@ -897,36 +814,6 @@ sub transact {
   }
   foreach my $h (@handlers) { &{$h}(); }
   return($ret);
-}
-
-sub transact_OLD {
-  my $send    = shift;     # This is the string to send
-  my $buff    = shift;     # we will store and manipulate the return value here.
-
-  eval {
-    local $SIG{'ALRM'} = sub {
-      $buff = "Timeout ($G::link{timeout} secs) waiting for server response";
-      die;
-    };
-    send_data_OLD($send) if (defined($send));
-    alarm($G::link{timeout});
-
-    if ($buff) {
-      $buff = '';
-    } else {
-      while ($buff !~ /^\d\d\d /m) {
-        my $l = recv_line_OLD();
-        $buff .= $l;
-        if (!defined($l)) {
-          $G::link{lost_cxn} = 1;
-          last;
-        }
-      }
-      chomp($buff);
-    }
-    alarm(0);
-  };
-  return($buff);
 }
 
 sub unencode_smtp {
