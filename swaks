@@ -8,7 +8,7 @@ use Getopt::Long;
 use Time::Local;
 
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20050605.2";
+my $p_version = "20050605.3";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<EOM;
         Copyright (c) 2003-2005 John Jetmore <jj33\@pobox.com>
@@ -945,30 +945,20 @@ sub process_args {
              ."X-Mailer: swaks v$p_version jetmore.org/john/code/#swaks".'\n\n'
              .'This is a test mailing\n';
   # The -g option trumps all other methods of getting the data
-#print STDERR scalar(localtime()), " starting get\n";
   $n{data}   = join('', <STDIN>) if ($o->{data_on_stdin});
-#print STDERR scalar(localtime()), " finished get\n";
   if (!$o->{no_data_fixup}) {
     $n{data} =~ s/\\n/\r\n/g;
-#print STDERR scalar(localtime()), " finished 1\n";
     $n{data} =~ s/%F/$n{from}/g;
-#print STDERR scalar(localtime()), " finished 2\n";
     $n{data} =~ s/%T/$n{to}/g;
-#print STDERR scalar(localtime()), " finished 3\n";
     $n{data} =~ s/%D/get_date_string()/eg;
-#print STDERR scalar(localtime()), " finished 4\n";
     $n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
-#print STDERR scalar(localtime()), " finished 5\n";
-    $n{data} =~ s/\r?\n\.\r?\n?$//s;  # If there was a trailing dot, remove it
-#print STDERR scalar(localtime()), " finished 6\n";
-    $n{data} =~ s/\n\./\n../g;        # quote any other leading dots
-#print STDERR scalar(localtime()), " finished 7\n";
-    # translate line endings - use while to fake out /g
-    while ($n{data} =~ s/([^\r])\n/$1\r\n/s) { 1; } 
-#print STDERR scalar(localtime()), " finished 8\n";
-    $n{data} .= "\r\n.";              # add a trailing dot
+    $n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
+    $n{data} =~ s/\n\./\n../g;         # quote any other leading dots
+    # translate line endings - run twice to get consecutive \n correctly
+    $n{data} =~ s/([^\r])\n/$1\r\n/gs;
+    $n{data} =~ s/([^\r])\n/$1\r\n/gs; # this identical call not a bug
+    $n{data} .= "\r\n.";               # add a trailing dot
   }
-#print STDERR scalar(localtime()), " finished fixup\n";
 
   # Handle TLS options
   $G::tls_optional   = 1 if (defined($o->{tls_optional}));
