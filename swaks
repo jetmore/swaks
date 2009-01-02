@@ -48,7 +48,7 @@ GetOptions(
   't|to:s'          => \$O{mail_to},       # envelope-(t)o address
   'h|helo|ehlo|lhlo:s' => \$O{mail_helo},  # (h)elo string
   's|server:s'      => \$O{mail_server},   # (s)erver to use
-  'p|port:i'        => \$O{mail_port},     # (p)ort to use
+  'p|port:s'        => \$O{mail_port},     # (p)ort to use
   'protocol:s'      => \$O{mail_protocol}, # protocol to use (smtp, esmtp, lmtp)
   'd|data:s'        => \$O{mail_data},     # (d)ata portion ('\n' for newlines)
   'timeout:s'       => \$O{timeout},       # timeout for each trans (def 30s)
@@ -1344,9 +1344,32 @@ sub process_args {
   }
 
   # SMTP port
-  $G::link{port}   = $o->{mail_port} || interact("Port: ", '^\d+$')
+  $G::link{port}   = $o->{mail_port} || interact("Port: ", '^\w+$')
       if (defined($o->{mail_port}));
-  $G::link{port} ||= $fconf->{PORT} || ($G::tls_on_connect ? 465 : 25);
+  $G::link{port} ||= $fconf->{PORT};
+  if ($G::link{port}) {
+    # in here, the user has either specified a port, or that they _want_
+    # to, so if it isn't a resolvable port, ,keep prompting for another one
+    my $o_port = $G::link{port};
+    if ($G::link{port} !~ /^\d+$/) {
+      $G::link{port} = getservbyname($G::link{port}, 'tcp');
+      while (!$G::link{port}) {
+        $G::link{port} = $o_port =
+            interact("Unable to resolve port $o_port\nPort: ", '^\w+$');
+        $G::link{port} = getservbyname($G::link{port}, 'tcp')
+            if ($G::link{port} !~ /^\d+$/);
+      }
+    }
+  } else {
+    # in here, user wants us to use default ports, so try look up services,
+    # use default numbers is service names don't resolve.  Never prompt user
+    if ($G::tls_on_connect) {
+      $G::link{port} = getservbyname('smtps', 'tcp') || '465';
+    } else {
+      $G::link{port} = getservbyname('smtp', 'tcp') || '25';
+    }
+  }
+  
 
   # Handle AUTH options
   $G::auth_optional = 1 if (defined($o->{auth_optional}));
@@ -1593,7 +1616,7 @@ Use argument as mail server to which to connect, or prompt user if no argument s
 
 =item -p, --port
 
-Use argument as port to connect to on server, or prompt user if no argument is specified.  Overridden by -l token PORT.  If unspecified, swaks will try to connect to port 25.
+Use argument as port to connect to on server, or prompt user if no argument is specified.  This can be either a port number or a service name.  Overridden by -l token PORT.  If unspecified, swaks will use service smtps if --tls-on-connect is used and smtp otherwise.
 
 =item -h, --helo, --ehlo
 
