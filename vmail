@@ -2,8 +2,8 @@
 
 use strict; # *gasp*!  A program by jetmore that uses strict?!?!
 
-#use LWP::Socket qw();
 use IO::Socket qw();
+use Net::DNS;
 use WCS::Util qw();
 use Getopt::Std;
 
@@ -25,6 +25,7 @@ if (!getopts('l:f:t:h:s:p:d:i:g', \%opt)) {
 # d - what is the (d)ata section of the email?
 # i - enter interactive mode
 # g - (g)et data on STDIN
+# m - emulate basic "Mail -v" functionality
 
 process_file($opt{l}) if ($opt{l});
 $from   = $opt{f} if ($opt{f});
@@ -275,26 +276,22 @@ sub get_hostname {
 }
 
 sub get_server {
-  # I'm sure there's a nicer way to do this, but I don't care right now.
-  my($addr) = shift;
-  my($pref) = -1;
-  my($server) = "localhost";
+  my $addr   = shift;
+  my $pref   = -1;
+  my $server = "localhost";
+  my $res    = new Net::DNS::Resolver;
 
   return($server) if ($addr !~ /\@/);
 
   $addr =~ s/^.*\@([^\@]*)$/$1/;
-  return($server) if (!$server);
+  return($server) if (!$addr);
 
-  open(P, "/bin/nslookup -q=mx $addr|") || return($server);
-  while (<P>) {
-    if (/preference = (\d+), mail exchanger = (\S+)\s*$/) {
-      if ($pref == -1 || $1 < $pref) {
-        $server = $2;
-        $pref = $1;
-      }
+  my @mx = mx($res, $addr);
+  foreach my $rr (@mx) {
+    if ($rr->preference < $pref || $pref == -1) {
+      $pref   = $rr->preference;
+      $server = $rr->exchange;
     }
   }
-  close(P);
   return($server);
 }
-  
