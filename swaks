@@ -122,7 +122,21 @@ open_link();
 sendmail($opts->{from}, $opts->{to}, $opts->{helo}, $opts->{data},
          $opts->{a_user}, $opts->{a_pass}, $opts->{a_type});
 
+teardown_link();
+
 exit(0);
+
+sub teardown_link {
+  if ($G::link{type} eq 'socket-inet') {
+    # XXX need anything special for tls teardown?
+    close($G::link{sock});
+  } elsif ($G::link{type} eq 'pipe') {
+    delete($SIG{PIPE});
+    $SIG{CHLD} = 'IGNORE';
+    close($G::link{sock}{wr});
+    close($G::link{sock}{re});
+  }
+}
 
 sub open_link {
   if ($G::link{type} eq 'socket-inet') {
@@ -139,14 +153,28 @@ sub open_link {
     }
     print_transaction(11, "Connected to $G::link{server}.");
   } elsif ($G::link{type} eq 'pipe') {
+    $SIG{PIPE} = sub {
+      print_transaction(12, "Child process went away unexpectedly, exiting");
+      exit(4);
+    };
+# XXX this needs to be turned off somehow at the end of the app so that error
+# XXX doesn't get printed when the app ends.  There probably needs to be a 
+# XXX teardown_link sub.  But that won't handle what happens when there's a
+# XXX mistake midway through the transaction
+    $SIG{CHLD} = sub {
+      print_transaction(12, "Problem with child process, exiting");
+      exit(5);
+    };
     print_transaction(11, "Trying pipe to $G::link{process}...");
-    # XXX if I can figure out blocking and order, consider open3 here
-    if (!try_load("IPC::Open2")) {
-      print_transaction(12, "Couldn't load IPC::Open2 for pipe, exiting");
+    if (!try_load("IPC::Open3")) {
+      print_transaction(12, "Couldn't load IPC::Open3 for pipe, exiting");
       exit(2);
     }
-    if (!open2($G::link{sock}{read},$G::link{sock}{write},$G::link{process})) {
-      print_transaction(12, "Error connecting to $G::link{process}:\n\t$!");
+    eval{
+      open3($G::link{sock}{wr},$G::link{sock}{re}, 0, $G::link{process});
+    };
+    if ($@) { # =~ /open3/) {
+      print_transaction(12, "Error connecting to $G::link{process}:\n\t$@");
       exit(2);
     }
     print_transaction(11, "Connected to $G::link{process}.");
@@ -236,7 +264,7 @@ sub sendmail {
   do_smtp_gen($data, '250', undef, $O{supress_data}) || do_smtp_quit(1, 26);
 
   # send QUIT
-  do_smtp_quit(0) || exit(27);
+  do_smtp_quit(0) || do_smtp_quit(1, 27);
 
   print_transaction(11,  "Connection closed by foreign host.");
 }
@@ -323,8 +351,12 @@ sub do_smtp_quit {
   my $exit = shift;
   my $err  = shift;
 
+  $SIG{CHLD} = 'IGNORE'; # XXX kludge.  there's a chicken and egg problem here
   my $r = do_smtp_gen('QUIT', '221');
-  exit $err if ($exit);
+  if ($exit) {
+    teardown_link();
+    exit $err;
+  }
 
   return($r);
 }
@@ -602,7 +634,7 @@ sub transact {
   my $send    = shift;     # This is the string to send
   my $buff    = shift;     # we will store and manipulate the return value here.
   my $s       = $G::link{sock}; # This is my IO::Socket object
-  my($wr,$re) = ($s->{write},$s->{read}) if ($G::link{type} eq 'pipe');
+  my($wr,$re) = ($s->{wr},$s->{re}) if ($G::link{type} eq 'pipe');
 
   eval {
     local $SIG{'ALRM'} = sub {
@@ -1341,6 +1373,14 @@ error connecting to remote server
 =item 3
 
 unknown connection type
+
+=item 4
+
+while running with connection type of "pipe", fatal problem writing to or reading from the child process
+
+=item 5
+
+while running with connection type of "pipe", child process died unexpectedly.  This can mean that the program specified with --pipe doesn't exist.
 
 =item 10
 
