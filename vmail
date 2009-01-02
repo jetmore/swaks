@@ -567,7 +567,7 @@ sub do_smtp_auth_ntlm {
   $d = $client->auth_msg($nonce, $flags);
 
   $auth_string = encode_base64("$d", '');
-  do_smtp_gen($s, $auth_string, '334', $t, \$r, '',
+  do_smtp_gen($s, $auth_string, '235', $t, \$r, '',
               $O::auth_showpt ? "$d" : '') || return(0);
 
   return(1);
