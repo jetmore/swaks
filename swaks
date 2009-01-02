@@ -1335,7 +1335,9 @@ sub process_args {
       my %matched = ();
       foreach my $l (map { split(/\\n/) } @{$o->{header}}) {
         if (my($h) = $l =~ /^([^:]+):/) {
-          if (!$matched{$h} && $n{data} =~ s/(^|\\n)$h:.*?($|\\n)/$1$l$2/) {
+          if (!$matched{$h}
+              && $n{data} =~ s/(^|\\n|\n)$h:.*?($|\\n|\n)/$1$l$2/)
+          {
             $matched{$h} = 1;
           } else { push(@{$o->{add_header}}, $l); }
         } else { push(@{$o->{add_header}}, $l); }
