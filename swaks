@@ -91,10 +91,10 @@ GetOptions(
   tls             => { name => "TLS",            list => ['Net::SSLeay'] },
   pipe            => { name => "Pipe Transport", list => ['IPC::Open2'] },
   socket          => { name => "Socket Transport", list => ['IO::Socket'] },
-  date_manip      => { name => "Date manipulation", list => ['Time::Local'] },
-  hostname        => { name => "Local hostname detection",
+  date_manip      => { name => "Date Manipulation", list => ['Time::Local'] },
+  hostname        => { name => "Local Hostname Detection",
                        list => ['Sys::Hostname'] },
-  hires_timing    => { name => "Hi resolution timing",
+  hires_timing    => { name => "High Resolution Timing",
                        list => ['Time::HiRes'] },
 );
 
@@ -1443,6 +1443,7 @@ sub get_date_string {
 
   if (!avail("date_manip")) {
     ptrans(12, avail_err("date_manip").".  Date strings will be in GMT");
+    @l = gmtime();
   } else {
     my @g = gmtime();
     $o = (timelocal(@l) - timelocal(@g))/36;
@@ -1734,43 +1735,57 @@ This program was written because I was testing a new MTA on an alternate port.  
 
 =head1 REQUIRES
 
+swaks does not have any single requirement except the standard module Getopt::Long.  However, there may be modules that are required for a given invocation of swaks.  The following list details the features reported by the --support option, what is actually being tested, and the consequences of the feature being reported as "not available"
+
 =over 4
 
-=item IO::Socket, Sys::Hostname, Getop::Long, Time::Local
+=item AUTH CRAM-MD5
 
-These modules are all required for the program to run at all.  This shouldn't be an issue as I believe these are all core modules.
+CRAM-MD5 authentication requires the Digest::MD5 perl module.  If this is unavailable and authentication is required, swaks will error if CRAM-MD5 was the specific authentication type requested, or if no specific auth type was requested but CRAM-MD5 was the only type advertised by the server.
 
-=item Net::DNS
+=item AUTH CRAM-SHA1
 
-This module is required to look up MX records for domains.  If unavailable the -s option can be used to statically route the message.
+CRAM-SHA1 authentication requires the Digest::SHA1 perl module.  If this is unavailable and authentication is required, swaks will error if CRAM-SHA1 was the specific authentication type requested, or if no specific auth type was requested but CRAM-SHA1 was the only type advertised by the server.
 
-=item Net::SSLeay
+=item AUTH DIGEST-MD5
 
-This module is required for TLS sessions.  STARTTLS will not be supported if module is unavailable.
+DIGEST-MD5 authentication requires the Authen::DigestMD5 perl module.  If this is unavailable and authentication is required, swaks will error if DIGEST-MD5 was the specific authentication type requested, or if no specific auth type was requested but DIGEST-MD5 was the only type advertised by the server.
 
-=item MIME::Base64
+=item AUTH NTLM
 
-This module is required for all SMTP AUTH transactions.  If it is unavailable no AUTH methods will be supported.
+NTLM/SPA/MSN authentication requires the Authen::NTLM perl module.  If this is unavailable and authentication is required, swaks will error if NTLM was the specific authentication type requested, or if no specific auth type was requested but NTLM was the only type advertised by the server.  Note that there are two modules using the Authen::NTLM namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.02.tar.gz) is the version required here.
 
-=item Digest::MD5
+=item Basic AUTH
 
-This module is required for CRAM-MD5 authentication.
+All authentication types require base64 encoding and decoding.  If possible, swaks uses the MIME::Base64 perl module to perform these actions.  However, if MIME::Base64 is not available swaks will use its own onboard base64 routines.  These are slower than the MIME::Base64 routines and less reviewed, though they have been tested thoroughly.  When possible it is recommended that you install MIME::Base64.
 
-=item Digest::SHA1
+=item Date Manipulation
 
-This module is required for CRAM-SHA1 authentication.
+swaks generates an RFC compliant date string when it interpolates the %D token in message bodies.  In order to build the GMT offset in this string, it needs the Time::Local module.  It would be very odd for this module not to be available because it has been included in the perl distribution for some time.  However, if it is not loadable for some reason and swaks interpolates a %D token (as it would when using the default body), the date string is in GMT instead of your local timezone.
 
-=item Authen::NTLM
+=item High Resolution Timing
 
-This module is required for SPA/MSN/NTLM authentication.  Note that there are two modules using the Authen::NTLM namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.02.tar.gz) is the version required here.
+When diagnosing SMTP delays using --show-time-lapse, by default high resolution timing is attempted using the Time::HiRes module.  If this module is not available, swaks uses a much poorer timing source with one second granularity.
 
-=item Authen::DigestMD5
+=item Local Hostname Detection
 
-This module is required for DIGEST-MD5 authentication.
+swaks uses your local machine's hostname to build the HELO string and sending email address when they are not specified on the command line.  If the Sys::Hostname module (which is a part of the base distribution) is not available for some reason, the user is prompted interactively for the HELO and sender strings.  Note that Sys::Hostname can sometimes fail to find the local hostname even when the module is available, which has the same behaviour.
 
-=item Time::HiRes
+=item MX Routing
 
-This module is required for high resolution timing.  If unavailable only integer timing is available.
+If the destination mail server is not specified using the --server option, swaks attempts to use DNS to route the message based on the recipient email address.  If the Net::DNS perl module is not available, swaks uses 'localhost' as the outbound mail server.
+
+=item Pipe Transport
+
+The IPC::Open2 module is required to deliver a message to a spawned subprocess using the --pipe option.  If this module, which is included in the base perl distribution, in not available, attempting to call swaks with the --pipe option will result in an error.
+
+=item Socket Transport
+
+The IO::Socket module is required to deliver a message to an internet domain socket (the default behaviour of swaks) and to a unix domain socket (specified with the --socket option).  If this module, which is included in the base perl distribution, is not available, attempting to call swaks with the --server or --socket options (or none of the --socket, --server, and --pipe options) will result in an error.
+
+=item TLS
+
+TLS functionality requires the Net::SSLeay perl module.  If this module is not available and TLS was required (using the --tls-on-connect or --tls options), the session will error out.  If TLS was requested but not required (using the --tls-optional option), swaks will continue but not attempt a TLS session.
 
 =back
 
