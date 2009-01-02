@@ -46,7 +46,7 @@ GetOptions(
   'protocol:s'      => \$O{mail_protocol}, # protocol to use (smtp, esmtp, lmtp)
   'd|data:s'        => \$O{mail_data},     # (d)ata portion ('\n' for newlines)
   'timeout:s'       => \$O{timeout},       # timeout for each trans (def 30s)
-  'g'               => \$O{data_on_stdin}, # (g)et data on stdin 
+  'g'               => \$O{data_on_stdin}, # (g)et data on stdin
   'm'               => \$O{emulate_mail},  # emulate (M)ail command
   'q|quit|quit-after=s' => \$O{quit_after}, # (q)uit after
   'n|suppress-data' => \$O{suppress_data}, # do (n)ot print data portion
@@ -81,7 +81,7 @@ GetOptions(
 
 # lists of dependencies for features
 %G::dependencies = (
-  auth            => { name => "Basic AUTH",     list => ['MIME::Base64'] },
+  auth            => { name => "Basic AUTH",     list => [] },#MIME::Base64
   auth_cram_md5   => { name => "AUTH CRAM-MD5",  list => ['Digest::MD5'] },
   auth_cram_sha1  => { name => "AUTH CRAM-SHA1", list => ['Digest::SHA1'] },
   auth_ntlm       => { name => "AUTH NTLM",      list => ['Authen::NTLM'] },
@@ -137,7 +137,7 @@ if ($G::dump_args) {
   print "auth             = ";
   if ($opts->{a_type}) {
     print $G::auth_optional ? 'optional' : 'yes', " type='",
-          join(',', @{$opts->{a_type}}), "' ", 
+          join(',', @{$opts->{a_type}}), "' ",
           "user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
   } else { print "no\n"; }
   print "auth map         = ", join("\n".' 'x19,
@@ -152,7 +152,7 @@ if ($G::dump_args) {
   exit(0);
 }
 
-# we're going to abstract away the actual connection layer from the mail 
+# we're going to abstract away the actual connection layer from the mail
 # process, so move the act of connecting into its own sub.  The sub will
 # set info in global hash %G::link
 # XXX instead of passing raw data, have processs_opts create a link_data
@@ -507,13 +507,13 @@ sub do_smtp_auth_ntlm {
   my $r = '';    # will store smtp response
   my $domain;
   ($u,$domain) = split(/%/, $u);
-  
+
   my $auth_string = "AUTH $as";
   do_smtp_gen($auth_string, '334') || return(0);
 
-  my $d = decode_base64(Authen::NTLM::ntlm());
+  my $d = db64(Authen::NTLM::ntlm());
 
-  $auth_string = encode_base64("$d", '');
+  $auth_string = eb64($d);
   do_smtp_gen($auth_string, '334', \$r, '', $G::auth_showpt ? "$d" : '',
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
 
@@ -521,9 +521,9 @@ sub do_smtp_auth_ntlm {
   Authen::NTLM::ntlm_domain($domain);
   Authen::NTLM::ntlm_user($u);
   Authen::NTLM::ntlm_password($p);
-  $d = decode_base64(Authen::NTLM::ntlm($r));
+  $d = db64(Authen::NTLM::ntlm($r));
 
-  $auth_string = encode_base64("$d", '');
+  $auth_string = eb64($d);
   do_smtp_gen($auth_string, '235', \$r, '',
               $G::auth_showpt ? "$d" : '') || return(0);
 
@@ -535,14 +535,14 @@ sub do_smtp_auth_digest {
   my $p = shift; # auth password
   my $as = shift; # auth string
   my $r = '';    # will store smtp response
-  
+
   my $auth_string = "AUTH $as";
   do_smtp_gen($auth_string, '334', \$r, '', '',
               $G::auth_showpt ? \&unencode_smtp : '')
       || return(0);
 
   $r =~ s/^....//; # maybe something a little better here?
-  $r = decode_base64($r);
+  $r = db64($r);
   my $req = Authen::DigestMD5::Request->new($r);
   my $res = Authen::DigestMD5::Response->new();
   $res->got_request($req);
@@ -552,13 +552,13 @@ sub do_smtp_auth_digest {
             'digest-uri' => "smtp/$G::link{server}");
   $res->add_digest(password => $p);
   my $d = $res->output();
-  $auth_string = encode_base64("$d", '');
+  $auth_string = eb64($d);
 
   do_smtp_gen($auth_string, '334', \$r, '', $G::auth_showpt ? "$d" : '',
               $G::auth_showpt ? \&unencode_smtp : '')
       || return(0);
   $r =~ s/^....//; # maybe something a little better here?
-  $r = decode_base64($r);
+  $r = db64($r);
   $req->input($r);
   return(0) if (!$req->auth_ok);
 
@@ -573,7 +573,7 @@ sub do_smtp_auth_cram {
   my $p  = shift; # auth password
   my $as = shift; # auth string
   my $r  = '';    # will store smtp response
-  
+
   my $auth_string = "AUTH $as";
   do_smtp_gen($auth_string, '334', \$r, '', '',
               $G::auth_showpt ? \&unencode_smtp : '')
@@ -582,7 +582,7 @@ sub do_smtp_auth_cram {
   $r =~ s/^....//; # maybe something a little better here?
   # specify which type of digest we need based on $as
   my $d = get_digest($p, $r, ($as =~ /-SHA1$/ ? 'sha1' : 'md5'));
-  $auth_string = encode_base64("$u $d", '');
+  $auth_string = eb64("$u $d");
 
   do_smtp_gen($auth_string, '235', undef, '',
               $G::auth_showpt ? "$u $d" : '') || return(0);
@@ -594,15 +594,15 @@ sub do_smtp_auth_login {
   my $p = shift; # auth password
   my $as = shift; # auth string
   my $z = '';
-  
+
   my $auth_string = "AUTH $as";
-  do_smtp_gen($auth_string, '334', undef, '', '', 
+  do_smtp_gen($auth_string, '334', undef, '', '',
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
-  $auth_string = encode_base64($u, '');
+  $auth_string = eb64($u);
   $z = $u if ($G::auth_showpt);
   do_smtp_gen($auth_string, '334', undef, '', $z,
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
-  $auth_string = encode_base64($p, '');
+  $auth_string = eb64($p);
   $z = $p if ($G::auth_showpt);
   do_smtp_gen($auth_string, '235', undef, '', $z) || return(0);
   return(1);
@@ -612,8 +612,8 @@ sub do_smtp_auth_plain {
   my $u = shift; # auth user
   my $p = shift; # auth password
   my $as = shift; # auth string
-  
-  my $auth_string = "AUTH $as " . encode_base64("\0$u\0$p", '');
+
+  my $auth_string = "AUTH $as " . eb64("\0$u\0$p");
   my $z = '';
   if ($G::auth_showpt) {
     $z = "AUTH $as \\0$u\\0$p";
@@ -709,7 +709,7 @@ sub do_smtp_data {
 
   my $ok = transact(cxn_string => $m, expect => '250', summarize_output => $b);
 
-  # now be a little messy - lmtp is not a lockstep after data - we need to 
+  # now be a little messy - lmtp is not a lockstep after data - we need to
   # listen for as many calls as we had accepted recipients
   # XXX UNTESTED (ok for e?smtp as it is never used, but LMTP multiple
   # XXX           recips need to be tested)
@@ -792,7 +792,7 @@ sub transact {
   my $ret      = 1;  # this is our return value
   my @handlers = (); # will hold and fail_handlers we need to run
   my $time     = ''; # used in time lapse calculations
-  
+
   push(@G::pending_send, \%h); # push onto send queue
   if (!($G::pipeline && $G::pipeline_adv) || !$h{defer}) {
 
@@ -815,7 +815,7 @@ sub transact {
         local $SIG{'ALRM'} = sub {
           $buff ="Timeout ($G::link{timeout} secs) waiting for server response";
           die;
-        }; 
+        };
         alarm($G::link{timeout});
         while ($buff !~ /^\d\d\d /m) {
           my $l = recv_line();
@@ -870,7 +870,7 @@ sub unencode_smtp {
   my $t = shift;
 
   my @t = split(' ', $t);
-  return("$t[0] " . decode_base64($t[1]));
+  return("$t[0] " . db64($t[1]));
 }
 
 sub process_file {
@@ -935,8 +935,8 @@ sub get_server {
           .($addr/(2**8))%(2**8)  . '.' . ($addr/(2**0))%(2**8));
   }
 
-    
-  
+
+
   if (!avail("dns")) {
     ptrans(12, avail_err("dns").".  Using $server as mail server");
     return($server);
@@ -998,7 +998,7 @@ sub get_digest {
   my $opad = chr(0x5c) x 64;
 
   if ($chal !~ /^</) {
-    chomp($chal = decode_base64($chal));
+    chomp($chal = db64($chal));
   }
 
   if (length($secr) > 64) {
@@ -1070,7 +1070,7 @@ sub process_args {
     ptrans(12, "Unknown protocol $G::protocol specified, exiting");
     exit(1);
   }
-  
+
   # set global option of -q option
   if ($o->{quit_after}) {
     $G::quit_after = lc($o->{quit_after});
@@ -1229,7 +1229,7 @@ sub process_args {
         $body .= "Content-Transfer-Encoding: BASE64\n"
               .  "Content-Disposition: attachment\n"
               .  "\n"
-              .  encode_base64($p->{body}) . "\n";
+              .  eb64($p->{body}, "\n") . "\n";
       }
     }
     $body .= "--$bound--\n";
@@ -1384,7 +1384,7 @@ sub process_args {
         {
           ptrans(12, avail_err("auth_digest_md5")) if ($o->{auth} ne 'ANY');
         }
-        
+
         else {
           $valid_auth_found = 1;
           push(@{$n{a_type}}, $type);
@@ -1403,17 +1403,17 @@ sub process_args {
         $n{a_user} ||= $fconf->{USER};
         $n{a_user} ||= interact("Username: ", 'SKIP');
         $n{a_user}   = '' if ($n{a_user} eq '<>');
-  
+
         $n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
         $n{a_pass} ||= $fconf->{PASS};
         $n{a_pass} ||= interact("Password: ", 'SKIP');
         $n{a_pass}   = '' if ($n{a_pass} eq '<>');
-    
+
         $G::auth_showpt = 1 if (defined($o->{auth_showpt}));
-        # This option is designed to hide passwords - turn echo off when 
+        # This option is designed to hide passwords - turn echo off when
         # supplying at PW prompt, star out the PW strings in AUTH transactions.
-        # Not implementing right now - the echo might be a portability issue, 
-        # and starring out is hard because the smtp transaction is abstracted 
+        # Not implementing right now - the echo might be a portability issue,
+        # and starring out is hard because the smtp transaction is abstracted
         # beyond where this is easy to do.  Maybe sometime in the future
         #$G::auth_hidepw = 1 if (defined($o->{auth_hidepw}));
       }
@@ -1440,7 +1440,7 @@ sub get_date_string {
 
   my @l = localtime();
   my $o = 0;
-  
+
   if (!avail("date_manip")) {
     ptrans(12, avail_err("date_manip").".  Date strings will be in GMT");
   } else {
@@ -1453,34 +1453,43 @@ sub get_date_string {
                  (qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec))[$l[4]],
                  $l[5]+1900, $l[2], $l[1], $l[0],
                  $o
-                 #(timelocal(@l) - timelocal(@g))/36
-                    );
+  );
 }
 
 # partially Cribbed from "Programming Perl" and MIME::Base64 v2.12
-sub decode_b64 {
+sub db64 {
   my $s =  shift;
-  $s    =~ tr#A-Za-z0-9+/##cd;
-  $s    =~ s|=+$||;
-  $s    =~ tr#A-Za-z0-9+/# -_#;
-  my $r = '';
-  while ($s =~ s/(.{1,60})//s) {
-    $r .= unpack("u", chr(32 + int(length($1)*3/4)) . $1);
+  if (load("MIME::Base64")) {
+    return(decode_base64($s));
+  } else {
+    $s    =~ tr#A-Za-z0-9+/##cd;
+    $s    =~ s|=+$||;
+    $s    =~ tr#A-Za-z0-9+/# -_#;
+    my $r = '';
+    while ($s =~ s/(.{1,60})//s) {
+      $r .= unpack("u", chr(32 + int(length($1)*3/4)) . $1);
+    }
+    return($r);
   }
-  return($r);
 }
 
 # partially Cribbed from MIME::Base64 v2.12
-sub encode_b64 {
+sub eb64 {
   my $s    =  shift;
-  my $l    =  length($s);
-  chomp($s =  pack("u", $s));
-  $s       =~ s|\n.||gms;
-  $s       =~ s|\A.||gms;
-  $s       =~ tr#` -_#AA-Za-z0-9+/#;
-  my $p    =  (3 - $l%3) % 3;
-  $s       =~ s/.{$p}$/'=' x $p/e if ($p);
-  return($s);
+  my $e    =  shift || ''; # line ending to use "empty by default"
+  if (load("MIME::Base64")) {
+    return(encode_base64($s, $e));
+  } else {
+    my $l    =  length($s);
+    chomp($s =  pack("u", $s));
+    $s       =~ s|\n.||gms;
+    $s       =~ s|\A.||gms;
+    $s       =~ tr#` -_#AA-Za-z0-9+/#;
+    my $p    =  (3 - $l%3) % 3;
+    $s       =~ s/.{$p}$/'=' x $p/e if ($p);
+    $s       =~ s/(.{1,76})/$1$e/g if (length($e));
+    return($s);
+  }
 }
 
 sub ext_usage {
