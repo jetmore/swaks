@@ -71,23 +71,36 @@ $server = $O::mail_server || interact("Server: ", '^[a-zA-Z0-9\-\.]+$')
 $port   = $O::mail_port   || interact("Port: ", '^\d+$')
                                       if (defined($O::mail_port));
 if ($O::auth) {
-  # populate the username info
-  if (defined($O::auth_user)) {
-    $a_user = $O::auth_user;
-  } else {
-    $a_user = $fconf->{USER}
-  }
-  $a_user ||= interact("Username: ", 'SKIP');
+  # make sure we can support it before we go any farther
 
-  # populate the password info
-  if (defined($O::auth_pass)) {
-    $a_pass = $O::auth_pass;
+  if (!try_load("MIME::Base64")) {
+    print STDERR "MIME::Base64 not installed, ";
+    if (defined($O::auth_optional)) {
+      print STDERR "skipping AUTH attempts...\n";
+      $a_type = ''; # So we won't attempt it later
+    } else {
+      print STDERR "exiting...\n";
+      exit(10);
+    }
   } else {
-    $a_pass = $fconf->{PASS};
-  }
-  $a_pass ||= interact("Password: ", 'SKIP');
+    # populate the username info
+    if (defined($O::auth_user)) {
+      $a_user = $O::auth_user;
+    } else {
+      $a_user = $fconf->{USER}
+    }
+    $a_user ||= interact("Username: ", 'SKIP');
 
-  $a_type = $O::auth
+    # populate the password info
+    if (defined($O::auth_pass)) {
+      $a_pass = $O::auth_pass;
+    } else {
+      $a_pass = $fconf->{PASS};
+    }
+    $a_pass ||= interact("Password: ", 'SKIP');
+
+    $a_type = $O::auth
+  }
 }
 
 if (defined($O::mail_data) && !defined($O::data_on_stdin)) {
@@ -118,16 +131,16 @@ $server ||= $fconf->{SERVER} || get_server($to);  # receiving server
 # The -g option trumps all other methods of getting the data
 $data     = join('', <STDIN>) if ($O::data_on_stdin);
 
-print "\$from   = $from\n";
-print "\$to     = $to\n";
-print "\$helo   = $helo\n";
-print "\$data   = $data\n";
-print "\$server = $server\n";
-print "\$port   = $port\n";
-print "\$a_type = $a_type\n";
-print "\$a_user = $a_user\n";
-print "\$a_pass = $a_pass\n";
-exit;
+#print "\$from   = $from\n";
+#print "\$to     = $to\n";
+#print "\$helo   = $helo\n";
+#print "\$data   = $data\n";
+#print "\$server = $server\n";
+#print "\$port   = $port\n";
+#print "\$a_type = $a_type\n";
+#print "\$a_user = $a_user\n";
+#print "\$a_pass = $a_pass\n";
+#exit;
 
 $data =~ s/([^\.])$/$1\n./;
 $data =~ s/\\n/\r\n/g;
@@ -136,7 +149,7 @@ $data =~ s/%T/$to/g;
 $data =~ s/%D/scalar(localtime(time()))/eg;
 #print "after parsing, \$data looks like this:\n#\n$data\n#\n";
 #exit;
-sendmail($from, $to, $helo, $data, $server, $port);
+sendmail($from, $to, $helo, $data, $server, $port, $a_user, $a_pass, $a_type);
 
 exit;
 
@@ -147,6 +160,9 @@ sub sendmail {
   my $data    = shift;	# body of message (content after DATA command)
   my $host    = shift;	# receiving host
   my $port    = shift;	# where's the remote smtp process live?
+  my $a_user  = shift;	# what user to auth with?
+  my $a_pass  = shift;	# what pass to auth with
+  my $a_type  = shift;	# what kind of auth (this must be set to to attempt)
 
   my $ehlo    = {};	# If server is esmtp, save advertised features here
   my $timeout = 10;	# timeout for all transactions
@@ -178,6 +194,22 @@ sub sendmail {
 
   # QUIT here if the user has asked us to do so
   if ($O::quit_after eq 'helo') {
+    do_smtp_gen($s, 'QUIT', '221', $timeout);
+    exit(0);
+  }
+
+  # handle auth here if user has requested it
+  if ($a_type) {
+    if (!do_smtp_auth($s, $timeout, $ehlo, $a_type, $a_user, $a_pass)
+         && !$O::auth_optional)
+    {
+      do_smtp_gen($s, 'QUIT', '221', $timeout);
+      exit(28);
+    }
+  }
+
+  # QUIT here if the user has asked us to do so
+  if ($O::quit_after eq 'auth') {
     do_smtp_gen($s, 'QUIT', '221', $timeout);
     exit(0);
   }
@@ -236,6 +268,18 @@ sub print_transaction {
   }
   $m =~ s/\n/\n$f /msg;
   print "$f $m\n";
+}
+
+sub do_smtp_auth {
+  my $s  = shift; # socket
+  my $t  = shift; # timeout
+  my $e  = shift; # ehlo config hash
+  my $at = shift; # auth type
+  my $au = shift; # auth user
+  my $ap = shift; # auth password
+
+  print_transaction('===', "doing auth here");
+  return(1);  # dummy right now
 }
 
 sub do_smtp_helo {
@@ -354,51 +398,6 @@ sub process_file {
   }
   return;
 }
-
-#sub process_file {
-#  my($file) = shift;
-#  
-#  if (! -e "$file") {
-#    print STDERR "File $file does not exist, exiting.\n";
-#    exit(10);
-#  } elsif (! -f "$file") {
-#    print STDERR "File $file is not a file, exiting.\n";
-#    exit(11);
-#  } elsif (!open(I, "<$file")) {
-#    print STDERR "Couldn't open $file: $!\n";
-#    exit(12);
-#  }
-#
-#  my($count) = 0;
-#  while (<I>) {
-#    chomp;
-#    $count++;
-#    next if (/^#?\s*$/); # skip blank lines and those that start w/ '#'
-#    my($key,$value) = split(/\s+/, $_, 2);
-#    $key = uc($key);
-#    if (!$key) {
-#      print STDERR "Error on line $count: no key found\n";
-#    } elsif (!$value) {
-#      print STDERR "Error on line $count: no value found for key $key...\n";
-#    } elsif ($key eq 'FROM') {
-#      $from = $value;
-#    } elsif ($key eq 'TO') {
-#      $to = $value;
-#    } elsif ($key eq 'HELO') {
-#      $helo = $value;
-#    } elsif ($key eq 'DATA') {
-#      $data = $value;
-#    } elsif ($key eq 'SERVER') {
-#      $server = $value;
-#    } elsif ($key eq 'PORT') {
-#      $port = $value;
-#    } else {
-#      print STDERR "Error on line $count: unrecognized key $key...\n";
-#    }
-#  }
-#  close(I);
-#  return;
-#}
 
 sub interact {
   my($prompt) = shift;
