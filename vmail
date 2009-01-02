@@ -6,7 +6,8 @@ use IO::Socket qw();
 use Sys::Hostname;
 use Getopt::Long;
 
-my($from,$to,$helo,$data,$server,$port,$a_type,$a_user,$a_pass) = (undef);
+my($from,$to,$helo,$data,$server,$port,$a_type,$a_user,$a_pass,
+   $lint) = (undef);
 my($fconf)    = {}; # this will hold config info from -l fileif specified
 my($user)     = getpwuid($<);
 my($hostname) = get_hostname();
@@ -27,6 +28,7 @@ GetOptions(
   'au:s' => \$O::auth_user,     # user for auth
   'ap:s' => \$O::auth_pass,     # pass for auth
   'ao'   => \$O::auth_optional, # make auth optional (ignore auth failure)
+  'li:s' => \$O::lint,          # local interface to use for connection
 ) || exit(1);
 
 # normalize the auth options a bit
@@ -48,9 +50,6 @@ if ($O::emulate_mail) {
 # load the $fconf hash if user has specified a -l file
 process_file($O::option_file, $fconf) if ($O::option_file);
 
-#if (defined($O::mail_to)) {
-#  $to = $O::mail_to ||  interact("To: ", '^\S+$');
-#} elsif
 $to     = $O::mail_to     || interact("To: ", '^\S+$')
                                       if (defined($O::mail_to));
 $from   = $O::mail_from   || interact("From: ", '^\S+$')
@@ -61,6 +60,8 @@ $server = $O::mail_server || interact("Server: ", '^[a-zA-Z0-9\-\.]+$')
                                       if (defined($O::mail_server));
 $port   = $O::mail_port   || interact("Port: ", '^\d+$')
                                       if (defined($O::mail_port));
+$lint   = $O::lint        || interact("Interface: ", '^[\-\da-zA-Z\.]+')
+                                      if (defined($O::lint));
 if ($O::auth) {
   # make sure we can support it before we go any farther
 
@@ -110,18 +111,24 @@ if (defined($O::mail_data) && !defined($O::data_on_stdin)) {
 # By the time we get here, if the user didn't provide info on command line
 # or tell us to prompt for it, we see if it was specified in the -l file,
 # and finally use the default value
-$from   ||= $fconf->{FROM} || "$user\@$hostname"; # envelope-from
+$from   ||= $fconf->{FROM}   || "$user\@$hostname"; # envelope-from
 $data   ||= $fconf->{DATA}
         ||  'To: %T\nFrom: %F\nSubject: test\n\nThis is a test mailing\n.';
                                                   # body (\n translated later)
-$helo   ||= $fconf->{HELO} || $hostname;          # who we claim to be in HELO
-$port   ||= $fconf->{PORT} || 25;                 # where's the mail server?
-$to     ||= $fconf->{TO}   || interact("To: ", '^\S+$');
+$helo   ||= $fconf->{HELO}   || $hostname;        # who we claim to be in HELO
+$port   ||= $fconf->{PORT}   || 25;               # where's the mail server?
+$to     ||= $fconf->{TO}     || interact("To: ", '^\S+$');
                                                   # who is the mail to?
 $server ||= $fconf->{SERVER} || get_server($to);  # receiving server
+$lint   ||= $fconf->{INTERFACE} || '0.0.0.0';     # local interface
 
 # The -g option trumps all other methods of getting the data
 $data     = join('', <STDIN>) if ($O::data_on_stdin);
+
+# we're allowing them to specify a hostname also, so resolve it back to 
+# an IP
+# actually, IO::Socket may do this for us, check that first;
+#$lint = get_ip_from_name($lint) if ($lint && $lint !~ /^\d+\.\d+\.\d+\.\d+$/);
 
 #print "\$from   = $from\n";
 #print "\$to     = $to\n";
@@ -132,6 +139,7 @@ $data     = join('', <STDIN>) if ($O::data_on_stdin);
 #print "\$a_type = $a_type\n";
 #print "\$a_user = $a_user\n";
 #print "\$a_pass = $a_pass\n";
+#print "\$lint   = $lint\n";
 #exit;
 
 $data =~ s/([^\.])$/$1\n./;
@@ -141,7 +149,8 @@ $data =~ s/%T/$to/g;
 $data =~ s/%D/scalar(localtime(time()))/eg;
 #print "after parsing, \$data looks like this:\n#\n$data\n#\n";
 #exit;
-sendmail($from, $to, $helo, $data, $server, $port, $a_user, $a_pass, $a_type);
+sendmail($from, $to, $helo, $data, $server, $port, $a_user, $a_pass, $a_type,
+         $lint);
 
 exit;
 
@@ -155,12 +164,14 @@ sub sendmail {
   my $a_user  = shift;	# what user to auth with?
   my $a_pass  = shift;	# what pass to auth with
   my $a_type  = shift;	# what kind of auth (this must be set to to attempt)
+  my $lint    = shift;	# what local interface to use
 
   my $ehlo    = {};	# If server is esmtp, save advertised features here
   my $timeout = 10;	# timeout for all transactions
   $|          = 1;
-  my $s       = IO::Socket::INET->new( PeerAddr => $host, PeerPort => $port,
-		                       Proto    => 'tcp', Timeout  => $timeout);
+  my $s       = IO::Socket::INET->new( PeerAddr  => $host, PeerPort => $port,
+		                       Proto     => 'tcp', Timeout  => $timeout,
+                                       LocalAddr => $lint);
 
   print_transaction('===', "Trying $host:$port...");
   die "Can't connect to $host:$port ($@)\n" if (!$s);
