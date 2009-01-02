@@ -43,6 +43,7 @@ GetOptions(
   'a|auth:s'        => \$O{auth},          # force auth, exit if not supported
   'au|auth-user:s'  => \$O{auth_user},     # user for auth
   'ap|auth-password:s' => \$O{auth_pass},  # pass for auth
+  'am|auth-map=s' => \$O{auth_map},        # auth type map
   'ahp|auth-hide-password' => \$O{auth_hidepw}, # hide passwords when possible
   'apt|auth-plaintext' => \$O{auth_showpt}, # translate base64 strings
   'ao|auth-optional' => \$O{auth_optional}, # auth optional (ignore failure)
@@ -55,7 +56,7 @@ GetOptions(
   'nth|no-hints'    => \$O{no_hints},      # Don't show transaction hints
   'hr|hide-receive' => \$O{hide_receive},  # Don't show reception lines
   'hs|hide-send'    => \$O{hide_send},     # Don't show sending lines
-  'stl|show-time-lapse' => \$O{show_time_lapse} # print lapse between send/recv
+  'stl|show-time-lapse:s' => \$O{show_time_lapse} # print lapse for send/recv
 ) || exit(1);
 
 load_modules({
@@ -341,34 +342,36 @@ sub do_smtp_auth {
     return(0);
   }
 
-  if (($at eq 'ANY' || $at eq 'CRAM-MD5') && $e->{AUTH}{'CRAM-MD5'}) {
-    if ($G::modules{"Digest::MD5"}) {
-      return(1) if (do_smtp_auth_cram($s, $t, $au, $ap));
-    } else {
-      # debug?
-    }
-  }
-  if (($at eq 'ANY' || $at eq 'DIGEST-MD5') && $e->{AUTH}{'DIGEST-MD5'}) {
-    if ($G::modules{"Authen::DigestMD5"}) {
-      return(1) if (do_smtp_auth_digest($s, $t, $au, $ap, $h));
-    } else {
-      # debug?
-    }
-  }
-  foreach ('MSN', 'SPA', 'NTLM') {
-    if (($at eq 'ANY' || $at eq $_) && $e->{AUTH}{$_}) {
-      if ($G::modules{"Authen::NTLM"}) {
-        return(1) if (do_smtp_auth_ntlm($s, $t, $au, $ap, $_));
-      } else {
-        # debug?
+  if ($G::modules{"Digest::MD5"}) {
+    foreach my $type (@{$G::auth_map_t{'CRAM-MD5'}}) {
+      if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
+        return(1) if (do_smtp_auth_cram($s, $t, $au, $ap, $type));
       }
     }
   }
-  if (($at eq 'ANY' || $at eq 'PLAIN') && $e->{AUTH}{PLAIN}) {
-    return(1) if (do_smtp_auth_plain($s, $t, $au, $ap));
+  if ($G::modules{"Authen::DigestMD5"}) {
+    foreach my $type (@{$G::auth_map_t{'DIGEST-MD5'}}) {
+      if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
+        return(1) if (do_smtp_auth_digest($s, $t, $au, $ap, $type, $h));
+      }
+    }
   }
-  if (($at eq 'ANY' || $at eq 'LOGIN') && $e->{AUTH}{LOGIN}) {
-    return(1) if (do_smtp_auth_login($s, $t, $au, $ap));
+  if ($G::modules{"Authen::NTLM"}) {
+    foreach my $type (@{$G::auth_map_t{'NTLM'}}) {
+      if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
+        return(1) if (do_smtp_auth_ntlm($s, $t, $au, $ap, $type));
+      }
+    }
+  }
+  foreach my $type (@{$G::auth_map_t{'PLAIN'}}) {
+    if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
+      return(1) if (do_smtp_auth_plain($s, $t, $au, $ap, $type));
+    }
+  }
+  foreach my $type (@{$G::auth_map_t{'LOGIN'}}) {
+    if (($at eq $type || $at eq 'ANY') && $e->{AUTH}{$type}) {
+      return(1) if (do_smtp_auth_login($s, $t, $au, $ap, $type));
+    }
   }
 
   print_transaction(12, "No authentication type succeeded");
@@ -380,12 +383,12 @@ sub do_smtp_auth_ntlm {
   my $t = shift; # timeout
   my $u = shift; # auth user
   my $p = shift; # auth password
-  my $at = shift; # auth type (since NTLM might be SPA or MSN)
+  my $as = shift; # auth type (since NTLM might be SPA or MSN)
   my $r = '';    # will store smtp response
   my $domain;
   ($u,$domain) = split(/%/, $u);
   
-  my $auth_string = "AUTH $at";
+  my $auth_string = "AUTH $as";
   do_smtp_gen($s, $auth_string, '334', $t) || return(0);
 
   my $d = decode_base64(Authen::NTLM::ntlm());
@@ -412,10 +415,11 @@ sub do_smtp_auth_digest {
   my $t = shift; # timeout
   my $u = shift; # auth user
   my $p = shift; # auth password
+  my $as = shift; # auth string
   my $h = shift; # host (used in digest-uri)
   my $r = '';    # will store smtp response
   
-  my $auth_string = "AUTH DIGEST-MD5";
+  my $auth_string = "AUTH $as";
   do_smtp_gen($s, $auth_string, '334', $t, \$r, '', '',
               $G::auth_showpt ? \&unencode_smtp : '')
       || return(0);
@@ -445,13 +449,14 @@ sub do_smtp_auth_digest {
 }
 
 sub do_smtp_auth_cram {
-  my $s = shift; # socket
-  my $t = shift; # timeout
-  my $u = shift; # auth user
-  my $p = shift; # auth password
-  my $r = '';    # will store smtp response
+  my $s  = shift; # socket
+  my $t  = shift; # timeout
+  my $u  = shift; # auth user
+  my $p  = shift; # auth password
+  my $as = shift; # auth string
+  my $r  = '';    # will store smtp response
   
-  my $auth_string = "AUTH CRAM-MD5";
+  my $auth_string = "AUTH $as";
   do_smtp_gen($s, $auth_string, '334', $t, \$r, '', '',
               $G::auth_showpt ? \&unencode_smtp : '')
       || return(0);
@@ -470,9 +475,10 @@ sub do_smtp_auth_login {
   my $t = shift; # timeout
   my $u = shift; # auth user
   my $p = shift; # auth password
+  my $as = shift; # auth string
   my $z = '';
   
-  my $auth_string = "AUTH LOGIN";
+  my $auth_string = "AUTH $as";
   do_smtp_gen($s, $auth_string, '334', $t, undef, '', '', 
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
   $auth_string = encode_base64($u, '');
@@ -490,11 +496,12 @@ sub do_smtp_auth_plain {
   my $t = shift; # timeout
   my $u = shift; # auth user
   my $p = shift; # auth password
+  my $as = shift; # auth string
   
-  my $auth_string = "AUTH PLAIN " . encode_base64("\0$u\0$p", '');
+  my $auth_string = "AUTH $as " . encode_base64("\0$u\0$p", '');
   my $z = '';
   if ($G::auth_showpt) {
-    $z = "AUTH PLAIN \\0$u\\0$p";
+    $z = "AUTH $as \\0$u\\0$p";
   }
   return(do_smtp_gen($s, $auth_string, '235', $t, undef, '', $z));
 }
@@ -555,16 +562,26 @@ sub do_smtp_gen {
   my $x = shift; # if this is populated, print this instead of $m
   my $c = shift; # if this is a code ref, call it on the return value b4 print
   my $r = '';    # This'll be the return value from transact()
+  my $time;
 
   print_transaction(21, $x ? $x : $m, $b) if (defined($m));
-  #my $time = time() if ($G::show_time_lapse);
-  my $time = [Time::HiRes::gettimeofday()] if ($G::show_time_lapse);
+  if ($G::show_time_lapse) {
+    if ($G::show_time_hires) {
+      $time = [Time::HiRes::gettimeofday()]
+    } else {
+      $time = time() if ($G::show_time_lapse);
+    }
+  }
   $r  = transact($s, $m, '', $t);
   $$p = $r;
   
   if ($G::show_time_lapse) {
-    #$time = time() - $time;
-    $time = Time::HiRes::tv_interval($time, [Time::HiRes::gettimeofday()]);
+    if ($G::show_time_hires) {
+      $time = sprintf("%0.03f", Time::HiRes::tv_interval($time,
+                               [Time::HiRes::gettimeofday()]));
+    } else {
+      $time = time() - $time;
+    }
     print_transaction(11, "response in ${time}s");
   }
 
@@ -787,8 +804,9 @@ sub process_args {
   $G::quit_after = lc($o->{quit_after}) if ($o->{quit_after});
 
   # set global flag for -stl flag
-  $G::show_time_lapse = time() if ($o->{show_time_lapse});
-  $G::show_time_hires = 1 if ($G::modules{'Time::HiRes'});
+  $G::show_time_lapse = time() if (defined($o->{show_time_lapse}));
+  $G::show_time_hires = 1
+      if ($G::modules{'Time::HiRes'} && $o->{show_time_lapse} !~ /^i/i);
 
   if ($o->{emulate_mail}) { # set up for -m option
     $n{to} = shift if (!defined($o->{mail_to}));
@@ -888,6 +906,15 @@ sub process_args {
                          defined($o->{auth_pass}) || $o->{auth_optional}));
   $o->{auth} = 'ANY' if (defined($o->{auth}) && !$o->{auth});
   if ($o->{auth}) {
+    foreach (split(/\s+,\s+/, $o->{auth_map}),"PLAIN=PLAIN","LOGIN=LOGIN",
+             "CRAM-MD5=CRAM-MD5","DIGEST-MD5=DIGEST-MD5","NTLM=NTLM",
+             "SPA=NTLM","MSN=NTLM")
+    {
+      my($alias,$type) = split(/=/, uc($_), 2);
+      $G::auth_map_f{$alias} = $type;
+      $G::auth_map_t{$type} ||= [];
+      push(@{$G::auth_map_t{$type}}, $alias);
+    }
     if (!$G::modules{"MIME::Base64"}) {
       if ($G::auth_optional) {
         $n{a_type} = ''; # So we won't attempt it later
@@ -898,7 +925,9 @@ sub process_args {
          'AUTH requirement MIME::Base64 not installed, exiting');
         exit(10);
       }
-    } elsif (!$G::modules{"Digest::MD5"} && $o->{auth} =~ /^CRAM(-MD5)?$/) {
+    } elsif (!$G::modules{"Digest::MD5"} &&
+              $G::auth_map_f{$o->{auth}} eq 'CRAM-MD5')
+    {
       if ($G::auth_optional) {
         $n{a_type} = ''; # So we won't attempt it later
         print_transaction(12,
@@ -909,7 +938,8 @@ sub process_args {
           'AUTH:CRAM-MD5 requirement Digest::MD5 not installed, exiting');
         exit(10);
       }
-    } elsif (!$G::modules{"Authen::NTLM"} && $o->{auth} =~ /^(NTLM|MSN|SPA)$/) {
+    } elsif (!$G::modules{"Authen::NTLM"} &&
+              $G::auth_map_f{$o->{auth}} eq 'NTLM') {
       if ($G::auth_optional) {
         $n{a_type} = ''; # So we won't attempt it later
         print_transaction(12,
@@ -918,6 +948,19 @@ sub process_args {
       } else {
         print_transaction(12,
           'AUTH:NTLM requirement Authen::NTLM not installed, exiting');
+        exit(10);
+      }
+    } elsif (!$G::modules{"Authen::DIGEST-MD5"} &&
+              $G::auth_map_f{$o->{auth}} eq 'DIGEST-MD5') {
+      if ($G::auth_optional) {
+        $n{a_type} = ''; # So we won't attempt it later
+        print_transaction(12,
+          'AUTH:DIGEST-MD5 requirement Authen::DigestMD5 not installed, ' .
+          'skipping optional AUTH:DIGEST-MD5');
+      } else {
+        print_transaction(12,
+          'AUTH:DIGEST-MD5 requirement Authen::DigestMD5 not installed, ' .
+          'exiting');
         exit(10);
       }
     } else {
@@ -1076,6 +1119,10 @@ For SPA authentication, a "domain" can be specified after the regular username w
 
 Supply the password for authentication.  The string <> can be supplied to mean an empty password.
 
+=item -am --auth-map
+
+Provides a way to map alternate names onto base authentication types.  Useful for any sites that use alternate names for common types.  This functionality is actually used internally to map types SPA and MSN onto the base type NTLM.  The command line argument to simulate this would be "--auth-map SPA=NTLM,MSN=NTLM".  The base types supported are LOGIN, PLAIN, CRAM-MD5, DIGEST-MD5, and NTLM.  SPA and MSN are mapped on to NTLM automatically.
+
 =item -apt, --auth-plaintext
 
 Instead of showing AUTH strings literally (in base64), translate them to plaintext before printing on screen.
@@ -1094,7 +1141,7 @@ Don't display sending lines
 
 =item -stl, --show-time-lapse
 
-Display time lapse between send/receive pairs
+Display time lapse between send/receive pairs.  If 'i' is provided as argument or the Time::HiRes module is unavailable the time lapse will be integer only, otherwise it will be to the thousandth of a second.
 
 =item --help
 
@@ -1153,6 +1200,10 @@ This module is required for SPA/MSN/NTLM authentication.  Note that there are tw
 =item Authen::DigestMD5
 
 This module is required for DIGEST-MD5 authentication.
+
+=item Time::HiRes
+
+This module is required for high resolution timing.  If unavailable only integer timing is available.
 
 =head1 EXIT CODES
 
