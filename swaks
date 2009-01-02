@@ -30,8 +30,6 @@ EOM
 ext_usage(); # before we do anything else, check for --help
 
 my %O        = ();
-my $user     = get_username();
-my $hostname = get_hostname();
 $|           = 1;
 
 Getopt::Long::Configure("bundling_override");
@@ -69,7 +67,8 @@ GetOptions(
   'ndf|no-data-fixup' => \$O{no_data_fixup}, # don't touch the data
   'pipe:s'          => \$O{pipe_cmd},      # command to communicate with
   'socket:s'        => \$O{socket},        # unix doain socket to talk to
-  'dump'            => \$O{dump_args}      # build options and dump
+  'dump'            => \$O{dump_args},     # build options and dump
+  'force-getpwuid'  => \$O{force_getpwuid} # use getpwuid building -f
 ) || exit(1);
 
 load_modules({
@@ -283,10 +282,8 @@ sub sendmail {
   # QUIT here if the user has asked us to do so
   do_smtp_quit(1, 0) if ($G::quit_after eq 'mail');
 
-  # send RCPT
-  my $num_accepted = 0;
-  foreach my $r (split(/,/, $to)) { $num_accepted++ if (do_smtp_rcpt($r)); }
-  do_smtp_quit(1, 24) if (!$num_accepted);
+  # send RCPT (sub handles multiple, comma-delimited recips
+  do_smtp_rcpt($to) || do_smtp_quit(1, 24);
 
   # QUIT here if the user has asked us to do so
   do_smtp_quit(1, 0) if ($G::quit_after eq 'rcpt');
@@ -956,6 +953,9 @@ sub process_args {
   if ($G::link{sockfile}) { $G::link{type} = 'socket-unix';   }
   else                   { delete($G::link{sockfile}); }
 
+  my $user     = get_username($o->{force_getpwuid});
+  my $hostname = get_hostname();
+
   # SMTP mail from
   $n{from} = $o->{mail_from} || interact("From: ", '^.*$')
       if (defined($o->{mail_from}));
@@ -1071,7 +1071,7 @@ sub process_args {
   }
   # if after that processing we've defined some auth type, do some more
   # specific processing
-  if ($o->{auth_types}) {
+  if (scalar(@{$o->{auth_types}})) {
     # there's a lot of option processing below.  If any type looks like it
     # will succeed later, set this to true
     my $valid_auth_found = 0;
@@ -1186,11 +1186,15 @@ sub process_args {
 }
 
 sub get_username {
+  my $force_getpwuid = shift;
   if ($^O eq 'MSWin32') {
     require Win32;
     return Win32::LoginName();
   }
-  return getpwuid($<);
+  if ($force_getpwuid) {
+    return (getpwuid($<))[0];
+  }
+  return getlogin() || (getpwuid($<))[0];
 }
 
 sub get_date_string {
@@ -1376,6 +1380,14 @@ Don't display sending lines
 =item -stl, --show-time-lapse
 
 Display time lapse between send/receive pairs.  If 'i' is provided as argument or the Time::HiRes module is unavailable the time lapse will be integer only, otherwise it will be to the thousandth of a second.
+
+=item --force-getpwuid
+
+In releases 20050709.1 and earlier of swaks the local_part of an automatically generated sender email address would be found using the getpwuid system call on the euid of the current process.  Depending on the users' desires, this may be confusing.  Following the 20050709.1 release the local_part is not looked up via the getlogin() funtion which attempts to look up the actual username of the logged in user, regardless of the euid of the process they are currently running.
+
+An example of where this might be an issue is running swaks under sudo for testing reasons when interacting with --pipe or --socket.  It makes sense that you need to run the process as a specific username but you would prefer your email to be from your real username.  You could always do this manually using the -s option, but this is an attempt to make it easier.
+
+--force-getpwuid forces the old behaviour for anyone who prefered that behaviour.  Also, if there is no "real" user for getlogin() to look up, the old getpwuid method will be used.  This would happen if the process was run from cron or some other headless daemon.
 
 =item --help
 
