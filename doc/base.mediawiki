@@ -489,11 +489,11 @@ The following options control what and how output is displayed to the caller.
 --hide-send, -hs
 : Don't display lines being sent by swaks to the remote server
 </blockquote><blockquote>
-'''--hide-informational, -hi'''
-: '''Don't display non-error informational lines from swaks itself.'''
+--hide-informational, -hi
+: Don't display non-error informational lines from swaks itself.
 </blockquote><blockquote>
-'''--hide-all, -ha'''
-: '''Do not display any content to the terminal.'''
+--hide-all, -ha
+: Do not display any content to the terminal.
 </blockquote><blockquote>
 '''--silent [level], -S [level]'''
 : '''Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.'''
