@@ -1,9 +1,151 @@
+== NAME ==
+
+: swaks - SMTP transaction tester
+
+== DESCRIPTION ==
+
+<blockquote>
+swaks' primary design goal is to be a transaction-oriented SMTP test tool, used for debugging mail servers. stress testing configs, etc.  It handles SMTP features and extensions such as TLS, authentication, and pipelining; multiple version of the SMTP protocol including SMTP, ESMTP, and LMTP; and multiple transport methods including unix-domain sockets, internet-domain sockets, and pipes to spawned processes.  All of this is wrapped in a secondary design goal of being extremely configurable for ease of use of operators and scripters.  Options can be specified in environment variables, config files, or the command line.
+</blockquote>
+
+== Quick Start ==
+
+<blockquote>
+Deliver a standard test email to user@example.com:
+: swaks -t user@example.com
+Deliver a standard test email to user@example.com using the LMTP protocol via a UNIX domain socket file
+: swaks -t user@example.com --socket /var/lda.sock --protocol LMTP 
+Deliver a standard test email, requiring CRAM-MD5 authentication as user me@example.com.  An "X-Test" header will be added to the email body.  The authentication password will be prompted for.
+: swaks -t user@example.com -f me@example.com --auth CRAM-MD5 --auth-user me@example.com --h-X-Test "test email"
+</blockquote>
+
+== OPTION PROCESSING ==
+
+<blockquote>
+Options can be given to swaks in three ways.  They can be specified in a configuration file, in environment variables, and on the command line.  Depending on the specific option and whether or not an argument is given to it, the value for an argument might be prompted for interactively.
+</blockquote>
+
+<blockquote>
+When swaks evaluates its options, it first looks for a configuration file (either in a default location or specified with --config).  Then it evaluates any environment variables.  Finally, it evaluates command line arguments.  At reach round of processing, any options set earlier will be overridden.  '''Additionally, any option can be prefixed with "no-" to cause swaks to forget that the variable had previously been set.'''  This capability is necessary because for may options a defined-but-empty value has different behavior than never having been specified in the fist place.
+</blockquote>
+
+<blockquote>
+The exact mechanism and format for using each of the types is listed below.
+</blockquote>
+
+=== CONFIGURATION FILE ===
+
+<blockquote>
+A configuration file to set commonly-used or abnormally verbose options can be used.  By default swaks looks in order for $SWAKS_HOME/.swaksrc, $HOME/.swaksrc, and $LOGDIR/.swaksrc.  If one of those is found to exist (and --config has not been used) that file is used as the configuration file
+</blockquote><blockquote>
+Additionally a configuration file in a non-default location can be specified using --config.  If this is set to an empty value, it tells swaks that no configure file is to be used, including a default file should one exist.  If --config points to a readable file, it is used as the configuration file, overriding any default that may exist.  If it points to a non-readable file and error will be shown and swaks will exit.
+</blockquote><blockquote>
+It is important to note that only one configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.
+</blockquote><blockquote>
+The format of the configuration file is designed to allow future expansion.  Currently it only allows the equivalent of command line options to be specified.  These options must be given between a line of "<ARGS>" and a line of "</ARGS>".  '''Every line between these two must either begin with a hash (#), which will be ignored as a comment, or a dash (-)''', which will be interpreted as an option to swaks.  Here is an example of the contents of a configuration file:
 <pre>
-=head1 NAME
+<ARGS>
+# always use this sender, no matter server or logged in user
+--from fred@example.com
+# my spam filter doesn't like it when I don't have a name in the To: header
+--h-To: "Fred Example" <fred@example.com>
+</ARGS>
+</pre>
+Note that everything after the first space is assumed to be the arg and is not shell processed, so any quoting is usually unneeded and will not be stripped off by the shell.
+</blockquote>
 
-swaks - SMTP transaction tester
+=== ENVIRONMENT VARIABLES ===
 
-=head1 USAGE
+=== COMMAND LINE OPTIONS ===
+
+== OPTIONS ==
+
+=== TRANSPORT ===
+--server, --socket, --pipe
+
+=== SMTP LAYER OPTIONS ===
+
+=== TLS ===
+
+=== AUTHENTICATION ===
+
+=== MESSAGE CONTENTS ===
+
+=== PROGRAM OUTPUT ===
+
+== REQUIRES ==
+
+== PORTABILITY ==
+
+== EXIT CODES ==
+<blockquote>
+0
+: no errors occurred
+</blockquote><blockquote>
+1
+: error parsing command line options
+</blockquote><blockquote>
+2
+: error connecting to remote server
+</blockquote><blockquote>
+3
+: unknown connection type
+</blockquote><blockquote>
+4
+: while running with connection type of "pipe", fatal problem writing to or reading from the child process
+</blockquote><blockquote>
+5
+: while running with connection type of "pipe", child process died unexpectedly.  This can mean that the program specified with --pipe doesn't exist.
+</blockquote><blockquote>
+6
+: Connection closed unexpectedly.  If the close is detected in response to the 'QUIT' swaks sends following an unexpected response, the error code for that unexpected response is used instead.  For instance, if a mail server returns a 550 response to a MAIL FROM: and then immediately closes the connection, swaks detects that the connection is closed, but uses the more specific exit code 23 to detail the nature of the failure.  If instead the server return a 250 code and then immediately closes the connection, swaks will use the exit code 6 because there is not a more specific exit code.
+</blockquote><blockquote>
+10
+: error in prerequisites (needed module not available)
+</blockquote><blockquote>
+21
+: error reading initial banner from server
+</blockquote><blockquote>
+22
+: error in HELO transaction
+</blockquote><blockquote>
+23
+: error in MAIL transaction
+</blockquote><blockquote>
+24
+: no RCPTs accepted
+</blockquote><blockquote>
+25
+: server returned error to DATA request
+</blockquote><blockquote>
+26
+: server did not accept mail following data
+</blockquote><blockquote>
+27
+: server returned error after normal-session quit request
+</blockquote><blockquote>
+28
+: error in AUTH transaction
+</blockquote><blockquote>
+29
+: error in TLS transaction
+</blockquote><blockquote>
+32
+: error in EHLO following TLS negotiation
+</blockquote>
+== CONTACT ==
+<blockquote>
+proj-swaks@jetmore.net
+: Please use this address for general contact, questions, patches, requests, etc.
+</blockquote><blockquote>
+updates-swaks@jetmore.net
+: If you would like to be put on a list to receive notifications when a new version of swaks is released, please send an email to this address.
+</blockquote><blockquote>
+http://www.jetmore.org/john/code/#swaks
+:Change logs, this help, and the latest version is found at this link.
+</blockquote>
+<pre>
+
 
 swaks [--help|--version] | (see description of options below)
 
@@ -329,106 +471,5 @@ This program was almost exclusively developed against Exim mail servers.  It was
 
 =back
 
-=head1 EXIT CODES
-
-=over 4
-
-=item 0
-
-no errors occurred
-
-=item 1
-
-error parsing command line options
-
-=item 2
-
-error connecting to remote server
-
-=item 3
-
-unknown connection type
-
-=item 4
-
-while running with connection type of "pipe", fatal problem writing to or reading from the child process
-
-=item 5
-
-while running with connection type of "pipe", child process died unexpectedly.  This can mean that the program specified with --pipe doesn't exist.
-
-=item 6
-
-Connection closed unexpectedly.  If the close is detected in response to the 'QUIT' swaks sends following an unexpected response, the error code for that unexpected response is used instead.
-
-For instance, if a mail server returns a 550 response to a MAIL FROM: and then immediately closes the connection, swaks detects that the connection is closed, but uses the more specific exit code 23 to detail the nature of the failure.
-
-If instead the server return a 250 code and then immediately closes the connection, swaks will use the exit code 6 because there is not a more specific exit code.
-
-=item 10
-
-error in prerequisites (needed module not available)
-
-=item 21
-
-error reading initial banner from server
-
-=item 22
-
-error in HELO transaction
-
-=item 23
-
-error in MAIL transaction
-
-=item 24
-
-no RCPTs accepted
-
-=item 25
-
-server returned error to DATA request
-
-=item 26
-
-server did not accept mail following data
-
-=item 27
-
-server returned error after normal-session quit request
-
-=item 28
-
-error in AUTH transaction
-
-=item 29
-
-error in TLS transaction
-
-=item 32
-
-error in EHLO following TLS negotiation
-
-=back
-
-=head1 CONTACT
-
-=over 4
-
-=item proj-swaks@jetmore.net
-
-Please use this address for general contact, questions, patches, requests, etc.
-
-=item updates-swaks@jetmore.net
-
-If you would like to be put on a list to receive notifications when a new version of swaks is released, please send an email to this address.
-
-=item jetmore.org/john/code/#swaks
-
-Change logs, this help, and the latest version is found at this link.
-
-=back
-
-=cut
 </pre>
 
