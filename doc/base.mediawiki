@@ -1,18 +1,3 @@
-* convert new doc into pod and put into code
-* need to be able to remove headers from DATA
-* exim can tell, at a very low level, when the other side of the connection has dropped the cxn.  (see sending NULs to oracle collab suite).  Can swaks do the same thing?  It seems like it would be valuable.
-* look atr the entire process of building the DATA, all the nested ways it can be built, and think if it needs to be fundamentally restructured.
-* figure out clean way to implement do_smtp_quit (w/ appropriate exit codes) as fail_callback for commands
-* now that some of the socket handling is a little smarter, attempt using open3 to catch stderr?
-* reading large input from STDIN is memory wasteful
-* get /code/ lines out before next release so that it can be referenced in link docs
-** don't break existing links (/code/, /code/script.version)
-** would like to have a wiki to try and get some community involvement.  
-
-/code/ - similar to whats there now, but just link to current version, brief description, and link to project page.
-/code/project - more detailed view on project, release dates, change logs, old versions, etc
-/code/wiki
-
 == NAME ==
 
 <blockquote>swaks - Swiss Army Knife SMTP, the all-purpose smtp transaction tester</blockquote>
