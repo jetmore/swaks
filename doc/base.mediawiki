@@ -495,9 +495,9 @@ The following options control what and how output is displayed to the caller.
 --hide-all, -ha
 : Do not display any content to the terminal.
 </blockquote><blockquote>
-'''--silent [level], -S [level]'''
-: '''Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.'''
-: '''Note that this used to be an additive option ("-S -S" was equivalent to "-S 2").  After environment option handling was introduced this was changed.  The additive method still works but is deprecated and will be removed entirely in a future release'''
+--silent [level], -S [level]
+: Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.
+: Note that this used to be an additive option ("-S -S" was equivalent to "-S 2").  After environment option handling was introduced this was changed.  The additive method still works but is deprecated and will be removed entirely in a future release
 </blockquote><blockquote>
 --support
 : Print capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and displays which functionality is available and which isn't, and which modules would need to be added to gain the missing functionality.
