@@ -1,16 +1,12 @@
 == NAME ==
 
-<blockquote>swaks - Swiss Army Knife SMTP transaction tester</blockquote>
+<blockquote>swaks - Swiss Army Knife SMTP, the all-purpose smtp transaction tester</blockquote>
 
 == DESCRIPTION ==
 
 <blockquote>
 swaks' primary design goal is to be a transaction-oriented SMTP test tool, used for debugging mail servers. stress testing configs, etc.  It handles SMTP features and extensions such as TLS, authentication, and pipelining; multiple version of the SMTP protocol including SMTP, ESMTP, and LMTP; and multiple transport methods including unix-domain sockets, internet-domain sockets, and pipes to spawned processes.  All of this is wrapped in a secondary design goal of being extremely configurable for ease of use of operators and scripters.  Options can be specified in environment variables, config files, or the command line.
 </blockquote>
-
-<pre>
-This program was written because I was testing a new MTA on an alternate port.  I did so much testing that using interactive telnet grew tiresome.  Over the next several years this program was fleshed out and every single option was added as a direct need of some testing I was doing as the mail admin of a medium sized ISP, with the exception of TLS support which was added on a whim.  As such, all options are reasonably well thought out and fairly well tested (though TLS could use more testing).
-</pre>
 
 == QUICK START ==
 
@@ -349,8 +345,8 @@ These options affect the content of the email itself.  That is, the contents of 
 | %T
 | Replaced with the envelope-recipient(s) value
 |-
-| %D
-| Replaced with the current time in a format suitable for inclusion in the Date: header
+| valign=top | %D
+| Replaced with the current time in a format suitable for inclusion in the Date: header.  Note that attempts to use the standard module Time::Local for timezone calculations.  If this module is unavailable the date string will be in GMT.
 |-
 | %H
 | Replaced with the contents of the --add-header option.  If --add-header is not specified this token is simple removed.
@@ -486,24 +482,6 @@ These are options which do not easily fall into another category
 
 <blockquote>
 swaks does not have any single requirement except the standard module Getopt::Long.  However, there may be modules that are required for a given invocation of swaks.  The following list details the features reported by the --support option, what is actually being tested, and the consequences of the feature being reported as "not available"
-</blockquote><blockquote>
-AUTH CRAM-MD5
-: CRAM-MD5 authentication requires the Digest::MD5 perl module.  If this is unavailable and authentication is required, swaks will error if CRAM-MD5 was the specific authentication type requested, or if no specific auth type was requested but CRAM-MD5 was the only type advertised by the server.
-</blockquote><blockquote>
-AUTH CRAM-SHA1
-: CRAM-SHA1 authentication requires the Digest::SHA1 perl module.  If this is unavailable and authentication is required, swaks will error if CRAM-SHA1 was the specific authentication type requested, or if no specific auth type was requested but CRAM-SHA1 was the only type advertised by the server.
-</blockquote><blockquote>
-AUTH DIGEST-MD5
-: DIGEST-MD5 authentication requires the Authen::DigestMD5 perl module.  If this is unavailable and authentication is required, swaks will error if DIGEST-MD5 was the specific authentication type requested, or if no specific auth type was requested but DIGEST-MD5 was the only type advertised by the server.
-</blockquote><blockquote>
-AUTH NTLM
-: NTLM/SPA/MSN authentication requires the Authen::NTLM perl module.  If this is unavailable and authentication is required, swaks will error if NTLM was the specific authentication type requested, or if no specific auth type was requested but NTLM was the only type advertised by the server.  Note that there are two modules using the Authen::NTLM namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.02.tar.gz) is the version required here.
-</blockquote><blockquote>
-Basic AUTH
-: All authentication types require base64 encoding and decoding.  If possible, swaks uses the MIME::Base64 perl module to perform these actions.  However, if MIME::Base64 is not available swaks will use its own onboard base64 routines.  These are slower than the MIME::Base64 routines and less reviewed, though they have been tested thoroughly.  When possible it is recommended that you install MIME::Base64.
-</blockquote><blockquote>
-Date Manipulation
-: swaks generates an RFC compliant date string when it interpolates the %D token in message bodies.  In order to build the GMT offset in this string, it needs the Time::Local module.  It would be very odd for this module not to be available because it has been included in the perl distribution for some time.  However, if it is not loadable for some reason and swaks interpolates a %D token (as it would when using the default body), the date string is in GMT instead of your local timezone.
 </blockquote><blockquote>
 High Resolution Timing
 : When diagnosing SMTP delays using --show-time-lapse, by default high resolution timing is attempted using the Time::HiRes module.  If this module is not available, swaks uses a much poorer timing source with one second granularity.
