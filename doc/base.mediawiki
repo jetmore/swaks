@@ -81,13 +81,13 @@ Additionally a configuration file in a non-default location can be specified usi
 </blockquote><blockquote>
 Only one configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.
 </blockquote><blockquote>
-The format of the configuration file is designed to allow future expansion.  Currently it only allows the equivalent of command line options to be specified.  '''These options must be given between a line of "<OPTIONS>" and a line of "</OPTIONS>".'''  '''Between these two lines, lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to swaks.  In this file the leading dash or dashes to options are optional.'''  Here is an example of the contents of a configuration file:
+The format of the configuration file is designed to allow future expansion.  Currently it only allows the equivalent of command line options to be specified.  These options must be given between a line of "<OPTIONS>" and a line of "</OPTIONS>".  Between these two lines, lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to swaks.  In this file the leading dash or dashes to options are optional.  Here is an example of the contents of a configuration file:
 <pre>
 <OPTIONS>
 # always use this sender, no matter server or logged in user
 --from fred@example.com
-# I prefer my test emails have a pretty from header
---h-From: "Fred Example" <fred@example.com>
+# I prefer my test emails have a pretty from header (note lack of dashes on option)
+h-From: "Fred Example" <fred@example.com>
 </OPTIONS>
 </pre>
 Note that everything after the first space is assumed to be the option's argument and is not shell processed, so any quoting is usually unneeded and will not be stripped off by the shell.
@@ -98,14 +98,14 @@ There is a deprecated option --input-file (or -l) in swaks that was a precursor 
 === ENVIRONMENT VARIABLES ===
 
 <blockquote>
-Options can be supplied via environment variables.  The variables are in the form $SWAKS_ARG_name, where name is the name of the option that would be specified on the command line.  Because dashes aren't allowed in environment variable names in most unix-ish shells, no leading dashes should be used and any dashes inside the option's name should be replaced with underscores.'''  The following would create the same options shown in the configuration file example:
+Options can be supplied via environment variables.  The variables are in the form $SWAKS_OPT_name, where name is the name of the option that would be specified on the command line.  Because dashes aren't allowed in environment variable names in most unix-ish shells, no leading dashes should be used and any dashes inside the option's name should be replaced with underscores.  The following would create the same options shown in the configuration file example:
 
 <pre>
-$> SWAKS_ARG_from='fred@example.com'
-$> SWAKS_ARG_h_From='"Fred Example" <fred@example.com>'
+$> SWAKS_OPT_from='fred@example.com'
+$> SWAKS_OPT_h_From='"Fred Example" <fred@example.com>'
 </pre>
 
-'''Setting a variable to an empty value is the same as specifying it on the command line with no argument.'''  For instance, setting SWAKS_ARG_server="" would cause swaks to prompt the use for the server to which to connect at each invocation.
+Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting SWAKS_OPT_server="" would cause swaks to prompt the use for the server to which to connect at each invocation.
 </blockquote><blockquote>
 In addition to setting the equivalent of command line options, SWAKS_HOME can be set to a directory containing the default .swaksrc to be used.
 </blockquote>
@@ -124,18 +124,18 @@ $> swaks --from fred@example.com --h-From: '"Fred Example" <fred@example.com>'
 == TRANSPORTS ==
 
 <blockquote>
-swaks can connect to a destination via unix pipes ("pipes"), unix domain sockets ("unix sockets"), or internet domain sockets ("network sockets").  Connecting via network sockets is the default behavior.  Because of the singular nature of the transport used, '''each set of options in the following section is mutually exclusive'''.  Below is a brief description of each type of transport and the options that are specific to that transport type.
+swaks can connect to a destination via unix pipes ("pipes"), unix domain sockets ("unix sockets"), or internet domain sockets ("network sockets").  Connecting via network sockets is the default behavior.  Because of the singular nature of the transport used, '''each set of options in the following section is mutually exclusive.  Specifying more than one of --server, --pipe, or --socket will result in an error.  Mixing other options between transport types will only result in the irrelevant options being ignored'''.  Below is a brief description of each type of transport and the options that are specific to that transport type.
 </blockquote>
 
 === NETWORK SOCKETS ===
 
 <blockquote>
-This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for swaks.  If none of --server, --pipe, or --socket are given then '''this transport is used and the destination server is determined from the recipient's domain using the Net::DNS module.  If the module is unavailable swaks attempts to use localhost as the outbound mail server.'''
+This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for swaks.  If none of --server, --pipe, or --socket are given then this transport is used and the destination server is determined from the recipient's domain (see --server below for more details).
 </blockquote><blockquote>
 This transport requires the IO::Socket module which is part of the standard perl distribution.  If this module is not loadable, attempting to use a this transport will result in an error and program termination.
 </blockquote><blockquote>
 --server [destination mail server], -s [destination mail server]
-: Explicitly tell swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address.  '''If Net::DNS is not available, use the A record for the domain.'''  See also --copy-routing.
+: Explicitly tell swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the Net::DNS module.  If Net::DNS is not available swaks will attempt to connect to localhost to deliver.  See also --copy-routing.
 </blockquote><blockquote>
 --port [port], -p [port]
 : Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is determined by the --protocol option.  See --protocol for more details.
@@ -187,19 +187,19 @@ These options are related to the protocol layer.
 {| cellpadding=5 cellspacing=5
 |-
 | align=left valign=top | CONNECT
-| '''Terminate the session immediately after opening the TCP connection.  Note that this is a violation of the SMTP protocol.'''
+| Terminate the session after receiving the greeting banner from the target.  BANNER is a valid synonym.
 |-
 | align=left valign=top | FIRST-HELO
 | In a STARTTLS (but not tls-on-connect) session, terminate the transaction after the first of two HELOs.  In a non-STARTTLS transaction, behaves the same as HELO (see below).  FIRST-EHLO and FIRST-LHLO are valid synonyms.
 |-
 | align=left valign=top | TLS
-| '''Quit the transaction immediately following TLS negotiation.  Note that this happens in different places depending on whether STARTTLS or tls-on-connect are used.
+| Quit the transaction immediately following TLS negotiation.  Note that this happens in different places depending on whether STARTTLS or tls-on-connect are used.  This always quits after the point where TLS would have been negotiated, regardless of whether it was attempted.
 |-
 | align=left valign=top | HELO
 | In a STARTTLS session, quit after the second HELO.  Otherwise quit after the first and only HELO.  EHLO and LHLO are valid synonyms.
 |-
 | align=left valign=top | AUTH
-| Quit after authentication is attempted.  '''is it after it's attempted, or after the point where it would no longer be able to be attempted?'''
+| Quit after authentication.  This always quits after the point where authentication would have been negotiated, regardless of whether it was attempted.
 |-
 | align=left valign=top | MAIL
 | Quit after MAIL FROM: is sent.  FROM is a valid synonym.
@@ -210,7 +210,7 @@ These options are related to the protocol layer.
 </blockquote>
 </blockquote><blockquote>
 --timeout [time]
-: Use argument as the SMTP transaction timeout, or prompt user if no argument given.  Argument can either be a pure digit, which will be interpretted as seconds, or can have a specifier s or m (5s = 5 seconds, 3m = 180 seconds).  '''As a special case, 0 means don't timeout the transactions. (XXX didn't this have to be 0s at one point?)'''  Default value is 30s.
+: Use argument as the SMTP transaction timeout, or prompt user if no argument given.  Argument can either be a pure digit, which will be interpretted as seconds, or can have a specifier s or m (5s = 5 seconds, 3m = 180 seconds).  As a special case, 0 means don't timeout the transactions.  Default value is 30s.
 </blockquote><blockquote>
 --protocol [protocol]
 : Specify which protocol to use in the transaction.  Valid options are shown in the table below.  Currently the 'core' protocols are SMTP, ESMTP, and LMTP.  By using variations of these protocol types one can tersely specify default ports, whether authentication should be attempted, and the type of TLS connection that should be attempted.  The default protocol is ESMTP.  This table demonstrates the available arguments to --protocol and the options each sets as a side effect:
