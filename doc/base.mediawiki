@@ -1,3 +1,18 @@
+* convert new doc into pod and put into code
+* need to be able to remove headers from DATA
+* exim can tell, at a very low level, when the other side of the connection has dropped the cxn.  (see sending NULs to oracle collab suite).  Can swaks do the same thing?  It seems like it would be valuable.
+* look atr the entire process of building the DATA, all the nested ways it can be built, and think if it needs to be fundamentally restructured.
+* figure out clean way to implement do_smtp_quit (w/ appropriate exit codes) as fail_callback for commands
+* now that some of the socket handling is a little smarter, attempt using open3 to catch stderr?
+* reading large input from STDIN is memory wasteful
+* get /code/ lines out before next release so that it can be referenced in link docs
+** don't break existing links (/code/, /code/script.version)
+** would like to have a wiki to try and get some community involvement.  
+
+/code/ - similar to whats there now, but just link to current version, brief description, and link to project page.
+/code/project - more detailed view on project, release dates, change logs, old versions, etc
+/code/wiki
+
 == NAME ==
 
 <blockquote>swaks - Swiss Army Knife SMTP, the all-purpose smtp transaction tester</blockquote>
@@ -85,7 +100,9 @@ A configuration file to set commonly-used or abnormally verbose options can be u
 </blockquote><blockquote>
 Additionally a configuration file in a non-default location can be specified using --config.  If this is set and not given an argument swaks will not use any configuration file, including any default file.  If --config points to a readable file, it is used as the configuration file, overriding any default that may exist.  If it points to a non-readable file and error will be shown and swaks will exit.
 </blockquote><blockquote>
-Only one configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.
+A set of "portable" defaults can also be created by adding a perl __DATA__ section to the end of the swaks program file.  At the end of the script add a single line containing "__DATA__", and any lines below that will be treated as the contents of a configuration file.  This allows a set of user preferences to be automatically copied from server to server in a single file.
+</blockquote><blockquote>
+If present and configuration files have not been explicitly turned off, the __DATA__ config is always read.  Only one other configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.  Specifying the --config option with no argument turns off the processing of both the __DATA__ config and any actual config files.
 </blockquote><blockquote>
 The format of the configuration file is designed to allow future expansion.  Currently it only allows the equivalent of command line options to be specified.  These options must be given between a line of "<OPTIONS>" and a line of "</OPTIONS>".  Between these two lines, lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to swaks.  In this file the leading dash or dashes to options are optional.  Here is an example of the contents of a configuration file:
 <pre>
@@ -140,7 +157,7 @@ This transport attempts to deliver a message via TCP/IP, the standard method for
 </blockquote><blockquote>
 This transport requires the IO::Socket module which is part of the standard perl distribution.  If this module is not loadable, attempting to use a this transport will result in an error and program termination.
 </blockquote><blockquote>
---server [destination mail server], -s [destination mail server]
+--server [destination mail server[:port]], -s [destination mail server[:port]]
 : Explicitly tell swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the Net::DNS module.  If Net::DNS is not available swaks will attempt to connect to localhost to deliver.  See also --copy-routing.
 </blockquote><blockquote>
 --port [port], -p [port]
@@ -417,7 +434,7 @@ These options pertain to the contents for the DATA portion of the SMTP transacti
 : By default, content that gets MIME attached to a message with the --attach option is encoded as application/octet-stream.  --attach-type changes the mime type for every --attach option which follows it.  It can be specified multiple times.
 </blockquote><blockquote>
 --add-header [header], -ah [header]
-: In the strictest sense, all this does is provide a value that replaces the %H token in the data.  Because of where %H is located in the default DATA, practically it is used to add custom headers without having to recraft the entire body.
+: This option allows headers to be added to the DATA.  If %H is present in the DATA it is replaced with the argument to this option.  If %H is not present, the argument is inserted between the first two consecutive newlines in the DATA (that is, it is inserted at the end of the existing headers).
 : The option can either be specified multiple times or a single time with multiple headers seperated by a literal '\n' string.  So, "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header 'Foo: bar\nBaz: foo'" end up adding the same two headers.
 </blockquote><blockquote>
 --header [header-and-data], --h-Header [data]
