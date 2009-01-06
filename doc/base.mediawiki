@@ -2,6 +2,15 @@
 
 <blockquote>swaks - Swiss Army Knife SMTP, the all-purpose smtp transaction tester</blockquote>
 
+'''if no env, file, or cli opts are given, swaks errors that the list vars in Getopts::Long call are undefined:'''
+<pre>
+wembley 0 /home/jetmore/bin > swaks                          
+To: jj33@pobox.com
+Can't use an undefined value as an ARRAY reference at swaks line 1635.
+</pre>
+
+'''test interaction of --no- code and --no-strip-from (my code needs to skip if --no-BLAH matches a valid option)'''
+
 == DESCRIPTION ==
 
 <blockquote>
@@ -9,6 +18,131 @@ swaks' primary design goal is to be a transaction-oriented SMTP test tool, used 
 </blockquote>
 
 == QUICK START ==
+'''> 2) Do you have any tricks/tips/hints that could go into the quick start section to demonstrate swaks flexing its muscles?'''
+
+'''I'd be more explicit with the --server option. I rarely use swaks without --server since I usually want to explicitly test a single box.'''
+
+<blockquote>
+Deliver a standard test email to user@example.com:
+: swaks -t user@example.com
+Deliver a standard test email to user@example.com using the LMTP protocol via a UNIX domain socket file
+: swaks -t user@example.com --socket /var/lda.sock --protocol LMTP 
+Deliver a standard test email, requiring CRAM-MD5 authentication as user me@example.com.  An "X-Test" header will be added to the email body.  The authentication password will be prompted for.
+: swaks -t user@example.com -f me@example.com --auth CRAM-MD5 --auth-user me@example.com --h-X-Test "test email"
+Test a virus scanner using EICAR in an attachment.  Don't show the message DATA part.:
+: cat eicar.txt | swaks -t user@example.com --attach - -s test-server.example.com --suppress-data
+Test a spam scanner using GTUBE in the body of an email:
+: swaks -t user@example.com --body /path/to/gtube/file
+</blockquote>
+
+== TERMS AND CONVENTIONS ==
+
+<blockquote>
+It can be confusing discussing the various portions of an SMTP transaction.  This document tries to be consistent in its use of terms to avoid unnecessary confusion.
+</blockquote><blockquote>
+Transaction
+: A transaction is the opening of connection over a transport to a target and using a messaging protocol to attempt to deliver a message.
+</blockquote><blockquote>
+Target
+: The target of a transaction is the thing that swaks connects to.  This generic term is used throughout the documentation because most other terms improperly imply something about the transport being used.
+</blockquote><blockquote>
+Transport
+: The transport is the underlying method used to connect to the target.
+</blockquote><blockquote>
+Protocol
+: The protocol is the application language used to communicate with the target.  This document uses SMTP to speak generically of all three supported protocols unless it states that it is speaking of the specific 'SMTP' protocol and excluding the others.
+</blockquote><blockquote>
+Message
+: SMTP protocols exist to transfer messages, a set of bytes in an agreed-upon format that has a sender and a recipient.
+</blockquote><blockquote>
+Envelope
+: A message's envelope contains the "true" sender and receiver of a message.  It can also be referred to as its components, envelope-sender and envelope-recipients.  It is important to note that a messages envelope does not have to match its To: and From: headers.
+</blockquote><blockquote>
+DATA
+: The DATA portion of an SMTP transaction is the actual message that is being transported.  It consists of both the message's headers and its body.  DATA and body are sometimes use synonymously, but they are always two distinct things in this document.
+</blockquote><blockquote>
+Headers
+: A message's headers are defined as all the lines in the message's DATA section before the first blank line.  They contain information about the email that will be displayed to the recipient such as To:, From:, Subject:, etc.  In this document headers will always be written with a capitalized first letter and a trailing colon.
+</blockquote><blockquote>
+Body
+: A message's body is the portion of its DATA section following the first blank line.
+</blockquote>
+
+== OPTION PROCESSING ==
+
+<blockquote>
+To prevent potential confusion in this document a flag to swaks is always referred to as an "option".  If the option takes additional data, that additional data is referred to as an argument to the option.  For example, "--from fred@example.com" might be provided to swaks on the command line, with "--from" being the option and "fred@example.com" being --from's argument.
+</blockquote><blockquote>
+Options can be given to swaks in three ways.  They can be specified in a configuration file, in environment variables, and on the command line.  Depending on the specific option and whether or not an argument is given to it, swaks may prompt the user for the argument.
+</blockquote>
+
+<blockquote>
+When swaks evaluates its options, it first looks for a configuration file (either in a default location or specified with --config).  Then it evaluates any options in environment variables.  Finally, it evaluates command line options.  At reach round of processing, any options set earlier will be overridden.  '''Additionally, any option can be prefixed with "no-" to cause swaks to forget that the variable had previously been set.'''  This capability is necessary because many options treat defined-but-no-argument differently than not-defined.
+</blockquote>
+
+<blockquote>
+The exact mechanism and format for using each of the types is listed below.
+</blockquote>
+
+=== CONFIGURATION FILE ===
+
+<blockquote>
+A configuration file to set commonly-used or abnormally verbose options can be used.  By default swaks looks in order for $SWAKS_HOME/.swaksrc, $HOME/.swaksrc, and $LOGDIR/.swaksrc.  If one of those is found to exist (and --config has not been used) that file is used as the configuration file.
+</blockquote><blockquote>
+Additionally a configuration file in a non-default location can be specified using --config.  If this is set and not given an argument swaks will not use any configuration file, including any default file.  If --config points to a readable file, it is used as the configuration file, overriding any default that may exist.  If it points to a non-readable file and error will be shown and swaks will exit.
+</blockquote><blockquote>
+Only one configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.
+</blockquote><blockquote>
+The format of the configuration file is designed to allow future expansion.  Currently it only allows the equivalent of command line options to be specified.  These options must be given between a line of "<OPTIONS>" and a line of "</OPTIONS>".  Between these two lines, lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to swaks.  In this file the leading dash or dashes to options are optional.  Here is an example of the contents of a configuration file:
+<pre>
+<OPTIONS>
+# always use this sender, no matter server or logged in user
+--from fred@example.com
+# I prefer my test emails have a pretty from header (note lack of dashes on option)
+h-From: "Fred Example" <fred@example.com>
+</OPTIONS>
+</pre>
+Note that everything after the first space is assumed to be the option's argument and is not shell processed, so any quoting is usually unneeded and will not be stripped off by the shell.
+</blockquote><blockquote>
+There is a deprecated option --input-file (or -l) in swaks that was a precursor of the configuration file defined here.  That option has been judged deficient and is being replaced wholesale with the idea of the configuration file defined above.  The option still exists for the time being but its use is strongly discouraged.  It is no longer documented, and it will be removed entirely in some future release.
+</blockquote>
+
+=== ENVIRONMENT VARIABLES ===
+
+<blockquote>
+Options can be supplied via environment variables.  The variables are in the form $SWAKS_OPT_name, where name is the name of the option that would be specified on the command line.  Because dashes aren't allowed in environment variable names in most unix-ish shells, no leading dashes should be used and any dashes inside the option's name should be replaced with underscores.  The following would create the same options shown in the configuration file example:
+
+<pre>
+$> SWAKS_OPT_from='fred@example.com'
+$> SWAKS_OPT_h_From='"Fred Example" <fred@example.com>'
+</pre>
+
+Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting SWAKS_OPT_server="" would cause swaks to prompt the use for the server to which to connect at each invocation.
+</blockquote><blockquote>
+In addition to setting the equivalent of command line options, SWAKS_HOME can be set to a directory containing the default .swaksrc to be used.
+</blockquote>
+
+=== COMMAND LINE OPTIONS ===
+
+<blockquote>
+The final method of supplying options to swaks is via the command line.  The options behave in a manner consistent with most unix-ish command line programs.  Many options have both a short and long form (for instance -s and --server).  By convention short options are specified with a single dash and long options are specified with a double-dash.  This is only a convention and either prefix will work with either type.
+</blockquote><blockquote>
+The following demonstrates the example shown in the configuration file and environment variable sections:
+<pre>
+$> swaks --from fred@example.com --h-From: '"Fred Example" <fred@example.com>'
+</pre>
+</blockquote>
+
+== DESCRIPTION ==
+
+<blockquote>
+swaks' primary design goal is to be a transaction-oriented SMTP test tool, used for debugging mail servers. stress testing configs, etc.  It handles SMTP features and extensions such as TLS, authentication, and pipelining; multiple version of the SMTP protocol including SMTP, ESMTP, and LMTP; and multiple transport methods including unix-domain sockets, internet-domain sockets, and pipes to spawned processes.  Options can be specified in environment variables, configuration files, and the command line with a goal of being extremely configurable for ease of use for operators and scripters.
+</blockquote>
+
+== QUICK START ==
+'''> 2) Do you have any tricks/tips/hints that could go into the quick start section to demonstrate swaks flexing its muscles?'''
+
+'''I'd be more explicit with the --server option. I rarely use swaks without --server since I usually want to explicitly test a single box.'''
 
 <blockquote>
 Deliver a standard test email to user@example.com:
@@ -475,7 +609,7 @@ The "informational prefixes" are referred to as transaction hints.  These hints 
 The following options control what and how output is displayed to the caller.
 </blockquote><blockquote>
 --suppress-data, -n
-: Summarizes the DATA portion of the SMTP transaction instead of printing every line.  This option is very helpful, bordering on required, when using swaks to send certain test emails.  Emails with attachments, for instance, will quickly overwhelm a terminal if the DAT is not supressed.
+: Summarizes the DATA portion of the SMTP transaction instead of printing every line.  This option is very helpful, bordering on required, when using swaks to send certain test emails.  Emails with attachments, for instance, will quickly overwhelm a terminal if the DATA is not supressed.
 </blockquote><blockquote>
 --show-time-lapse [i], -stl [i]
 : Display time lapse between send/receive pairs.  This option is most useful when Time::HiRes is available, in which case the time lapse will be displayed in thousandths of a second.  If Time::HiRes is unavailable or "i" is given as an argument the lapse will be displayed in integer seconds only.
