@@ -5,7 +5,7 @@
 == DESCRIPTION ==
 
 <blockquote>
-swaks' primary design goal is to be a transaction-oriented SMTP test tool, used for debugging mail servers. stress testing configs, etc.  It handles SMTP features and extensions such as TLS, authentication, and pipelining; multiple version of the SMTP protocol including SMTP, ESMTP, and LMTP; and multiple transport methods including unix-domain sockets, internet-domain sockets, and pipes to spawned processes.  All of this is wrapped in a secondary design goal of being extremely configurable for ease of use of operators and scripters.  Options can be specified in environment variables, config files, or the command line.
+swaks' primary design goal is to be a transaction-oriented SMTP test tool, used for debugging mail servers. stress testing configs, etc.  It handles SMTP features and extensions such as TLS, authentication, and pipelining; multiple version of the SMTP protocol including SMTP, ESMTP, and LMTP; and multiple transport methods including unix-domain sockets, internet-domain sockets, and pipes to spawned processes.  Options can be specified in environment variables, configuration files, and the command line with a goal of being extremely configurable for ease of use for operators and scripters.
 </blockquote>
 
 == QUICK START ==
@@ -23,14 +23,49 @@ Test a spam scanner using GTUBE in the body of an email:
 : swaks -t user@example.com --body /path/to/gtube/file
 </blockquote>
 
+== TERMS AND CONVENTIONS ==
+
+<blockquote>
+It can be confusing discussing the various portions of an SMTP transaction.  This document tries to be consistent in its use of terms to avoid unnecessary confusion.
+</blockquote><blockquote>
+Transaction
+: A transaction is the opening of connection over a transport to a target and using a messaging protocol to attempt to deliver a message.
+</blockquote><blockquote>
+Target
+: The target of a transaction is the thing that swaks connects to.  This generic term is used throughout the documentation because most other terms improperly imply something about the transport being used.
+</blockquote><blockquote>
+Transport
+: The transport is the underlying method used to connect to the target.
+</blockquote><blockquote>
+Protocol
+: The protocol is the application language used to communicate with the target.  This document uses SMTP to speak generically of all three supported protocols unless it states that it is speaking of the specific 'SMTP' protocol and excluding the others.
+</blockquote><blockquote>
+Message
+: SMTP protocols exist to transfer messages, a set of bytes in an agreed-upon format that has a sender and a recipient.
+</blockquote><blockquote>
+Envelope
+: A message's envelope contains the "true" sender and receiver of a message.  It can also be referred to as its components, envelope-sender and envelope-recipients.  It is important to note that a messages envelope does not have to match its To: and From: headers.
+</blockquote><blockquote>
+DATA
+: The DATA portion of an SMTP transaction is the actual message that is being transported.  It consists of both the message's headers and its body.  DATA and body are sometimes use synonymously, but they are always two distinct things in this document.
+</blockquote><blockquote>
+Headers
+: A message's headers are defined as all the lines in the message's DATA section before the first blank line.  They contain information about the email that will be displayed to the recipient such as To:, From:, Subject:, etc.  In this document headers will always be written with a capitalized first letter and a trailing colon.
+</blockquote><blockquote>
+Body
+: A message's body is the portion of its DATA section following the first blank line.
+</blockquote>
+
 == OPTION PROCESSING ==
 
 <blockquote>
-Options can be given to swaks in three ways.  They can be specified in a configuration file, in environment variables, and on the command line.  Depending on the specific option and whether or not an argument is given to it, the value for an argument might be prompted for interactively.
+To prevent potential confusion in this document a flag to swaks is always referred to as an "option".  If the option takes additional data, that additional data is referred to as an argument to the option.  For example, "--from fred@example.com" might be provided to swaks on the command line, with "--from" being the option and "fred@example.com" being --from's argument.
+</blockquote><blockquote>
+Options can be given to swaks in three ways.  They can be specified in a configuration file, in environment variables, and on the command line.  Depending on the specific option and whether or not an argument is given to it, swaks may prompt the user for the argument.
 </blockquote>
 
 <blockquote>
-When swaks evaluates its options, it first looks for a configuration file (either in a default location or specified with --config).  Then it evaluates any environment variables.  Finally, it evaluates command line arguments.  At reach round of processing, any options set earlier will be overridden.  '''Additionally, any option can be prefixed with "no-" to cause swaks to forget that the variable had previously been set.'''  This capability is necessary because for may options a defined-but-empty value has different behavior than never having been specified in the fist place.
+When swaks evaluates its options, it first looks for a configuration file (either in a default location or specified with --config).  Then it evaluates any options in environment variables.  Finally, it evaluates command line options.  At reach round of processing, any options set earlier will be overridden.  '''Additionally, any option can be prefixed with "no-" to cause swaks to forget that the variable had previously been set.'''  This capability is necessary because many options treat defined-but-no-argument differently than not-defined.
 </blockquote>
 
 <blockquote>
@@ -40,37 +75,37 @@ The exact mechanism and format for using each of the types is listed below.
 === CONFIGURATION FILE ===
 
 <blockquote>
-A configuration file to set commonly-used or abnormally verbose options can be used.  By default swaks looks in order for $SWAKS_HOME/.swaksrc, $HOME/.swaksrc, and $LOGDIR/.swaksrc.  If one of those is found to exist (and --config has not been used) that file is used as the configuration file
+A configuration file to set commonly-used or abnormally verbose options can be used.  By default swaks looks in order for $SWAKS_HOME/.swaksrc, $HOME/.swaksrc, and $LOGDIR/.swaksrc.  If one of those is found to exist (and --config has not been used) that file is used as the configuration file.
 </blockquote><blockquote>
-Additionally a configuration file in a non-default location can be specified using --config.  If this is set to an empty value, it tells swaks that no configure file is to be used, including a default file should one exist.  If --config points to a readable file, it is used as the configuration file, overriding any default that may exist.  If it points to a non-readable file and error will be shown and swaks will exit.
+Additionally a configuration file in a non-default location can be specified using --config.  If this is set and not given an argument swaks will not use any configuration file, including any default file.  If --config points to a readable file, it is used as the configuration file, overriding any default that may exist.  If it points to a non-readable file and error will be shown and swaks will exit.
 </blockquote><blockquote>
-It is important to note that only one configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.
+Only one configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.
 </blockquote><blockquote>
-The format of the configuration file is designed to allow future expansion.  Currently it only allows the equivalent of command line options to be specified.  These options must be given between a line of "<ARGS>" and a line of "</ARGS>".  '''Between these two lines, lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to swaks.  In this file the leading dash or dashes to options are optional.'''  Here is an example of the contents of a configuration file:
+The format of the configuration file is designed to allow future expansion.  Currently it only allows the equivalent of command line options to be specified.  '''These options must be given between a line of "<OPTIONS>" and a line of "</OPTIONS>".'''  '''Between these two lines, lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to swaks.  In this file the leading dash or dashes to options are optional.'''  Here is an example of the contents of a configuration file:
 <pre>
-<ARGS>
+<OPTIONS>
 # always use this sender, no matter server or logged in user
 --from fred@example.com
 # I prefer my test emails have a pretty from header
 --h-From: "Fred Example" <fred@example.com>
-</ARGS>
+</OPTIONS>
 </pre>
-Note that everything after the first space is assumed to be the arg and is not shell processed, so any quoting is usually unneeded and will not be stripped off by the shell.
+Note that everything after the first space is assumed to be the option's argument and is not shell processed, so any quoting is usually unneeded and will not be stripped off by the shell.
 </blockquote><blockquote>
-There is a deprecated option --input-file (or -l) in swaks that was a precursor of the configuration file defined here.  That option has been judged deficient and is being replaced wholesale with the idea of the configuration file defined above.  The option still exists for the time being but its use is strongly discouraged, it is no longer documented, and it will be removed entirely in some future release.
+There is a deprecated option --input-file (or -l) in swaks that was a precursor of the configuration file defined here.  That option has been judged deficient and is being replaced wholesale with the idea of the configuration file defined above.  The option still exists for the time being but its use is strongly discouraged.  It is no longer documented, and it will be removed entirely in some future release.
 </blockquote>
 
 === ENVIRONMENT VARIABLES ===
 
 <blockquote>
-Options can be supplied via environment variables.  The variables are in the form $SWAKS_ARG_option, where option is the name of the option that would be specified on the command line, minus any leading dashes.  '''Also, since dashes aren't allowed in variable names, they should be replaced with underscores.'''  The following would create the same options shown in the configuration file example:
+Options can be supplied via environment variables.  The variables are in the form $SWAKS_ARG_name, where name is the name of the option that would be specified on the command line.  Because dashes aren't allowed in environment variable names in most unix-ish shells, no leading dashes should be used and any dashes inside the option's name should be replaced with underscores.'''  The following would create the same options shown in the configuration file example:
 
 <pre>
 $> SWAKS_ARG_from='fred@example.com'
 $> SWAKS_ARG_h_From='"Fred Example" <fred@example.com>'
 </pre>
 
-Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting SWAKS_ARG_server="" would cause swaks to prompt the use for the server to connect to at each invocation.
+'''Setting a variable to an empty value is the same as specifying it on the command line with no argument.'''  For instance, setting SWAKS_ARG_server="" would cause swaks to prompt the use for the server to which to connect at each invocation.
 </blockquote><blockquote>
 In addition to setting the equivalent of command line options, SWAKS_HOME can be set to a directory containing the default .swaksrc to be used.
 </blockquote>
@@ -78,74 +113,76 @@ In addition to setting the equivalent of command line options, SWAKS_HOME can be
 === COMMAND LINE OPTIONS ===
 
 <blockquote>
-The final method of supplying arguments to swaks is via the command line.  The options behave in a manner consistent with most implementations.  Many options have both a short and long form (for instance -s and --server).  By convention short options are specified with a single dash and long options are specified with a double-dash.  However this is only a convention, either prefix will work with either type.
+The final method of supplying options to swaks is via the command line.  The options behave in a manner consistent with most unix-ish command line programs.  Many options have both a short and long form (for instance -s and --server).  By convention short options are specified with a single dash and long options are specified with a double-dash.  This is only a convention and either prefix will work with either type.
 </blockquote><blockquote>
-The following demonstrates the example shown in the configuration and environment variable sections:
+The following demonstrates the example shown in the configuration file and environment variable sections:
 <pre>
 $> swaks --from fred@example.com --h-From: '"Fred Example" <fred@example.com>'
 </pre>
 </blockquote>
 
-== OPTIONS ==
-
-=== TRANSPORT ===
+== TRANSPORTS ==
 
 <blockquote>
-swaks can connect to a destination via unix pipes, unix domain sockets, or internet domain sockets.  Internet-domain sockets is the default behavior.  Because of the singular nature of the transport used, '''each set of options in the following section is mutually exclusive'''.  Below is a brief description of each type of transport and the options that are specific to that transport type.
+swaks can connect to a destination via unix pipes ("pipes"), unix domain sockets ("unix sockets"), or internet domain sockets ("network sockets").  Connecting via network sockets is the default behavior.  Because of the singular nature of the transport used, '''each set of options in the following section is mutually exclusive'''.  Below is a brief description of each type of transport and the options that are specific to that transport type.
 </blockquote>
 
-==== INTERNET-DOMAIN SOCKETS ====
+=== NETWORK SOCKETS ===
 
 <blockquote>
-This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for swaks.  If none of --server, --pipe, or --socket are given then this transport is used and the destination server is determined from the recipient's domain.
+This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for swaks.  If none of --server, --pipe, or --socket are given then '''this transport is used and the destination server is determined from the recipient's domain using the Net::DNS module.  If the module is unavailable swaks attempts to use localhost as the outbound mail server.'''
+</blockquote><blockquote>
+This transport requires the IO::Socket module which is part of the standard perl distribution.  If this module is not loadable, attempting to use a this transport will result in an error and program termination.
 </blockquote><blockquote>
 --server [destination mail server], -s [destination mail server]
-: Explicitly tell swaks to use internet domain sockets and specify the hostname or IP address to which to connect, or prompt if no argument fiven.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address.  '''If Net::DNS is not available, use the A record for the domain.'''  See also --copy-routing.
+: Explicitly tell swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address.  '''If Net::DNS is not available, use the A record for the domain.'''  See also --copy-routing.
 </blockquote><blockquote>
 --port [port], -p [port]
-: Specify which TCP port on the target server is to be used, or prompt if no argument is listed.  The argument can be a service name (as found in /etc/services) or a port number.  If unspecified, swaks will use service 'lmtp' is --protocol is LMTP, service 'smtps' if --tls-on-connect is used, and service 'smtp' otherwise.
+: Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is determined by the --protocol option.  See --protocol for more details.
 </blockquote><blockquote>
 --local-interface [IP or hostname], -li [IP or hostname]
-: Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP or a hostname.  Default action is to let OS choose local interface.
+: Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose local interface.
 </blockquote><blockquote>
 --copy-routing [domain]
-: The argument is interpreted as the domain part of an email address and it is used to find the destination server using the same logic that would be used to look up the destination server for an recipient email address.
+: The argument is interpreted as the domain part of an email address and it is used to find the destination server using the same logic that would be used to look up the destination server for an recipient email address.  See  --to option for more details on how the target is determined from the email domain.
 </blockquote>
 
-==== UNIX-DOMAIN SOCKETS ====
+=== UNIX SOCKETS ===
 
 <blockquote>
-This transport method attempts to deliver messages via a unix-domain socket file.  This is useful for testing MTA/MDAs that listen on socket files (for instance, testing LMTP delivery to Cyrus).
+This transport method attempts to deliver messages via a unix-domain socket file.  This is useful for testing MTA/MDAs that listen on socket files (for instance, testing LMTP delivery to Cyrus).  This transport requires the IO::Socket module which is part of the standard perl distribution.  If this module is not loadable, attempting to use this transport will result in an error and program termination.
 </blockquote><blockquote>
 --socket [/path/to/socket/file]
-: This option takes as its argument a unix domain socket file.
+: This option takes as its argument a unix-domain socket file.  If swaks is unable to open this socket it will display an error and exit.
 </blockquote>
 
-==== PIPES ====
+=== PIPES ===
 
 <blockquote>
-This transport attempts to spawn a process and communicate with it via pipes.  The spawned program must be prepared to behave as a mail server over STDIN/STDOUT.  Any MTA designed to operate from inet/xinet should support this.  In addition some MTAs provide testing modes that can be interacted with via STDIN/STDOUT.  This transport can be used to automate that testing.  For example, if you implemented DNSBL checking with Exim and you wanted to make sure it was working, you could run 'swaks --pipe "exim -bh 127.0.0.2"'.  In an ideal world the process you are talking to should behave exactly like an SMTP server on stdin and stdout.  Any debugging should be sent to stderr, which will be directed to your terminal.  In the real world swaks can generally handle some debug on the child's stdout, but there are no guarantees on how much it can handle.
+This transport attempts to spawn a process and communicate with it via pipes.  The spawned program must be prepared to behave as a mail server over STDIN/STDOUT.  Any MTA designed to operate from inet/xinet should support this.  In addition some MTAs provide testing modes that can be communicated with via STDIN/STDOUT.  This transport can be used to automate that testing.  For example, if you implemented DNSBL checking with Exim and you wanted to make sure it was working, you could run 'swaks --pipe "exim -bh 127.0.0.2"'.  In an ideal world the process you are talking to should behave exactly like an SMTP server on stdin and stdout.  Any debugging should be sent to stderr, which will be directed to your terminal.  In the real world swaks can generally handle some debug on the child's stdout, but there are no guarantees on how much it can handle.
+</blockquote><blockquote>
+This transport requires the IPC::Open2 module which is part of the standard perl distribution.  If this module is not loadable, attempting to use this transport will result in an error and program termination.
 </blockquote><blockquote>
 --pipe [/path/to/command and arguments]
-: Provide a process name and arguments to the process.  swaks will attempt to spawn the process and communicate with it via pipes.
+: Provide a process name and arguments to the process.  swaks will attempt to spawn the process and communicate with it via pipes.  If the argument is not an executable swaks will display an error and exit.
 </blockquote>
 
-=== SMTP LAYER OPTIONS ===
+== PROTOCOL OPTIONS ==
 <blockquote>
-These options are related to the SMTP transaction layer (RFC2821 as opposed to 2822, if you will)
+These options are related to the protocol layer.
 </blockquote><blockquote>
 --to [email-address[,email-address,...]], -t [email-address[,email-address,...]]
 : Tells swaks to use argument(s) as the envelope-recipient for the email, or prompt for recipient if no argument provided.  If multiple recipients are provided and the recipient domain is needed to determine routing the domain of the last recipient provided is used.
 : There is no default value for this option.  If no recipients are provided via any means, user will be prompted to provide one interactively.  The only exception to this is if a --quit-after value is provided which will cause the smtp transaction to be terminated before the recipient is needed.
 </blockquote><blockquote>
 --from [email-address], -f [email-address]
-: Use argument as envelope-sender for email, or prompt user if no argument specified.  The string <> can be supplied to mean the null sender.  If user does not specify a sender address a default value is used.  The domain-part of the default address is a best guess at the fully-qualified domain name of the local host.  The method of determining the local-part varies.  On Windows, Win32::LoginName() is used.  On unix-ish platforms, the $LOGNAME environment variable is used if it is set.  Otherwise getpwuid(3) is used.  See also --force-getpwuid.
+: Use argument as envelope-sender for email, or prompt user if no argument specified.  The string <> can be supplied to mean the null sender.  If user does not specify a sender address a default value is used.  The domain-part of the default sender is a best guess at the fully-qualified domain name of the local host.  The method of determining the local-part varies.  On Windows, Win32::LoginName() is used.  On unix-ish platforms, the $LOGNAME environment variable is used if it is set.  Otherwise getpwuid(3) is used.  See also --force-getpwuid.
 </blockquote><blockquote>
---helo [helo-string], --ehlo [helo-string], -h [helo-string]
-: String to use as argument to HELO/EHLO/LHLO command, or prompt use if no argument is specified.  If this option is not used a best guess at the fully-qualified domain name of the local host is used.
+--helo [helo-string], --ehlo [helo-string], --lhlo [helo-string], -h [helo-string]
+: String to use as argument to HELO/EHLO/LHLO command, or prompt use if no argument is specified.  If this option is not used a best guess at the fully-qualified domain name of the local host is used.  If the Sys::Hostname module, which is part of the base distribution, is not available the user will be prompted for a HELO value.  Note that Sys::Hostname has been observed to not be able to find the local hostname in certain circumstances.  This has the same effect as if Sys::Hostname were unavailable.
 </blockquote><blockquote>
 --quit-after [stop-point], -q [stop-point]
-: Point at which the transaction should be stopped.  When the requested stopping point is reached in the transaction, provviding swaks has not errored out prior to reachingit,  swaks will send "QUIT" and attempt to close the connection cleanly.  These are the valid arguments and notes about their meaning.
+: Point at which the transaction should be stopped.  When the requested stopping point is reached in the transaction, and provided that swaks has not errored out prior to reaching it,  swaks will send "QUIT" and attempt to close the connection cleanly.  These are the valid arguments and notes about their meaning.
 <blockquote>
 {| cellpadding=5 cellspacing=5
 |-
@@ -153,10 +190,10 @@ These options are related to the SMTP transaction layer (RFC2821 as opposed to 2
 | '''Terminate the session immediately after opening the TCP connection.  Note that this is a violation of the SMTP protocol.'''
 |-
 | align=left valign=top | FIRST-HELO
-| In a STARTTLS (but not tls-on-connect) session, terminate the transaction after the first of two HELOs.  In a non-STARTTLS transaction, hehaves the same as HELO (see below).  FIRST-EHLO and FIRST-LHLO are valid synonyms.
+| In a STARTTLS (but not tls-on-connect) session, terminate the transaction after the first of two HELOs.  In a non-STARTTLS transaction, behaves the same as HELO (see below).  FIRST-EHLO and FIRST-LHLO are valid synonyms.
 |-
 | align=left valign=top | TLS
-| '''Quit the transaction immediately following TLS negotiation.  Note that this happens in different places depending on whether STARTTLS of tls-on-connect are used.
+| '''Quit the transaction immediately following TLS negotiation.  Note that this happens in different places depending on whether STARTTLS or tls-on-connect are used.
 |-
 | align=left valign=top | HELO
 | In a STARTTLS session, quit after the second HELO.  Otherwise quit after the first and only HELO.  EHLO and LHLO are valid synonyms.
@@ -257,11 +294,14 @@ These options are related to the SMTP transaction layer (RFC2821 as opposed to 2
 </blockquote><blockquote>
 --pipeline
 : If the remote server supports it, attempt SMTP PIPELINING (RFC 2920).  This is a younger option, if you experience problems with it please notify the author.  Potential problem areas include servers accepting DATA even though there were no valid recipients (swaks should send empty body in that case, not QUIT) and deadlocks caused by sending packets outside the tcp window size.
+</blockquote><blockquote>
+--force-getpwuid
+: Tell swaks to use the getpwuid method of finding the default sender local-part instead of trying $LOGNAME first.
 </blockquote>
 
-=== TLS ===
+== TLS / ENCRYPTION ==
 <blockquote>
-These are options related to encrypting the transaction.  These have been tested and confirmed to work with all three transport methods.
+These are options related to encrypting the transaction.  These have been tested and confirmed to work with all three transport methods.  The Net::SSLeay module is used to perform encryption when it is requested.  If this module is not loadable swaks will either ignore the TLS request or error out, depending on whether the request was optional.  STARTTLS is defined as an extension in the ESMTP protocol and will be unavailable if --protocol is set to a variation of smtp.  Because it is not defined in the protocol itself, --tls-on-connect is available for any protocol type if the target supports it.
 </blockquote><blockquote>
 -tls
 : Require connection to use STARTTLS.  Exit if TLS not available for any reason (not advertised, negotiations failed, etc).
@@ -272,43 +312,45 @@ These are options related to encrypting the transaction.  These have been tested
 : Attempt to use STARTTLS if available.  Proceed with transaction if TLS is negotiated successfully or STARTTLS not advertised.  If STARTTLS is advertised but TLS negotiations fail, treat as an error and abort transaction.
 </blockquote><blockquote>
 --tls-on-connect, -tlsc
-: Initiate a TLS connection immediately on connection.  Use to test smtps/ssmtp servers.  If this options is specified, the default port changes from 25 to 465, though this can still be overridden with the -p option.
+: Initiate a TLS connection immediately on connection.  Following common convention, if this option is specified the default port changes from 25 to 465, though this can still be overridden with the --port option.
 </blockquote>
 
-=== AUTHENTICATION ===
+== AUTHENTICATION ==
 <blockquote>
-If instructed to do so swaks will attempt to authenticate to the target mail server.  This section details available authentication types, requirements, options and their interactions, and other fine points in authentication usage.
-</blockquote>
-==== AUTHENTICATION TYPES ====
-<blockquote>
+If instructed to do so swaks will attempt to authenticate to the target mail server.  This section details available authentication types, requirements, options and their interactions, and other fine points in authentication usage.  Because authentication is defined as an extension in the ESMTP protocol it will be unavailable if --protocol is set to a variation of smtp.
+</blockquote><blockquote>
 All authentication methods require base64 encoding.  If the MIME::Base64 perl module is loadable swaks attempts to use it to perform these encodings.  If MIME::Base64 is not available swaks will use its own onboard base64 routines.  These are slower than the MIME::Base64 routines and less reviewed, though they have been tested thoroughly.  Using the MIME::Base64 module is encouraged.
 </blockquote><blockquote>
-If authentication is required (see options below for when it is and isn't required) and the requirements aren't met for the authentication type available, swaks displays an error and exits.  Two ways this can happen include forcing swaks to use a specific authentication type that swaks can't use due to missing requirements, or allowing swaks to use any authentication type, but the server only advertises a type swaks can't support.  In the former case swaks errors out at option processing time since it knows up front it won't be able to authenticate.  In the latter case swaks will error out at the authentication stage of the smtp transaction since swaks will not be aware that it will not be able to authenticate until that point.
+If authentication is required (see options below for when it is and isn't required) and the requirements aren't met for the authentication type available, swaks displays an error and exits.  Two ways this can happen include forcing swaks to use a specific authentication type that swaks can't use due to missing requirements, or allowing swaks to use any authentication type, but the server only advertises types swaks can't support.  In the former case swaks errors out at option processing time since it knows up front it won't be able to authenticate.  In the latter case swaks will error out at the authentication stage of the smtp transaction since swaks will not be aware that it will not be able to authenticate until that point.
 </blockquote><blockquote>
 Following are the supported authentication types including any individual notes and requirements.
 </blockquote><blockquote>
-LOGIN, PLAIN
-: These basic authentication types are fully supported and tested and have no additional requirements
-</blockquote><blockquote>
-CRAM-MD5
-: The CRAM-MD5 authenticator requires the Digest::MD5 module.  It is fully tested and believed to work against any server that implements it.
-</blockquote><blockquote>
-DIGEST-MD5
-: The DIGEST-MD5 authenticator (RFC2831) requires the Authen::DigestMD5 module.  Only known to have been tested against Communigate and may therefore have some implementation deficiencies.
-</blockquote><blockquote>
-CRAM-SHA1
-: The CRAM-SHA1 authenticator requires the Digest::SHA1 module.  This type has only been tested against a non-standard implementation on an Exim server nd may therefore have some implementation deficiencies.
-</blockquote><blockquote>
-NTLM/SPA/MSN
-: These authenticators require the Authen::NTLM module.  Note that there are two modules using the Authen::NTLM namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.02.tar.gz) is the version required by swaks.  This type has been tested against Exim and Communigate but may not be feature complete.  '''There is some initial evidence that it does not work against Exchange 2007.'''
-: In addition to the standard username and password, this authentication type can also recognize a "domain".  Rather than create a new option for this single authentication type, the domain can be passed by adding "%DOMAIN" to the end of the username.  For instance, if "-ap user@example.com%NTDOM" is passed, "user@example.com" is the username and "NTDOM" is the domain.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
-</blockquote>
-==== AUTHENTICATION OPTIONS ====
-<blockquote>
-The following options affect swaks use of authentication.  These options are all inter-related.  For instance, specifying --auth-user implies --auth and --auth-password.  Specifying --auth-optional implies --auth-user and --auth-password, etc.
+The following options affect swaks' use of authentication.  These options are all inter-related.  For instance, specifying --auth-user implies --auth and --auth-password.  Specifying --auth-optional implies --auth-user and --auth-password, etc.
 </blockquote><blockquote>
 --auth [auth-type[,auth-type,...]], -a [auth-type[,auth-type,...]]
 : Require swaks to authenticate.  If no argument is given, any supported auth-types advertised by the server are tried until one succeeds or all fail.  If one or more auth-types are specified as an argument, each that the server also supports is tried in order until one succeeds or all fail.  This option requires swaks to authenticate, so if no common auth-types are found or no credentials succeed, swaks displays an error and exits.
+: The following tables lists the valid auth-types
+<blockquote>
+{| border=0 cellpadding=5 cellspacing=5
+| valign=top | LOGIN, PLAIN
+| These basic authentication types are fully supported and tested and have no additional requirements
+|-
+| valign=top | CRAM-MD5
+| The CRAM-MD5 authenticator requires the Digest::MD5 module.  It is fully tested and believed to work against any server that implements it.
+|-
+| valign=top | DIGEST-MD5
+| The DIGEST-MD5 authenticator (RFC2831) requires the Authen::DigestMD5 module.  Only known to have been tested against Communigate and may therefore have some implementation deficiencies.
+|- 
+| valign=top | CRAM-SHA1
+| The CRAM-SHA1 authenticator requires the Digest::SHA1 module.  This type has only been tested against a non-standard implementation on an Exim server and may therefore have some implementation deficiencies.
+|-
+| valign=top | NTLM/SPA/MSN
+| These authenticators require the Authen::NTLM module.  Note that there are two modules using the Authen::NTLM namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.02.tar.gz) is the version required by swaks.  This type has been tested against Exim and Communigate but may not be feature complete.  '''There is some initial evidence that it does not work against Exchange 2007.'''
+
+In addition to the standard username and password, this authentication type can also recognize a "domain".  Rather than create a new option for this single authentication type, the domain can be passed by adding "%DOMAIN" to the end of the username.  For instance, if "-ap user@example.com%NTDOM" is passed, "user@example.com" is the username and "NTDOM" is the domain.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
+|}
+</blockquote>
+
 </blockquote><blockquote>
 --auth-optional [auth-type[,auth-type,...]], -ao [auth-type[,auth-type,...]]
 : This option behaves identically to --auth except that it requests authentication rather than requiring it.  If no common auth-types are found or no credentials succeed, swaks proceeds as if authentication had not been requested.
@@ -329,27 +371,27 @@ The following options affect swaks use of authentication.  These options are all
 : Instead of showing AUTH strings literally (in base64), translate them to plaintext before printing on screen.
 </blockquote>
 
-=== MESSAGE CONTENTS ===
+== DATA OPTIONS ==
 <blockquote>
-These options affect the content of the email itself.  That is, the contents of the DATA portion of the transaction.
+These options pertain to the contents for the DATA portion of the SMTP transaction.
 </blockquote><blockquote>
 --data [data-portion], -d [data-portion]
-: Use argument as DATA portion of SMTP transaction, or prompt user if no argument specified.  This string should be on one single line, with \n (ascii 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  If an argument of '-' is given the data-portion will be read from STDIN.  The default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\nX-Mailer: swaks v$p_version jetmore.org/john/code/#swaks\n%H\n\n%B\n".
-: Very basic token parsing is done.  The following table shows the recognized tokens and their replacement values:
+: Use argument as the entire contents of DATA, or prompt user if no argument specified.  This string should be on one single line, with \n (ascii 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  If an argument of '-' is given the data-portion will be read from STDIN.  The default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\nX-Mailer: swaks v$p_version jetmore.org/john/code/#swaks\n%H\n\n%B\n".
+: Very basic token parsing is performed on the DATA portion.  The following table shows the recognized tokens and their replacement values:
 <blockquote>
 {|
 |-
 | %F
-| Replaced with the envelope-sender value
+| Replaced with the envelope-sender.
 |-
 | %T
-| Replaced with the envelope-recipient(s) value
+| Replaced with the envelope-recipient(s).
 |-
 | valign=top | %D
-| Replaced with the current time in a format suitable for inclusion in the Date: header.  Note that attempts to use the standard module Time::Local for timezone calculations.  If this module is unavailable the date string will be in GMT.
+| Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module Time::Local for timezone calculations.  If this module is unavailable the date string will be in GMT.
 |-
 | %H
-| Replaced with the contents of the --add-header option.  If --add-header is not specified this token is simple removed.
+| Replaced with the contents of the --add-header option.  If --add-header is not specified this token is simply removed.
 |-
 | %B
 | Replaced with the value specified by the --body option.  See --body for default.
@@ -381,9 +423,9 @@ These options affect the content of the email itself.  That is, the contents of 
 : Don't strip the From_ line from the DATA portion, if present.
 </blockquote>
 
-=== PROGRAM OUTPUT ===
+== OUTPUT OPTIONS ==
 <blockquote>
-By default swaks provides a transcript of its transactions to its caller (STDOUT/STDERR).  This transcript aims to be as faithful a representation as possible of the transaction.  It does fix up this output by adding informational prefixes to lines and by providing plaintext versions of TLS transactions
+By default swaks provides a transcript of its transactions to its caller (STDOUT/STDERR).  This transcript aims to be as faithful a representation as possible of the transaction though it does modify this output by adding informational prefixes to lines and by providing plaintext versions of TLS transactions
 </blockquote><blockquote>
 The "informational prefixes" are referred to as transaction hints.  These hints are initially composed of those marking lines that are output of swaks itself, either informational or error messages, and those that indicate a line of data actually sent or received in a transaction.  This table indicates the hints and their meanings:
 </blockquote><blockquote><blockquote>
@@ -453,54 +495,18 @@ The following options control what and how output is displayed to the caller.
 '''--hide-all, -ha'''
 : '''Do not display any content to the terminal.'''
 </blockquote><blockquote>
---support
-: Print capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and lets you know which functionality is available and which isn't, and which modules would need to be added to gain the missing functionality.
-</blockquote><blockquote>
 '''--silent [level], -S [level]'''
 : '''Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.'''
 : '''Note that this used to be an additive option ("-S -S" was equivalent to "-S 2").  After environment option handling was introduced this was changed.  The additive method still works but is deprecated and will be removed entirely in a future release'''
-</blockquote>
-
-=== MISCELLANEOUS ===
-<blockquote>
-These are options which do not easily fall into another category
 </blockquote><blockquote>
--m
-: Emulate the 'Mail' command.  This option is likely to be deprecated in the future.  '''you know, there's enough fine-tuned stuff in swaks now that this coule be mae to work better - leave the subject/body prompts but still have date/from/to...'''
-</blockquote><blockquote>
---force-getpwuid
-: Tell swaks to use the getpwuid method of finding the default sender local-part instead of trying $LOGNAME first.
+--support
+: Print capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and displays which functionality is available and which isn't, and which modules would need to be added to gain the missing functionality.
 </blockquote><blockquote>
 --help
 : Display this help information.
 </blockquote><blockquote>
 --version
-: Display version information.
-</blockquote>
-
-== REQUIRES ==
-
-<blockquote>
-swaks does not have any single requirement except the standard module Getopt::Long.  However, there may be modules that are required for a given invocation of swaks.  The following list details the features reported by the --support option, what is actually being tested, and the consequences of the feature being reported as "not available"
-</blockquote><blockquote>
-High Resolution Timing
-: When diagnosing SMTP delays using --show-time-lapse, by default high resolution timing is attempted using the Time::HiRes module.  If this module is not available, swaks uses a much poorer timing source with one second granularity.
-</blockquote><blockquote>
-Local Hostname Detection
-: swaks uses your local machine's hostname to build the HELO string and sending email address when they are not specified on the command line.  If the Sys::Hostname module (which is a part of the base distribution) is not available for some reason, the user is prompted interactively for the HELO and sender strings.  Note that Sys::Hostname can sometimes fail to find the local hostname even when the module is available, which has the same behaviour.
-</blockquote><blockquote>
-MX Routing
-: If the destination mail server is not specified using the --server option, swaks attempts to use DNS to route the message based on the recipient email address.  If the Net::DNS perl module is not available, swaks uses 'localhost' as the outbound mail server.
-</blockquote><blockquote>
-Pipe Transport
-: The IPC::Open2 module is required to deliver a message to a spawned subprocess using the --pipe option.  If this module, which is included in the base perl distribution, in not available, attempting to call swaks with the --pipe option will result in an error.
-</blockquote><blockquote>
-Socket Transport
-: The IO::Socket module is required to deliver a message to an internet domain socket (the default behaviour of swaks) and to a unix domain socket (specified with the --socket option).  If this module, which is included in the base perl distribution, is not available, attempting to call swaks with the --server or --socket options (or none of the --socket, --server, and --pipe options) will result in an error.
-</blockquote><blockquote>
-TLS
-: TLS functionality requires the Net::SSLeay perl module.  If this module is not available and TLS was required (using the --tls-on-connect or --tls options), the session will error out.  If TLS was requested but not required (using the --tls-optional option), swaks will continue but not attempt a TLS session.
-</blockquote>
+: Display version information.</blockquote>
 
 == PORTABILITY ==
 
