@@ -336,6 +336,8 @@ These are options related to encrypting the transaction.  These have been tested
 </blockquote><blockquote>
 --tls-on-connect, -tlsc
 : Initiate a TLS connection immediately on connection.  Following common convention, if this option is specified the default port changes from 25 to 465, though this can still be overridden with the --port option.
+--tls-get-peer-cert [/path/to/file]
+: Get a copy of the TLS peer's certificate.  If no argument is given, it will be displayed to STDOUT.  If an argument is given it is assumed to be a filesystem path specifying where the certificate should be written.  The saved certificate can then be examined using standard tools such as the openssl command.  If a file is specified its contents will be overwritten.
 </blockquote>
 
 == AUTHENTICATION ==
