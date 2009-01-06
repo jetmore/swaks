@@ -56,7 +56,7 @@ Additionally a configuration file in a non-default location can be specified usi
 </blockquote><blockquote>
 It is important to note that only one configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.
 </blockquote><blockquote>
-The format of the configuration file is designed to allow future expansion.  Currently it only allows the equivalent of command line options to be specified.  These options must be given between a line of "<ARGS>" and a line of "</ARGS>".  '''Every line between these two must either begin with a hash (#), which will be ignored as a comment, or a dash (-)''', which will be interpreted as an option to swaks.  Here is an example of the contents of a configuration file:
+The format of the configuration file is designed to allow future expansion.  Currently it only allows the equivalent of command line options to be specified.  These options must be given between a line of "<ARGS>" and a line of "</ARGS>".  '''Between these two lines, lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to swaks.  In this file the leading dash or dashes to options are optional.'''  Here is an example of the contents of a configuration file:
 <pre>
 <ARGS>
 # always use this sender, no matter server or logged in user
@@ -101,22 +101,22 @@ $> swaks --from fred@example.com --h-From: '"Fred Example" <fred@example.com>'
 === TRANSPORT ===
 
 <blockquote>
-swaks can connect to a destination via unix pipes, unix domain sockets, or internet domain sockets.  Internet-domain sockets is the default behavior.  Below is a brief description of each type of transport and the options that are specific to that transport type.
+swaks can connect to a destination via unix pipes, unix domain sockets, or internet domain sockets.  Internet-domain sockets is the default behavior.  Because of the singular nature of the transport used, '''each set of options in the following section is mutually exclusive'''.  Below is a brief description of each type of transport and the options that are specific to that transport type.
 </blockquote>
 
 ==== INTERNET-DOMAIN SOCKETS ====
 
 <blockquote>
-This is the standard way to deliver SMTP emails - via a TCP port over TCP/IP.  Therefore it is also the default behavior of swaks.  The minimum set of options swaks needs to run is a recipient email address.  If this is all that's provided swaks assumes port 25 on a mail server detected from the recipient's domain.
+This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for swaks.  If none of --server, --pipe, or --socket are given then this transport is used and the destination server is determined from the recipient's domain.
 </blockquote><blockquote>
 --server [destination mail server], -s [destination mail server]
-: This is the key argument telling swaks to use internet-domain sockets.  This option tells swaks the hostname or IP address to which to connect.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address.  If Net::DNS is not available, use the A record for the domain.  See also --copy-routing.  If this option is used but no argument provided, swaks will prompt the user for a value.
+: Explicitly tell swaks to use internet domain sockets and specify the hostname or IP address to which to connect, or prompt if no argument fiven.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address.  '''If Net::DNS is not available, use the A record for the domain.'''  See also --copy-routing.
 </blockquote><blockquote>
 --port [port], -p [port]
-: Specify which TCP port on the target server is to be used, or prompt if no argument is listed.  The argument can be a port name (as found in /etc/services) or a port number.  If unspecified, swaks will use service 'lmtp' is --protocol is LMTP, service 'smtps' if --tls-on-connect is used, and service 'smtp' otherwise.
+: Specify which TCP port on the target server is to be used, or prompt if no argument is listed.  The argument can be a service name (as found in /etc/services) or a port number.  If unspecified, swaks will use service 'lmtp' is --protocol is LMTP, service 'smtps' if --tls-on-connect is used, and service 'smtp' otherwise.
 </blockquote><blockquote>
 --local-interface [IP or hostname], -li [IP or hostname]
-: Use argument as the local interface for the SMTP connection, or prompt user if no argument given.  Argument can be an IP or a hostname.  Default action is to let OS choose local interface.
+: Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP or a hostname.  Default action is to let OS choose local interface.
 </blockquote><blockquote>
 --copy-routing [domain]
 : The argument is interpreted as the domain part of an email address and it is used to find the destination server using the same logic that would be used to look up the destination server for an recipient email address.
@@ -125,21 +125,19 @@ This is the standard way to deliver SMTP emails - via a TCP port over TCP/IP.  T
 ==== UNIX-DOMAIN SOCKETS ====
 
 <blockquote>
-swaks can deliver messages via a unix-domain socket file.  This is useful for testing MTA/MDAs that listen on socket files (for instance, testing LMTP delivery to Cyrus).
+This transport method attempts to deliver messages via a unix-domain socket file.  This is useful for testing MTA/MDAs that listen on socket files (for instance, testing LMTP delivery to Cyrus).
 </blockquote><blockquote>
 --socket [/path/to/socket/file]
-: This option takes as its argument a unix domain socket file.  This option is mutually exclusive with --server and --pipe.  When specified, this option causes swaks to perform a delivery over a unix-domain socket.
+: This option takes as its argument a unix domain socket file.
 </blockquote>
 
 ==== PIPES ====
 
 <blockquote>
-The third transport method available to swaks is spawning a command given by the user and communicating with it over pipes.  The spawned program must be prepared to behave as a mail server over STDIN/STDOUT.  Any MTA designed to operate from inet/xinet should support this.
+This transport attempts to spawn a process and communicate with it via pipes.  The spawned program must be prepared to behave as a mail server over STDIN/STDOUT.  Any MTA designed to operate from inet/xinet should support this.  In addition some MTAs provide testing modes that can be interacted with via STDIN/STDOUT.  This transport can be used to automate that testing.  For example, if you implemented DNSBL checking with Exim and you wanted to make sure it was working, you could run 'swaks --pipe "exim -bh 127.0.0.2"'.  In an ideal world the process you are talking to should behave exactly like an SMTP server on stdin and stdout.  Any debugging should be sent to stderr, which will be directed to your terminal.  In the real world swaks can generally handle some debug on the child's stdout, but there are no guarantees on how much it can handle.
 </blockquote><blockquote>
 --pipe [/path/to/command and arguments]
-: This option takes as its argument a program and the program's arguments.  If this option is present, swaks opens a pipe to the program and enters an SMTP transaction over that pipe rather than connecting to a remote server.  Some MTAs have testing modes using stdin/stdout.  This option allows you to tie into those options.  For example, if you implemented DNSBL checking with exim and you wanted to make sure it was working, you could run 'swaks --pipe "exim -bh 127.0.0.2"'.
-</blockquote><blockquote>
-: In an ideal world the process you are talking to should behave exactly like an SMTP server on stdin and stdout.  Any debugging should be sent to stderr, which will be directed to your terminal.  In the real world swaks can generally handle some debug on the child's stdout, but there are no guarantees on how much it can handle.
+: Provide a process name and arguments to the process.  swaks will attempt to spawn the process and communicate with it via pipes.
 </blockquote>
 
 === SMTP LAYER OPTIONS ===
@@ -196,20 +194,15 @@ These are options related to encrypting the transaction.  These have been tested
 </blockquote><blockquote>
 -tls
 : Require connection to use STARTTLS.  Exit if TLS not available for any reason (not advertised, negotiations failed, etc).
+--tls-optional, -tlso
+: Attempt to use STARTTLS if available, continue with normal transaction if TLS was unable to be negotiated for any reason
+</blockquote><blockquote>
+--tls-optionsl-strict, -tlsos
+: Attempt to use STARTTLS if available.  Proceed with transaction if TLS is negotiated successfully or STARTTLS not advertised.  If STARTTLS is advertised but TLS negotiations fail, treat as an error and abort transaction.
+</blockquote><blockquote>
+--tls-on-connect, -tlsc
+: Initiate a TLS connection immediately on connection.  Use to test smtps/ssmtp servers.  If this options is specified, the default port changes from 25 to 465, though this can still be overridden with the -p option.
 </blockquote>
-<pre>
-=item -tlso, --tls-optional
-
-Attempt to use STARTTLS if possible, continue t/ normal transaction if TLS unavailable.
-
-=item -tlsos, --tls-optional-strict
-
-Attempt to use STARTTLS if available.  proceed if available and succeeds or not advertised.  If advertised but TLS negotiations fail, error out.
-
-=item -tlsc, --tls-on-connect
-
-Initiate a TLS connection immediately on connection.  Use to test smtps/ssmtp servers.  If this options is specified, the default port changes from 25 to 465, though this can still be overridden with the -p option.
-</pre>
 
 === AUTHENTICATION ===
 <pre>
@@ -299,6 +292,16 @@ Don't strip the From_ line from the DATA portion, if present.
 </pre>
 
 === PROGRAM OUTPUT ===
+<blockquote>
+By default swaks provides a transcript of its transactions to its caller (STDOUT/STDERR).  This transcript aims to be as faithful a representation as possible of the transaction.  It does fix up this output by adding informational prefixes to lines and by providing plaintext versions of TLS transactions
+</blockquote><blockquote>
+The "informational prefixes" are referred to as transaction hints.  These hints are initially composed of those marking lines that are output of swaks itself, either informational or error messages, and those that indicate a line of data actually sent or received in a transaction.  This table indicates the hints and their meanings:
+</blockquote><blockquote>
+HINTS INDICATING PROGRAM STATUS
+HINTS INDICATING LINES OF DATA FROM TRANSACTION
+</blockquote><blockquote>
+The following options control what and how output is displayed to the caller.
+</blockquote>
 <pre>
 =item -nth, --no-hints
 
