@@ -198,6 +198,34 @@ These options are related to the protocol layer.
 
 > Specify which protocol to use in the transaction.  Valid options are shown in the table below.  Currently the 'core' protocols are SMTP, ESMTP, and LMTP.  By using variations of these protocol types one can tersely specify default ports, whether authentication should be attempted, and the type of TLS connection that should be attempted.  The default protocol is ESMTP.  This table demonstrates the available arguments to --protocol and the options each sets as a side effect:
 
+> SMTP
+> > HELO Verb: HELO
+> > Implied Options: "-p 25"
+
+> SMTP: HELO = HELO, Implied Options: "-p 25"
+
+> SSMTP: HELO = EHLO->HELO, Implied Options: "-tlsc -p 465"
+
+> SSMTPA: HELO = EHLO->HELO, Implied Options: "-a -tlsc -p 465"
+
+> SMTPS: HELO = HELO, Implied Options: "-tlsc -p 465"
+
+> ESMTP: HELO = EHLO->HELO, Implied Options: "-p 25"
+
+> ESMTPA: HELO = EHLO->HELO, Implied Options: "-a -p 25"
+
+> ESMTPS: HELO = EHLO->HELO, Implied Options: "-tls -p 25"
+
+> ESMTPSA: HELO = EHLO->HELO, Implied Options: "-a -tls -p 25"
+
+> LMTP: HELO = LHLO, Implied Options: "-p 24"
+
+> LMTPA: HELO = LHLO, Implied Options: "-a -p 24"
+
+> LMTPS: HELO = LHLO, Implied Options: "-tls -p 24"
+
+> LMTPSA: HELO = LHLO, Implied Options: "-a -tls -p 24"
+
 > Protocol !! HELO Verb      !! Auth Options !! TLS Options !! Port
 
 > SMTP    | HELO            |         |         | smtp  / 25
