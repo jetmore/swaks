@@ -481,3 +481,6 @@ swaks   (20011219)
         > 20080618 released 20080618.0-dev to martin#antibodymx.net
 	* 20100203 updated copyright date to 2010
 	* 20100203 declaring docs good enough, finished rewrite
+	* 20100204 fixed TZ bug which could occassionally generate TZs offsets
+	           like +0099 (instead of +0100) for GMT+X TZs (not GMT-X).
+	           fixed debian bug 566013)

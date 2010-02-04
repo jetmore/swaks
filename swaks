@@ -1918,14 +1918,16 @@ sub get_username {
 sub get_date_string {
   return($G::date_string) if (length($G::date_string) > 0);
 
-  my @l = localtime();
+  my $et = time();
+
+  my @l = localtime($et);
   my $o = 0;
 
   if (!avail("date_manip")) {
     ptrans(12, avail_str("date_manip").".  Date strings will be in GMT");
-    @l = gmtime();
+    @l = gmtime($et);
   } else {
-    my @g = gmtime();
+    my @g = gmtime($et);
     $o = (timelocal(@l) - timelocal(@g))/36;
   }
   $G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
