@@ -126,16 +126,15 @@ A set of "portable" defaults can also be created by adding a perl __DATA__ secti
 
 If present and configuration files have not been explicitly turned off, the __DATA__ config is always read.  Only one other configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.  Specifying the --config option with no argument turns off the processing of both the __DATA__ config and any actual config files.
 
-The format of the configuration file is designed to allow future expansion.  Currently it only allows the equivalent of command line options to be specified.  These options must be given between a line of "<OPTIONS>" and a line of "</OPTIONS>".  Between these two lines, lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to swaks.  In this file the leading dash or dashes to options are optional.  Here is an example of the contents of a configuration file:
+In a configuration file lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to swaks, with the leading dash or dashes optional.  Everything after a option line's first space is assumed to be the option's argument and is not shell processed.  Therefore quoting is usually unneeded and will be included literally in the argument.  Here is an example of the contents of a configuration file:
 
-    <OPTIONS>
+
     # always use this sender, no matter server or logged in user
     --from fred@example.com
-    # I prefer my test emails have a pretty from header (note lack of dashes on option)
+    # I prefer my test emails have a pretty from header.  Note
+    # the lack of dashes on option and lack of quotes around
+    # entire argument.
     h-From: "Fred Example" <fred@example.com>
-    </OPTIONS>
-
-Note that everything after the first space is assumed to be the option's argument and is not shell processed, so any quoting is usually unneeded and will not be stripped off by the shell.
 
 There is a deprecated option --input-file (or -l) in swaks that was a precursor of the configuration file defined here.  That option has been judged deficient and is being replaced wholesale with the idea of the configuration file defined above.  The option still exists for the time being but its use is strongly discouraged.  It is no longer documented, and it will be removed entirely in some future release.
 

@@ -1302,23 +1302,15 @@ sub load_args {
 
   # All of the above will result in $config_file either being empty or
   # containing the one and only config file we will use.
-  # the long term plan is that we could store other stuff in here too so
-  # we may move processing somewhere else, but for now just handle here
   if ($config_file) {
     foreach my $configf ('&DATA', $config_file) {
       if (open(C, "<$configf")) {
-        # we only pay attention to file between ^<OPTIONS>$ and ^</OPTIONS>$
-        # here.  "#" in col 0 is a comment
-        while (defined(my $l = <C>)) {
-          if ($l =~ /^<OPTIONS>\s*$/) {
-            while (defined(my $m = <C>)) {
-              last if ($m =~ m|^</OPTIONS>\s*$|);
-              next if ($m =~ m|^#|);
-              chomp($m);
-              $m = '-' . $m if ($m !~ /^-/);
-              push(@ARGV, split(/\s/, $m, 2));
-            }
-          }
+        # "#" in col 0 is a comment
+        while (defined(my $m = <C>)) {
+          next if ($m =~ m|^#|);
+          chomp($m);
+          $m = '-' . $m if ($m !~ /^-/);
+          push(@ARGV, split(/\s/, $m, 2));
         }
         close(C);
       } elsif (!$config_is_default && $configf eq $config_file) {

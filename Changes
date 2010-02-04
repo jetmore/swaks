@@ -484,3 +484,4 @@ swaks   (20011219)
 	* 20100204 fixed TZ bug which could occassionally generate TZs offsets
 	           like +0099 (instead of +0100) for GMT+X TZs (not GMT-X).
 	           fixed debian bug 566013)
+	* 20100204 removed requirement for OPTIONS markers in config files
