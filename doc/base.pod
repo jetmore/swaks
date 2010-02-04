@@ -4,51 +4,71 @@ swaks - Swiss Army Knife SMTP, the all-purpose smtp transaction tester
 
 =head1 DESCRIPTION
 
-swaks' primary design goal is to be a transaction-oriented SMTP test tool, used for debugging mail servers. stress testing configs, etc.  It handles SMTP features and extensions such as TLS, authentication, and pipelining; multiple version of the SMTP protocol including SMTP, ESMTP, and LMTP; and multiple transport methods including unix-domain sockets, internet-domain sockets, and pipes to spawned processes.  Options can be specified in environment variables, configuration files, and the command line with a goal of being extremely configurable for ease of use for operators and scripters.
+swaks' primary design goal is to be a flexible, scriptable, transaction-oriented SMTP test tools.  It handles SMTP features and extensions such as TLS, authentication, and pipelining; multiple version of the SMTP protocol including SMTP, ESMTP, and LMTP; and multiple transport methods including unix-domain sockets, internet-domain sockets, and pipes to spawned processes.  Options can be specified in environment variables, configuration files, and the command line allowing maximum configurability and ease of use for operators and scripters.
 
 =head1 QUICK START
 
-=over 4
+Deliver a standard test email to user@example.com on port 25 of test-server.example.net:
 
-=item Deliver a standard test email to user@example.com on port 25 of test-server.example.net:
+=over 4
 
 swaks --to user@example.com --server test-server.example.net
 
-=item Deliver a standard test email, requiring CRAM-MD5 authentication as user me@example.com.  An "X-Test" header will be added to the email body.  The authentication password will be prompted for.
+=back
+
+Deliver a standard test email, requiring CRAM-MD5 authentication as user me@example.com.  An "X-Test" header will be added to the email body.  The authentication password will be prompted for.
+
+=over 4
 
 swaks --to user@example.com --from me@example.com --auth CRAM-MD5 --auth-user me@example.com --header-X-Test "test email"
 
-=item Test a virus scanner using EICAR in an attachment.  Don't show the message DATA part.:
+=back
+
+Test a virus scanner using EICAR in an attachment.  Don't show the message DATA part.:
+
+=over 4
 
 swaks -t user@example.com --attach - --server test-server.example.com --suppress-data </path/to/eicar.txt
 
-=item Test a spam scanner using GTUBE in the body of an email, routed via the MX records for example.com:
+=back
+
+Test a spam scanner using GTUBE in the body of an email, routed via the MX records for example.com:
+
+=over 4
 
 swaks --to user@example.com --body /path/to/gtube/file
 
-=item Deliver a standard test email to user@example.com using the LMTP protocol via a UNIX domain socket file
+=back
+
+Deliver a standard test email to user@example.com using the LMTP protocol via a UNIX domain socket file
+
+=over 4
 
 swaks --to user@example.com --socket /var/lda.sock --protocol LMTP
 
-=item Report all the recipients in a text file that are non-verifyiable on a test server:
+=back
 
- for E in `cat /path/to/email/file`
- do
-     swaks --to $E --server test-server.example.com --quit-after RCPT --hide-all
-     [ $? -ne 0 ] && echo $E
- done
+Report all the recipients in a text file that are non-verifyiable on a test server:
+
+=over 4
+
+    for E in `cat /path/to/email/file`
+    do
+        swaks --to $E --server test-server.example.com --quit-after RCPT --hide-all
+        [ $? -ne 0 ] && echo $E
+    done
 
 =back
 
 =head1 TERMS AND CONVENTIONS
 
-It can be confusing discussing the various portions of an SMTP transaction.  This document tries to be consistent in its use of terms to avoid unnecessary confusion.
+This document tries to be consistent and specific in its use of the following terms to reduce confusion.
 
 =over 4
 
 =item Transaction
 
-A transaction is the opening of connection over a transport to a target and using a messaging protocol to attempt to deliver a message.
+A transaction is the opening of a connection over a transport to a target and using a messaging protocol to attempt to deliver a message.
 
 =item Target
 
@@ -90,7 +110,7 @@ To prevent potential confusion in this document a flag to swaks is always referr
 
 Options can be given to swaks in three ways.  They can be specified in a configuration file, in environment variables, and on the command line.  Depending on the specific option and whether or not an argument is given to it, swaks may prompt the user for the argument.
 
-When swaks evaluates its options, it first looks for a configuration file (either in a default location or specified with --config).  Then it evaluates any options in environment variables.  Finally, it evaluates command line options.  At reach round of processing, any options set earlier will be overridden.  Additionally, any option can be prefixed with "no-" to cause swaks to forget that the variable had previously been set.  This capability is necessary because many options treat defined-but-no-argument differently than not-defined.
+When swaks evaluates its options, it first looks for a configuration file (either in a default location or specified with --config).  Then it evaluates any options in environment variables.  Finally, it evaluates command line options.  At each round of processing, any options set earlier will be overridden.  Additionally, any option can be prefixed with "no-" to cause swaks to forget that the variable had previously been set.  This capability is necessary because many options treat defined-but-no-argument differently than not-defined.
 
 The exact mechanism and format for using each of the types is listed below.
 
@@ -98,7 +118,7 @@ The exact mechanism and format for using each of the types is listed below.
 
 =item CONFIGURATION FILE
 
-A configuration file to set commonly-used or abnormally verbose options can be used.  By default swaks looks in order for $SWAKS_HOME/.swaksrc, $HOME/.swaksrc, and $LOGDIR/.swaksrc.  If one of those is found to exist (and --config has not been used) that file is used as the configuration file.
+A configuration file can be used to set commonly-used or abnormally verbose options.  By default swaks looks in order for $SWAKS_HOME/.swaksrc, $HOME/.swaksrc, and $LOGDIR/.swaksrc.  If one of those is found to exist (and --config has not been used) that file is used as the configuration file.
 
 Additionally a configuration file in a non-default location can be specified using --config.  If this is set and not given an argument swaks will not use any configuration file, including any default file.  If --config points to a readable file, it is used as the configuration file, overriding any default that may exist.  If it points to a non-readable file and error will be shown and swaks will exit.
 
@@ -154,15 +174,15 @@ This transport requires the IO::Socket module which is part of the standard perl
 
 =over 4
 
-=item --server [destination mail server[:port]], -s [destination mail server[:port]]
+=item -s, --server [destination mail server[:port]]
 
 Explicitly tell swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the Net::DNS module.  If Net::DNS is not available swaks will attempt to connect to localhost to deliver.  See also --copy-routing.
 
-=item --port [port], -p [port]
+=item -p, --port [port]
 
 Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is determined by the --protocol option.  See --protocol for more details.
 
-=item --local-interface [IP or hostname], -li [IP or hostname]
+=item -li, --local-interface [IP or hostname]
 
 Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose local interface.
 
@@ -206,53 +226,53 @@ These options are related to the protocol layer.
 
 =over 4
 
-=item --to [email-address[,email-address,...]], -t [email-address[,email-address,...]]
+=item -t, --to [email-address[,email-address,...]]
 
 Tells swaks to use argument(s) as the envelope-recipient for the email, or prompt for recipient if no argument provided.  If multiple recipients are provided and the recipient domain is needed to determine routing the domain of the last recipient provided is used.
 
 There is no default value for this option.  If no recipients are provided via any means, user will be prompted to provide one interactively.  The only exception to this is if a --quit-after value is provided which will cause the smtp transaction to be terminated before the recipient is needed.
 
-=item --from [email-address], -f [email-address]
+=item -f, --from [email-address]
 
 Use argument as envelope-sender for email, or prompt user if no argument specified.  The string <> can be supplied to mean the null sender.  If user does not specify a sender address a default value is used.  The domain-part of the default sender is a best guess at the fully-qualified domain name of the local host.  The method of determining the local-part varies.  On Windows, Win32::LoginName() is used.  On unix-ish platforms, the $LOGNAME environment variable is used if it is set.  Otherwise getpwuid(3) is used.  See also --force-getpwuid.
 
-=item --helo [helo-string], --ehlo [helo-string], --lhlo [helo-string], -h [helo-string]
+=item --ehlo, --lhlo, -h, --helo [helo-string]
 
 String to use as argument to HELO/EHLO/LHLO command, or prompt use if no argument is specified.  If this option is not used a best guess at the fully-qualified domain name of the local host is used.  If the Sys::Hostname module, which is part of the base distribution, is not available the user will be prompted for a HELO value.  Note that Sys::Hostname has been observed to not be able to find the local hostname in certain circumstances.  This has the same effect as if Sys::Hostname were unavailable.
 
-=item --quit-after [stop-point], -q [stop-point]
+=item -q, --quit-after [stop-point]
 
 Point at which the transaction should be stopped.  When the requested stopping point is reached in the transaction, and provided that swaks has not errored out prior to reaching it,  swaks will send "QUIT" and attempt to close the connection cleanly.  These are the valid arguments and notes about their meaning.
 
 =over 4
 
-=item CONNECT
+=item CONNECT, BANNER
 
-Terminate the session after receiving the greeting banner from the target.  BANNER is a valid synonym.
+Terminate the session after receiving the greeting banner from the target.
 
-=item FIRST-HELO
+=item FIRST-HELO, FIRST-EHLO, FIRST-LHLO
 
-In a STARTTLS (but not tls-on-connect) session, terminate the transaction after the first of two HELOs.  In a non-STARTTLS transaction, behaves the same as HELO (see below).  FIRST-EHLO and FIRST-LHLO are valid synonyms.
+In a STARTTLS (but not tls-on-connect) session, terminate the transaction after the first of two HELOs.  In a non-STARTTLS transaction, behaves the same as HELO (see below).
 
 =item TLS
 
 Quit the transaction immediately following TLS negotiation.  Note that this happens in different places depending on whether STARTTLS or tls-on-connect are used.  This always quits after the point where TLS would have been negotiated, regardless of whether it was attempted.
 
-=item HELO
+=item HELO, EHLO, LHLO
 
-In a STARTTLS session, quit after the second HELO.  Otherwise quit after the first and only HELO.  EHLO and LHLO are valid synonyms.
+In a STARTTLS session, quit after the second HELO.  Otherwise quit after the first and only HELO.
 
 =item AUTH
 
 Quit after authentication.  This always quits after the point where authentication would have been negotiated, regardless of whether it was attempted.
 
-=item MAIL
+=item MAIL, FROM
 
-Quit after MAIL FROM: is sent.  FROM is a valid synonym.
+Quit after MAIL FROM: is sent.
 
-=item RCPT
+=item RCPT, TO
 
-Quit after RCPT TO: is sent.  TO is a valid synonym.
+Quit after RCPT TO: is sent.
 
 =back
 
@@ -268,51 +288,51 @@ Specify which protocol to use in the transaction.  Valid options are shown in th
 
 =item SMTP
 
-HELO = HELO, Implied Options: "-p 25"
+HELO, "-p 25"
 
 =item SSMTP
 
-HELO = EHLO->HELO, Implied Options: "-tlsc -p 465"
+EHLO->HELO, "-tlsc -p 465"
 
 =item SSMTPA
 
-HELO = EHLO->HELO, Implied Options: "-a -tlsc -p 465"
+EHLO->HELO, "-a -tlsc -p 465"
 
 =item SMTPS
 
-HELO = HELO, Implied Options: "-tlsc -p 465"
+HELO, "-tlsc -p 465"
 
 =item ESMTP
 
-HELO = EHLO->HELO, Implied Options: "-p 25"
+EHLO->HELO, "-p 25"
 
 =item ESMTPA
 
-HELO = EHLO->HELO, Implied Options: "-a -p 25"
+EHLO->HELO, "-a -p 25"
 
 =item ESMTPS
 
-HELO = EHLO->HELO, Implied Options: "-tls -p 25"
+EHLO->HELO, "-tls -p 25"
 
 =item ESMTPSA
 
-HELO = EHLO->HELO, Implied Options: "-a -tls -p 25"
+EHLO->HELO, "-a -tls -p 25"
 
 =item LMTP
 
-HELO = LHLO, Implied Options: "-p 24"
+LHLO, "-p 24"
 
 =item LMTPA
 
-HELO = LHLO, Implied Options: "-a -p 24"
+LHLO, "-a -p 24"
 
 =item LMTPS
 
-HELO = LHLO, Implied Options: "-tls -p 24"
+LHLO, "-tls -p 24"
 
 =item LMTPSA
 
-HELO = LHLO, Implied Options: "-a -tls -p 24"
+LHLO, "-a -tls -p 24"
 
 =back
 
@@ -336,15 +356,15 @@ These are options related to encrypting the transaction.  These have been tested
 
 Require connection to use STARTTLS.  Exit if TLS not available for any reason (not advertised, negotiations failed, etc).
 
-=item --tls-optional, -tlso
+=item -tlso, --tls-optional
 
 Attempt to use STARTTLS if available, continue with normal transaction if TLS was unable to be negotiated for any reason
 
-=item --tls-optionsl-strict, -tlsos
+=item -tlsos, --tls-optional-strict
 
 Attempt to use STARTTLS if available.  Proceed with transaction if TLS is negotiated successfully or STARTTLS not advertised.  If STARTTLS is advertised but TLS negotiations fail, treat as an error and abort transaction.
 
-=item --tls-on-connect, -tlsc
+=item --tlsc, --tls-on-connect
 
 Initiate a TLS connection immediately on connection.  Following common convention, if this option is specified the default port changes from 25 to 465, though this can still be overridden with the --port option.
 
@@ -356,7 +376,7 @@ Get a copy of the TLS peer's certificate.  If no argument is given, it will be d
 
 =head1 AUTHENTICATION
 
-If instructed to do so swaks will attempt to authenticate to the target mail server.  This section details available authentication types, requirements, options and their interactions, and other fine points in authentication usage.  Because authentication is defined as an extension in the ESMTP protocol it will be unavailable if --protocol is set to a variation of smtp.
+swaks will attempt to authenticate to the target mail server if instructed to do so.  This section details available authentication types, requirements, options and their interactions, and other fine points in authentication usage.  Because authentication is defined as an extension in the ESMTP protocol it will be unavailable if --protocol is set to a variation of smtp.
 
 All authentication methods require base64 encoding.  If the MIME::Base64 perl module is loadable swaks attempts to use it to perform these encodings.  If MIME::Base64 is not available swaks will use its own onboard base64 routines.  These are slower than the MIME::Base64 routines and less reviewed, though they have been tested thoroughly.  Using the MIME::Base64 module is encouraged.
 
@@ -368,7 +388,7 @@ The following options affect swaks' use of authentication.  These options are al
 
 =over 4
 
-=item --auth [auth-type[,auth-type,...]], -a [auth-type[,auth-type,...]]
+=item -a, --auth [auth-type[,auth-type,...]]
 
 Require swaks to authenticate.  If no argument is given, any supported auth-types advertised by the server are tried until one succeeds or all fail.  If one or more auth-types are specified as an argument, each that the server also supports is tried in order until one succeeds or all fail.  This option requires swaks to authenticate, so if no common auth-types are found or no credentials succeed, swaks displays an error and exits.
 
@@ -400,29 +420,29 @@ In addition to the standard username and password, this authentication type can 
 
 =back
 
-=item --auth-optional [auth-type[,auth-type,...]], -ao [auth-type[,auth-type,...]]
+=item -ao, --auth-optional [auth-type[,auth-type,...]]
 
 This option behaves identically to --auth except that it requests authentication rather than requiring it.  If no common auth-types are found or no credentials succeed, swaks proceeds as if authentication had not been requested.
 
-=item --auth-optional-strict [auth-type[,auth-type,...]], -aos [auth-type[,auth-type,...]]
+=item -aos, --auth-optional-strict [auth-type[,auth-type,...]]
 
 This option is a compromise between --auth and --auth-optional.  If no common auth-types are found, swaks behaves as if --auth-optional were specified and proceeds with the transaction.  If swaks can't support requested auth-type, the server doesn't advertise any common auth-types, or if no credentials succeed, swaks behaves as if --auth were used and exits with an error.
 
-=item --auth-user [username], -au [username]
+=item -au, --auth-user [username]
 
 Provide the username to be used for authentication, or prompt the user for it if no argument is provided.  The string <> can be supplied to mean an empty username.
 
-=item --auth-password [password], -ap [password]
+=item -ap, --auth-password [password]
 
 Provide the password to be used for authentication, or prompt the user for it if no argument is provided.  The string <> can be supplied to mean an empty password.
 
-=item --auth-map [auth-alias=auth-type[,...]], -am [auth-alias=auth-type[,...]]
+=item -am, --auth-map [auth-alias=auth-type[,...]]
 
 Provides a way to map alternate names onto base authentication types.  Useful for any sites that use alternate names for common types.  This functionality is actually used internally to map types SPA and MSN onto the base type NTLM.  The command line argument to simulate this would be "--auth-map SPA=NTLM,MSN=NTLM".  All of the auth-types listed above are valid targets for mapping except SPA and MSN.
 
-=item --auth-plaintext, -apt
+=item -apt, --auth-plaintext
 
-Instead of showing AUTH strings literally (in base64), translate them to plaintext before printing on screen.
+Instead of showing AUTH strings base64 encoded as they are transmitted, translate them to plaintext before printing on screen.
 
 =back
 
@@ -432,7 +452,7 @@ These options pertain to the contents for the DATA portion of the SMTP transacti
 
 =over 4
 
-=item --data [data-portion], -d [data-portion]
+=item -d, --data [data-portion]
 
 Use argument as the entire contents of DATA, or prompt user if no argument specified.  If the argument '-' is provided the data will be read from STDIN.  If any other argument is provided and it represents the name of an open-able file, the contents of the file will be used.  Any other argument will be itself for the DATA contents.
 
@@ -480,7 +500,7 @@ It is legal for '-' (STDIN) to be specified as an argument multiple times (once 
 
 By default, content that gets MIME attached to a message with the --attach option is encoded as application/octet-stream.  --attach-type changes the mime type for every --attach option which follows it.  It can be specified multiple times.
 
-=item --add-header [header], -ah [header]
+=item -ah, --add-header [header]
 
 This option allows headers to be added to the DATA.  If %H is present in the DATA it is replaced with the argument to this option.  If %H is not present, the argument is inserted between the first two consecutive newlines in the DATA (that is, it is inserted at the end of the existing headers).
 
@@ -510,43 +530,43 @@ The "informational prefixes" are referred to as transaction hints.  These hints 
 
 =item ===
 
-program, Indicates an informational line generated by swaks
+Indicates an informational line generated by swaks
 
 =item ***
 
-program, Indicates an error generated within swaks
+Indicates an error generated within swaks
 
 =item ->
 
-transaction, Indicates an expected line sent by swaks to target server
+Indicates an expected line sent by swaks to target server
 
 =item ~>
 
-transaction, Indicates a TLS-encrypted, expected line sent by swaks to target server
+Indicates a TLS-encrypted, expected line sent by swaks to target server
 
 =item **>
 
-transaction, Indicates an unexpected line sent by swaks to the target server
+Indicates an unexpected line sent by swaks to the target server
 
 =item *~>
 
-transaction, Indicates a TLS-encrypted, unexpected line sent by swaks to target server
+Indicates a TLS-encrypted, unexpected line sent by swaks to target server
 
 =item <-
 
-transaction, Indicates an expected line sent by target server to swaks
+Indicates an expected line sent by target server to swaks
 
 =item <~
 
-transaction, Indicates a TLS-encrypted, expected line sent by target server to swaks
+Indicates a TLS-encrypted, expected line sent by target server to swaks
 
 =item <**
 
-transaction, Indicates an unexpected line sent by target server to swaks
+Indicates an unexpected line sent by target server to swaks
 
 =item <~*
 
-transaction, Indicates a TLS-encrypted, unexpected line sent by target server to swaks
+Indicates a TLS-encrypted, unexpected line sent by target server to swaks
 
 =back
 
@@ -554,35 +574,35 @@ The following options control what and how output is displayed to the caller.
 
 =over 4
 
-=item --suppress-data, -n
+=item -n, --suppress-data
 
 Summarizes the DATA portion of the SMTP transaction instead of printing every line.  This option is very helpful, bordering on required, when using swaks to send certain test emails.  Emails with attachments, for instance, will quickly overwhelm a terminal if the DATA is not supressed.
 
-=item --show-time-lapse [i], -stl [i]
+=item -stl, --show-time-lapse [i]
 
 Display time lapse between send/receive pairs.  This option is most useful when Time::HiRes is available, in which case the time lapse will be displayed in thousandths of a second.  If Time::HiRes is unavailable or "i" is given as an argument the lapse will be displayed in integer seconds only.
 
-=item --no-hints, -nth
+=item -nth, --no-hints
 
 Don't show transaction hints (useful in conjunction with -hr to create copy/paste-able transactions).
 
-=item --hide-receive, -hr
+=item -hr, --hide-receive
 
 Don't display lines sent from the remote server being received by swaks
 
-=item --hide-send, -hs
+=item -hs, --hide-send
 
 Don't display lines being sent by swaks to the remote server
 
-=item --hide-informational, -hi
+=item -hi, --hide-informational
 
 Don't display non-error informational lines from swaks itself.
 
-=item --hide-all, -ha
+=item -ha, --hide-all
 
 Do not display any content to the terminal.
 
-=item --silent [level], -S [level]
+=item -S, --silent [level]
 
 Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.
 
@@ -716,3 +736,4 @@ Change logs, this help, and the latest version is found at this link.
 
 =back
 
+=cut
