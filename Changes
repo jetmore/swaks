@@ -479,3 +479,5 @@ swaks   (20011219)
         * 20080618 add --tls-get-peer-cert to save peer cert for evaluation
                    (suggested by Martin A. Brooks <martin#antibodymx.net>)
         > 20080618 released 20080618.0-dev to martin#antibodymx.net
+	* 20100203 updated copyright date to 2010
+	* 20100203 declaring docs good enough, finished rewrite
