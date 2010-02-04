@@ -366,114 +366,139 @@ Following are the supported authentication types including any individual notes 
 
 The following options affect swaks' use of authentication.  These options are all inter-related.  For instance, specifying --auth-user implies --auth and --auth-password.  Specifying --auth-optional implies --auth-user and --auth-password, etc.
 
---auth [auth-type[,auth-type,...]], -a [auth-type[,auth-type,...]]
+=over 4
 
-> Require swaks to authenticate.  If no argument is given, any supported auth-types advertised by the server are tried until one succeeds or all fail.  If one or more auth-types are specified as an argument, each that the server also supports is tried in order until one succeeds or all fail.  This option requires swaks to authenticate, so if no common auth-types are found or no credentials succeed, swaks displays an error and exits.
+=item --auth [auth-type[,auth-type,...]], -a [auth-type[,auth-type,...]]
 
-> The following tables lists the valid auth-types
+Require swaks to authenticate.  If no argument is given, any supported auth-types advertised by the server are tried until one succeeds or all fail.  If one or more auth-types are specified as an argument, each that the server also supports is tried in order until one succeeds or all fail.  This option requires swaks to authenticate, so if no common auth-types are found or no credentials succeed, swaks displays an error and exits.
 
-> LOGIN, PLAIN
+The following tables lists the valid auth-types
 
-> > These basic authentication types are fully supported and tested and have no additional requirements
+=over 4
 
-> CRAM-MD5
+=item LOGIN, PLAIN
 
-> > The CRAM-MD5 authenticator requires the Digest::MD5 module.  It is fully tested and believed to work against any server that implements it.
+These basic authentication types are fully supported and tested and have no additional requirements
 
-> DIGEST-MD5
+=item CRAM-MD5
 
-> > The DIGEST-MD5 authenticator (RFC2831) requires the Authen::DigestMD5 module.  Only known to have been tested against Communigate and may therefore have some implementation deficiencies.
+The CRAM-MD5 authenticator requires the Digest::MD5 module.  It is fully tested and believed to work against any server that implements it.
 
-> CRAM-SHA1
+=item DIGEST-MD5
 
-> > The CRAM-SHA1 authenticator requires the Digest::SHA1 module.  This type has only been tested against a non-standard implementation on an Exim server and may therefore have some implementation deficiencies.
+The DIGEST-MD5 authenticator (RFC2831) requires the Authen::DigestMD5 module.  Only known to have been tested against Communigate and may therefore have some implementation deficiencies.
 
-> NTLM/SPA/MSN
+=item CRAM-SHA1
 
-> > These authenticators require the Authen::NTLM module.  Note that there are two modules using the Authen::NTLM namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.03.tar.gz) is the version required by swaks.  This type has been tested against Exim, Communigate, and Exchange 2007.
+The CRAM-SHA1 authenticator requires the Digest::SHA1 module.  This type has only been tested against a non-standard implementation on an Exim server and may therefore have some implementation deficiencies.
 
-> > In addition to the standard username and password, this authentication type can also recognize a "domain".  Rather than create a new option for this single authentication type, the domain can be passed by adding "%DOMAIN" to the end of the username.  For instance, if "-ap user@example.com%NTDOM" is passed, "user@example.com" is the username and "NTDOM" is the domain.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
+=item NTLM/SPA/MSN
 
---auth-optional [auth-type[,auth-type,...]], -ao [auth-type[,auth-type,...]]
+These authenticators require the Authen::NTLM module.  Note that there are two modules using the Authen::NTLM namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.03.tar.gz) is the version required by swaks.  This type has been tested against Exim, Communigate, and Exchange 2007.
 
-> This option behaves identically to --auth except that it requests authentication rather than requiring it.  If no common auth-types are found or no credentials succeed, swaks proceeds as if authentication had not been requested.
+In addition to the standard username and password, this authentication type can also recognize a "domain".  Rather than create a new option for this single authentication type, the domain can be passed by adding "%DOMAIN" to the end of the username.  For instance, if "-ap user@example.com%NTDOM" is passed, "user@example.com" is the username and "NTDOM" is the domain.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
 
---auth-optional-strict [auth-type[,auth-type,...]], -aos [auth-type[,auth-type,...]]
+=back
 
-> This option is a compromise between --auth and --auth-optional.  If no common auth-types are found, swaks behaves as if --auth-optional were specified and proceeds with the transaction.  If swaks can't support requested auth-type, the server doesn't advertise any common auth-types, or if no credentials succeed, swaks behaves as if --auth were used and exits with an error.
+=item --auth-optional [auth-type[,auth-type,...]], -ao [auth-type[,auth-type,...]]
 
---auth-user [username], -au [username]
+This option behaves identically to --auth except that it requests authentication rather than requiring it.  If no common auth-types are found or no credentials succeed, swaks proceeds as if authentication had not been requested.
 
-> Provide the username to be used for authentication, or prompt the user for it if no argument is provided.  The string <> can be supplied to mean an empty username.
+=item --auth-optional-strict [auth-type[,auth-type,...]], -aos [auth-type[,auth-type,...]]
 
---auth-password [password], -ap [password]
+This option is a compromise between --auth and --auth-optional.  If no common auth-types are found, swaks behaves as if --auth-optional were specified and proceeds with the transaction.  If swaks can't support requested auth-type, the server doesn't advertise any common auth-types, or if no credentials succeed, swaks behaves as if --auth were used and exits with an error.
 
-> Provide the password to be used for authentication, or prompt the user for it if no argument is provided.  The string <> can be supplied to mean an empty password.
+=item --auth-user [username], -au [username]
 
---auth-map [auth-alias=auth-type[,...]], -am [auth-alias=auth-type[,...]]
+Provide the username to be used for authentication, or prompt the user for it if no argument is provided.  The string <> can be supplied to mean an empty username.
 
-> Provides a way to map alternate names onto base authentication types.  Useful for any sites that use alternate names for common types.  This functionality is actually used internally to map types SPA and MSN onto the base type NTLM.  The command line argument to simulate this would be "--auth-map SPA=NTLM,MSN=NTLM".  All of the auth-types listed above are valid targets for mapping except SPA and MSN.
+=item --auth-password [password], -ap [password]
 
---auth-plaintext, -apt
+Provide the password to be used for authentication, or prompt the user for it if no argument is provided.  The string <> can be supplied to mean an empty password.
 
-> Instead of showing AUTH strings literally (in base64), translate them to plaintext before printing on screen.
+=item --auth-map [auth-alias=auth-type[,...]], -am [auth-alias=auth-type[,...]]
+
+Provides a way to map alternate names onto base authentication types.  Useful for any sites that use alternate names for common types.  This functionality is actually used internally to map types SPA and MSN onto the base type NTLM.  The command line argument to simulate this would be "--auth-map SPA=NTLM,MSN=NTLM".  All of the auth-types listed above are valid targets for mapping except SPA and MSN.
+
+=item --auth-plaintext, -apt
+
+Instead of showing AUTH strings literally (in base64), translate them to plaintext before printing on screen.
+
+=back
 
 =head1 DATA OPTIONS
 
 These options pertain to the contents for the DATA portion of the SMTP transaction.
 
---data [data-portion], -d [data-portion]
+=over 4
 
-> Use argument as the entire contents of DATA, or prompt user if no argument specified.  If the argument '-' is provided the data will be read from STDIN.  If any other argument is provided and it represents the name of an open-able file, the contents of the file will be used.  Any other argument will be itself for the DATA contents.
+=item --data [data-portion], -d [data-portion]
 
-> The value can be on one single line, with \n (ascii 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\nX-Mailer: swaks v$p_version jetmore.org/john/code/#swaks\n%H\n\n%B\n".
+Use argument as the entire contents of DATA, or prompt user if no argument specified.  If the argument '-' is provided the data will be read from STDIN.  If any other argument is provided and it represents the name of an open-able file, the contents of the file will be used.  Any other argument will be itself for the DATA contents.
 
-> Very basic token parsing is performed on the DATA portion.  The following table shows the recognized tokens and their replacement values:
+The value can be on one single line, with \n (ascii 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\nX-Mailer: swaks v$p_version jetmore.org/john/code/#swaks\n%H\n\n%B\n".
 
+Very basic token parsing is performed on the DATA portion.  The following table shows the recognized tokens and their replacement values:
 
-> %F - Replaced with the envelope-sender.
+=over 4
 
-> %T - Replaced with the envelope-recipient(s).
+=item %F
 
-> %D - Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module Time::Local for timezone calculations.  If this module is unavailable the date string will be in GMT.
+Replaced with the envelope-sender.
 
-> %H - Replaced with the contents of the --add-header option.  If --add-header is not specified this token is simply removed.
+=item %T
 
-> %B - Replaced with the value specified by the --body option.  See --body for default.
+Replaced with the envelope-recipient(s).
 
---body [body-specification]
+=item %D
 
-> Specify the body of the email.  The default is "This is a test mailing".  If no argument to --body is given, prompt to supply one interactively.  If '-' is supplied, the body will be read from standard input.  If any other text is provided and the text represents an open-able file, the content of that file is used as the body.  If it does not represent an open-able file, the text itself is used as the body.
+Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module Time::Local for timezone calculations.  If this module is unavailable the date string will be in GMT.
 
---attach [attachment-specification]
+=item %H
 
-> When one or more --attach option is supplied, the message is changed into a multipart/mixed MIME message.  The arguments to --attach are processed the same as --body with regard to stdin, file contents, etc.  --attach can be supplied multiple times to create multiple attachments.  By default each attachment is attached as a application/octet-stream file.  See --attach-type for changing this behavior.
+Replaced with the contents of the --add-header option.  If --add-header is not specified this token is simply removed.
 
-> When the message changes to MIME format, the previous body (%B) is attached as a text/plain type as the first attachment.  --body can still be used to specify the contents of this body attachment.
+=item %B
 
-> It is legal for '-' (STDIN) to be specified as an argument multiple times (once for --body and multiple times for --attach).  In this case, the same content will be attached each time it is specified.  This is useful for attaching the same content with multiple MIME types.
+Replaced with the value specified by the --body option.  See --body for default.
 
---attach-type [mime-type]
+=back
 
-> By default, content that gets MIME attached to a message with the --attach option is encoded as application/octet-stream.  --attach-type changes the mime type for every --attach option which follows it.  It can be specified multiple times.
+=item --body [body-specification]
 
---add-header [header], -ah [header]
+Specify the body of the email.  The default is "This is a test mailing".  If no argument to --body is given, prompt to supply one interactively.  If '-' is supplied, the body will be read from standard input.  If any other text is provided and the text represents an open-able file, the content of that file is used as the body.  If it does not represent an open-able file, the text itself is used as the body.
 
-> This option allows headers to be added to the DATA.  If %H is present in the DATA it is replaced with the argument to this option.  If %H is not present, the argument is inserted between the first two consecutive newlines in the DATA (that is, it is inserted at the end of the existing headers).
+=item --attach [attachment-specification]
 
-> The option can either be specified multiple times or a single time with multiple headers seperated by a literal '\n' string.  So, "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header 'Foo: bar\nBaz: foo'" end up adding the same two headers.
+When one or more --attach option is supplied, the message is changed into a multipart/mixed MIME message.  The arguments to --attach are processed the same as --body with regard to stdin, file contents, etc.  --attach can be supplied multiple times to create multiple attachments.  By default each attachment is attached as a application/octet-stream file.  See --attach-type for changing this behavior.
 
---header [header-and-data], --h-Header [data]
+When the message changes to MIME format, the previous body (%B) is attached as a text/plain type as the first attachment.  --body can still be used to specify the contents of this body attachment.
 
-> These options allow a way to change headers that already exist in the DATA.  '--header "Subject: foo"' and '--h-Subject foo' are equivalent.  If the header does not already exist in the data then this argument behaves identically to --add-header.  However, if the header already exists it is replaced with the one specified.
+It is legal for '-' (STDIN) to be specified as an argument multiple times (once for --body and multiple times for --attach).  In this case, the same content will be attached each time it is specified.  This is useful for attaching the same content with multiple MIME types.
 
--g
+=item --attach-type [mime-type]
 
-> If specified, swaks will read the DATA value for the mail from STDIN.  This is equivalent to "--data -".  If there is a From_ line in the email, it will be removed (but see -nsf option).  Useful for delivering real message (stored in files) instead of using example messages.
+By default, content that gets MIME attached to a message with the --attach option is encoded as application/octet-stream.  --attach-type changes the mime type for every --attach option which follows it.  It can be specified multiple times.
 
---no-strip-from, -nsf
+=item --add-header [header], -ah [header]
 
-> Don't strip the From_ line from the DATA portion, if present.
+This option allows headers to be added to the DATA.  If %H is present in the DATA it is replaced with the argument to this option.  If %H is not present, the argument is inserted between the first two consecutive newlines in the DATA (that is, it is inserted at the end of the existing headers).
+
+The option can either be specified multiple times or a single time with multiple headers seperated by a literal '\n' string.  So, "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header 'Foo: bar\nBaz: foo'" end up adding the same two headers.
+
+=item --header [header-and-data], --h-Header [data]
+
+These options allow a way to change headers that already exist in the DATA.  '--header "Subject: foo"' and '--h-Subject foo' are equivalent.  If the header does not already exist in the data then this argument behaves identically to --add-header.  However, if the header already exists it is replaced with the one specified.
+
+=item -g
+
+If specified, swaks will read the DATA value for the mail from STDIN.  This is equivalent to "--data -".  If there is a From_ line in the email, it will be removed (but see -nsf option).  Useful for delivering real message (stored in files) instead of using example messages.
+
+=item --no-strip-from, -nsf
+
+Don't strip the From_ line from the DATA portion, if present.
+
+=back
 
 =head1 OUTPUT OPTIONS
 
@@ -481,137 +506,213 @@ By default swaks provides a transcript of its transactions to its caller (STDOUT
 
 The "informational prefixes" are referred to as transaction hints.  These hints are initially composed of those marking lines that are output of swaks itself, either informational or error messages, and those that indicate a line of data actually sent or received in a transaction.  This table indicates the hints and their meanings:
 
-> === program, Indicates an informational line generated by swaks
+=over 4
 
-> \*** program, Indicates an error generated within swaks
+=item ===
 
-> -> transaction, Indicates an expected line sent by swaks to target server
+program, Indicates an informational line generated by swaks
 
-> ~> transaction, Indicates a TLS-encrypted, expected line sent by swaks to target server
+=item ***
 
-> **> transaction, Indicates an unexpected line sent by swaks to the target server
+program, Indicates an error generated within swaks
 
-> *~> transaction, Indicates a TLS-encrypted, unexpected line sent by swaks to target server
+=item ->
 
-> <- transaction, Indicates an expected line sent by target server to swaks
+transaction, Indicates an expected line sent by swaks to target server
 
-> <~ transaction, Indicates a TLS-encrypted, expected line sent by target server to swaks
+=item ~>
 
-> <** transaction, Indicates an unexpected line sent by target server to swaks
+transaction, Indicates a TLS-encrypted, expected line sent by swaks to target server
 
-> <~* transaction, Indicates a TLS-encrypted, unexpected line sent by target server to swaks
+=item **>
+
+transaction, Indicates an unexpected line sent by swaks to the target server
+
+=item *~>
+
+transaction, Indicates a TLS-encrypted, unexpected line sent by swaks to target server
+
+=item <-
+
+transaction, Indicates an expected line sent by target server to swaks
+
+=item <~
+
+transaction, Indicates a TLS-encrypted, expected line sent by target server to swaks
+
+=item <**
+
+transaction, Indicates an unexpected line sent by target server to swaks
+
+=item <~*
+
+transaction, Indicates a TLS-encrypted, unexpected line sent by target server to swaks
+
+=back
 
 The following options control what and how output is displayed to the caller.
 
---suppress-data, -n
+=over 4
 
-> Summarizes the DATA portion of the SMTP transaction instead of printing every line.  This option is very helpful, bordering on required, when using swaks to send certain test emails.  Emails with attachments, for instance, will quickly overwhelm a terminal if the DATA is not supressed.
+=item --suppress-data, -n
 
---show-time-lapse [i], -stl [i]
+Summarizes the DATA portion of the SMTP transaction instead of printing every line.  This option is very helpful, bordering on required, when using swaks to send certain test emails.  Emails with attachments, for instance, will quickly overwhelm a terminal if the DATA is not supressed.
 
-> Display time lapse between send/receive pairs.  This option is most useful when Time::HiRes is available, in which case the time lapse will be displayed in thousandths of a second.  If Time::HiRes is unavailable or "i" is given as an argument the lapse will be displayed in integer seconds only.
+=item --show-time-lapse [i], -stl [i]
 
---no-hints, -nth
+Display time lapse between send/receive pairs.  This option is most useful when Time::HiRes is available, in which case the time lapse will be displayed in thousandths of a second.  If Time::HiRes is unavailable or "i" is given as an argument the lapse will be displayed in integer seconds only.
 
-> Don't show transaction hints (useful in conjunction with -hr to create copy/paste-able transactions).
+=item --no-hints, -nth
 
---hide-receive, -hr
+Don't show transaction hints (useful in conjunction with -hr to create copy/paste-able transactions).
 
-> Don't display lines sent from the remote server being received by swaks
+=item --hide-receive, -hr
 
---hide-send, -hs
+Don't display lines sent from the remote server being received by swaks
 
-> Don't display lines being sent by swaks to the remote server
+=item --hide-send, -hs
 
---hide-informational, -hi
+Don't display lines being sent by swaks to the remote server
 
-> Don't display non-error informational lines from swaks itself.
+=item --hide-informational, -hi
 
---hide-all, -ha
+Don't display non-error informational lines from swaks itself.
 
-> Do not display any content to the terminal.
+=item --hide-all, -ha
 
---silent [level], -S [level]
+Do not display any content to the terminal.
 
-> Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.
+=item --silent [level], -S [level]
 
-> Note that this used to be an additive option ("-S -S" was equivalent to "-S 2").  After environment option handling was introduced this was changed.  The additive method still works but is deprecated and will be removed entirely in a future release
+Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.
 
---support
+Note that this used to be an additive option ("-S -S" was equivalent to "-S 2").  After environment option handling was introduced this was changed.  The additive method still works but is deprecated and will be removed entirely in a future release
 
-> Print capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and displays which functionality is available and which isn't, and which modules would need to be added to gain the missing functionality.
+=item --support
 
---help
+Print capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and displays which functionality is available and which isn't, and which modules would need to be added to gain the missing functionality.
 
-> Display this help information.
+=item --help
 
---version
+Display this help information.
 
-> Display version information.
+=item --version
+
+Display version information.
+
+=back
 
 =head1 PORTABILITY
 
-Operating Systems
+=over 4
 
-> This program was primarily intended for use on unix-like operating systems, and it should work on any reasonable version thereof.  It has been developed and tested on Solaris, Linux, and Mac OS X and is feature complete on all of these.
+=item OPERATING SYSTEMS
 
-> This program is known to demonstrate basic functionality on Windows using ActiveState's Perl.  It has not been fully tested.  Known to work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5 auth types.  Unknown is any TLS functionality and the NTLM/SPA and Digest-MD5 auth types.
+This program was primarily intended for use on unix-like operating systems, and it should work on any reasonable version thereof.  It has been developed and tested on Solaris, Linux, and Mac OS X and is feature complete on all of these.
 
-> Because this program should work anywhere Perl works, I would appreciate knowing about any new operating systems you've thoroughly used swaks on as well as any problems encountered on a new OS.
+This program is known to demonstrate basic functionality on Windows using ActiveState's Perl.  It has not been fully tested.  Known to work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5 auth types.  Unknown is any TLS functionality and the NTLM/SPA and Digest-MD5 auth types.
 
-Mail Servers
+Because this program should work anywhere Perl works, I would appreciate knowing about any new operating systems you've thoroughly used swaks on as well as any problems encountered on a new OS.
 
-> This program was almost exclusively developed against Exim mail servers.  It was been used casually by the author, though not thoroughly tested, with Sendmail, Smail, Exchange, Oracle Collaboration Suite, and Communigate.  Because all functionality in swaks is based off of known standards it should work with any fairly modern mail server.  If a problem is found, please alert the author at the address below.
+=item MAIL SERVERS
+
+This program was almost exclusively developed against Exim mail servers.  It was been used casually by the author, though not thoroughly tested, with Sendmail, Smail, Exchange, Oracle Collaboration Suite, and Communigate.  Because all functionality in swaks is based off of known standards it should work with any fairly modern mail server.  If a problem is found, please alert the author at the address below.
+
+=back
 
 =head1 EXIT CODES
 
-0 - no errors occurred
+=over 4
 
-1 - error parsing command line options
+=item 0
 
-2 - error connecting to remote server
+no errors occurred
 
-3 - unknown connection type
+=item 1
 
-4 - while running with connection type of "pipe", fatal problem writing to or reading from the child process
+error parsing command line options
 
-5 - while running with connection type of "pipe", child process died unexpectedly.  This can mean that the program specified with --pipe doesn't exist.
+=item 2
 
-6 - Connection closed unexpectedly.  If the close is detected in response to the 'QUIT' swaks sends following an unexpected response, the error code for that unexpected response is used instead.  For instance, if a mail server returns a 550 response to a MAIL FROM: and then immediately closes the connection, swaks detects that the connection is closed, but uses the more specific exit code 23 to detail the nature of the failure.  If instead the server return a 250 code and then immediately closes the connection, swaks will use the exit code 6 because there is not a more specific exit code.
+error connecting to remote server
 
-10 - error in prerequisites (needed module not available)
+=item 3
 
-21 - error reading initial banner from server
+unknown connection type
 
-22 - error in HELO transaction
+=item 4
 
-23 - error in MAIL transaction
+while running with connection type of "pipe", fatal problem writing to or reading from the child process
 
-24 - no RCPTs accepted
+=item 5
 
-25 - server returned error to DATA request
+while running with connection type of "pipe", child process died unexpectedly.  This can mean that the program specified with --pipe doesn't exist.
 
-26 - server did not accept mail following data
+=item 6
 
-27 - server returned error after normal-session quit request
+Connection closed unexpectedly.  If the close is detected in response to the 'QUIT' swaks sends following an unexpected response, the error code for that unexpected response is used instead.  For instance, if a mail server returns a 550 response to a MAIL FROM: and then immediately closes the connection, swaks detects that the connection is closed, but uses the more specific exit code 23 to detail the nature of the failure.  If instead the server return a 250 code and then immediately closes the connection, swaks will use the exit code 6 because there is not a more specific exit code.
 
-28 - error in AUTH transaction
+=item 10
 
-29 - error in TLS transaction
+error in prerequisites (needed module not available)
 
-32 - error in EHLO following TLS negotiation
+=item 21
+
+error reading initial banner from server
+
+=item 22
+
+error in HELO transaction
+
+=item 23
+
+error in MAIL transaction
+
+=item 24
+
+no RCPTs accepted
+
+=item 25
+
+server returned error to DATA request
+
+=item 26
+
+server did not accept mail following data
+
+=item 27
+
+server returned error after normal-session quit request
+
+=item 28
+
+error in AUTH transaction
+
+=item 29
+
+error in TLS transaction
+
+=item 32
+
+error in EHLO following TLS negotiation
+
+=back
 
 =head1 CONTACT
 
-proj-swaks@jetmore.net
+=over 4
 
-> Please use this address for general contact, questions, patches, requests, etc.
+=item proj-swaks@jetmore.net
 
-updates-swaks@jetmore.net
+Please use this address for general contact, questions, patches, requests, etc.
 
-> If you would like to be put on a list to receive notifications when a new version of swaks is released, please send an email to this address.
+=item updates-swaks@jetmore.net
 
-http://www.jetmore.org/john/code/#swaks
+If you would like to be put on a list to receive notifications when a new version of swaks is released, please send an email to this address.
 
-> Change logs, this help, and the latest version is found at this link.
+=item http://www.jetmore.org/john/code/#swaks
+
+Change logs, this help, and the latest version is found at this link.
+
+=back
 
