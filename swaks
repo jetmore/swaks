@@ -1231,7 +1231,7 @@ sub get_option_struct {
     { opts => ['body'],                           suffix => ':s',
       okey => 'body_822',                         type => 'scalar', },
     # A file to attach
-    { opts => ['attach-type', 'attach'],          suffix => ':s',
+    { opts => ['attach-name','attach-type','attach'], suffix => ':s',
       okey => 'attach_822',                       type => 'list', },
     # replacement for %H DATA token
     { opts => ['ah', 'add-header'],               suffix => ':s',
@@ -1368,6 +1368,18 @@ sub fetch_args {
       }
       ptrans(12, "Unknown option $ARGV[$i], Exiting");
       exit(1);
+    } elsif ($ARGV[$i] =~ /^-?-attach-name$/) {
+      if ($ARGV[$i+1] =~ /^-/) {
+        # in this case, the user is trying to tell us not to use
+        # a filename for the next attachment.  This means we actually have to
+        # insert an argument, flagged as a filename, with no value
+        # XXX WCSFIXME
+        splice(@ARGV, $i+1, 0, "FILENAME:");
+      } else {
+        # We were given a filename - mark it as such so we can figure
+        # it out later
+        $ARGV[$i+1] = "FILENAME:" . $ARGV[$i+1];
+      }
     }
   }
 
@@ -1594,13 +1606,20 @@ sub process_args {
     # the message become a mime message and the "body" goes in the
     # first text/plain part
     my $mime_type = 'application/octet-stream';
+    my $next_name = undef();
     my @parts = ( { body => $body, type => 'text/plain' } );
     $bound = "----=_MIME_BOUNDARY_000_$$";
     while (defined(my $t = shift(@{$o->{attach_822}}))) {
       if ($t =~ m|^[^/]+/[^/]+$| && !stat($t)) {
         $mime_type = $t;
+      } elsif ($t =~ /^FILENAME:(.*)$/) {
+        $next_name = $1;
       } else {
         push(@parts, { body => "$t", type => $mime_type });
+        if (defined($next_name)) {
+          $parts[-1]{name} = $next_name;
+          $next_name = undef();
+        }
       }
     }
     $body = '';
@@ -1613,18 +1632,27 @@ sub process_args {
           $stdin     = $p->{body};
         }
       } elsif (open(I, "<$p->{body}")) {
+        if (!exists($p->{name})) {
+          ($p->{name}) = $p->{body} =~ m|/?([^/]+)$|;
+        }
         $p->{body} = join('', <I>);
         close(I);
+        
       }
-      $body .= "--$bound\n"
-            .  "Content-Type: $p->{type}\n";
-      if ($p->{type} =~ m|^text/plain$|i) {
-        $body .= "\n" . $p->{body} . "\n";
+      $body .= "--$bound\n";
+      if ($p->{type} =~ m|^text/plain$|i && !$p->{name}) {
+        $body .= "Content-Type: $p->{type}\n\n" . $p->{body} . "\n";
       } else {
+        if ($p->{name}) {
+          $body .= "Content-Type: $p->{type}; name=\"$p->{name}\"\n"
+                .  "Content-Description: $p->{name}\n"
+                .  "Content-Disposition: attachment; filename=\"$p->{name}\"\n";
+        } else {
+          $body .= "Content-Type: $p->{type}\n"
+                .  "Content-Disposition: attachment\n";
+        }
         $body .= "Content-Transfer-Encoding: BASE64\n"
-              .  "Content-Disposition: attachment\n"
-              .  "\n"
-              .  eb64($p->{body}, "\n") . "\n";
+              .  "\n" . eb64($p->{body}, "\n") . "\n";
       }
     }
     $body .= "--$bound--\n";

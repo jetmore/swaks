@@ -487,17 +487,23 @@ Replaced with the value specified by the --body option.  See --body for default.
 
 Specify the body of the email.  The default is "This is a test mailing".  If no argument to --body is given, prompt to supply one interactively.  If '-' is supplied, the body will be read from standard input.  If any other text is provided and the text represents an open-able file, the content of that file is used as the body.  If it does not represent an open-able file, the text itself is used as the body.
 
+If the message is forced to MIME format (see --attach) the argument to this option will be included unencoded as the first MIME part.  Its content-type will always be text/plain.
+
 =item --attach [attachment-specification]
 
 When one or more --attach option is supplied, the message is changed into a multipart/mixed MIME message.  The arguments to --attach are processed the same as --body with regard to stdin, file contents, etc.  --attach can be supplied multiple times to create multiple attachments.  By default each attachment is attached as a application/octet-stream file.  See --attach-type for changing this behavior.
 
-When the message changes to MIME format, the previous body (%B) is attached as a text/plain type as the first attachment.  --body can still be used to specify the contents of this body attachment.
+If a filename is specified, the MIME encoding will include that file name.  See --attach-name for more detail on file naming.
 
 It is legal for '-' (STDIN) to be specified as an argument multiple times (once for --body and multiple times for --attach).  In this case, the same content will be attached each time it is specified.  This is useful for attaching the same content with multiple MIME types.
 
 =item --attach-type [mime-type]
 
 By default, content that gets MIME attached to a message with the --attach option is encoded as application/octet-stream.  --attach-type changes the mime type for every --attach option which follows it.  It can be specified multiple times.
+
+=item --attach-name [name]
+
+This option sets the filename that will be included in the MIME part created for the next --attach option.  If no argument is set for this option, it causes no filename information to be included for the next MIME part, even if swaks could generate it from the local file name.
 
 =item -ah, --add-header [header]
 

@@ -485,3 +485,8 @@ swaks   (20011219)
 	           like +0099 (instead of +0100) for GMT+X TZs (not GMT-X).
 	           fixed debian bug 566013)
 	* 20100204 removed requirement for OPTIONS markers in config files
+	* 20100204 set a name for attachments based off of filename
+	* 20100204 added --attach-name option to allow setting of custom
+	           name or setting that no name should be used.  Need
+	           pointed out by Stefan Lischke, Christoph Kiechle, and
+	           Cliff Clasen.
