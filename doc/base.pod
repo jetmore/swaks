@@ -1,3 +1,6 @@
+
+=pod
+
 =head1 NAME
 
 swaks - Swiss Army Knife SMTP, the all-purpose smtp transaction tester
