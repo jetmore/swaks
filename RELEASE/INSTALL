@@ -1,0 +1,24 @@
+swaks is designed to be a self contained script.  It should run on any system
+That has perl installed, although its capabilites may be limited by which
+modules are or are not installed.
+
+To get a snapshot of what swaks can and cannot do on a given system, run:
+
+	swaks --support
+
+swaks will evaluate the installed perl modules and inform you of any
+missing functionality, and how to get that functionality.  Example output:
+
+	=== AUTH CRAM-MD5 supported
+	=== AUTH CRAM-SHA1 supported
+	*** AUTH DIGEST-MD5 not available: requires Authen::DigestMD5
+	*** AUTH NTLM not available: requires Authen::NTLM
+	=== Basic AUTH supported
+	=== Date Manipulation supported
+	=== High Resolution Timing supported
+	=== Local Hostname Detection supported
+	=== MX Routing supported
+	=== Pipe Transport supported
+	=== Socket Transport supported
+	=== TLS supported
+

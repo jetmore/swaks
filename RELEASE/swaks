@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 
 # use 'swaks --help' to view documentation for this program
+# Homepage: http://jetmore.org/john/code/swaks/
+# Online Docs: http://jetmore.org/john/code/swaks/latest/doc/ref.txt
 # if you want to be notified about future releases of this program,
 #	please send an email to updates-swaks@jetmore.net
 
@@ -8,7 +10,7 @@ use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20100204.0";
+my $p_version = "20100211.0";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
         Copyright (c) 2003-2008,2010 John Jetmore <jj33@pobox.com>
@@ -1683,7 +1685,7 @@ sub process_args {
   }
   $n{data} ||= $fconf->{DATA}
            || 'Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\n'
-             ."X-Mailer: swaks v$p_version jetmore.org/john/code/#swaks".'\n'
+             ."X-Mailer: swaks v$p_version jetmore.org/john/code/swaks/".'\n'
              . ($bound ?  'MIME-Version: 1.0\n'
                          .'Content-Type: multipart/mixed; '
                          .'boundary="'.$bound.'"\n'
@@ -2013,7 +2015,6 @@ sub ext_usage {
   exit(0);
 }
 
-__END__
 
 =pod
 
@@ -2141,9 +2142,9 @@ A configuration file can be used to set commonly-used or abnormally verbose opti
 
 Additionally a configuration file in a non-default location can be specified using --config.  If this is set and not given an argument swaks will not use any configuration file, including any default file.  If --config points to a readable file, it is used as the configuration file, overriding any default that may exist.  If it points to a non-readable file and error will be shown and swaks will exit.
 
-A set of "portable" defaults can also be created by adding a perl __DATA__ section to the end of the swaks program file.  At the end of the script add a single line containing "__DATA__", and any lines below that will be treated as the contents of a configuration file.  This allows a set of user preferences to be automatically copied from server to server in a single file.
+A set of "portable" defaults can also be created by adding options to the end of the swaks program file.  As distributed, the last line of swaks should be "__END__".  Any lines added after __END__ will be treated as the contents of a configuration file.  This allows a set of user preferences to be automatically copied from server to server in a single file.
 
-If present and configuration files have not been explicitly turned off, the __DATA__ config is always read.  Only one other configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.  Specifying the --config option with no argument turns off the processing of both the __DATA__ config and any actual config files.
+If present and configuration files have not been explicitly turned off, the __END config is always read.  Only one other configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.  Specifying the --config option with no argument turns off the processing of both the __END__ config and any actual config files.
 
 In a configuration file lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to swaks, with the leading dash or dashes optional.  Everything after a option line's first space is assumed to be the option's argument and is not shell processed.  Therefore quoting is usually unneeded and will be included literally in the argument.  Here is an example of the contents of a configuration file:
 
@@ -2754,10 +2755,11 @@ Please use this address for general contact, questions, patches, requests, etc.
 
 If you would like to be put on a list to receive notifications when a new version of swaks is released, please send an email to this address.
 
-=item http://www.jetmore.org/john/code/#swaks
+=item http://www.jetmore.org/john/code/swaks/
 
 Change logs, this help, and the latest version is found at this link.
 
 =back
 
 =cut
+__END__
