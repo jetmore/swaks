@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 
 # use 'swaks --help' to view documentation for this program
+# Homepage: http://jetmore.org/john/code/swaks/
+# Online Docs: http://jetmore.org/john/code/swaks/latest/doc.html
 # if you want to be notified about future releases of this program,
 #	please send an email to updates-swaks@jetmore.net
 
@@ -8,7 +10,7 @@ use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20100204.0";
+my $p_version = "%DEVRELEASE%";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
         Copyright (c) 2003-2008,2010 John Jetmore <jj33@pobox.com>
@@ -1683,7 +1685,7 @@ sub process_args {
   }
   $n{data} ||= $fconf->{DATA}
            || 'Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\n'
-             ."X-Mailer: swaks v$p_version jetmore.org/john/code/#swaks".'\n'
+             ."X-Mailer: swaks v$p_version jetmore.org/john/code/swaks/".'\n'
              . ($bound ?  'MIME-Version: 1.0\n'
                          .'Content-Type: multipart/mixed; '
                          .'boundary="'.$bound.'"\n'

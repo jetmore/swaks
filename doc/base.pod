@@ -738,7 +738,7 @@ Please use this address for general contact, questions, patches, requests, etc.
 
 If you would like to be put on a list to receive notifications when a new version of swaks is released, please send an email to this address.
 
-=item http://www.jetmore.org/john/code/#swaks
+=item http://www.jetmore.org/john/code/swaks/
 
 Change logs, this help, and the latest version is found at this link.
 
