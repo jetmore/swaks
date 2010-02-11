@@ -2,7 +2,7 @@
 
 # use 'swaks --help' to view documentation for this program
 # Homepage: http://jetmore.org/john/code/swaks/
-# Online Docs: http://jetmore.org/john/code/swaks/latest/doc.html
+# Online Docs: http://jetmore.org/john/code/swaks/latest/doc/ref.txt
 # if you want to be notified about future releases of this program,
 #	please send an email to updates-swaks@jetmore.net
 
@@ -10,7 +10,7 @@ use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "%DEVRELEASE%";
+my $p_version = "DEVRELEASE";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
         Copyright (c) 2003-2008,2010 John Jetmore <jj33@pobox.com>
@@ -2015,4 +2015,3 @@ sub ext_usage {
   exit(0);
 }
 
-__END__
