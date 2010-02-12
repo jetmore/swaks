@@ -9,7 +9,7 @@ my $release = shift || die "Need release\n";
 
 my $pod_blob = '';
 
-print "Building $release_d/swaks... ";
+print "Building swaks... ";
 open(O, ">$release_d/swaks") || die "can't write to $release_d/swaks: $!\n";
 open(I, "<$home/swaks") || die "can't read from $home/swaks\n";
 while (<I>) {
@@ -47,6 +47,22 @@ print "done\n";
 #         "--title=swaks reference, release $release");
 #print "done\n";
 
+my @lines = ();
+print "Building Changes.txt\n";
+open(I, "<$home/Changes") || die "Couldn't open $home/Changes: $!\n";
+open(O, ">$release_d/doc/Changes.txt") || die "can't write Changes.txt: $!";
+while (<I>) {
+  if (/^\S/) {
+    push (@lines, $_);
+  } else {
+    $lines[-1] .= $_;
+  }
+}
+print O reverse(@lines);
+close(O);
+close(I);
+
+
 print "\n",
-	"UPDATE Changes.txt\n",
+	"UPDATE README\n",
 	"TAG RELEASE: svn copy http://svn.jetmore.org/swaks/trunk/RELEASE http://svn.jetmore.org/swaks/tags/r-$release\n";
