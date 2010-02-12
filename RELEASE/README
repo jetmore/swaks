@@ -1,3 +1,6 @@
+------------------------------
+INSTALL
+------------------------------
 swaks is designed to be a self contained script.  It should run on any system
 That has perl installed, although its capabilites may be limited by which
 modules are or are not installed.
@@ -22,3 +25,34 @@ missing functionality, and how to get that functionality.  Example output:
 	=== Socket Transport supported
 	=== TLS supported
 
+------------------------------
+Documentation
+------------------------------
+Check the following files
+	README
+		This file.  Contains install notes, references to other
+		files, and major changes for this release
+	doc/Changes.txt
+		All changes to swaks
+	doc/ref.txt
+		The text version of the --help output
+	doc/recipes.txt
+		Hints, tips, tricks that don't fit in the reference
+
+------------------------------
+Change Summary
+------------------------------
+v20100211.0
+	* Completely rewritten documentation.  Designed to sort options by
+	  broad category to make finding options easier
+	* New configuration system.  Allow default .swaksrc, custom config
+	  file, use of swaks itself as a config file, and environment
+	  variables.
+	* New option --copy-routing
+	* New option --auth-optional-strict
+	* New option --tls-optional-strict
+	* New option --hide-all
+	* New option --hide-informational
+	* New option --tls-get-peer-cert
+	* New option --attach-name
+	* Many bugs fixes and other minor tweaks

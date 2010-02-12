@@ -3,7 +3,7 @@ NAME
 
 DESCRIPTION
     swaks' primary design goal is to be a flexible, scriptable,
-    transaction-oriented SMTP test tools. It handles SMTP features and
+    transaction-oriented SMTP test tool. It handles SMTP features and
     extensions such as TLS, authentication, and pipelining; multiple version
     of the SMTP protocol including SMTP, ESMTP, and LMTP; and multiple
     transport methods including unix-domain sockets, internet-domain
