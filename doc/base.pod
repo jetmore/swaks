@@ -594,6 +594,14 @@ Display time lapse between send/receive pairs.  This option is most useful when 
 
 Don't show transaction hints (useful in conjunction with -hr to create copy/paste-able transactions).
 
+=item --output-file </path/to/file>
+
+=item --output-file-stdout </path/to/file>
+
+=item --output-file-stderr </path/to/file>
+
+These options allow the user to send output to files instead of stdout/stderr.  The first option sends both to the same file.  The arguments of &STDOUT and &STDERR are treated specially, refering to the "normal" file handles, so "--output-file-stderr '&STDOUT'" would redirect STDERR to STDOUT.
+
 =item -hr, --hide-receive
 
 Don't display lines sent from the remote server being received by swaks

@@ -54,6 +54,8 @@ if ($G::dump_args) {
   print "hide_receive     = ", $G::hide_receive ? "TRUE" : "FALSE", "\n";
   print "hide_informational = ", $G::hide_informational ? "TRUE" : "FALSE","\n";
   print "hide_all         = ", $G::hide_all ? "TRUE" : "FALSE", "\n";
+  print "trans_fh_of      = $G::trans_fh_of ($G::trans_fh_oh,", \*STDOUT,")\n";
+  print "trans_fh_ef      = $G::trans_fh_ef ($G::trans_fh_eh,", \*STDERR,")\n";
   print "pipeline         = ", $G::pipeline ? "TRUE" : "FALSE", "\n";
   print "silent           = $G::silent\n";
   print "protocol         = $G::protocol\n";
@@ -364,7 +366,8 @@ sub ptrans {
   my $c = shift;  # transaction flag
   my $m = shift;  # message to print
   my $b = shift;  # be brief in what we print
-  my $o = \*STDOUT;
+  #my $o = \*STDOUT;
+  my $o = $G::trans_fh_oh;
   my $f;
 
   return if (($G::hide_send    && int($c/10) == 2) ||
@@ -398,7 +401,8 @@ sub ptrans {
   # program info
   if ($c == 11) { $f = '==='; }
   # program error
-  elsif ($c == 12) { $f = '***'; $o = \*STDERR; }
+  #elsif ($c == 12) { $f = '***'; $o = \*STDERR; }
+  elsif ($c == 12) { $f = '***'; $o = $G::trans_fh_eh; }
   # smtp send info
   elsif ($c == 21) { $f = $G::link{tls}{active} ? ' ~>' : ' ->'; }
   # smtp send error
@@ -1223,6 +1227,15 @@ sub get_option_struct {
     # don't touch the data
     { opts => ['ndf', 'no-data-fixup'],           suffix => '',
       okey => 'no_data_fixup',                    type => 'scalar', },
+    # specify file to write to
+    { opts => ['output-file'],                    suffix => '=s',
+      okey => 'output_file',                      type => 'scalar', },
+    # specify file to write to
+    { opts => ['output-file-stdout'],             suffix => '=s',
+      okey => 'output_file_stdout',               type => 'scalar', },
+    # specify file to write to
+    { opts => ['output-file-stderr'],             suffix => '=s',
+      okey => 'output_file_stderr',               type => 'scalar', },
     # command to communicate with
     { opts => ['pipe'],                           suffix => ':s',
       okey => 'pipe_cmd',                         type => 'scalar', },
@@ -1417,6 +1430,43 @@ sub process_args {
 
   # load the $fconf hash if user has specified a -l file
   process_file($o->{option_file}, $fconf) if ($o->{option_file});
+
+  # handle the output file handles early so they can be used for errors
+  # we don't need to keep track of the actual files but it will make debugging
+  # easier later
+  $G::trans_fh_oh = \*STDOUT;
+  $G::trans_fh_of = "STDOUT";
+  $G::trans_fh_eh = \*STDERR;
+  $G::trans_fh_ef = "STDERR";
+  if ($o->{output_file} &&
+        (!$o->{output_file_stderr} || !$o->{output_file_stdout}))
+  {
+    if (!open(OUTFH, ">>$o->{output_file}")) {
+      ptrans(12, "Unable to open $o->{output_file} for writing\n");
+      exit(1);
+    }
+    $G::trans_fh_oh = \*OUTFH;
+    $G::trans_fh_of = $o->{output_file};
+    $G::trans_fh_eh = \*OUTFH;
+    $G::trans_fh_ef = $o->{output_file};
+  }
+  if ($o->{output_file_stderr}) {
+    if (!open(OUTEFH, ">>$o->{output_file_stderr}")) {
+      ptrans(12, "Unable to open $o->{output_file_stderr} for writing\n");
+      exit(1);
+    }
+    $G::trans_fh_eh = \*OUTEFH;
+    $G::trans_fh_ef = $o->{output_file_stderr};
+  }
+  if ($o->{output_file_stdout}) {
+    if (!open(OUTOFH, ">>$o->{output_file_stdout}")) {
+      ptrans(12, "Unable to open $o->{output_file_stdout} for writing\n");
+      exit(1);
+    }
+    $G::trans_fh_oh = \*OUTOFH;
+    $G::trans_fh_of = $o->{output_file_stdout};
+  }
+    
 
   $G::dump_args          = 1 if ($o->{dump_args});
   $G::suppress_data      = 1 if ($o->{suppress_data});
