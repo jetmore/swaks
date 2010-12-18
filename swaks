@@ -1417,7 +1417,8 @@ sub fetch_args {
   if (!load("Getopt::Long")) {
     ptrans(12, "Unable to load Getopt::Long for option processing, Exiting");
     exit(1);
-  }  
+  }
+
   Getopt::Long::Configure("bundling_override");
   GetOptions(%options) || exit(1);
 }
@@ -1755,15 +1756,11 @@ sub process_args {
     if (defined($o->{header}) && ref($o->{header}) eq 'ARRAY'
                               && scalar(@{$o->{header}}))
     {
-      #my %matched = ();
       foreach my $l (map { split(/\\n/) } @{$o->{header}}) {
         if (my($h) = $l =~ /^([^:]+):/) {
-          $n{data} =~ s/(^|\\n|\n)$h:.*?($|\\n|\n)/$1$l$2/;
-          #if (!$matched{$h}
-          #    && $n{data} =~ s/(^|\\n|\n)$h:.*?($|\\n|\n)/$1$l$2/)
-          #{
-          #  $matched{$h} = 1;
-          #} else { push(@{$o->{add_header}}, $l); }
+          if ($n{data} !~ s/(^|\\n|\n)$h:.*?($|\\n|\n)/$1$l$2/) {
+            push(@{$o->{add_header}}, $l);
+          }
         } else { push(@{$o->{add_header}}, $l); }
       }
     }

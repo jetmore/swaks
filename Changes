@@ -490,3 +490,5 @@
 * 20100212 fixed doc typo
 * 20100215 added recipes.pod to repo and added vrfy and fswaks recipes
 * 20101217 added and documented the --output-file* options
+* 20101217 fixed bug where --header no longer worked for setting custom headers
+           (reported 20101015 by David Favor)
