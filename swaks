@@ -367,7 +367,7 @@ sub ptrans {
   my $m = shift;  # message to print
   my $b = shift;  # be brief in what we print
   #my $o = \*STDOUT;
-  my $o = $G::trans_fh_oh;
+  my $o = $G::trans_fh_oh || \*STDOUT;
   my $f;
 
   return if (($G::hide_send    && int($c/10) == 2) ||
@@ -402,7 +402,7 @@ sub ptrans {
   if ($c == 11) { $f = '==='; }
   # program error
   #elsif ($c == 12) { $f = '***'; $o = \*STDERR; }
-  elsif ($c == 12) { $f = '***'; $o = $G::trans_fh_eh; }
+  elsif ($c == 12) { $f = '***'; $o = $G::trans_fh_eh || \*STDERR; }
   # smtp send info
   elsif ($c == 21) { $f = $G::link{tls}{active} ? ' ~>' : ' ->'; }
   # smtp send error
