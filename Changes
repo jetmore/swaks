@@ -492,3 +492,7 @@
 * 20101217 added and documented the --output-file* options
 * 20101217 fixed bug where --header no longer worked for setting custom headers
            (reported 20101015 by David Favor)
+* 20110309 updated copyright date to 2011
+* 20110309 misc typos/style
+* 20110309 added --protect-password option to make best effort not to
+           echo user input on sensitive fields (*nix and Win32)

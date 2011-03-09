@@ -602,6 +602,10 @@ Don't show transaction hints (useful in conjunction with -hr to create copy/past
 
 These options allow the user to send output to files instead of stdout/stderr.  The first option sends both to the same file.  The arguments of &STDOUT and &STDERR are treated specially, refering to the "normal" file handles, so "--output-file-stderr '&STDOUT'" would redirect STDERR to STDOUT.
 
+=item -pp, --protect-prompt
+
+Don't echo user input on prompts that are potentially sensitive (right now only authentication password)
+
 =item -hr, --hide-receive
 
 Don't display lines sent from the remote server being received by swaks

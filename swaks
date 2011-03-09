@@ -13,7 +13,7 @@ my($p_name)   = $0 =~ m|/?([^/]+)$|;
 my $p_version = "DEVRELEASE";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2011 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -808,7 +808,7 @@ sub recv_line {
 sub transact {
   my %h        = @_; # this is an smtp transaction element
   my $ret      = 1;  # this is our return value
-  my @handlers = (); # will hold and fail_handlers we need to run
+  my @handlers = (); # will hold any fail_handlers we need to run
   my $time     = ''; # used in time lapse calculations
 
   push(@G::pending_send, \%h); # push onto send queue
@@ -916,14 +916,73 @@ sub process_file {
 }
 
 sub interact {
-  my($prompt) = shift;
-  my($regexp) = shift;
-  my($continue) = shift;
-  my($response) = '';
+  my $prompt     = shift;
+  my $regexp     = shift;
+  my $hide_input = shift;
+  my $response   = '';
 
   do {
-    print "$prompt";
-    chomp($response = <STDIN>);
+    print $prompt;
+    if (!$hide_input || !$G::protect_prompt || $G::interact_method eq 'default') {
+      chomp($response = <STDIN>);
+    } else {
+      if ($^O eq 'MSWin32') {
+        #if ($G::interact_method eq "win32-console" ||
+        #   (!$G::interact_method && load("Win32::Console")))
+        #{
+        #    Couldn't get this working in the time I wanted to devote to it
+        #}
+        if ($G::interact_method eq "win32-readkey" ||
+           (!$G::interact_method && load("Term::ReadKey")))
+        {
+          $G::interact_method ||= "win32-readkey";
+          # the trick to replace input w/ '*' doesn't work on Win32
+          # Term::ReadKey, so just use it as an stty replacement
+          ReadMode('noecho');
+          # need to think about this on windows some more
+          #local $SIG{INT} = sub { ReadMode('restore'); };
+          chomp($response = <STDIN>);
+          ReadMode('restore');
+        } else {
+          $G::interact_method ||= "default";
+          chomp($response = <STDIN>);
+        }
+      } else {
+        if ($G::interact_method eq "unix-readkey" ||
+           (!$G::interact_method && load("Term::ReadKey")))
+        {
+          $G::interact_method ||= "unix-readkey";
+          my @resp = ();
+          ReadMode('raw');
+          #local $SIG{INT} = 
+          # reevaluate this code - what happens if del is first char we press?
+          while ((my $kp = ReadKey(0)) ne "\n") {
+            my $kp_num = ord($kp);
+            if($kp_num == 127 || $kp_num == 8) {
+              next if (!scalar(@resp));
+              pop(@resp);
+              print "\b \b";
+            } elsif($kp_num >= 32) {
+              push(@resp, $kp);
+              print "*";
+            }
+          }
+          ReadMode('restore');
+          $response = join('', @resp);
+        } elsif ($G::interact_method eq "unix-stty" ||
+                (!$G::interact_method && open(STTY, "stty -a |")))
+        {
+          $G::interact_method ||= "unix-stty";
+          { my $foo = join('', <STTY>); }
+          system('stty', '-echo');
+          chomp($response = <STDIN>);
+          system('stty', 'echo');
+        } else {
+          $G::interact_method ||= "default";
+          chomp($response = <STDIN>);
+        }
+      }
+    }
   } while ($regexp ne 'SKIP' && $response !~ /$regexp/);
 
   return($response);
@@ -1167,6 +1226,9 @@ sub get_option_struct {
     { opts => ['am', 'auth-map'],                 suffix => '=s',
       okey => 'auth_map',                         type => 'scalar', },
     # hide passwords when possible
+    # note this isn't implemented yet and is specific to only the display of
+    # auth info in the printed smtp transaction.  --protect-prompt is the option
+    # for globally protecting any prompts we think are revealing
     #{ opts => ['ahp', 'auth-hide-password'],      suffix => '',
     #  okey => 'auth_hidepw',                      type => 'scalar', },
     # translate base64 strings
@@ -1215,6 +1277,9 @@ sub get_option_struct {
     # Don't show sending lines
     { opts => ['hs', 'hide-send'],                suffix => '',
       okey => 'hide_send',                        type => 'scalar', },
+    # Don't echo input on potentially sensitive prompts
+    { opts => ['pp', 'protect-prompt'],           suffix => '',
+      okey => 'protect_prompt',                   type => 'scalar', },
     # Don't show any swaks-generated, non-error informational lines
     { opts => ['hi', 'hide-informational'],       suffix => '',
       okey => 'hide_informational',               type => 'scalar', },
@@ -1476,6 +1541,7 @@ sub process_args {
   $G::hide_receive       = 1 if ($o->{hide_receive});
   $G::hide_informational = 1 if ($o->{hide_informational});
   $G::hide_all           = 1 if ($o->{hide_all});
+  $G::protect_prompt     = 1 if ($o->{protect_prompt});
   $G::pipeline           = 1 if ($o->{pipeline});
   $G::silent             = $o->{silent} || 0;
 
@@ -1955,7 +2021,7 @@ sub process_args {
 
         $n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
         $n{a_pass} ||= $fconf->{PASS};
-        $n{a_pass} ||= interact("Password: ", 'SKIP');
+        $n{a_pass} ||= interact("Password: ", 'SKIP', 1);
         $n{a_pass}   = '' if ($n{a_pass} eq '<>');
 
         $G::auth_showpt = 1 if (defined($o->{auth_showpt}));
