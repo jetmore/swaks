@@ -499,3 +499,5 @@
 * 20110321 fixed bug which prevented message data to be provided in a file 
            with a "n" or "\" in the filename.  Reported and fix suggested
            by dietrich.rebmann#freenet.de
+* 20110321 added --auth-hide-password option to replace recoverable passwords
+           in SMTP transactions with a dummy string

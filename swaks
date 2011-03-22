@@ -612,35 +612,28 @@ sub do_smtp_auth_cram {
 }
 
 sub do_smtp_auth_login {
-  my $u = shift; # auth user
-  my $p = shift; # auth password
+  my $u  = shift; # auth user
+  my $p  = shift; # auth password
   my $as = shift; # auth string
-  my $z = '';
 
-  my $auth_string = "AUTH $as";
-  do_smtp_gen($auth_string, '334', undef, '', '',
+  do_smtp_gen("AUTH $as", '334', undef, '', '',
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
-  $auth_string = eb64($u);
-  $z = $u if ($G::auth_showpt);
-  do_smtp_gen($auth_string, '334', undef, '', $z,
+  do_smtp_gen(eb64($u),   '334', undef, '', $G::auth_showpt ? $u : '',
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
-  $auth_string = eb64($p);
-  $z = $p if ($G::auth_showpt);
-  do_smtp_gen($auth_string, '235', undef, '', $z) || return(0);
+  do_smtp_gen(eb64($p),   '235', undef, '',
+              $G::auth_showpt ? ($G::auth_hidepw || $p)
+                              : eb64($G::auth_hidepw || $p)) || return(0);
   return(1);
 }
 
 sub do_smtp_auth_plain {
-  my $u = shift; # auth user
-  my $p = shift; # auth password
+  my $u  = shift; # auth user
+  my $p  = shift; # auth password
   my $as = shift; # auth string
 
-  my $auth_string = "AUTH $as " . eb64("\0$u\0$p");
-  my $z = '';
-  if ($G::auth_showpt) {
-    $z = "AUTH $as \\0$u\\0$p";
-  }
-  return(do_smtp_gen($auth_string, '235', undef, '', $z));
+  return(do_smtp_gen("AUTH $as " . eb64("\0$u\0$p"), '235', undef, '',
+                     $G::auth_showpt ? "AUTH $as \\0$u\\0" . ($G::auth_hidepw || $p)
+                                     : "AUTH $as " . eb64("\0$u\0" . ($G::auth_hidepw || $p))));
 }
 
 sub do_smtp_helo {
@@ -1226,11 +1219,8 @@ sub get_option_struct {
     { opts => ['am', 'auth-map'],                 suffix => '=s',
       okey => 'auth_map',                         type => 'scalar', },
     # hide passwords when possible
-    # note this isn't implemented yet and is specific to only the display of
-    # auth info in the printed smtp transaction.  --protect-prompt is the option
-    # for globally protecting any prompts we think are revealing
-    #{ opts => ['ahp', 'auth-hide-password'],      suffix => '',
-    #  okey => 'auth_hidepw',                      type => 'scalar', },
+    { opts => ['ahp', 'auth-hide-password'],      suffix => ':s',
+      okey => 'auth_hidepw',                      type => 'scalar', },
     # translate base64 strings
     { opts => ['apt', 'auth-plaintext'],          suffix => '',
       okey => 'auth_showpt',                      type => 'scalar', },
@@ -2025,12 +2015,11 @@ sub process_args {
         $n{a_pass}   = '' if ($n{a_pass} eq '<>');
 
         $G::auth_showpt = 1 if (defined($o->{auth_showpt}));
-        # This option is designed to hide passwords - turn echo off when
-        # supplying at PW prompt, star out the PW strings in AUTH transactions.
-        # Not implementing right now - the echo might be a portability issue,
-        # and starring out is hard because the smtp transaction is abstracted
-        # beyond where this is easy to do.  Maybe sometime in the future
-        #$G::auth_hidepw = 1 if (defined($o->{auth_hidepw}));
+        if (length($o->{auth_hidepw})) {
+          $G::auth_hidepw = $o->{auth_hidepw};
+        } elsif (defined($o->{auth_hidepw})) {
+          $G::auth_hidepw = "DEADBEEFDEADBEEF";
+        }
       }
     } # end avail("auth")
   } # end auth parsing

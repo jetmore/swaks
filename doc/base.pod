@@ -446,6 +446,12 @@ Provides a way to map alternate names onto base authentication types.  Useful fo
 
 Instead of showing AUTH strings base64 encoded as they are transmitted, translate them to plaintext before printing on screen.
 
+=item -ahp, --auth-hide-password [replacement string]
+
+If this option is specified, any time a readable password would be printed to the terminal (specifically AUTH PLAIN and AUTH LOGIN) the password is replaced with a dummy string (or the contents of "replacement string" if provided).  The dummy string will be base64 encoded or not contingent on the --auth-plaintext option.
+
+Note that --auth-hide-password is similar, but not identical, to the --protect-prompt option.  The former protects passwords from being displayed in the SMTP transaction regardless of how they are entered.  The latter protects sensitive strings when the user types them at the terminal, regardless of how the string would be used.
+
 =back
 
 =head1 DATA OPTIONS
@@ -604,7 +610,7 @@ These options allow the user to send output to files instead of stdout/stderr.  
 
 =item -pp, --protect-prompt
 
-Don't echo user input on prompts that are potentially sensitive (right now only authentication password)
+Don't echo user input on prompts that are potentially sensitive (right now only authentication password).  See also --auth-hide-password
 
 =item -hr, --hide-receive
 
