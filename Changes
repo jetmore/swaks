@@ -496,3 +496,6 @@
 * 20110309 misc typos/style
 * 20110309 added --protect-password option to make best effort not to
            echo user input on sensitive fields (*nix and Win32)
+* 20110321 fixed bug which prevented message data to be provided in a file 
+           with a "n" or "\" in the filename.  Reported and fix suggested
+           by dietrich.rebmann#freenet.de

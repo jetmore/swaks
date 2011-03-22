@@ -1813,7 +1813,7 @@ sub process_args {
   # The -g option trumps all other methods of getting the data
   if ($o->{data_on_stdin}) {
     $n{data} = join('', <STDIN>);
-  } elsif ($n{data} !~ m|[\\n\n]| && open(F, "<$n{data}")) {
+  } elsif ($n{data} !~ m/(\\n|\n)/ && open(F, "<$n{data}")) {
     $n{data} = join('', <F>);
     close(F);
   }
