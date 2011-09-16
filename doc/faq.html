@@ -1,0 +1,175 @@
+<html><head><title>swaks - Occasionally Asked Questions</title></head>
+<body>
+<table width=100% height=100%><tr><td valign=middle align=center>
+<font size=-1><a href=/>www.jetmore.org</a>/<a href=/john/>john</a>/<a href=/john/code/>code</a>/<a href=/john/code/swaks>swaks</a></font>/<font size=+2>faq.html</font>
+<P>
+<table cellpadding=3 border=0 width=75%>
+<tr><td colspan=2><hr></td></tr>
+<tr><td colspan=2 align=left><font size=-1>
+<a name=swaks>
+<font size=+2><B>swaks</B> - Occasionally Asked Questions</font>
+<p>
+These are questions that I occasionally get asked or I see pop up in a Google query string.
+<P>
+If you are trying to figure out something using swaks, drop me a line at proj-swaks@jetmore.net.  swaks is a low-traffic project and I enjoy making it better, whether it's docs or code or just a hint in an email.
+</font></td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<td valign=top><font size=-1><b>Table of Contents</b></font></td>
+<td><font size=-1>
+<ol>
+<li><a href="#mult_recip">How do I use swaks to send email to multiple recipients?</a>
+<li><a href="#adding_header">How do I add a header?</a>
+<li><a href="#install_macosx">How do I install on Mac OS X?</a>
+<li><a href="#install_windows">How do I install on Windows?</a>
+<li><a href="#send_html_email">How do I send HTML email?</a>
+</ol>
+</font>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
+<td valign=top><font size=-1><b><a name="mult_recip">Multiple Recipients</a></b></font></td>
+<td><font size=-1>
+<B>How do I use swaks to send email to multiple recipients?</b>
+<P>
+Multiple recipients can be specified by passing them as a single argument to the "--to" option.  Any of the following will result in mail being sent to both foo@example.net and bar@example.com:
+<P>
+Command line:
+<pre>swaks --to foo@example.net,bar@example.com</pre>
+<P>
+Environment variable:
+<pre>SWAKS_OPT_to='foo@example.net,bar@example.com'
+swaks
+</pre>
+<P>
+Config file:
+<pre>
+echo "--to foo@example.net,bar@example.com" >> .swaksrc
+swaks --config .swaksrc
+</pre>
+The argument to the --to option is passed deep into the heart of swaks with no real validation checking.  This is done on purpose because swaks is meant to be a test tool, so oddball values should be allowed.  This does mean though that you can't have a space after the comma, or you will try to send an email to an address that begins with a comma, which is probably not what you want.
+<P>
+There is one additional consideration here.  Since swaks is oriented around a single smtp-session per invocation, it will only ever connect to a single server, even if multiple recipients are specified.  In the example above, both emails will be delivered to the MX server for example.com (since, as documented, the mail routing for the last domain in the list is used).  This may or may not work, depending on the type of email server you are testing.
+</font>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
+<td valign=top><font size=-1><b><a name="adding_header">Adding Headers</a></b></font></td>
+<td><font size=-1>
+<B>How do I add a header??</b>
+<P>
+Use the --add-header option:
+<pre>
+swaks --add-header "X-Test-Header: foo"
+</pre>
+<P>
+There are lots more examples in <a href=http://jetmore.org/john/code/swaks/latest/doc/ref.txt>the spec</a>, look for --header and --add-header for details and nuance about each.  A quick rule of thumb though is that you want --header to overwrite a header that already exists in you test email, and you want --add-header to add a completely new header, even if that same header already exists in your test email.
+</font>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
+<td valign=top><font size=-1><b><a name="">Install on Mac OS X</a></b></font></td>
+<td><font size=-1>
+<B>How do I install on Mac OS X?</b>
+<P>
+Copy and paste or right-click, save-as works great for me =).  I don't know if anyone's packaged swaks for Mac OS X, but, at the layer swaks operates, it's just UNIX.  Much of the first part of swaks' life was developed on a tibook running 10.3.x and 10.4.x and recently it has been on a MacBook running 10.6.x
+<P>
+It is true that there are a couple of modules that make swaks much more fun to use, but they are all easy to install.  If you have any specific questions I'd be happy to listen to them, especially if I can enhance this question with specific help.
+</font>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
+<td valign=top><font size=-1><b><a name="#install_windows">Install on Windows</a></b></font></td>
+<td><font size=-1>
+<B>How do I install on Windows?</b>
+<P>
+swaks has been tested much less on Windows than Mac OS X or Linux (or even Solaris, swaks' birth-OS), but it has worked when I tested it.  I installed ActiveState Perl, saved the latest version of swaks as swaks.pl, and used ppm to install perl modules.  Worked fine, but if you are having specific issues let me know.
+</font>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
+<td valign=top><font size=-1><b><a name="send_html_email">HTML Email</a></b></font></td>
+<td><font size=-1>
+<B>How do I send HTML email?</b>
+<P>
+This really depends on what you want to do.  At its base, swaks is agnostic about what it sends in its DATA section, so you can craft whatever email you want and use it as the DATA of the message using the --data option.  This is the best route for testing, where you usually have a fixed set of test cases to run, or you want to run the same command many times.  If you don't know what a raw email looks like, send yourself an email to a gmail account and select "Show Original".  The entire text file is the format that the --data option expects (though it will probably be more complicated and have more headers than you need)
+<P>
+On the other hand, if you're trying to do something like use swaks to send an email copy of a nightly HTML file, and you want the file to show up correctly in your MUA, swaks does have a couple of helper options.
+<P>
+First, if you want the HTML file to be an attachment that can be openable or saveable from your MUA, you want the --attach option.  For instance, the following command will attach the file report.html.  --attach-type is optional, but setting it will help your MUA know what to do with the attachment:
+<P>
+<pre>
+swaks --attach-type text/html --attach report.html
+</pre>
+<P>
+Another interpretation of this question is "How do I send email which has an HTML-encoded body".  This means sending an email that your MUA will display as HTML.  swaks always treats the "body" portion of a MIME email as text/plain, so you have to "cheat" and add the MIME headers yourself.  The following should work:
+<P>
+<pre>
+swaks --body report.html --add-header "MIME-Version: 1.0" --add-header "Content-Type: text/html"
+</pre>
+<P>
+One potential issue with this path is that the contents of report.html won't be encoded as they would if it was processed using --attach.  Whether this will be an issue or not depends on the contents of the file, the mail server(s) used to handle the mail, and the MUA used to view the mail
+</font>
+</td></tr>
+<!-- y8y
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
+<td valign=top><font size=-1><b><a name="">Multiple Recipients</a></b></font></td>
+<td><font size=-1>
+<B>How do I use swaks to send email to multiple recipients?</b>
+<P>
+</font>
+</td></tr>
+-->
+<!-- TODO
+
+These are all the remaining Q-strings from 2011 through 9/16
+
+swaks%20config%20file
+swaks%20download
+swaks+send+attachment
+configuration%20et%20implementation%20de%20swaks%20sur%20nagios
+testing+clamav+through+swaks
+swaks+timeout+after+30+seconds
+gtube%20swaks
+swaks%20examples
+how+to+send+a+empty+message+in+swaks
+swaks%20lmtp
+swaks%20send%20eicar
+***+Host+did+not+advertise+STARTTLS+swaks
+swaks%20stress%20test
+swaks%20not%20including%20%5Cr
+swaks+how+to+debug+smtps+465
+swaks+%22Host+did+not+advertise+authentication%22
+swaks%20send%20file
+swaks%20TLS%20is%20not%20a%20recognized%20auth%20type%2C%20skipping
+swaks+Host+did+not+advertise+authentication
+
+
+       1  swaks+IPv6
+       1  swaks%20local-interface
+       1  swaks+ssl+certificate
+       1  swaks%20enable%20tls
+       1  download+swaks+sco
+       1  swaks+smtps
+       1  changing+data+and+subject+swaks
+       1  nagios+swaks+smtp
+       1  swaks%20attachment%20name
+       1  send+multiple+emails+swaks
+       1  multiple+emails+with+single+SWAKS+command
+       1  swaks%20multiple%20attachments
+       1  blank+message+id+swaks
+       1  swaks%20multiple%20mails%20one%20session
+       1  swaks+Stress+Testing+Tool.
+       1  swaks+No+acceptable+authentication+types+available
+       1  sending%20multiple%20messages%20with%20SWAKS
+       1  swaks+tls+accept+certificate
+       1  No%20acceptable%20authentication%20types%20available%20swaks
+       1  swaksrc+example
+       1  tls+tsting+swaks+win32
+       1  swaks%20force%20tls
+       1  swaks+message-charset
+       1  send%20a%20s%2Fmime%20mail%20with%20swaks
+       1  swaks+transaction+latency
+-->
+</table>
+</td></tr></table></body></html>
