@@ -501,3 +501,6 @@
            by dietrich.rebmann#freenet.de
 * 20110321 added --auth-hide-password option to replace recoverable passwords
            in SMTP transactions with a dummy string
+* 20111021 Fixed the date string TZ offset to work correctly for TZs that
+           are not fixed on an hour boundary.  Report and patch by Peter
+           Samuelson in debian bug 646084.

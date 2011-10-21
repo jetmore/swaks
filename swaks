@@ -2052,7 +2052,10 @@ sub get_date_string {
     @l = gmtime($et);
   } else {
     my @g = gmtime($et);
-    $o = (timelocal(@l) - timelocal(@g))/36;
+    $o = (timelocal(@l) - timelocal(@g)) / 60;
+    # Adjust to hours and minutes and not hours and hour-hundreths
+    # See debian bug 646084
+    $o = int($o / 60)*100 + ($o%60)*($o > 0 ? 1 : -1);
   }
   $G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
                  (qw(Sun Mon Tue Wed Thu Fri Sat))[$l[6]],
