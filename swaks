@@ -1258,6 +1258,9 @@ sub get_option_struct {
     # Don't strip From_ line from DATA
     { opts => ['nsf', 'no-strip-from'],           suffix => '',
       okey => 'no_strip_from',                    type => 'scalar', },
+    # Use the old, one-character substitution tokens (%H, %D, etc)
+    { opts => ['use-old-data-tokens'],            suffix => '',
+      okey => 'use_old_data_tokens',              type => 'scalar', },
     # Don't show transaction hints
     { opts => ['nth', 'no-hints'],                suffix => '',
       okey => 'no_hints',                         type => 'scalar', },
@@ -1303,7 +1306,7 @@ sub get_option_struct {
     # A file to attach
     { opts => ['attach-name','attach-type','attach'], suffix => ':s',
       okey => 'attach_822',                       type => 'list', },
-    # replacement for %H DATA token
+    # replacement for %NEW_HEADERS% DATA token
     { opts => ['ah', 'add-header'],               suffix => ':s',
       okey => 'add_header',                       type => 'list', },
     # replace header if exist, else add
@@ -1768,9 +1771,9 @@ sub process_args {
   }
 
   # add-header option.  In a strict technical sense all this is is a text
-  # string that will replace %H in the DATA.  Because of where %H is placed
-  # in the default DATA, in practice this is used to add headers to the stock
-  # DATA w/o having to craft a custom DATA portion
+  # string that will replace %NEW_HEADERS% in the DATA.  Because of where
+  # %NEW_HEADERS% is placed in the default DATA, in practice this is used
+  # to add headers to the stock DATA w/o having to craft a custom DATA portion
   @{$o->{add_header}} = map { split(/\\n/) } @{$o->{add_header}};
 
   # SMTP DATA
@@ -1791,15 +1794,15 @@ sub process_args {
     }
   }
   $n{data} ||= $fconf->{DATA}
-           || 'Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\n'
+           || 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n'
              ."X-Mailer: swaks v$p_version jetmore.org/john/code/swaks/".'\n'
              . ($bound ?  'MIME-Version: 1.0\n'
                          .'Content-Type: multipart/mixed; '
                          .'boundary="'.$bound.'"\n'
                        : '')
-             .'%H' # newline will be added in replacement if it exists
+             .'%NEW_HEADERS%' # newline will be added in replacement if it exists
              .'\n'
-             .'%B\n';
+             .'%BODY%\n';
   # The -g option trumps all other methods of getting the data
   if ($o->{data_on_stdin}) {
     $n{data} = join('', <STDIN>);
@@ -1808,7 +1811,8 @@ sub process_args {
     close(F);
   }
   if (!$o->{no_data_fixup}) {
-    $n{data} =~ s/%B/$body/g;
+    $n{data} =~ s/%BODY%/$body/g;
+    $n{data} =~ s/%B/$body/g if ($O{use_old_data_tokens});
     if (defined($o->{header}) && ref($o->{header}) eq 'ARRAY'
                               && scalar(@{$o->{header}}))
     {
@@ -1822,13 +1826,21 @@ sub process_args {
     }
     $n{add_header} = join('\n', @{$o->{add_header}}) . "\n"
         if (@{$o->{add_header}});
-    if ($n{data} !~ s/%H/$n{add_header}/g) {
+    if ($n{data} =~ /%NEW_HEADERS%/ || ($O{use_old_data_tokens} && $n{data} =~ /%H/)) {
+      $n{data} =~ s/%NEW_HEADERS%/$n{add_header}/g;
+      $n{data} =~ s/%H/$n{add_header}/g if ($O{use_old_data_tokens});
+    } else {
       $n{data} =~ s/(\n|\\n)(\r?\n|\\n)/$1$n{add_header}$2/;
     }
     $n{data} =~ s/\\n/\r\n/g;
-    $n{data} =~ s/%F/$n{from}/g;
-    $n{data} =~ s/%T/$n{to}/g;
-    $n{data} =~ s/%D/get_date_string()/eg;
+    $n{data} =~ s/%FROM_ADDRESS%/$n{from}/g;
+    $n{data} =~ s/%F/$n{from}/g if ($O{use_old_data_tokens});
+    $n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
+    $n{data} =~ s/%T/$n{to}/g if ($O{use_old_data_tokens});
+    { my $date_string = get_date_string();
+      $n{data} =~ s/%DATE%/$date_string/g;
+      $n{data} =~ s/%D/$date_string/g if ($O{use_old_data_tokens});
+    }
     $n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
     $n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
     $n{data} =~ s/\n\./\n../g;         # quote any other leading dots

@@ -504,3 +504,10 @@
 * 20111021 Fixed the date string TZ offset to work correctly for TZs that
            are not fixed on an hour boundary.  Report and patch by Peter
            Samuelson in debian bug 646084.
+* 20111128 Changed default token parsing from the old single-char version
+           (%F) to the newer, safer version (%FROM_ADDRESS%).  Added and
+           and documented the --use-old-data-tokens option to get old
+           behavior back.  Marked option and older tokens as deprecated
+           to hopefully get people to transition to new tokens. (The issue
+           with the overly simplistic tokens and non-ascii language encoding
+           first reported by Peter Baranyi)

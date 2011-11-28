@@ -464,33 +464,37 @@ These options pertain to the contents for the DATA portion of the SMTP transacti
 
 Use argument as the entire contents of DATA, or prompt user if no argument specified.  If the argument '-' is provided the data will be read from STDIN.  If any other argument is provided and it represents the name of an open-able file, the contents of the file will be used.  Any other argument will be itself for the DATA contents.
 
-The value can be on one single line, with \n (ascii 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\nX-Mailer: swaks v$p_version jetmore.org/john/code/#swaks\n%H\n\n%B\n".
+The value can be on one single line, with \n (ascii 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is "Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\nX-Mailer: swaks v$p_version jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n".
 
-Very basic token parsing is performed on the DATA portion.  The following table shows the recognized tokens and their replacement values:
+Very basic token parsing is performed on the DATA portion.  See --use-old-data-tokens for details about the single-character tokens marked as deprecated.  The following table shows the recognized tokens and their replacement values:
 
 =over 4
 
-=item %F
+=item %FROM_ADDRESS%
 
-Replaced with the envelope-sender.
+Replaced with the envelope-sender.  Replaces the deprecated %F token.
 
-=item %T
+=item %TO_ADDRESS%
 
-Replaced with the envelope-recipient(s).
+Replaced with the envelope-recipient(s).  Replaces the deprecated %T token.
 
-=item %D
+=item %DATE%
 
-Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module Time::Local for timezone calculations.  If this module is unavailable the date string will be in GMT.
+Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module Time::Local for timezone calculations.  If this module is unavailable the date string will be in GMT.  Replaces the deprecated %D token.
 
-=item %H
+=item %NEW_HEADERS%
 
-Replaced with the contents of the --add-header option.  If --add-header is not specified this token is simply removed.
+Replaced with the contents of the --add-header option.  If --add-header is not specified this token is simply removed.  Replaces the deprecated %H token.
 
-=item %B
+=item %BODY%
 
-Replaced with the value specified by the --body option.  See --body for default.
+Replaced with the value specified by the --body option.  See --body for default.  Replaces the deprecated %H token.
 
 =back
+
+=item --use-old-data-tokens
+
+In previous versions of swaks the DATA tokens as described in the --data option above used single-character tokens (e.g., %F).  These were not a great choice for default tokens, and proved especially troublesome with encoded, non-english languages where these character combinations might be common.  The single-character tokens were replaced with the slightly-less-error-prone versions listed above.  The retention of the old tokens and the inclusion of this option to activate them are intended as a temporary aid to users who have an existing message corpus using the old tokens.  The single-character tokens and the --use-old-data-tokens option should be considered deprecated and likely to be removed in the next release.
 
 =item --body [body-specification]
 
