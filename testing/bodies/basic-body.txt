@@ -1,0 +1,7 @@
+From: %FROM_ADDRESS%
+To: %TO_ADDRESS%
+Subject: test %DATE%
+Date: %DATE%
+%NEW_HEADERS%
+
+%BODY%

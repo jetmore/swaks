@@ -1,0 +1,6 @@
+From: %F
+To: %T
+Subject: test %D
+Date: %D
+
+%B

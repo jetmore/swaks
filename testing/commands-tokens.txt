@@ -1,0 +1,44 @@
+# basic token replacement
+# it's known that there will be an extra newline when %NEW_HEADERS% is replaced.  swaks adds the newline
+# when it does the replacement on purpose.
+swaks --dump -t foo@bar.com --data bodies/basic-body.txt
+swaks --dump -t foo@bar.com --data bodies/basic-body-old-tokens.txt
+swaks --dump -t foo@bar.com --data bodies/basic-body-multiple-tokens.txt
+swaks --dump -t foo@bar.com --use-old-data-tokens --data bodies/basic-body.txt
+swaks --dump -t foo@bar.com --use-old-data-tokens --data bodies/basic-body-old-tokens.txt
+swaks --dump -t foo@bar.com --use-old-data-tokens --data bodies/basic-body-multiple-tokens.txt
+
+
+# playing with the various ways you can add/replace headers
+swaks --dump -t foo@bar.com --h-Date "replacement date"               --data bodies/basic-body.txt
+swaks --dump -t foo@bar.com --header "Date: replacement date"         --data bodies/basic-body.txt
+swaks --dump -t foo@bar.com --add-header "Date: replacement date(ah)" --data bodies/basic-body.txt
+swaks --dump -t foo@bar.com --add-header "Date: replacement date(ah)" --data bodies/basic-body-no-H.txt
+swaks --dump -t foo@bar.com --add-header "Date: replacement date(ah)" --data bodies/basic-body-old-tokens.txt
+swaks --dump -t foo@bar.com --use-old-data-tokens --add-header "Date: replacement date(ah)" --data bodies/basic-body-old-tokens.txt
+
+# multiple header commands
+swaks --dump -t foo@bar.com \
+      --h-Date "replacement date" \
+      --header "Date: replacement date" \
+      --add-header "Date: replacement date(ah)" \
+      --data bodies/basic-body.txt
+
+swaks --dump -t foo@bar.com \
+      --h-Date "replacement date" \
+      --header "Subject: replacement subject" \
+      --header "Foo: completely new header" \
+      --add-header "Date: replacement date(ah)" \
+      --add-header "Bar: another new header" \
+      --data bodies/basic-body.txt
+
+swaks --dump -t foo@bar.com \
+      --h-Date "replacement date" \
+      --header "Subject: replacement subject" \
+      --header "Foo: completely new header" \
+      --add-header "Date: replacement date(ah)" \
+      --add-header "Bar: another new header" \
+      --add-header "X-1: X-1 (1)" \
+      --add-header "X-1: X-1 (2)\nX-2: X-2\nX-3: X-3" \
+      --data bodies/basic-body-no-H.txt
+
