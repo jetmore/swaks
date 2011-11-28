@@ -1164,9 +1164,6 @@ sub get_option_struct {
     # location of config file
     { opts => ['config'],                         suffix => ':s',
       okey => 'config_file',                      type => 'scalar', },
-    # (l)ocation of input data
-    { opts => ['l', 'input-file'],                suffix => '=s',
-      okey => 'option_file',                      type => 'scalar', },
     # envelope-(f)rom address
     { opts => ['f', 'from'],                      suffix => ':s',
       okey => 'mail_from',                        type => 'scalar', },

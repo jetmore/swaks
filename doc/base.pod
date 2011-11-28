@@ -139,7 +139,7 @@ In a configuration file lines beginning with a hash (#) are ignored.  All other 
     # entire argument.
     h-From: "Fred Example" <fred@example.com>
 
-There is a deprecated option --input-file (or -l) in swaks that was a precursor of the configuration file defined here.  That option has been judged deficient and is being replaced wholesale with the idea of the configuration file defined above.  The option still exists for the time being but its use is strongly discouraged.  It is no longer documented, and it will be removed entirely in some future release.
+There was an option --input-file (or -l) that was a predecessor to the current configuration file system.  It was deprecated and undocumented before this release.  The code for it is being removed in this release, and this mention of it will be removed in the next release.  If you were still using it please move to using one of the other configuration methods.
 
 =item ENVIRONMENT VARIABLES
 

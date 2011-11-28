@@ -512,3 +512,6 @@
            with the overly simplistic tokens and non-ascii language encoding
            first reported by Peter Baranyi)
 * 20111128 Adding missing --no-data-fixup option back into the docs
+* 20111128 removed the --input-file/-l option from the code.  Left one final
+           mention on if in the docs as a breadcrumb to anyone who still needs
+           to move to --config.  Will remove breadcrumb after next release
