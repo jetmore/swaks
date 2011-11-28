@@ -532,6 +532,10 @@ These options allow a way to change headers that already exist in the DATA.  '--
 
 If specified, swaks will read the DATA value for the mail from STDIN.  This is equivalent to "--data -".  If there is a From_ line in the email, it will be removed (but see -nsf option).  Useful for delivering real message (stored in files) instead of using example messages.
 
+=item --no-data-fixup, -ndf
+
+This option forces swaks to do no massaging of the DATA portion of the email.  This includes token replacement, From_ stripping, trailing-dot addition, --body/attachment inclusion, and any header additions.  This option is really only useful when used with --data, since the internal default DATA portion uses tokens.
+
 =item --no-strip-from, -nsf
 
 Don't strip the From_ line from the DATA portion, if present.

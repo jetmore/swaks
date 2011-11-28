@@ -511,3 +511,4 @@
            to hopefully get people to transition to new tokens. (The issue
            with the overly simplistic tokens and non-ascii language encoding
            first reported by Peter Baranyi)
+* 20111128 Adding missing --no-data-fixup option back into the docs
