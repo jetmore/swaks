@@ -1251,7 +1251,7 @@ sub get_option_struct {
     # suppress output to varying degrees
     { opts => ['S', 'silent'],                    suffix => ':i',
       okey => 'silent',                           type => 'sub',
-      literal => 'sub { $r->{silent} = $_[1] || $r->{silent} + 1; }', },
+      literal => 'sub { $r->{silent} = $_[1] || 1; }', },
     # Don't strip From_ line from DATA
     { opts => ['nsf', 'no-strip-from'],           suffix => '',
       okey => 'no_strip_from',                    type => 'scalar', },

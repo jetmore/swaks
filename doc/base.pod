@@ -640,7 +640,7 @@ Do not display any content to the terminal.
 
 Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.
 
-Note that this used to be an additive option ("-S -S" was equivalent to "-S 2").  After environment option handling was introduced this was changed.  The additive method still works but is deprecated and will be removed entirely in a future release
+In previous releases the -S option could be additive (i.e., "-S -S" was equivalent to "-S 2").  This was marked deprecated in previous releases.  The functionality has been removed from code in this release.  This mention of the functionality is left as a breadcrumb only and will be removed in the next release.  If you are still using the additive method, please change to the method described above.
 
 =item --support
 

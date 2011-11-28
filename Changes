@@ -515,3 +515,6 @@
 * 20111128 removed the --input-file/-l option from the code.  Left one final
            mention on if in the docs as a breadcrumb to anyone who still needs
            to move to --config.  Will remove breadcrumb after next release
+* 20111128 Removed the additive nature of the --silent/-S option.  Left
+           a mention of it in doc as breadcumb.  Remove all mention in next
+           release
