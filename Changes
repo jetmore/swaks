@@ -518,3 +518,8 @@
 * 20111128 Removed the additive nature of the --silent/-S option.  Left
            a mention of it in doc as breadcumb.  Remove all mention in next
            release
+* 20111128 Fix option processing so that "no-" prefixed options wipe out
+           the same option when presented in the same context.  Previously
+           --no-timeout on command line would erase a timeout set by a
+           config option or env variable, but would not erase --timeout
+           given earlier on the same command line.

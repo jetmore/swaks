@@ -1393,11 +1393,21 @@ sub load_args {
 sub fetch_args {
   my $r = shift;
   my $l = shift;
+  
+  my %to_delete = ();
 
   # need to rewrite header-HEADER opts before std option parsing
   # also see if there are any --no- options that need to be processed
   RUNOPTS:
   for (my $i = 0; $i < scalar(@ARGV); $i++) {
+    if ($ARGV[$i] =~ /^-?-(.*)$/) {
+      my $opt_name = $1;
+      foreach my $e (@$l) {
+        if (grep /^$opt_name$/, @{$e->{opts}}) {
+          delete($to_delete{$e->{okey}});
+        }
+      }
+    }
     if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
       $ARGV[$i] = "--header"; $ARGV[$i+1] = "$1: $ARGV[$i+1]";
     } elsif ($ARGV[$i] =~ /^-?-(no-(.*))$/) {
@@ -1409,6 +1419,7 @@ sub fetch_args {
         } elsif (grep /^$opt_name$/, @{$e->{opts}}) {
           splice(@ARGV, $i, 1);
           delete($r->{$e->{okey}});
+          $to_delete{$e->{okey}} = 1;          
           redo RUNOPTS; # since we're messing with the list, redo this element
         }
       }
@@ -1452,6 +1463,19 @@ sub fetch_args {
 
   Getopt::Long::Configure("bundling_override");
   GetOptions(%options) || exit(1);
+  
+  # now remove any options that might have been added by a --no option
+  # (we have to do this here since it's legal to mix multiple OPT and --no-OPT
+  # in the same context (config file, command line, env var)
+  if (scalar keys %to_delete) {
+    foreach my $e (@$l) {
+      foreach my $opt_name (@{$e->{opts}}) {
+        if ($to_delete{$opt_name}) {
+          delete($r->{$e->{okey}});
+        }
+      }
+    }
+  }
 }
 
 # A couple of global options are set in here, they will be in the G:: namespace
