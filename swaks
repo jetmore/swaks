@@ -884,30 +884,6 @@ sub unencode_smtp {
   return("$t[0] " . db64($t[1]));
 }
 
-sub process_file {
-  my $f = shift;
-  my $h = shift;
-
-  if (! -e "$f") {
-    ptrans(12, "File $f does not exist, skipping");
-    return;
-  } elsif (! -f "$f") {
-    ptrans(12, "File $f is not a file, skipping");
-    return;
-  } elsif (!open(I, "<$f")) {
-    ptrans(12, "Couldn't open $f, skipping... ($!)");
-    return;
-  }
-
-  while (<I>) {
-    chomp;
-    next if (/^#?\s*$/); # skip blank lines and those that start w/ '#'
-    my($key,$value) = split(' ', $_, 2);
-    $h->{uc($key)} = $value;
-  }
-  return;
-}
-
 sub interact {
   my $prompt     = shift;
   my $regexp     = shift;
@@ -1483,9 +1459,6 @@ sub process_args {
   my $o     = shift; # This is the args we got from command line
   my %n     = ();    # This is the hash we will return w/ the fixed-up args
   my $fconf = {};    # Hold config info from -l file if specified
-
-  # load the $fconf hash if user has specified a -l file
-  process_file($o->{option_file}, $fconf) if ($o->{option_file});
 
   # handle the output file handles early so they can be used for errors
   # we don't need to keep track of the actual files but it will make debugging
