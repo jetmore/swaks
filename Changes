@@ -523,3 +523,8 @@
            --no-timeout on command line would erase a timeout set by a
            config option or env variable, but would not erase --timeout
            given earlier on the same command line.
+* 20111130 Changed the DIGEST-MD5 backend from Authen::DigestMD5 to
+           Authen::SASL.  Authen::DigestMD5 had some blatant protocol
+           bugs and swaks did a poor job of supporting DIGEST-MD5
+           (as pointed out by Erwan Legrand).  Current version
+           tested against a reasonably new Sendmail install.

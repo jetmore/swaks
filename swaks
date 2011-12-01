@@ -565,27 +565,41 @@ sub do_smtp_auth_digest {
 
   $r =~ s/^....//; # maybe something a little better here?
   $r = db64($r);
-  my $req = Authen::DigestMD5::Request->new($r);
-  my $res = Authen::DigestMD5::Response->new();
-  $res->got_request($req);
-  # XXX using link{server} here is probably a bug, but I don;t know what else
-  # XXX to use yet on a non-inet-socket connection
-  $res->set('username' => $u, 'realm' => '',
-            'digest-uri' => "smtp/$G::link{server}");
-  $res->add_digest(password => $p);
-  my $d = $res->output();
-  $auth_string = eb64($d);
+  
+  my $sasl = Authen::SASL->new(
+    debug => 1,
+    mechanism => 'DIGEST-MD5',
+    callback  => {
+      user => $u,
+      pass => $p,
+    },
+  );
+  my $sasl_client = $sasl->client_new("smtp");
+  
+  # Force the DIGEST-MD5 session to use qop=auth.  I'm open to exposing this setting
+  # via some swaks options, but I don't know enough about the protocol to just guess
+  # here.  I do know that letting it auto-negotiate didn't work in my reference
+  # environment.  sendmail advertised auth,auth-int,auth-conf, but when Authen::SASL
+  # chose auth-int the session would fail (server would say auth succeeded, but then
+  # immediately terminate my session when I sent MAIL).  My reference client
+  # (Mulberry) always sent auth, and indeed forcing swaks to auth also seems to work.
+  # If anyone out there knows more about this please let me know.
+  $sasl_client->property('maxssf' => 0);
 
-  do_smtp_gen($auth_string, '334', \$r, '', $G::auth_showpt ? "$d" : '',
+  my $auth_string = $sasl_client->client_step($r);
+  do_smtp_gen(eb64($auth_string), '334', \$r, '', $G::auth_showpt ? "$auth_string" : '',
               $G::auth_showpt ? \&unencode_smtp : '')
       || return(0);
   $r =~ s/^....//; # maybe something a little better here?
   $r = db64($r);
-  $req->input($r);
-  return(0) if (!$req->auth_ok);
 
-  do_smtp_gen("", '235', undef, '',
-              $G::auth_showpt ? "" : '') || return(0);
+  $auth_string = $sasl_client->client_step($r);
+  do_smtp_gen(eb64($auth_string), '235', \$r, '',
+              $G::auth_showpt ? "$auth_string" : '')
+      || return(0);
+      
+  return(0) if (!$sasl_client->is_success());
+
   return(1);
 }
 
@@ -1121,8 +1135,7 @@ sub load_dependencies {
     auth_cram_md5   => { name => "AUTH CRAM-MD5",  req => ['Digest::MD5'] },
     auth_cram_sha1  => { name => "AUTH CRAM-SHA1", req => ['Digest::SHA1'] },
     auth_ntlm       => { name => "AUTH NTLM",      req => ['Authen::NTLM'] },
-    auth_digest_md5 => { name => "AUTH DIGEST-MD5",
-                         req  => ['Authen::DigestMD5'] },
+    auth_digest_md5 => { name => "AUTH DIGEST-MD5", req  => ['Authen::SASL'] },
     dns             => { name => "MX Routing",     req => ['Net::DNS'] },
     tls             => { name => "TLS",            req => ['Net::SSLeay'] },
     pipe            => { name => "Pipe Transport", req => ['IPC::Open2'] },

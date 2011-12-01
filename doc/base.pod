@@ -408,7 +408,9 @@ The CRAM-MD5 authenticator requires the Digest::MD5 module.  It is fully tested 
 
 =item DIGEST-MD5
 
-The DIGEST-MD5 authenticator (RFC2831) requires the Authen::DigestMD5 module.  Only known to have been tested against Communigate and may therefore have some implementation deficiencies.
+The DIGEST-MD5 authenticator (RFC2831) requires the Authen::SASL module.  Version 20100211.0 and earlier used Authen::DigestMD5 which had some protocol level errors which prevented it from working with some servers.  Authen::SASL's DIGEST-MD5 handling is much more robust.
+
+The DIGEST-MD5 implementation in swaks is fairly immature.  It currently supports only the "auth" qop type, it doesn't expose the realm option to the user, etc.  If you have DIGEST-MD5 experience and would like to help swaks support DIGEST-MD5 better, please get in touch with me.
 
 =item CRAM-SHA1
 
