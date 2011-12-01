@@ -528,3 +528,5 @@
            bugs and swaks did a poor job of supporting DIGEST-MD5
            (as pointed out by Erwan Legrand).  Current version
            tested against a reasonably new Sendmail install.
+> 20111130 released r256 to Erwan Legrand (erwan@lightbringer.org)
+           to evaluate the DIGEST-MD5 changes
