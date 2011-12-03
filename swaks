@@ -398,6 +398,7 @@ sub ptrans {
   # 3x is smtp recv
   # x = 1 is info/normal
   # x = 2 is error
+  # x = 3 dump output
   # program info
   if ($c == 11) { $f = '==='; }
   # program error
@@ -407,10 +408,14 @@ sub ptrans {
   elsif ($c == 21) { $f = $G::link{tls}{active} ? ' ~>' : ' ->'; }
   # smtp send error
   elsif ($c == 22) { $f = $G::link{tls}{active} ? '*~>' : '**>'; }
+  # smtp send dump output
+  elsif ($c == 23) { $f = '  >'; }
   # smtp recv info
   elsif ($c == 31) { $f = $G::link{tls}{active} ? '<~ ' : '<- '; }
   # smtp recv error
   elsif ($c == 32) { $f = $G::link{tls}{active} ? '<~*' : '<**'; }
+  # smtp recv dump output
+  elsif ($c == 33) { $f = '<  '; }
   # something went unexpectedly
   else { $c = '???'; }
 
@@ -784,6 +789,7 @@ sub flush_send_buffer {
   } else {
     print $s $G::send_buffer;
   }
+  ptrans(23, hdump($G::send_buffer)) if ($G::show_raw_text);
   $G::send_buffer = '';
 }
 
@@ -796,14 +802,54 @@ sub recv_line {
   # Either an IO::Socket obj or a FH to my child - the thing to read from
   my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{re} : $G::link{sock};
   my $r = undef;
-
-  if ($G::link{tls}{active}) {
-    $r = Net::SSLeay::read($G::link{tls}{ssl});
-  } else {
-    $r = <$s>;
+  my $t = undef;
+  my $c = 0;
+  
+  while ($G::recv_buffer !~ m|\n|si) {
+    last if (++$c > 1000);
+    if ($G::link{tls}{active}) {
+      $t = Net::SSLeay::read($G::link{tls}{ssl});
+      return($t) if (!defined($t));
+    } elsif ($G::link{type} eq 'pipe') {
+      $t = <$s>;
+      return($t) if (!defined($t));
+    } else {      
+      # if you're having problems with reads, swap the comments on the
+      # the following two lines
+      my $recv_r = recv($s, $t, 8192, 0);
+      #$t = <$s>;
+      return($t) if (!defined($t));
+      
+      # the above line should be good enough but it isn't returning
+      # undef for some reason.  I think heuristically it will be sufficient
+      # to just look for an empty packet (I hope.  gulp).  Comment out the
+      # following line if your swaks seems to be saying that it lost connection
+      # for no good reason.  Then email me about it.
+      return(undef()) if (!length($t));
+      
+      #print "\$t = $t (defined = ", defined($t) ? "yes" : "no",
+      #      "), \$recv_r = $recv_r (", defined($recv_r) ? "yes" : "no", ")\n";
+    }
+	$G::recv_buffer .= $t;
+    ptrans(33, hdump($t)) if ($G::show_raw_text);
   }
+  
+  if ($c >= 1000) {
+    # If you saw this in the wild, I'd love to hear more about it
+    # at proj-swaks@jetmore.net
+    ptrans(12, "In recv_line, hit loop counter.  Continuing in unknown state");
+  }
+  
+  # using only bare newlines is bound to cause me problems in the future
+  # but it matches the expectation we've already been using.  All we can
+  # do is hone in on the proper behavior iteratively.
+  if ($G::recv_buffer =~ s|^(.*?\n)||si) {
+    $r = $1;
+  } else {
+	ptrans(12, "I'm in an impossible state");
+  }
+
   $r =~ s|\r||msg;
-#print "in recv_line, returning \$r = $r\n";
   return($r);
 }
 
@@ -889,6 +935,30 @@ sub transact {
   }
   foreach my $h (@handlers) { &{$h}(); }
   return($ret);
+}
+
+sub hdump {
+  my $r = shift;
+  my $c = 0;  # counter
+  my $i = 16; # increment value
+  my $b;      # buffer
+
+  while (length($r) && ($r =~ s|^(.{1,$i})||smi)) {
+    my $s = $1; # $s will be the ascii string we manipulate for display
+    my @c = map { ord($_); } (split('', $s));
+    $s =~ s|[^\x21-\x7E]|.|g;
+
+    my $hfs = ''; # This is the hex format string for printf
+    for (my $hc = 0; $hc < $i; $hc++) {
+      $hfs .= ' ' if (!($hc%4));
+      if ($hc < scalar(@c)) { $hfs .= '%02X '; } else { $hfs .= '   '; }
+    }
+
+    $b .= sprintf("%04d:$hfs   %-16s\n", $c, @c, $s);
+    $c += $i;
+  }
+  chomp($b); # unelegant remnant of hdump's previous life
+  return($b)
 }
 
 sub unencode_smtp {
@@ -1271,6 +1341,9 @@ sub get_option_struct {
     # don't touch the data
     { opts => ['ndf', 'no-data-fixup'],           suffix => '',
       okey => 'no_data_fixup',                    type => 'scalar', },
+    # show dumps of the raw read/written text
+    { opts => ['raw', 'show-raw-text'],           suffix => '',
+      okey => 'show_raw_text',                    type => 'scalar', },
     # specify file to write to
     { opts => ['output-file'],                    suffix => '=s',
       okey => 'output_file',                      type => 'scalar', },
@@ -1541,6 +1614,7 @@ sub process_args {
   $G::hide_receive       = 1 if ($o->{hide_receive});
   $G::hide_informational = 1 if ($o->{hide_informational});
   $G::hide_all           = 1 if ($o->{hide_all});
+  $G::show_raw_text      = 1 if ($o->{show_raw_text});
   $G::protect_prompt     = 1 if ($o->{protect_prompt});
   $G::pipeline           = 1 if ($o->{pipeline});
   $G::silent             = $o->{silent} || 0;

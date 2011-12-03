@@ -576,6 +576,10 @@ Indicates an unexpected line sent by swaks to the target server
 
 Indicates a TLS-encrypted, unexpected line sent by swaks to target server
 
+=item >
+
+Indicates a raw chunk of test sent by swaks to a target server (see --show-raw-text).  There is no concept of "expected" or "unexpected" at this level.
+
 =item <-
 
 Indicates an expected line sent by target server to swaks
@@ -591,6 +595,10 @@ Indicates an unexpected line sent by target server to swaks
 =item <~*
 
 Indicates a TLS-encrypted, unexpected line sent by target server to swaks
+
+=item <
+
+Indicates a raw chunk of text received by swaks from a target server (see --show-raw-text).  There is no concept of "expected" or "unexpected" at this level.
 
 =back
 
@@ -609,6 +617,10 @@ Display time lapse between send/receive pairs.  This option is most useful when 
 =item -nth, --no-hints
 
 Don't show transaction hints (useful in conjunction with -hr to create copy/paste-able transactions).
+
+=item -raw, --show-raw-text
+
+This option will print a hex dump of raw data sent and received by swaks.  Each hex dump is the contents of a single read or write on the network.  This should be identical to what is already being displayed (with the exception of the \r characters being removed).  This option is useful in seeing details when servers are sending lots of data in single packets, or breaking up individual lines into multiple packets.  If you really need to go in depth in that area you're probably better with a packet sniffer, but this option is a good first step to seeing odd connection issues.
 
 =item --output-file </path/to/file>
 
@@ -666,13 +678,13 @@ Display version information.
 
 This program was primarily intended for use on unix-like operating systems, and it should work on any reasonable version thereof.  It has been developed and tested on Solaris, Linux, and Mac OS X and is feature complete on all of these.
 
-This program is known to demonstrate basic functionality on Windows using ActiveState's Perl.  It has not been fully tested.  Known to work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5 auth types.  Unknown is any TLS functionality and the NTLM/SPA and Digest-MD5 auth types.
+This program is known to demonstrate basic functionality on Windows using ActiveState's Perl.  It has not been fully tested.  Known to work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5 auth types.  Unknown is any TLS functionality and the NTLM/SPA and DIGEST-MD5 auth types.
 
 Because this program should work anywhere Perl works, I would appreciate knowing about any new operating systems you've thoroughly used swaks on as well as any problems encountered on a new OS.
 
 =item MAIL SERVERS
 
-This program was almost exclusively developed against Exim mail servers.  It was been used casually by the author, though not thoroughly tested, with Sendmail, Smail, Exchange, Oracle Collaboration Suite, and Communigate.  Because all functionality in swaks is based off of known standards it should work with any fairly modern mail server.  If a problem is found, please alert the author at the address below.
+This program was almost exclusively developed against Exim mail servers.  It was been used casually by the author, though not thoroughly tested, with Sendmail, Smail, Exchange, Oracle Collaboration Suite, qpsmtpd, and Communigate.  Because all functionality in swaks is based off of known standards it should work with any fairly modern mail server.  If a problem is found, please alert the author at the address below.
 
 =back
 

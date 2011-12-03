@@ -530,3 +530,14 @@
            tested against a reasonably new Sendmail install.
 > 20111130 released r256 to Erwan Legrand (erwan@lightbringer.org)
            to evaluate the DIGEST-MD5 changes
+* 20111201 fixed TLS issue when SMTP response sent in multiple packets.
+           This looks like a regression of the TLS fix from 20050709
+           (r94) that was made in the implementation of --pipeline in 
+           20060309's r115.  Regression reported by Peter J. Holzer along
+           with suggested fix.
+* 20111202 reimplemented reading of server responses in non-TLS, non-pipe
+           sessions in terms of recv rather than as a standard filehandle
+           operation (<>) to make it closer to the TLS's read and to allow
+           a more in-depth view of what's being sent on the wire.
+* 20111202 implemented the -raw/--show-raw-text option to print a hex dump
+           of the raw bytes as received on the wire.
