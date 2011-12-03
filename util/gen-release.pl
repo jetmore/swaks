@@ -3,7 +3,7 @@
 use Pod::Text;
 use Pod::Html;
 
-my $home = '/home/jetmore/dev/swaks/trunk';
+my $home = '/home/jetmore/dev/swaks';
 my $release_d = "$home/RELEASE";
 my $release = shift || die "Need release\n";
 
