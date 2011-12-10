@@ -412,6 +412,8 @@ The DIGEST-MD5 authenticator (RFC2831) requires the Authen::SASL module.  Versio
 
 The DIGEST-MD5 implementation in swaks is fairly immature.  It currently supports only the "auth" qop type, it doesn't expose the realm option to the user, etc.  If you have DIGEST-MD5 experience and would like to help swaks support DIGEST-MD5 better, please get in touch with me.
 
+The DIGEST-MD5 protocol's "digest-uri" values can be set using the -au option.  The option can take an argument like USERNAME%URI-SERV-TYPE%URI-HOST%URI-SERV-NAME, where USERNAME is the standard authentication username, and the other values are used to build the client's digest-uri, as described in RFC2831.
+
 =item CRAM-SHA1
 
 The CRAM-SHA1 authenticator requires the Digest::SHA1 module.  This type has only been tested against a non-standard implementation on an Exim server and may therefore have some implementation deficiencies.

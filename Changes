@@ -541,3 +541,7 @@
            a more in-depth view of what's being sent on the wire.
 * 20111202 implemented the -raw/--show-raw-text option to print a hex dump
            of the raw bytes as received on the wire.
+* 20111209 Fixed default value of DIGEST-MD5's digest-uri to always include
+           a "host" value
+* 20111209 Allow specifying DIGEST-MD5's digest-uri by extending the -au
+           option (USERNAME%URI-SERV-TYPE%URI-HOST%URI-SERV-NAME)

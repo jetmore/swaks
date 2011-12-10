@@ -558,10 +558,31 @@ sub do_smtp_auth_ntlm {
 }
 
 sub do_smtp_auth_digest {
-  my $u = shift; # auth user
-  my $p = shift; # auth password
+  my $u  = shift; # auth user
+  my $p  = shift; # auth password
   my $as = shift; # auth string
-  my $r = '';    # will store smtp response
+  my $r  = '';    # will store smtp response
+  my @digest_uri = ();
+  
+  if ($u =~ m|\%|) {
+    # user-provided digest-uri values.  Provided via the -au option
+    # in the form USERNAME%URI-SERV-TYPE%URI-HOST%URI-SERV-NAME
+    ($u,@digest_uri) = split(/\%/, $u);
+  } else {
+    # if user didn't provide URI information, set SERV-TYPE to smtp,
+    # make a best guess for a URI-HOST for the various transports,
+    # and leave SERV-NAME blank
+    $digest_uri[0] = 'smtp';
+    if ($G::link{type} eq 'socket-unix') {
+      $digest_uri[1] = $G::link{sockfile};
+      $digest_uri[1] =~ s|[^a-zA-Z0-9\.\-]|-|g;
+    } elsif ($G::link{type} eq 'pipe') {
+      $digest_uri[1] = $G::link{process};
+      $digest_uri[1] =~ s|[^a-zA-Z0-9\.\-]|-|g;
+    } else {
+      $digest_uri[1] = $G::link{server};
+    }
+  }
 
   my $auth_string = "AUTH $as";
   do_smtp_gen($auth_string, '334', \$r, '', '',
@@ -579,7 +600,7 @@ sub do_smtp_auth_digest {
       pass => $p,
     },
   );
-  my $sasl_client = $sasl->client_new("smtp");
+  my $sasl_client = $sasl->client_new(@digest_uri);
   
   # Force the DIGEST-MD5 session to use qop=auth.  I'm open to exposing this setting
   # via some swaks options, but I don't know enough about the protocol to just guess
