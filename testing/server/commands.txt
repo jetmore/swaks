@@ -1,0 +1,9 @@
+
+
+./smtp-server -p 8026 -i lappy -d inet
+swaks -s lappy -p 8026
+
+./smtp-server -i /tmp/foo.s -d unix
+swaks --socket /tmp/foo.s
+
+swaks --pipe './smtp-server.pl -d pipe' 
