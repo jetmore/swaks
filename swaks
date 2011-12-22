@@ -584,8 +584,10 @@ sub do_smtp_auth_digest {
     }
   }
   if (exists($G::auth_extras{"DMD5-SERV-NAME"})) {
-    # only set this if the user passed in a value - no default value
-    @digest_uri[2] = $G::auth_extras{"DMD5-SERV-NAME"};
+    # There seems to be a hole in the Authen::SASL interface where there's
+    # no option to directory provide the digest-uri serv-name.  But we can
+    # trick it into using the value we want by tacking it onto the end of host
+    @digest_uri[1] .= '/' . $G::auth_extras{"DMD5-SERV-NAME"};
   }
 
   my $auth_string = "AUTH $as";
@@ -857,7 +859,7 @@ sub recv_line {
       #print "\$t = $t (defined = ", defined($t) ? "yes" : "no",
       #      "), \$recv_r = $recv_r (", defined($recv_r) ? "yes" : "no", ")\n";
     }
-	$G::recv_buffer .= $t;
+    $G::recv_buffer .= $t;
     ptrans(33, hdump($t)) if ($G::show_raw_text);
   }
   
@@ -873,7 +875,7 @@ sub recv_line {
   if ($G::recv_buffer =~ s|^(.*?\n)||si) {
     $r = $1;
   } else {
-	ptrans(12, "I'm in an impossible state");
+    ptrans(12, "I'm in an impossible state");
   }
 
   $r =~ s|\r||msg;

@@ -556,3 +556,5 @@
 * 20111221 added ability to set realm in the DIGEST-MD5 authenticator using
            realm --auth-extra keyword.
 * 20111221 fix --auth-map parsing to accept documented format.
+* 20111222 fix handling of --auth-extra dmd5-serv-name to work around lack
+           of interface for it in Authen::SASL.
