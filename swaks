@@ -4,7 +4,7 @@
 # Homepage: http://jetmore.org/john/code/swaks/
 # Online Docs: http://jetmore.org/john/code/swaks/latest/doc/ref.txt
 # if you want to be notified about future releases of this program,
-#	please send an email to updates-swaks@jetmore.net
+#    please send an email to updates-swaks@jetmore.net
 
 use strict;
 
@@ -179,14 +179,14 @@ sub open_link {
 }
 
 sub sendmail {
-  my $from    = shift;	# envelope-from
-  my $to      = shift;	# envelope-to
-  my $helo    = shift;	# who am I?
-  my $data    = shift;	# body of message (content after DATA command)
-  my $a_user  = shift;	# what user to auth with?
-  my $a_pass  = shift;	# what pass to auth with
-  my $a_type  = shift;	# what kind of auth (this must be set to to attempt)
-  my $ehlo    = {};	# If server is esmtp, save advertised features here
+  my $from    = shift; # envelope-from
+  my $to      = shift; # envelope-to
+  my $helo    = shift; # who am I?
+  my $data    = shift; # body of message (content after DATA command)
+  my $a_user  = shift; # what user to auth with?
+  my $a_pass  = shift; # what pass to auth with
+  my $a_type  = shift; # what kind of auth (this must be set to to attempt)
+  my $ehlo    = {};    # If server is esmtp, save advertised features here
 
   # start up tls if -tlsc specified
   if ($G::tls_on_connect) {
@@ -213,15 +213,6 @@ sub sendmail {
   do_smtp_quit(1, 0) if ($G::quit_after eq 'first-helo');
 
   # handle TLS here if user has requested it
-  #if ($G::tls) {
-  #  if ($ehlo->{STARTTLS} && !avail("tls")) {
-  #    # if !avail(tls) and !auth_optional or auth_optional==1, we'll never
-  #    # get here, but if we were at auth-optional-strict, we have to error here
-  #    ptrans(12,avail_str("tls").".  Exiting");
-  #    do_smtp_quit(1, 29);
-  #  }
-  #  do_smtp_quit(1, 29) if (!do_smtp_tls($ehlo) && !$G::tls_optional);
-  #}
   if ($G::tls) {
     # 0 = tls succeeded
     # 1 = tls not advertised
@@ -313,9 +304,6 @@ sub sendmail {
   do_smtp_gen('DATA', '354') || do_smtp_quit(1, 25);
 
   # send the actual data
-  #do_smtp_gen($data, '250', undef, $G::suppress_data) || do_smtp_quit(1, 26);
-  # this was moved to a custom sub because the server will have a custom
-  # behaviour when using LMTP
   do_smtp_data($data, $G::suppress_data) || do_smtp_quit(1, 26);
 
   # send QUIT
@@ -369,7 +357,6 @@ sub ptrans {
   my $c = shift;  # transaction flag
   my $m = shift;  # message to print
   my $b = shift;  # be brief in what we print
-  #my $o = \*STDOUT;
   my $o = $G::trans_fh_oh || \*STDOUT;
   my $f;
 
@@ -693,11 +680,8 @@ sub do_smtp_helo {
   if ($p eq 'esmtp' || $p eq 'lmtp') {
     my $l = $p eq 'lmtp' ? "LHLO" : "EHLO";
     if (do_smtp_gen("$l $h", '250', \$r)) {
-      # $ehlo is designed to hold the advertised options, but I'm not sure how
-      # to store them all - for instance, SIZE is a simple key/value pair, but
-      # AUTH lends itself more towards a multilevel hash.  What I'm going to do
-      # is come here and add each key in the way that makes most sense in each
-      # case.  I only need auth for now.
+      # There's not a standard structure for the $e hashref, each
+      # key is stored in the manner that makes the most sense
       foreach my $l (split(/\n/, $r)) {
         $l =~ s/^....//;
         if ($l =~ /^AUTH=?(.*)$/) {
@@ -741,15 +725,11 @@ sub do_smtp_rcpt {
   my @a = split(/,/, $m);
   $G::smtp_rcpt_total = scalar(@a);
   foreach my $addr (@a) {
-    #$f++ if (!do_smtp_gen("RCPT TO:<$addr>", '250'));
     transact(cxn_string => "RCPT TO:<$addr>", expect => '250', defer => 1,
              fail_callback => \&smtp_rcpt_callback);
   }
 
   return(1); # the callback handles failures, so just return here
-
-#  # if at least one addr succeeded, we can proceed, else we stop here
-#  return $f == scalar(@a) ? 0 : 1;
 }
 
 sub smtp_rcpt_callback {
@@ -766,9 +746,9 @@ sub smtp_rcpt_callback {
 sub do_smtp_data {
   my $m = shift; # string to send
   my $b = shift; # be brief in the data we send
-  my $calls = $G::smtp_rcpt_total - $G::smtp_rcpt_failures;
 
-  my $ok = transact(cxn_string => $m, expect => '250', summarize_output => $b);
+  my $calls = $G::smtp_rcpt_total - $G::smtp_rcpt_failures;
+  my $ok    = transact(cxn_string => $m, expect => '250', summarize_output => $b);
 
   # now be a little messy - lmtp is not a lockstep after data - we need to
   # listen for as many calls as we had accepted recipients
@@ -886,7 +866,6 @@ sub recv_line {
 # any non-immediate request will handle results through fail_callback().
 # therefore, only return the state of the last transaction attempted,
 # which will always be immediate
-# We still need to reimplement timing
 sub transact {
   my %h        = @_; # this is an smtp transaction element
   my $ret      = 1;  # this is our return value
@@ -1102,8 +1081,6 @@ sub get_server {
   }
   my $res = new Net::DNS::Resolver;
 
-  #return($server) if ($addr !~ /\@/);
-
   $addr =~ s/^.*\@([^\@]*)$/$1/;
   return($server) if (!$addr);
   $server = $addr;
@@ -1200,12 +1177,6 @@ sub test_support {
 
   foreach my $act (sort { $s->{$a}{name} cmp $s->{$b}{name} } keys %$s) {
     ptrans(avail($act) ? 11 : 12, avail_str($act));
-    #if (avail($act)) {
-    #  #ptrans(11, "$s->{$act}{name} supported");
-    #  ptrans(11, avail_err($act));
-    #} else {
-    #  ptrans(12, avail_err($act));
-    #}
   }
 }
 
@@ -1478,7 +1449,6 @@ sub load_args {
         }
         close(C);
       } elsif (!$config_is_default && $configf eq $config_file) {
-#} else {
         # we only print an error if the config was specified explicitly
         ptrans(12, "Config file $configf could not be opened ($!).  Exiting");
         exit(1);
@@ -1571,7 +1541,6 @@ sub fetch_args {
     } elsif ($e->{type} eq 'sub') {
       eval("\$options{\$k} = $e->{literal};");
     }
-    #print "\$k = $k, $options{$k}\n";
   }
 
   if (!load("Getopt::Long")) {
