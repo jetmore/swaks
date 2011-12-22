@@ -2050,7 +2050,7 @@ sub process_args {
     my $valid_auth_found = 0;
 
     # handle the --auth-map options plus our default mappings
-    foreach (split(/\s+,\s+/, $o->{auth_map}),"PLAIN=PLAIN","LOGIN=LOGIN",
+    foreach (split(/\s*,\s*/, $o->{auth_map}),"PLAIN=PLAIN","LOGIN=LOGIN",
              "CRAM-MD5=CRAM-MD5","DIGEST-MD5=DIGEST-MD5","CRAM-SHA1=CRAM-SHA1",
              "NTLM=NTLM","SPA=NTLM","MSN=NTLM")
     {
