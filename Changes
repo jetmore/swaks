@@ -545,3 +545,13 @@
            a "host" value
 * 20111209 Allow specifying DIGEST-MD5's digest-uri by extending the -au
            option (USERNAME%URI-SERV-TYPE%URI-HOST%URI-SERV-NAME)
+* 20111221 moved --auth-map contents in --dump into the "if auth" section.
+* 20111221 added and documented the --auth-extra option.  Initial keywords
+           are domain, realm, dmd5-serv-type, dmd5-host, and dmd5-serv-name
+* 20111221 removed -au overloading to set DOMAIN in NTLM/MSN/SPA.  Use
+           domain --auth-extra keyword now.
+* 20111221 removed -au overloading for digest-uri string in DIGEST-MD5. Use
+           dmd5-serv-type, dmd5-host, and dmd5-serv-name --auth-extra
+           keywords now.
+* 20111221 added ability to set realm in the DIGEST-MD5 authenticator using
+           realm --auth-extra keyword.

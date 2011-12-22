@@ -410,9 +410,11 @@ The CRAM-MD5 authenticator requires the Digest::MD5 module.  It is fully tested 
 
 The DIGEST-MD5 authenticator (RFC2831) requires the Authen::SASL module.  Version 20100211.0 and earlier used Authen::DigestMD5 which had some protocol level errors which prevented it from working with some servers.  Authen::SASL's DIGEST-MD5 handling is much more robust.
 
-The DIGEST-MD5 implementation in swaks is fairly immature.  It currently supports only the "auth" qop type, it doesn't expose the realm option to the user, etc.  If you have DIGEST-MD5 experience and would like to help swaks support DIGEST-MD5 better, please get in touch with me.
+The DIGEST-MD5 implementation in swaks is fairly immature.  It currently supports only the "auth" qop type, for instance.  If you have DIGEST-MD5 experience and would like to help swaks support DIGEST-MD5 better, please get in touch with me.
 
-The DIGEST-MD5 protocol's "digest-uri" values can be set using the -au option.  The option can take an argument like USERNAME%URI-SERV-TYPE%URI-HOST%URI-SERV-NAME, where USERNAME is the standard authentication username, and the other values are used to build the client's digest-uri, as described in RFC2831.
+The DIGEST-MD5 protocol's "realm" value can be set using the --auth-extra "realm" keyword.  If no realm is given, a reasonable default will be used.
+
+The DIGEST-MD5 protocol's "digest-uri" values can be set using the --auth-extra option.  For instance, you could create the digest-uri-value of "lmtp/mail.example.com/example.com" with the option "--auth-extra dmd5-serv-type=lmtp,dmd5-host=mail.example.com,dmd5-serv-name=example.com".  The "digest-uri-value" string and its components is defined in RFC2831.  If none of these values are given, reasonable defaults will be used.
 
 =item CRAM-SHA1
 
@@ -422,7 +424,7 @@ The CRAM-SHA1 authenticator requires the Digest::SHA1 module.  This type has onl
 
 These authenticators require the Authen::NTLM module.  Note that there are two modules using the Authen::NTLM namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.03.tar.gz) is the version required by swaks.  This type has been tested against Exim, Communigate, and Exchange 2007.
 
-In addition to the standard username and password, this authentication type can also recognize a "domain".  Rather than create a new option for this single authentication type, the domain can be passed by adding "%DOMAIN" to the end of the username.  For instance, if "-ap user@example.com%NTDOM" is passed, "user@example.com" is the username and "NTDOM" is the domain.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
+In addition to the standard username and password, this authentication type can also recognize a "domain".  The domain can be set using the --auth-extra "domain" keyword.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
 
 =back
 
@@ -441,6 +443,32 @@ Provide the username to be used for authentication, or prompt the user for it if
 =item -ap, --auth-password [password]
 
 Provide the password to be used for authentication, or prompt the user for it if no argument is provided.  The string <> can be supplied to mean an empty password.
+
+=item -ae, --auth-extra [KEYWORD=value[,...]]
+
+Some of the authentication types allow extra information to be included in the authentication process.  Rather than add a new option for every nook and cranny of each authenticator, the --auth-extra option allows this information to be supplied.
+
+The following table lists the currently recognized keywords and the authenticators that use them
+
+=over 4
+
+=item realm, domain
+
+The realm and domain keywords are synonymous.  Using either will set the "domain" option in NTLM/MSN/SPA and the "realm" option in DIGEST-MD5
+
+=item dmd5-serv-type
+
+The dmd5-serv-type keyword is used by the DIGEST-MD5 authenticator and is used, in part, to build the digest-uri-value string (see RFC2831)
+
+=item dmd5-host
+
+The dmd5-host keyword is used by the DIGEST-MD5 authenticator and is used, in part, to build the digest-uri-value string (see RFC2831)
+
+=item dmd5-serv-name
+
+The dmd5-serv-name keyword is used by the DIGEST-MD5 authenticator and is used, in part, to build the digest-uri-value string (see RFC2831)
+
+=back
 
 =item -am, --auth-map [auth-alias=auth-type[,...]]
 

@@ -86,12 +86,15 @@ if ($G::dump_args) {
     }
     print " type='", join(',', @{$opts->{a_type}}),
           "' user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
+    print "auth_extras      = ",
+          join(',', map { "$_=$G::auth_extras{$_}" } keys (%G::auth_extras)),
+          "\n";
+    print "auth map         = ", join("\n".' 'x19,
+                                map { "$_ = ".
+                                      join(', ', @{$G::auth_map_t{$_}})
+                                    } (keys %G::auth_map_t)
+                               ), "\n";
   } else { print "no\n"; }
-  print "auth map         = ", join("\n".' 'x19,
-                              map { "$_ = ".
-                                    join(', ', @{$G::auth_map_t{$_}})
-                                  } (keys %G::auth_map_t)
-                             ), "\n";
   print "quit after       = $G::quit_after\n";
   print "local int        = $G::link{lint}\n";
   print "timeout          = $G::link{timeout}\n";
@@ -528,12 +531,10 @@ sub do_smtp_auth {
 }
 
 sub do_smtp_auth_ntlm {
-  my $u = shift; # auth user
-  my $p = shift; # auth password
+  my $u  = shift; # auth user
+  my $p  = shift; # auth password
   my $as = shift; # auth type (since NTLM might be SPA or MSN)
-  my $r = '';    # will store smtp response
-  my $domain;
-  ($u,$domain) = split(/%/, $u);
+  my $r  = '';    # will store smtp response
 
   my $auth_string = "AUTH $as";
   do_smtp_gen($auth_string, '334') || return(0);
@@ -545,7 +546,7 @@ sub do_smtp_auth_ntlm {
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
 
   $r =~ s/^....//; # maybe something a little better here?
-  Authen::NTLM::ntlm_domain($domain);
+  Authen::NTLM::ntlm_domain($G::auth_extras{DOMAIN});
   Authen::NTLM::ntlm_user($u);
   Authen::NTLM::ntlm_password($p);
   $d = db64(Authen::NTLM::ntlm($r));
@@ -564,15 +565,14 @@ sub do_smtp_auth_digest {
   my $r  = '';    # will store smtp response
   my @digest_uri = ();
   
-  if ($u =~ m|\%|) {
-    # user-provided digest-uri values.  Provided via the -au option
-    # in the form USERNAME%URI-SERV-TYPE%URI-HOST%URI-SERV-NAME
-    ($u,@digest_uri) = split(/\%/, $u);
+  if (exists($G::auth_extras{"DMD5-SERV-TYPE"})) {
+    @digest_uri[0] = $G::auth_extras{"DMD5-SERV-TYPE"};
   } else {
-    # if user didn't provide URI information, set SERV-TYPE to smtp,
-    # make a best guess for a URI-HOST for the various transports,
-    # and leave SERV-NAME blank
-    $digest_uri[0] = 'smtp';
+    @digest_uri[0] = 'smtp';
+  }
+  if (exists($G::auth_extras{"DMD5-HOST"})) {
+    @digest_uri[1] = $G::auth_extras{"DMD5-HOST"};
+  } else {
     if ($G::link{type} eq 'socket-unix') {
       $digest_uri[1] = $G::link{sockfile};
       $digest_uri[1] =~ s|[^a-zA-Z0-9\.\-]|-|g;
@@ -583,6 +583,10 @@ sub do_smtp_auth_digest {
       $digest_uri[1] = $G::link{server};
     }
   }
+  if (exists($G::auth_extras{"DMD5-SERV-NAME"})) {
+    # only set this if the user passed in a value - no default value
+    @digest_uri[2] = $G::auth_extras{"DMD5-SERV-NAME"};
+  }
 
   my $auth_string = "AUTH $as";
   do_smtp_gen($auth_string, '334', \$r, '', '',
@@ -592,13 +596,15 @@ sub do_smtp_auth_digest {
   $r =~ s/^....//; # maybe something a little better here?
   $r = db64($r);
   
+  my $callbacks = { user => $u, pass => $p };
+  if (exists($G::auth_extras{REALM})) {
+    $callbacks->{realm} = $G::auth_extras{REALM};
+  }
+  
   my $sasl = Authen::SASL->new(
     debug => 1,
     mechanism => 'DIGEST-MD5',
-    callback  => {
-      user => $u,
-      pass => $p,
-    },
+    callback  => $callbacks,
   );
   my $sasl_client = $sasl->client_new(@digest_uri);
   
@@ -1295,6 +1301,9 @@ sub get_option_struct {
     # auth type map
     { opts => ['am', 'auth-map'],                 suffix => '=s',
       okey => 'auth_map',                         type => 'scalar', },
+    # extra, authenticator-specific options
+    { opts => ['ae', 'auth-extra'],               suffix => '=s',
+      okey => 'auth_extra',                       type => 'scalar', },
     # hide passwords when possible
     { opts => ['ahp', 'auth-hide-password'],      suffix => ':s',
       okey => 'auth_hidepw',                      type => 'scalar', },
@@ -2051,6 +2060,18 @@ sub process_args {
       # this gives a list of all base types and any aliases for it.
       $G::auth_map_t{$type} ||= [];
       push(@{$G::auth_map_t{$type}}, $alias);
+    }
+    # Now handle the --auth-extra options
+    foreach (split(/\s*,\s*/, $o->{auth_extra})) {
+      my($keyword,$value) = split(/=/, $_, 2);
+      $keyword = uc($keyword);
+      $G::auth_extras{$keyword} = $value;
+    }
+    # handle the realm/domain synonyms
+    if ($G::auth_extras{DOMAIN}) {
+      $G::auth_extras{REALM} = $G::auth_extras{DOMAIN};
+    } elsif ($G::auth_extras{DOMAIN}) {
+      $G::auth_extras{DOMAIN} = $G::auth_extras{REALM};
     }
     if (!avail("auth")) { # check for general auth requirements
       if ($G::auth_optional == 2) {
