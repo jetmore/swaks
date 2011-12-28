@@ -1,16 +1,20 @@
 #!/usr/bin/perl
 
 # use 'swaks --help' to view documentation for this program
-# Homepage: http://jetmore.org/john/code/swaks/
-# Online Docs: http://jetmore.org/john/code/swaks/latest/doc/ref.txt
-# if you want to be notified about future releases of this program,
-#    please send an email to updates-swaks@jetmore.net
+#
+#      Homepage: http://jetmore.org/john/code/swaks/
+#   Online Docs: http://jetmore.org/john/code/swaks/latest/doc/ref.txt
+#                http://jetmore.org/john/code/swaks/faq.html
+# Announce List: send mail to updates-swaks@jetmore.net
+#   Project RSS: http://jetmore.org/john/blog/c/swaks/feed/
+#       Google+: https://plus.google.com/u/0/110270727761256449657
+#       Twitter: http://www.twitter.com/SwaksSMTP
 
 use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "DEVRELEASE";
+my $p_version = "DEVRELEASE"; # $Id$
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
         Copyright (c) 2003-2008,2010-2011 John Jetmore <jj33@pobox.com>
