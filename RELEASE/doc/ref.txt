@@ -151,7 +151,7 @@ OPTION PROCESSING
         in a single file.
 
         If present and configuration files have not been explicitly turned
-        off, the __END config is always read. Only one other configuration
+        off, the __END__ config is always read. Only one other configuration
         file will ever be used per single invocation of swaks, even if
         multiple configuration files are specified. Specifying the --config
         option with no argument turns off the processing of both the __END__
@@ -172,12 +172,12 @@ OPTION PROCESSING
             # entire argument.
             h-From: "Fred Example" <fred@example.com>
 
-        There is a deprecated option --input-file (or -l) in swaks that was
-        a precursor of the configuration file defined here. That option has
-        been judged deficient and is being replaced wholesale with the idea
-        of the configuration file defined above. The option still exists for
-        the time being but its use is strongly discouraged. It is no longer
-        documented, and it will be removed entirely in some future release.
+        There was an option --input-file (or -l) that was a predecessor to
+        the current configuration file system. It was deprecated and
+        undocumented before this release. The code for it is being removed
+        in this release, and this mention of it will be removed in the next
+        release. If you were still using it please move to using one of the
+        other configuration methods.
 
     ENVIRONMENT VARIABLES
         Options can be supplied via environment variables. The variables are
@@ -540,10 +540,17 @@ AUTHENTICATION
             implements it.
 
         DIGEST-MD5
-            The DIGEST-MD5 authenticator (RFC2831) requires the
-            Authen::DigestMD5 module. Only known to have been tested against
-            Communigate and may therefore have some implementation
-            deficiencies.
+            The DIGEST-MD5 authenticator (RFC2831) requires the Authen::SASL
+            module. Version 20100211.0 and earlier used Authen::DigestMD5
+            which had some protocol level errors which prevented it from
+            working with some servers. Authen::SASL's DIGEST-MD5 handling is
+            much more robust.
+
+            The DIGEST-MD5 implementation in swaks is fairly immature. It
+            currently supports only the "auth" qop type, it doesn't expose
+            the realm option to the user, etc. If you have DIGEST-MD5
+            experience and would like to help swaks support DIGEST-MD5
+            better, please get in touch with me.
 
         CRAM-SHA1
             The CRAM-SHA1 authenticator requires the Digest::SHA1 module.
@@ -605,6 +612,19 @@ AUTHENTICATION
         Instead of showing AUTH strings base64 encoded as they are
         transmitted, translate them to plaintext before printing on screen.
 
+    -ahp, --auth-hide-password [replacement string]
+        If this option is specified, any time a readable password would be
+        printed to the terminal (specifically AUTH PLAIN and AUTH LOGIN) the
+        password is replaced with a dummy string (or the contents of
+        "replacement string" if provided). The dummy string will be base64
+        encoded or not contingent on the --auth-plaintext option.
+
+        Note that --auth-hide-password is similar, but not identical, to the
+        --protect-prompt option. The former protects passwords from being
+        displayed in the SMTP transaction regardless of how they are
+        entered. The latter protects sensitive strings when the user types
+        them at the terminal, regardless of how the string would be used.
+
 DATA OPTIONS
     These options pertain to the contents for the DATA portion of the SMTP
     transaction.
@@ -619,28 +639,52 @@ DATA OPTIONS
         The value can be on one single line, with \n (ascii 0x5c, 0x6e)
         representing where line breaks should be placed. Leading dots will
         be quoted. Closing dot is not required but is allowed. The default
-        value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test
-        %D\nX-Mailer: swaks v$p_version
-        jetmore.org/john/code/#swaks\n%H\n\n%B\n".
+        value for this option is "Date: %DATE%\nTo: %TO_ADDRESS%\nFrom:
+        %FROM_ADDRESS%\nSubject: test %DATE%\nX-Mailer: swaks v$p_version
+        jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n".
 
-        Very basic token parsing is performed on the DATA portion. The
-        following table shows the recognized tokens and their replacement
-        values:
+        Very basic token parsing is performed on the DATA portion. See
+        --use-old-data-tokens for details about the single-character tokens
+        marked as deprecated. The following table shows the recognized
+        tokens and their replacement values:
 
-        %F  Replaced with the envelope-sender.
+        %FROM_ADDRESS%
+            Replaced with the envelope-sender. Replaces the deprecated %F
+            token.
 
-        %T  Replaced with the envelope-recipient(s).
+        %TO_ADDRESS%
+            Replaced with the envelope-recipient(s). Replaces the deprecated
+            %T token.
 
-        %D  Replaced with the current time in a format suitable for
+        %DATE%
+            Replaced with the current time in a format suitable for
             inclusion in the Date: header. Note this attempts to use the
             standard module Time::Local for timezone calculations. If this
-            module is unavailable the date string will be in GMT.
+            module is unavailable the date string will be in GMT. Replaces
+            the deprecated %D token.
 
-        %H  Replaced with the contents of the --add-header option. If
+        %NEW_HEADERS%
+            Replaced with the contents of the --add-header option. If
             --add-header is not specified this token is simply removed.
+            Replaces the deprecated %H token.
 
-        %B  Replaced with the value specified by the --body option. See
-            --body for default.
+        %BODY%
+            Replaced with the value specified by the --body option. See
+            --body for default. Replaces the deprecated %H token.
+
+    --use-old-data-tokens
+        In previous versions of swaks the DATA tokens as described in the
+        --data option above used single-character tokens (e.g., %F). These
+        were not a great choice for default tokens, and proved especially
+        troublesome with encoded, non-english languages where these
+        character combinations might be common. The single-character tokens
+        were replaced with the slightly-less-error-prone versions listed
+        above. The retention of the old tokens and the inclusion of this
+        option to activate them are intended as a temporary aid to users who
+        have an existing message corpus using the old tokens. The
+        single-character tokens and the --use-old-data-tokens option should
+        be considered deprecated and likely to be removed in the next
+        release.
 
     --body [body-specification]
         Specify the body of the email. The default is "This is a test
@@ -711,6 +755,13 @@ DATA OPTIONS
         delivering real message (stored in files) instead of using example
         messages.
 
+    --no-data-fixup, -ndf
+        This option forces swaks to do no massaging of the DATA portion of
+        the email. This includes token replacement, From_ stripping,
+        trailing-dot addition, --body/attachment inclusion, and any header
+        additions. This option is really only useful when used with --data,
+        since the internal default DATA portion uses tokens.
+
     --no-strip-from, -nsf
         Don't strip the From_ line from the DATA portion, if present.
 
@@ -741,6 +792,10 @@ OUTPUT OPTIONS
     *~> Indicates a TLS-encrypted, unexpected line sent by swaks to target
         server
 
+    >   Indicates a raw chunk of test sent by swaks to a target server (see
+        --show-raw-text). There is no concept of "expected" or "unexpected"
+        at this level.
+
     <-  Indicates an expected line sent by target server to swaks
 
     <~  Indicates a TLS-encrypted, expected line sent by target server to
@@ -750,6 +805,10 @@ OUTPUT OPTIONS
 
     <~* Indicates a TLS-encrypted, unexpected line sent by target server to
         swaks
+
+    <   Indicates a raw chunk of text received by swaks from a target server
+        (see --show-raw-text). There is no concept of "expected" or
+        "unexpected" at this level.
 
     The following options control what and how output is displayed to the
     caller.
@@ -772,6 +831,31 @@ OUTPUT OPTIONS
         Don't show transaction hints (useful in conjunction with -hr to
         create copy/paste-able transactions).
 
+    -raw, --show-raw-text
+        This option will print a hex dump of raw data sent and received by
+        swaks. Each hex dump is the contents of a single read or write on
+        the network. This should be identical to what is already being
+        displayed (with the exception of the \r characters being removed).
+        This option is useful in seeing details when servers are sending
+        lots of data in single packets, or breaking up individual lines into
+        multiple packets. If you really need to go in depth in that area
+        you're probably better with a packet sniffer, but this option is a
+        good first step to seeing odd connection issues.
+
+    --output-file </path/to/file>
+    --output-file-stdout </path/to/file>
+    --output-file-stderr </path/to/file>
+        These options allow the user to send output to files instead of
+        stdout/stderr. The first option sends both to the same file. The
+        arguments of &STDOUT and &STDERR are treated specially, refering to
+        the "normal" file handles, so "--output-file-stderr '&STDOUT'" would
+        redirect STDERR to STDOUT.
+
+    -pp, --protect-prompt
+        Don't echo user input on prompts that are potentially sensitive
+        (right now only authentication password). See also
+        --auth-hide-password
+
     -hr, --hide-receive
         Don't display lines sent from the remote server being received by
         swaks
@@ -791,10 +875,12 @@ OUTPUT OPTIONS
         which all output is shown. If an argument of "2" is given, only
         print errors. If "3" is given, show no output ever.
 
-        Note that this used to be an additive option ("-S -S" was equivalent
-        to "-S 2"). After environment option handling was introduced this
-        was changed. The additive method still works but is deprecated and
-        will be removed entirely in a future release
+        In previous releases the -S option could be additive (i.e., "-S -S"
+        was equivalent to "-S 2"). This was marked deprecated in previous
+        releases. The functionality has been removed from code in this
+        release. This mention of the functionality is left as a breadcrumb
+        only and will be removed in the next release. If you are still using
+        the additive method, please change to the method described above.
 
     --support
         Print capabilities and exit. Certain features require non-standard
@@ -820,7 +906,7 @@ PORTABILITY
         using ActiveState's Perl. It has not been fully tested. Known to
         work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5
         auth types. Unknown is any TLS functionality and the NTLM/SPA and
-        Digest-MD5 auth types.
+        DIGEST-MD5 auth types.
 
         Because this program should work anywhere Perl works, I would
         appreciate knowing about any new operating systems you've thoroughly
@@ -830,13 +916,13 @@ PORTABILITY
         This program was almost exclusively developed against Exim mail
         servers. It was been used casually by the author, though not
         thoroughly tested, with Sendmail, Smail, Exchange, Oracle
-        Collaboration Suite, and Communigate. Because all functionality in
-        swaks is based off of known standards it should work with any fairly
-        modern mail server. If a problem is found, please alert the author
-        at the address below.
+        Collaboration Suite, qpsmtpd, and Communigate. Because all
+        functionality in swaks is based off of known standards it should
+        work with any fairly modern mail server. If a problem is found,
+        please alert the author at the address below.
 
 EXIT CODES
-    *   no errors occurred
+    0   no errors occurred
 
     1   error parsing command line options
 

@@ -10,10 +10,10 @@ use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20100211.0";
+my $p_version = "20111202.0-dev";
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2010-2011 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -54,6 +54,8 @@ if ($G::dump_args) {
   print "hide_receive     = ", $G::hide_receive ? "TRUE" : "FALSE", "\n";
   print "hide_informational = ", $G::hide_informational ? "TRUE" : "FALSE","\n";
   print "hide_all         = ", $G::hide_all ? "TRUE" : "FALSE", "\n";
+  print "trans_fh_of      = $G::trans_fh_of ($G::trans_fh_oh,", \*STDOUT,")\n";
+  print "trans_fh_ef      = $G::trans_fh_ef ($G::trans_fh_eh,", \*STDERR,")\n";
   print "pipeline         = ", $G::pipeline ? "TRUE" : "FALSE", "\n";
   print "silent           = $G::silent\n";
   print "protocol         = $G::protocol\n";
@@ -364,7 +366,8 @@ sub ptrans {
   my $c = shift;  # transaction flag
   my $m = shift;  # message to print
   my $b = shift;  # be brief in what we print
-  my $o = \*STDOUT;
+  #my $o = \*STDOUT;
+  my $o = $G::trans_fh_oh || \*STDOUT;
   my $f;
 
   return if (($G::hide_send    && int($c/10) == 2) ||
@@ -395,18 +398,24 @@ sub ptrans {
   # 3x is smtp recv
   # x = 1 is info/normal
   # x = 2 is error
+  # x = 3 dump output
   # program info
   if ($c == 11) { $f = '==='; }
   # program error
-  elsif ($c == 12) { $f = '***'; $o = \*STDERR; }
+  #elsif ($c == 12) { $f = '***'; $o = \*STDERR; }
+  elsif ($c == 12) { $f = '***'; $o = $G::trans_fh_eh || \*STDERR; }
   # smtp send info
   elsif ($c == 21) { $f = $G::link{tls}{active} ? ' ~>' : ' ->'; }
   # smtp send error
   elsif ($c == 22) { $f = $G::link{tls}{active} ? '*~>' : '**>'; }
+  # smtp send dump output
+  elsif ($c == 23) { $f = '  >'; }
   # smtp recv info
   elsif ($c == 31) { $f = $G::link{tls}{active} ? '<~ ' : '<- '; }
   # smtp recv error
   elsif ($c == 32) { $f = $G::link{tls}{active} ? '<~*' : '<**'; }
+  # smtp recv dump output
+  elsif ($c == 33) { $f = '<  '; }
   # something went unexpectedly
   else { $c = '???'; }
 
@@ -561,27 +570,41 @@ sub do_smtp_auth_digest {
 
   $r =~ s/^....//; # maybe something a little better here?
   $r = db64($r);
-  my $req = Authen::DigestMD5::Request->new($r);
-  my $res = Authen::DigestMD5::Response->new();
-  $res->got_request($req);
-  # XXX using link{server} here is probably a bug, but I don;t know what else
-  # XXX to use yet on a non-inet-socket connection
-  $res->set('username' => $u, 'realm' => '',
-            'digest-uri' => "smtp/$G::link{server}");
-  $res->add_digest(password => $p);
-  my $d = $res->output();
-  $auth_string = eb64($d);
+  
+  my $sasl = Authen::SASL->new(
+    debug => 1,
+    mechanism => 'DIGEST-MD5',
+    callback  => {
+      user => $u,
+      pass => $p,
+    },
+  );
+  my $sasl_client = $sasl->client_new("smtp");
+  
+  # Force the DIGEST-MD5 session to use qop=auth.  I'm open to exposing this setting
+  # via some swaks options, but I don't know enough about the protocol to just guess
+  # here.  I do know that letting it auto-negotiate didn't work in my reference
+  # environment.  sendmail advertised auth,auth-int,auth-conf, but when Authen::SASL
+  # chose auth-int the session would fail (server would say auth succeeded, but then
+  # immediately terminate my session when I sent MAIL).  My reference client
+  # (Mulberry) always sent auth, and indeed forcing swaks to auth also seems to work.
+  # If anyone out there knows more about this please let me know.
+  $sasl_client->property('maxssf' => 0);
 
-  do_smtp_gen($auth_string, '334', \$r, '', $G::auth_showpt ? "$d" : '',
+  my $auth_string = $sasl_client->client_step($r);
+  do_smtp_gen(eb64($auth_string), '334', \$r, '', $G::auth_showpt ? "$auth_string" : '',
               $G::auth_showpt ? \&unencode_smtp : '')
       || return(0);
   $r =~ s/^....//; # maybe something a little better here?
   $r = db64($r);
-  $req->input($r);
-  return(0) if (!$req->auth_ok);
 
-  do_smtp_gen("", '235', undef, '',
-              $G::auth_showpt ? "" : '') || return(0);
+  $auth_string = $sasl_client->client_step($r);
+  do_smtp_gen(eb64($auth_string), '235', \$r, '',
+              $G::auth_showpt ? "$auth_string" : '')
+      || return(0);
+      
+  return(0) if (!$sasl_client->is_success());
+
   return(1);
 }
 
@@ -608,35 +631,28 @@ sub do_smtp_auth_cram {
 }
 
 sub do_smtp_auth_login {
-  my $u = shift; # auth user
-  my $p = shift; # auth password
+  my $u  = shift; # auth user
+  my $p  = shift; # auth password
   my $as = shift; # auth string
-  my $z = '';
 
-  my $auth_string = "AUTH $as";
-  do_smtp_gen($auth_string, '334', undef, '', '',
+  do_smtp_gen("AUTH $as", '334', undef, '', '',
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
-  $auth_string = eb64($u);
-  $z = $u if ($G::auth_showpt);
-  do_smtp_gen($auth_string, '334', undef, '', $z,
+  do_smtp_gen(eb64($u),   '334', undef, '', $G::auth_showpt ? $u : '',
               $G::auth_showpt ? \&unencode_smtp : '') || return(0);
-  $auth_string = eb64($p);
-  $z = $p if ($G::auth_showpt);
-  do_smtp_gen($auth_string, '235', undef, '', $z) || return(0);
+  do_smtp_gen(eb64($p),   '235', undef, '',
+              $G::auth_showpt ? ($G::auth_hidepw || $p)
+                              : eb64($G::auth_hidepw || $p)) || return(0);
   return(1);
 }
 
 sub do_smtp_auth_plain {
-  my $u = shift; # auth user
-  my $p = shift; # auth password
+  my $u  = shift; # auth user
+  my $p  = shift; # auth password
   my $as = shift; # auth string
 
-  my $auth_string = "AUTH $as " . eb64("\0$u\0$p");
-  my $z = '';
-  if ($G::auth_showpt) {
-    $z = "AUTH $as \\0$u\\0$p";
-  }
-  return(do_smtp_gen($auth_string, '235', undef, '', $z));
+  return(do_smtp_gen("AUTH $as " . eb64("\0$u\0$p"), '235', undef, '',
+                     $G::auth_showpt ? "AUTH $as \\0$u\\0" . ($G::auth_hidepw || $p)
+                                     : "AUTH $as " . eb64("\0$u\0" . ($G::auth_hidepw || $p))));
 }
 
 sub do_smtp_helo {
@@ -773,6 +789,7 @@ sub flush_send_buffer {
   } else {
     print $s $G::send_buffer;
   }
+  ptrans(23, hdump($G::send_buffer)) if ($G::show_raw_text);
   $G::send_buffer = '';
 }
 
@@ -785,14 +802,54 @@ sub recv_line {
   # Either an IO::Socket obj or a FH to my child - the thing to read from
   my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{re} : $G::link{sock};
   my $r = undef;
-
-  if ($G::link{tls}{active}) {
-    $r = Net::SSLeay::read($G::link{tls}{ssl});
-  } else {
-    $r = <$s>;
+  my $t = undef;
+  my $c = 0;
+  
+  while ($G::recv_buffer !~ m|\n|si) {
+    last if (++$c > 1000);
+    if ($G::link{tls}{active}) {
+      $t = Net::SSLeay::read($G::link{tls}{ssl});
+      return($t) if (!defined($t));
+    } elsif ($G::link{type} eq 'pipe') {
+      $t = <$s>;
+      return($t) if (!defined($t));
+    } else {      
+      # if you're having problems with reads, swap the comments on the
+      # the following two lines
+      my $recv_r = recv($s, $t, 8192, 0);
+      #$t = <$s>;
+      return($t) if (!defined($t));
+      
+      # the above line should be good enough but it isn't returning
+      # undef for some reason.  I think heuristically it will be sufficient
+      # to just look for an empty packet (I hope.  gulp).  Comment out the
+      # following line if your swaks seems to be saying that it lost connection
+      # for no good reason.  Then email me about it.
+      return(undef()) if (!length($t));
+      
+      #print "\$t = $t (defined = ", defined($t) ? "yes" : "no",
+      #      "), \$recv_r = $recv_r (", defined($recv_r) ? "yes" : "no", ")\n";
+    }
+	$G::recv_buffer .= $t;
+    ptrans(33, hdump($t)) if ($G::show_raw_text);
   }
+  
+  if ($c >= 1000) {
+    # If you saw this in the wild, I'd love to hear more about it
+    # at proj-swaks@jetmore.net
+    ptrans(12, "In recv_line, hit loop counter.  Continuing in unknown state");
+  }
+  
+  # using only bare newlines is bound to cause me problems in the future
+  # but it matches the expectation we've already been using.  All we can
+  # do is hone in on the proper behavior iteratively.
+  if ($G::recv_buffer =~ s|^(.*?\n)||si) {
+    $r = $1;
+  } else {
+	ptrans(12, "I'm in an impossible state");
+  }
+
   $r =~ s|\r||msg;
-#print "in recv_line, returning \$r = $r\n";
   return($r);
 }
 
@@ -804,7 +861,7 @@ sub recv_line {
 sub transact {
   my %h        = @_; # this is an smtp transaction element
   my $ret      = 1;  # this is our return value
-  my @handlers = (); # will hold and fail_handlers we need to run
+  my @handlers = (); # will hold any fail_handlers we need to run
   my $time     = ''; # used in time lapse calculations
 
   push(@G::pending_send, \%h); # push onto send queue
@@ -880,6 +937,30 @@ sub transact {
   return($ret);
 }
 
+sub hdump {
+  my $r = shift;
+  my $c = 0;  # counter
+  my $i = 16; # increment value
+  my $b;      # buffer
+
+  while (length($r) && ($r =~ s|^(.{1,$i})||smi)) {
+    my $s = $1; # $s will be the ascii string we manipulate for display
+    my @c = map { ord($_); } (split('', $s));
+    $s =~ s|[^\x21-\x7E]|.|g;
+
+    my $hfs = ''; # This is the hex format string for printf
+    for (my $hc = 0; $hc < $i; $hc++) {
+      $hfs .= ' ' if (!($hc%4));
+      if ($hc < scalar(@c)) { $hfs .= '%02X '; } else { $hfs .= '   '; }
+    }
+
+    $b .= sprintf("%04d:$hfs   %-16s\n", $c, @c, $s);
+    $c += $i;
+  }
+  chomp($b); # unelegant remnant of hdump's previous life
+  return($b)
+}
+
 sub unencode_smtp {
   my $t = shift;
 
@@ -887,39 +968,74 @@ sub unencode_smtp {
   return("$t[0] " . db64($t[1]));
 }
 
-sub process_file {
-  my $f = shift;
-  my $h = shift;
-
-  if (! -e "$f") {
-    ptrans(12, "File $f does not exist, skipping");
-    return;
-  } elsif (! -f "$f") {
-    ptrans(12, "File $f is not a file, skipping");
-    return;
-  } elsif (!open(I, "<$f")) {
-    ptrans(12, "Couldn't open $f, skipping... ($!)");
-    return;
-  }
-
-  while (<I>) {
-    chomp;
-    next if (/^#?\s*$/); # skip blank lines and those that start w/ '#'
-    my($key,$value) = split(' ', $_, 2);
-    $h->{uc($key)} = $value;
-  }
-  return;
-}
-
 sub interact {
-  my($prompt) = shift;
-  my($regexp) = shift;
-  my($continue) = shift;
-  my($response) = '';
+  my $prompt     = shift;
+  my $regexp     = shift;
+  my $hide_input = shift;
+  my $response   = '';
 
   do {
-    print "$prompt";
-    chomp($response = <STDIN>);
+    print $prompt;
+    if (!$hide_input || !$G::protect_prompt || $G::interact_method eq 'default') {
+      chomp($response = <STDIN>);
+    } else {
+      if ($^O eq 'MSWin32') {
+        #if ($G::interact_method eq "win32-console" ||
+        #   (!$G::interact_method && load("Win32::Console")))
+        #{
+        #    Couldn't get this working in the time I wanted to devote to it
+        #}
+        if ($G::interact_method eq "win32-readkey" ||
+           (!$G::interact_method && load("Term::ReadKey")))
+        {
+          $G::interact_method ||= "win32-readkey";
+          # the trick to replace input w/ '*' doesn't work on Win32
+          # Term::ReadKey, so just use it as an stty replacement
+          ReadMode('noecho');
+          # need to think about this on windows some more
+          #local $SIG{INT} = sub { ReadMode('restore'); };
+          chomp($response = <STDIN>);
+          ReadMode('restore');
+        } else {
+          $G::interact_method ||= "default";
+          chomp($response = <STDIN>);
+        }
+      } else {
+        if ($G::interact_method eq "unix-readkey" ||
+           (!$G::interact_method && load("Term::ReadKey")))
+        {
+          $G::interact_method ||= "unix-readkey";
+          my @resp = ();
+          ReadMode('raw');
+          #local $SIG{INT} = 
+          # reevaluate this code - what happens if del is first char we press?
+          while ((my $kp = ReadKey(0)) ne "\n") {
+            my $kp_num = ord($kp);
+            if($kp_num == 127 || $kp_num == 8) {
+              next if (!scalar(@resp));
+              pop(@resp);
+              print "\b \b";
+            } elsif($kp_num >= 32) {
+              push(@resp, $kp);
+              print "*";
+            }
+          }
+          ReadMode('restore');
+          $response = join('', @resp);
+        } elsif ($G::interact_method eq "unix-stty" ||
+                (!$G::interact_method && open(STTY, "stty -a |")))
+        {
+          $G::interact_method ||= "unix-stty";
+          { my $foo = join('', <STTY>); }
+          system('stty', '-echo');
+          chomp($response = <STDIN>);
+          system('stty', 'echo');
+        } else {
+          $G::interact_method ||= "default";
+          chomp($response = <STDIN>);
+        }
+      }
+    }
   } while ($regexp ne 'SKIP' && $response !~ /$regexp/);
 
   return($response);
@@ -1089,8 +1205,7 @@ sub load_dependencies {
     auth_cram_md5   => { name => "AUTH CRAM-MD5",  req => ['Digest::MD5'] },
     auth_cram_sha1  => { name => "AUTH CRAM-SHA1", req => ['Digest::SHA1'] },
     auth_ntlm       => { name => "AUTH NTLM",      req => ['Authen::NTLM'] },
-    auth_digest_md5 => { name => "AUTH DIGEST-MD5",
-                         req  => ['Authen::DigestMD5'] },
+    auth_digest_md5 => { name => "AUTH DIGEST-MD5", req  => ['Authen::SASL'] },
     dns             => { name => "MX Routing",     req => ['Net::DNS'] },
     tls             => { name => "TLS",            req => ['Net::SSLeay'] },
     pipe            => { name => "Pipe Transport", req => ['IPC::Open2'] },
@@ -1108,9 +1223,6 @@ sub get_option_struct {
     # location of config file
     { opts => ['config'],                         suffix => ':s',
       okey => 'config_file',                      type => 'scalar', },
-    # (l)ocation of input data
-    { opts => ['l', 'input-file'],                suffix => '=s',
-      okey => 'option_file',                      type => 'scalar', },
     # envelope-(f)rom address
     { opts => ['f', 'from'],                      suffix => ':s',
       okey => 'mail_from',                        type => 'scalar', },
@@ -1163,8 +1275,8 @@ sub get_option_struct {
     { opts => ['am', 'auth-map'],                 suffix => '=s',
       okey => 'auth_map',                         type => 'scalar', },
     # hide passwords when possible
-    #{ opts => ['ahp', 'auth-hide-password'],      suffix => '',
-    #  okey => 'auth_hidepw',                      type => 'scalar', },
+    { opts => ['ahp', 'auth-hide-password'],      suffix => ':s',
+      okey => 'auth_hidepw',                      type => 'scalar', },
     # translate base64 strings
     { opts => ['apt', 'auth-plaintext'],          suffix => '',
       okey => 'auth_showpt',                      type => 'scalar', },
@@ -1198,10 +1310,13 @@ sub get_option_struct {
     # suppress output to varying degrees
     { opts => ['S', 'silent'],                    suffix => ':i',
       okey => 'silent',                           type => 'sub',
-      literal => 'sub { $r->{silent} = $_[1] || $r->{silent} + 1; }', },
+      literal => 'sub { $r->{silent} = $_[1] || 1; }', },
     # Don't strip From_ line from DATA
     { opts => ['nsf', 'no-strip-from'],           suffix => '',
       okey => 'no_strip_from',                    type => 'scalar', },
+    # Use the old, one-character substitution tokens (%H, %D, etc)
+    { opts => ['use-old-data-tokens'],            suffix => '',
+      okey => 'use_old_data_tokens',              type => 'scalar', },
     # Don't show transaction hints
     { opts => ['nth', 'no-hints'],                suffix => '',
       okey => 'no_hints',                         type => 'scalar', },
@@ -1211,6 +1326,9 @@ sub get_option_struct {
     # Don't show sending lines
     { opts => ['hs', 'hide-send'],                suffix => '',
       okey => 'hide_send',                        type => 'scalar', },
+    # Don't echo input on potentially sensitive prompts
+    { opts => ['pp', 'protect-prompt'],           suffix => '',
+      okey => 'protect_prompt',                   type => 'scalar', },
     # Don't show any swaks-generated, non-error informational lines
     { opts => ['hi', 'hide-informational'],       suffix => '',
       okey => 'hide_informational',               type => 'scalar', },
@@ -1223,6 +1341,18 @@ sub get_option_struct {
     # don't touch the data
     { opts => ['ndf', 'no-data-fixup'],           suffix => '',
       okey => 'no_data_fixup',                    type => 'scalar', },
+    # show dumps of the raw read/written text
+    { opts => ['raw', 'show-raw-text'],           suffix => '',
+      okey => 'show_raw_text',                    type => 'scalar', },
+    # specify file to write to
+    { opts => ['output-file'],                    suffix => '=s',
+      okey => 'output_file',                      type => 'scalar', },
+    # specify file to write to
+    { opts => ['output-file-stdout'],             suffix => '=s',
+      okey => 'output_file_stdout',               type => 'scalar', },
+    # specify file to write to
+    { opts => ['output-file-stderr'],             suffix => '=s',
+      okey => 'output_file_stderr',               type => 'scalar', },
     # command to communicate with
     { opts => ['pipe'],                           suffix => ':s',
       okey => 'pipe_cmd',                         type => 'scalar', },
@@ -1235,7 +1365,7 @@ sub get_option_struct {
     # A file to attach
     { opts => ['attach-name','attach-type','attach'], suffix => ':s',
       okey => 'attach_822',                       type => 'list', },
-    # replacement for %H DATA token
+    # replacement for %NEW_HEADERS% DATA token
     { opts => ['ah', 'add-header'],               suffix => ':s',
       okey => 'add_header',                       type => 'list', },
     # replace header if exist, else add
@@ -1349,11 +1479,21 @@ sub load_args {
 sub fetch_args {
   my $r = shift;
   my $l = shift;
+  
+  my %to_delete = ();
 
   # need to rewrite header-HEADER opts before std option parsing
   # also see if there are any --no- options that need to be processed
   RUNOPTS:
   for (my $i = 0; $i < scalar(@ARGV); $i++) {
+    if ($ARGV[$i] =~ /^-?-(.*)$/) {
+      my $opt_name = $1;
+      foreach my $e (@$l) {
+        if (grep /^$opt_name$/, @{$e->{opts}}) {
+          delete($to_delete{$e->{okey}});
+        }
+      }
+    }
     if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
       $ARGV[$i] = "--header"; $ARGV[$i+1] = "$1: $ARGV[$i+1]";
     } elsif ($ARGV[$i] =~ /^-?-(no-(.*))$/) {
@@ -1365,6 +1505,7 @@ sub fetch_args {
         } elsif (grep /^$opt_name$/, @{$e->{opts}}) {
           splice(@ARGV, $i, 1);
           delete($r->{$e->{okey}});
+          $to_delete{$e->{okey}} = 1;          
           redo RUNOPTS; # since we're messing with the list, redo this element
         }
       }
@@ -1404,9 +1545,23 @@ sub fetch_args {
   if (!load("Getopt::Long")) {
     ptrans(12, "Unable to load Getopt::Long for option processing, Exiting");
     exit(1);
-  }  
+  }
+
   Getopt::Long::Configure("bundling_override");
   GetOptions(%options) || exit(1);
+  
+  # now remove any options that might have been added by a --no option
+  # (we have to do this here since it's legal to mix multiple OPT and --no-OPT
+  # in the same context (config file, command line, env var)
+  if (scalar keys %to_delete) {
+    foreach my $e (@$l) {
+      foreach my $opt_name (@{$e->{opts}}) {
+        if ($to_delete{$opt_name}) {
+          delete($r->{$e->{okey}});
+        }
+      }
+    }
+  }
 }
 
 # A couple of global options are set in here, they will be in the G:: namespace
@@ -1415,8 +1570,42 @@ sub process_args {
   my %n     = ();    # This is the hash we will return w/ the fixed-up args
   my $fconf = {};    # Hold config info from -l file if specified
 
-  # load the $fconf hash if user has specified a -l file
-  process_file($o->{option_file}, $fconf) if ($o->{option_file});
+  # handle the output file handles early so they can be used for errors
+  # we don't need to keep track of the actual files but it will make debugging
+  # easier later
+  $G::trans_fh_oh = \*STDOUT;
+  $G::trans_fh_of = "STDOUT";
+  $G::trans_fh_eh = \*STDERR;
+  $G::trans_fh_ef = "STDERR";
+  if ($o->{output_file} &&
+        (!$o->{output_file_stderr} || !$o->{output_file_stdout}))
+  {
+    if (!open(OUTFH, ">>$o->{output_file}")) {
+      ptrans(12, "Unable to open $o->{output_file} for writing\n");
+      exit(1);
+    }
+    $G::trans_fh_oh = \*OUTFH;
+    $G::trans_fh_of = $o->{output_file};
+    $G::trans_fh_eh = \*OUTFH;
+    $G::trans_fh_ef = $o->{output_file};
+  }
+  if ($o->{output_file_stderr}) {
+    if (!open(OUTEFH, ">>$o->{output_file_stderr}")) {
+      ptrans(12, "Unable to open $o->{output_file_stderr} for writing\n");
+      exit(1);
+    }
+    $G::trans_fh_eh = \*OUTEFH;
+    $G::trans_fh_ef = $o->{output_file_stderr};
+  }
+  if ($o->{output_file_stdout}) {
+    if (!open(OUTOFH, ">>$o->{output_file_stdout}")) {
+      ptrans(12, "Unable to open $o->{output_file_stdout} for writing\n");
+      exit(1);
+    }
+    $G::trans_fh_oh = \*OUTOFH;
+    $G::trans_fh_of = $o->{output_file_stdout};
+  }
+    
 
   $G::dump_args          = 1 if ($o->{dump_args});
   $G::suppress_data      = 1 if ($o->{suppress_data});
@@ -1425,6 +1614,8 @@ sub process_args {
   $G::hide_receive       = 1 if ($o->{hide_receive});
   $G::hide_informational = 1 if ($o->{hide_informational});
   $G::hide_all           = 1 if ($o->{hide_all});
+  $G::show_raw_text      = 1 if ($o->{show_raw_text});
+  $G::protect_prompt     = 1 if ($o->{protect_prompt});
   $G::pipeline           = 1 if ($o->{pipeline});
   $G::silent             = $o->{silent} || 0;
 
@@ -1661,9 +1852,9 @@ sub process_args {
   }
 
   # add-header option.  In a strict technical sense all this is is a text
-  # string that will replace %H in the DATA.  Because of where %H is placed
-  # in the default DATA, in practice this is used to add headers to the stock
-  # DATA w/o having to craft a custom DATA portion
+  # string that will replace %NEW_HEADERS% in the DATA.  Because of where
+  # %NEW_HEADERS% is placed in the default DATA, in practice this is used
+  # to add headers to the stock DATA w/o having to craft a custom DATA portion
   @{$o->{add_header}} = map { split(/\\n/) } @{$o->{add_header}};
 
   # SMTP DATA
@@ -1684,48 +1875,53 @@ sub process_args {
     }
   }
   $n{data} ||= $fconf->{DATA}
-           || 'Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\n'
+           || 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n'
              ."X-Mailer: swaks v$p_version jetmore.org/john/code/swaks/".'\n'
              . ($bound ?  'MIME-Version: 1.0\n'
                          .'Content-Type: multipart/mixed; '
                          .'boundary="'.$bound.'"\n'
                        : '')
-             .'%H' # newline will be added in replacement if it exists
+             .'%NEW_HEADERS%' # newline will be added in replacement if it exists
              .'\n'
-             .'%B\n';
+             .'%BODY%\n';
   # The -g option trumps all other methods of getting the data
   if ($o->{data_on_stdin}) {
     $n{data} = join('', <STDIN>);
-  } elsif ($n{data} !~ m|[\\n\n]| && open(F, "<$n{data}")) {
+  } elsif ($n{data} !~ m/(\\n|\n)/ && open(F, "<$n{data}")) {
     $n{data} = join('', <F>);
     close(F);
   }
   if (!$o->{no_data_fixup}) {
-    $n{data} =~ s/%B/$body/g;
+    $n{data} =~ s/%BODY%/$body/g;
+    $n{data} =~ s/%B/$body/g if ($O{use_old_data_tokens});
     if (defined($o->{header}) && ref($o->{header}) eq 'ARRAY'
                               && scalar(@{$o->{header}}))
     {
-      #my %matched = ();
       foreach my $l (map { split(/\\n/) } @{$o->{header}}) {
         if (my($h) = $l =~ /^([^:]+):/) {
-          $n{data} =~ s/(^|\\n|\n)$h:.*?($|\\n|\n)/$1$l$2/;
-          #if (!$matched{$h}
-          #    && $n{data} =~ s/(^|\\n|\n)$h:.*?($|\\n|\n)/$1$l$2/)
-          #{
-          #  $matched{$h} = 1;
-          #} else { push(@{$o->{add_header}}, $l); }
+          if ($n{data} !~ s/(^|\\n|\n)$h:.*?($|\\n|\n)/$1$l$2/) {
+            push(@{$o->{add_header}}, $l);
+          }
         } else { push(@{$o->{add_header}}, $l); }
       }
     }
     $n{add_header} = join('\n', @{$o->{add_header}}) . "\n"
         if (@{$o->{add_header}});
-    if ($n{data} !~ s/%H/$n{add_header}/g) {
+    if ($n{data} =~ /%NEW_HEADERS%/ || ($O{use_old_data_tokens} && $n{data} =~ /%H/)) {
+      $n{data} =~ s/%NEW_HEADERS%/$n{add_header}/g;
+      $n{data} =~ s/%H/$n{add_header}/g if ($O{use_old_data_tokens});
+    } else {
       $n{data} =~ s/(\n|\\n)(\r?\n|\\n)/$1$n{add_header}$2/;
     }
     $n{data} =~ s/\\n/\r\n/g;
-    $n{data} =~ s/%F/$n{from}/g;
-    $n{data} =~ s/%T/$n{to}/g;
-    $n{data} =~ s/%D/get_date_string()/eg;
+    $n{data} =~ s/%FROM_ADDRESS%/$n{from}/g;
+    $n{data} =~ s/%F/$n{from}/g if ($O{use_old_data_tokens});
+    $n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
+    $n{data} =~ s/%T/$n{to}/g if ($O{use_old_data_tokens});
+    { my $date_string = get_date_string();
+      $n{data} =~ s/%DATE%/$date_string/g;
+      $n{data} =~ s/%D/$date_string/g if ($O{use_old_data_tokens});
+    }
     $n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
     $n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
     $n{data} =~ s/\n\./\n../g;         # quote any other leading dots
@@ -1908,16 +2104,15 @@ sub process_args {
 
         $n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
         $n{a_pass} ||= $fconf->{PASS};
-        $n{a_pass} ||= interact("Password: ", 'SKIP');
+        $n{a_pass} ||= interact("Password: ", 'SKIP', 1);
         $n{a_pass}   = '' if ($n{a_pass} eq '<>');
 
         $G::auth_showpt = 1 if (defined($o->{auth_showpt}));
-        # This option is designed to hide passwords - turn echo off when
-        # supplying at PW prompt, star out the PW strings in AUTH transactions.
-        # Not implementing right now - the echo might be a portability issue,
-        # and starring out is hard because the smtp transaction is abstracted
-        # beyond where this is easy to do.  Maybe sometime in the future
-        #$G::auth_hidepw = 1 if (defined($o->{auth_hidepw}));
+        if (length($o->{auth_hidepw})) {
+          $G::auth_hidepw = $o->{auth_hidepw};
+        } elsif (defined($o->{auth_hidepw})) {
+          $G::auth_hidepw = "DEADBEEFDEADBEEF";
+        }
       }
     } # end avail("auth")
   } # end auth parsing
@@ -1950,7 +2145,10 @@ sub get_date_string {
     @l = gmtime($et);
   } else {
     my @g = gmtime($et);
-    $o = (timelocal(@l) - timelocal(@g))/36;
+    $o = (timelocal(@l) - timelocal(@g)) / 60;
+    # Adjust to hours and minutes and not hours and hour-hundreths
+    # See debian bug 646084
+    $o = int($o / 60)*100 + ($o%60)*($o > 0 ? 1 : -1);
   }
   $G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
                  (qw(Sun Mon Tue Wed Thu Fri Sat))[$l[6]],
@@ -2144,7 +2342,7 @@ Additionally a configuration file in a non-default location can be specified usi
 
 A set of "portable" defaults can also be created by adding options to the end of the swaks program file.  As distributed, the last line of swaks should be "__END__".  Any lines added after __END__ will be treated as the contents of a configuration file.  This allows a set of user preferences to be automatically copied from server to server in a single file.
 
-If present and configuration files have not been explicitly turned off, the __END config is always read.  Only one other configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.  Specifying the --config option with no argument turns off the processing of both the __END__ config and any actual config files.
+If present and configuration files have not been explicitly turned off, the __END__ config is always read.  Only one other configuration file will ever be used per single invocation of swaks, even if multiple configuration files are specified.  Specifying the --config option with no argument turns off the processing of both the __END__ config and any actual config files.
 
 In a configuration file lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to swaks, with the leading dash or dashes optional.  Everything after a option line's first space is assumed to be the option's argument and is not shell processed.  Therefore quoting is usually unneeded and will be included literally in the argument.  Here is an example of the contents of a configuration file:
 
@@ -2156,7 +2354,7 @@ In a configuration file lines beginning with a hash (#) are ignored.  All other 
     # entire argument.
     h-From: "Fred Example" <fred@example.com>
 
-There is a deprecated option --input-file (or -l) in swaks that was a precursor of the configuration file defined here.  That option has been judged deficient and is being replaced wholesale with the idea of the configuration file defined above.  The option still exists for the time being but its use is strongly discouraged.  It is no longer documented, and it will be removed entirely in some future release.
+There was an option --input-file (or -l) that was a predecessor to the current configuration file system.  It was deprecated and undocumented before this release.  The code for it is being removed in this release, and this mention of it will be removed in the next release.  If you were still using it please move to using one of the other configuration methods.
 
 =item ENVIRONMENT VARIABLES
 
@@ -2425,7 +2623,9 @@ The CRAM-MD5 authenticator requires the Digest::MD5 module.  It is fully tested 
 
 =item DIGEST-MD5
 
-The DIGEST-MD5 authenticator (RFC2831) requires the Authen::DigestMD5 module.  Only known to have been tested against Communigate and may therefore have some implementation deficiencies.
+The DIGEST-MD5 authenticator (RFC2831) requires the Authen::SASL module.  Version 20100211.0 and earlier used Authen::DigestMD5 which had some protocol level errors which prevented it from working with some servers.  Authen::SASL's DIGEST-MD5 handling is much more robust.
+
+The DIGEST-MD5 implementation in swaks is fairly immature.  It currently supports only the "auth" qop type, it doesn't expose the realm option to the user, etc.  If you have DIGEST-MD5 experience and would like to help swaks support DIGEST-MD5 better, please get in touch with me.
 
 =item CRAM-SHA1
 
@@ -2463,6 +2663,12 @@ Provides a way to map alternate names onto base authentication types.  Useful fo
 
 Instead of showing AUTH strings base64 encoded as they are transmitted, translate them to plaintext before printing on screen.
 
+=item -ahp, --auth-hide-password [replacement string]
+
+If this option is specified, any time a readable password would be printed to the terminal (specifically AUTH PLAIN and AUTH LOGIN) the password is replaced with a dummy string (or the contents of "replacement string" if provided).  The dummy string will be base64 encoded or not contingent on the --auth-plaintext option.
+
+Note that --auth-hide-password is similar, but not identical, to the --protect-prompt option.  The former protects passwords from being displayed in the SMTP transaction regardless of how they are entered.  The latter protects sensitive strings when the user types them at the terminal, regardless of how the string would be used.
+
 =back
 
 =head1 DATA OPTIONS
@@ -2475,33 +2681,37 @@ These options pertain to the contents for the DATA portion of the SMTP transacti
 
 Use argument as the entire contents of DATA, or prompt user if no argument specified.  If the argument '-' is provided the data will be read from STDIN.  If any other argument is provided and it represents the name of an open-able file, the contents of the file will be used.  Any other argument will be itself for the DATA contents.
 
-The value can be on one single line, with \n (ascii 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is "Date: %D\nTo: %T\nFrom: %F\nSubject: test %D\nX-Mailer: swaks v$p_version jetmore.org/john/code/#swaks\n%H\n\n%B\n".
+The value can be on one single line, with \n (ascii 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is "Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\nX-Mailer: swaks v$p_version jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n".
 
-Very basic token parsing is performed on the DATA portion.  The following table shows the recognized tokens and their replacement values:
+Very basic token parsing is performed on the DATA portion.  See --use-old-data-tokens for details about the single-character tokens marked as deprecated.  The following table shows the recognized tokens and their replacement values:
 
 =over 4
 
-=item %F
+=item %FROM_ADDRESS%
 
-Replaced with the envelope-sender.
+Replaced with the envelope-sender.  Replaces the deprecated %F token.
 
-=item %T
+=item %TO_ADDRESS%
 
-Replaced with the envelope-recipient(s).
+Replaced with the envelope-recipient(s).  Replaces the deprecated %T token.
 
-=item %D
+=item %DATE%
 
-Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module Time::Local for timezone calculations.  If this module is unavailable the date string will be in GMT.
+Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module Time::Local for timezone calculations.  If this module is unavailable the date string will be in GMT.  Replaces the deprecated %D token.
 
-=item %H
+=item %NEW_HEADERS%
 
-Replaced with the contents of the --add-header option.  If --add-header is not specified this token is simply removed.
+Replaced with the contents of the --add-header option.  If --add-header is not specified this token is simply removed.  Replaces the deprecated %H token.
 
-=item %B
+=item %BODY%
 
-Replaced with the value specified by the --body option.  See --body for default.
+Replaced with the value specified by the --body option.  See --body for default.  Replaces the deprecated %H token.
 
 =back
+
+=item --use-old-data-tokens
+
+In previous versions of swaks the DATA tokens as described in the --data option above used single-character tokens (e.g., %F).  These were not a great choice for default tokens, and proved especially troublesome with encoded, non-english languages where these character combinations might be common.  The single-character tokens were replaced with the slightly-less-error-prone versions listed above.  The retention of the old tokens and the inclusion of this option to activate them are intended as a temporary aid to users who have an existing message corpus using the old tokens.  The single-character tokens and the --use-old-data-tokens option should be considered deprecated and likely to be removed in the next release.
 
 =item --body [body-specification]
 
@@ -2538,6 +2748,10 @@ These options allow a way to change headers that already exist in the DATA.  '--
 =item -g
 
 If specified, swaks will read the DATA value for the mail from STDIN.  This is equivalent to "--data -".  If there is a From_ line in the email, it will be removed (but see -nsf option).  Useful for delivering real message (stored in files) instead of using example messages.
+
+=item --no-data-fixup, -ndf
+
+This option forces swaks to do no massaging of the DATA portion of the email.  This includes token replacement, From_ stripping, trailing-dot addition, --body/attachment inclusion, and any header additions.  This option is really only useful when used with --data, since the internal default DATA portion uses tokens.
 
 =item --no-strip-from, -nsf
 
@@ -2577,6 +2791,10 @@ Indicates an unexpected line sent by swaks to the target server
 
 Indicates a TLS-encrypted, unexpected line sent by swaks to target server
 
+=item >
+
+Indicates a raw chunk of test sent by swaks to a target server (see --show-raw-text).  There is no concept of "expected" or "unexpected" at this level.
+
 =item <-
 
 Indicates an expected line sent by target server to swaks
@@ -2592,6 +2810,10 @@ Indicates an unexpected line sent by target server to swaks
 =item <~*
 
 Indicates a TLS-encrypted, unexpected line sent by target server to swaks
+
+=item <
+
+Indicates a raw chunk of text received by swaks from a target server (see --show-raw-text).  There is no concept of "expected" or "unexpected" at this level.
 
 =back
 
@@ -2610,6 +2832,22 @@ Display time lapse between send/receive pairs.  This option is most useful when 
 =item -nth, --no-hints
 
 Don't show transaction hints (useful in conjunction with -hr to create copy/paste-able transactions).
+
+=item -raw, --show-raw-text
+
+This option will print a hex dump of raw data sent and received by swaks.  Each hex dump is the contents of a single read or write on the network.  This should be identical to what is already being displayed (with the exception of the \r characters being removed).  This option is useful in seeing details when servers are sending lots of data in single packets, or breaking up individual lines into multiple packets.  If you really need to go in depth in that area you're probably better with a packet sniffer, but this option is a good first step to seeing odd connection issues.
+
+=item --output-file </path/to/file>
+
+=item --output-file-stdout </path/to/file>
+
+=item --output-file-stderr </path/to/file>
+
+These options allow the user to send output to files instead of stdout/stderr.  The first option sends both to the same file.  The arguments of &STDOUT and &STDERR are treated specially, refering to the "normal" file handles, so "--output-file-stderr '&STDOUT'" would redirect STDERR to STDOUT.
+
+=item -pp, --protect-prompt
+
+Don't echo user input on prompts that are potentially sensitive (right now only authentication password).  See also --auth-hide-password
 
 =item -hr, --hide-receive
 
@@ -2631,7 +2869,7 @@ Do not display any content to the terminal.
 
 Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.
 
-Note that this used to be an additive option ("-S -S" was equivalent to "-S 2").  After environment option handling was introduced this was changed.  The additive method still works but is deprecated and will be removed entirely in a future release
+In previous releases the -S option could be additive (i.e., "-S -S" was equivalent to "-S 2").  This was marked deprecated in previous releases.  The functionality has been removed from code in this release.  This mention of the functionality is left as a breadcrumb only and will be removed in the next release.  If you are still using the additive method, please change to the method described above.
 
 =item --support
 
@@ -2655,13 +2893,13 @@ Display version information.
 
 This program was primarily intended for use on unix-like operating systems, and it should work on any reasonable version thereof.  It has been developed and tested on Solaris, Linux, and Mac OS X and is feature complete on all of these.
 
-This program is known to demonstrate basic functionality on Windows using ActiveState's Perl.  It has not been fully tested.  Known to work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5 auth types.  Unknown is any TLS functionality and the NTLM/SPA and Digest-MD5 auth types.
+This program is known to demonstrate basic functionality on Windows using ActiveState's Perl.  It has not been fully tested.  Known to work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5 auth types.  Unknown is any TLS functionality and the NTLM/SPA and DIGEST-MD5 auth types.
 
 Because this program should work anywhere Perl works, I would appreciate knowing about any new operating systems you've thoroughly used swaks on as well as any problems encountered on a new OS.
 
 =item MAIL SERVERS
 
-This program was almost exclusively developed against Exim mail servers.  It was been used casually by the author, though not thoroughly tested, with Sendmail, Smail, Exchange, Oracle Collaboration Suite, and Communigate.  Because all functionality in swaks is based off of known standards it should work with any fairly modern mail server.  If a problem is found, please alert the author at the address below.
+This program was almost exclusively developed against Exim mail servers.  It was been used casually by the author, though not thoroughly tested, with Sendmail, Smail, Exchange, Oracle Collaboration Suite, qpsmtpd, and Communigate.  Because all functionality in swaks is based off of known standards it should work with any fairly modern mail server.  If a problem is found, please alert the author at the address below.
 
 =back
 

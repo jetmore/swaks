@@ -1,3 +1,57 @@
+* 20111202 implemented the -raw/--show-raw-text option to print a hex dump
+           of the raw bytes as received on the wire.
+* 20111202 reimplemented reading of server responses in non-TLS, non-pipe
+           sessions in terms of recv rather than as a standard filehandle
+           operation (<>) to make it closer to the TLS's read and to allow
+           a more in-depth view of what's being sent on the wire.
+* 20111201 fixed TLS issue when SMTP response sent in multiple packets.
+           This looks like a regression of the TLS fix from 20050709
+           (r94) that was made in the implementation of --pipeline in 
+           20060309's r115.  Regression reported by Peter J. Holzer along
+           with suggested fix.
+> 20111130 released r256 to Erwan Legrand (erwan@lightbringer.org)
+           to evaluate the DIGEST-MD5 changes
+* 20111130 Changed the DIGEST-MD5 backend from Authen::DigestMD5 to
+           Authen::SASL.  Authen::DigestMD5 had some blatant protocol
+           bugs and swaks did a poor job of supporting DIGEST-MD5
+           (as pointed out by Erwan Legrand).  Current version
+           tested against a reasonably new Sendmail install.
+* 20111128 Fix option processing so that "no-" prefixed options wipe out
+           the same option when presented in the same context.  Previously
+           --no-timeout on command line would erase a timeout set by a
+           config option or env variable, but would not erase --timeout
+           given earlier on the same command line.
+* 20111128 Removed the additive nature of the --silent/-S option.  Left
+           a mention of it in doc as breadcumb.  Remove all mention in next
+           release
+* 20111128 removed the --input-file/-l option from the code.  Left one final
+           mention on if in the docs as a breadcrumb to anyone who still needs
+           to move to --config.  Will remove breadcrumb after next release
+* 20111128 Adding missing --no-data-fixup option back into the docs
+* 20111128 Changed default token parsing from the old single-char version
+           (%F) to the newer, safer version (%FROM_ADDRESS%).  Added and
+           and documented the --use-old-data-tokens option to get old
+           behavior back.  Marked option and older tokens as deprecated
+           to hopefully get people to transition to new tokens. (The issue
+           with the overly simplistic tokens and non-ascii language encoding
+           first reported by Peter Baranyi)
+* 20111021 Fixed the date string TZ offset to work correctly for TZs that
+           are not fixed on an hour boundary.  Report and patch by Peter
+           Samuelson in debian bug 646084.
+* 20110321 added --auth-hide-password option to replace recoverable passwords
+           in SMTP transactions with a dummy string
+* 20110321 fixed bug which prevented message data to be provided in a file 
+           with a "n" or "\" in the filename.  Reported and fix suggested
+           by dietrich.rebmann#freenet.de
+* 20110309 added --protect-password option to make best effort not to
+           echo user input on sensitive fields (*nix and Win32)
+* 20110309 misc typos/style
+* 20110309 updated copyright date to 2011
+* 20101217 fixed bug where --header no longer worked for setting custom headers
+           (reported 20101015 by David Favor)
+* 20101217 added and documented the --output-file* options
+* 20100215 added recipes.pod to repo and added vrfy and fswaks recipes
+* 20100212 fixed doc typo
 > 20100211 released 20100211.0
 * 20100211 moved to swaks.org, redid website
 * 20100211 working on release engineering
