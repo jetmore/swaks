@@ -562,3 +562,4 @@
 * 20111228 updating contact links at top and adding Id keyword
 * 20111229 Change indent from 2-space to 1-tab, use 120-char width where it
            makes sense.
+* 20111229 address some -w output related to the DIGEST-MD5 rewrite

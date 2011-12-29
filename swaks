@@ -542,12 +542,12 @@ sub do_smtp_auth_digest {
 	my @digest_uri = ();
 	
 	if (exists($G::auth_extras{"DMD5-SERV-TYPE"})) {
-		@digest_uri[0] = $G::auth_extras{"DMD5-SERV-TYPE"};
+		$digest_uri[0] = $G::auth_extras{"DMD5-SERV-TYPE"};
 	} else {
-		@digest_uri[0] = 'smtp';
+		$digest_uri[0] = 'smtp';
 	}
 	if (exists($G::auth_extras{"DMD5-HOST"})) {
-		@digest_uri[1] = $G::auth_extras{"DMD5-HOST"};
+		$digest_uri[1] = $G::auth_extras{"DMD5-HOST"};
 	} else {
 		if ($G::link{type} eq 'socket-unix') {
 			$digest_uri[1] = $G::link{sockfile};
@@ -563,7 +563,7 @@ sub do_smtp_auth_digest {
 		# There seems to be a hole in the Authen::SASL interface where there's
 		# no option to directory provide the digest-uri serv-name.  But we can
 		# trick it into using the value we want by tacking it onto the end of host
-		@digest_uri[1] .= '/' . $G::auth_extras{"DMD5-SERV-NAME"};
+		$digest_uri[1] .= '/' . $G::auth_extras{"DMD5-SERV-NAME"};
 	}
 
 	my $auth_string = "AUTH $as";
@@ -595,7 +595,7 @@ sub do_smtp_auth_digest {
 	# If anyone out there knows more about this please let me know.
 	$sasl_client->property('maxssf' => 0);
 
-	my $auth_string = $sasl_client->client_step($r);
+	$auth_string = $sasl_client->client_step($r);
 	do_smtp_gen(eb64($auth_string), '334', \$r, '',
 	                 $G::auth_showpt ? "$auth_string" : '',
 	                 $G::auth_showpt ? \&unencode_smtp : '')
