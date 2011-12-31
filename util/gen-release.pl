@@ -17,8 +17,7 @@ while (<I>) {
   print O;
 }
 close(I);
-open(I, "<$home/doc/base.pod") ||
-    die "can't read from $home/doc/base.pod: $!\n";
+open(I, "<$home/doc/base.pod") || die "can't read from $home/doc/base.pod: $!\n";
 while (<I>) {
   s|DEVRELEASE|$release|g;
   $pod_blob .= $_;
@@ -38,6 +37,20 @@ print "done\n";
 print "Building ref.txt... ";
 my $pod2text = Pod::Text->new();
 $pod2text->parse_from_file("$release_d/doc/ref.pod", "$release_d/doc/ref.txt");
+print "done\n";
+
+print "Building recipes.pod... ";
+open(I, "<$home/doc/recipes.pod") || die "can't read from $home/doc/recipes.pod: $!\n";
+open(O, ">$release_d/doc/recipes.pod") || die "Can't write to recipes.pod: $!\n";
+while (<I>) {
+  print O;
+}
+close(O);
+close(I);
+print "done\n";
+
+print "Building recipes.txt... ";
+$pod2text->parse_from_file("$release_d/doc/recipes.pod", "$release_d/doc/recipes.txt");
 print "done\n";
 
 # ugh, the resulting html sucks, skip it
@@ -63,7 +76,13 @@ close(O);
 close(I);
 
 
-print "\n",
-	"UPDATE README\n",
-	"SVN COMMIT to put /release/ into SVN\n",
-	"TAG RELEASE: svn copy http://svn.jetmore.org/swaks/trunk/RELEASE http://svn.jetmore.org/swaks/tags/r-$release\n";
+print <<EOM;
+
+UPDATE README
+SVN COMMIT to put /RELEASE/ into SVN
+TAG RELEASE:
+  svn copy http://svn.jetmore.org/swaks/trunk/RELEASE http://svn.jetmore.org/swaks/tags/r-$release
+EXPORT AND PACKAGE RELEASE: 
+  svn export http://svn.jetmore.org/swaks/tags/r-$release swaks-$release
+  tar -cvf - swaks-$release | gzip > swaks-$release.tar.gz
+EOM
