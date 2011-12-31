@@ -494,7 +494,7 @@
            (reported 20101015 by David Favor)
 * 20110309 updated copyright date to 2011
 * 20110309 misc typos/style
-* 20110309 added --protect-password option to make best effort not to
+* 20110309 added --protect-prompt option to make best effort not to
            echo user input on sensitive fields (*nix and Win32)
 * 20110321 fixed bug which prevented message data to be provided in a file 
            with a "n" or "\" in the filename.  Reported and fix suggested
