@@ -65,4 +65,5 @@ close(I);
 
 print "\n",
 	"UPDATE README\n",
+	"SVN COMMIT to put /release/ into SVN\n",
 	"TAG RELEASE: svn copy http://svn.jetmore.org/swaks/trunk/RELEASE http://svn.jetmore.org/swaks/tags/r-$release\n";
