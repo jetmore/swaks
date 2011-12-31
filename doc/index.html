@@ -28,6 +28,134 @@ Download latest (<a href=latest.tar.gz>entire distribution</a>, <a href=latest/s
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>
 <tr>
+<td valign=top><font size=-1><b>v20111230.0</b></font></td>
+<td><font size=-1>
+<B>Links:</b> <a href=swaks-20111230.0.tar.gz>Distribution</a>, <a href=swaks-20111230.0/swaks>script only</a>, <a href=swaks-20111230.0/doc/ref.txt>version docs</a>
+<P>
+<B>Change Summary:</B><BR>
+<pre>
+New Features:
+  * Added --output-file family of options to capture some or all output
+    without requiring shell redirection
+  * Added --protect-password option to protect "sensitive" user input
+    (currently only auth passwords)
+  * Added --auth-hide-password to replace recoverable passwords in SMTP
+    session output with a dummy string
+  * Added --auth-extra to have a single interface to pass non-standard
+    authentication options into swaks.  Currently used by NTLM and
+    DIGEST-MD5.
+  * Added --show-raw-text option to provide more details of exact data
+    being sent on the wire
+Notable Changes
+  * SMTP Data token parsing has been changed from single-character (%F) to
+    multi-character (%FROM_ADDRESS%) to reduce chance of collisions with
+    message text, especially non-ascii language encoding.  See
+    --use-old-data-tokens to recover old tokens while transitioning.
+    (issue reported by Peter Baranyi)
+  * Specifying the NTLM/MSN/SPA DOMAIN by appending "%DOMAIN" to the
+    username is no longer supported.  See the new --auth-extra command.
+  * The DIGEST-MD5 authentication no longer uses the (buggy)
+    Authen::DigestMD5 module.  The Authen::SASL module is now used.
+Notable Bugs Fixed
+  * Previous release broke ability to use --header to set custom headers
+    (first reported by David Favor)
+  * Previous release would not allow a file to be used to provide the
+    message data if the file name contained the character "n".
+    (first reported by dietrich.rebmann@******)
+  * swaks has never properly handled creating date strings for timezones
+    that are not on an even hour boundary.
+    (report from, and patch provided by, Peter Samuelson)
+  * The documented behavior of the "no-" prefix on swaks' options did not
+    work when --OPTION and --no-OPTION were given in the same context.
+  * The DIGEST-MD5 auth type was not completely implemented.  Worked
+    extensively with Erwan Legrand to get as complete and useful an
+    implementation as possible.
+  * Previous release contained a regression in which TLS responses sent in
+    multiple packets were not processed correctly.
+    (reported by Peter J. Holzer)
+</pre>
+<B>Changelog:</B><BR>
+<pre>
+* 20100212 fixed doc typo
+* 20100215 added recipes.pod to repo and added vrfy and fswaks recipes
+* 20101217 added and documented the --output-file* options
+* 20101217 fixed bug where --header no longer worked for setting custom headers
+           (reported 20101015 by David Favor)
+* 20110309 updated copyright date to 2011
+* 20110309 misc typos/style
+* 20110309 added --protect-password option to make best effort not to
+           echo user input on sensitive fields (*nix and Win32)
+* 20110321 fixed bug which prevented message data to be provided in a file 
+           with a "n" or "\" in the filename.  Reported and fix suggested
+           by dietrich.rebmann#freenet.de
+* 20110321 added --auth-hide-password option to replace recoverable passwords
+           in SMTP transactions with a dummy string
+* 20111021 Fixed the date string TZ offset to work correctly for TZs that
+           are not fixed on an hour boundary.  Report and patch by Peter
+           Samuelson in debian bug 646084.
+* 20111128 Changed default token parsing from the old single-char version
+           (%F) to the newer, safer version (%FROM_ADDRESS%).  Added and
+           and documented the --use-old-data-tokens option to get old
+           behavior back.  Marked option and older tokens as deprecated
+           to hopefully get people to transition to new tokens. (The issue
+           with the overly simplistic tokens and non-ascii language encoding
+           first reported by Peter Baranyi)
+* 20111128 Adding missing --no-data-fixup option back into the docs
+* 20111128 removed the --input-file/-l option from the code.  Left one final
+           mention on if in the docs as a breadcrumb to anyone who still needs
+           to move to --config.  Will remove breadcrumb after next release
+* 20111128 Removed the additive nature of the --silent/-S option.  Left
+           a mention of it in doc as breadcumb.  Remove all mention in next
+           release
+* 20111128 Fix option processing so that "no-" prefixed options wipe out
+           the same option when presented in the same context.  Previously
+           --no-timeout on command line would erase a timeout set by a
+           config option or env variable, but would not erase --timeout
+           given earlier on the same command line.
+* 20111130 Changed the DIGEST-MD5 backend from Authen::DigestMD5 to
+           Authen::SASL.  Authen::DigestMD5 had some blatant protocol
+           bugs and swaks did a poor job of supporting DIGEST-MD5
+           (as pointed out by Erwan Legrand).  Current version
+           tested against a reasonably new Sendmail install.
+> 20111130 released r256 to Erwan Legrand (erwan@lightbringer.org)
+           to evaluate the DIGEST-MD5 changes
+* 20111201 fixed TLS issue when SMTP response sent in multiple packets.
+           This looks like a regression of the TLS fix from 20050709
+           (r94) that was made in the implementation of --pipeline in 
+           20060309's r115.  Regression reported by Peter J. Holzer along
+           with suggested fix.
+* 20111202 reimplemented reading of server responses in non-TLS, non-pipe
+           sessions in terms of recv rather than as a standard filehandle
+           operation (<>) to make it closer to the TLS's read and to allow
+           a more in-depth view of what's being sent on the wire.
+* 20111202 implemented the -raw/--show-raw-text option to print a hex dump
+           of the raw bytes as received on the wire.
+> 20111203 released 20111202.0-dev to announce list for review
+* 20111209 Fixed default value of DIGEST-MD5's digest-uri to always include
+           a "host" value
+* 20111209 Allow specifying DIGEST-MD5's digest-uri by extending the -au
+           option (USERNAME%URI-SERV-TYPE%URI-HOST%URI-SERV-NAME)
+* 20111221 moved --auth-map contents in --dump into the "if auth" section.
+* 20111221 added and documented the --auth-extra option.  Initial keywords
+           are domain, realm, dmd5-serv-type, dmd5-host, and dmd5-serv-name
+* 20111221 removed -au overloading to set DOMAIN in NTLM/MSN/SPA.  Use
+           domain --auth-extra keyword now.
+* 20111221 removed -au overloading for digest-uri string in DIGEST-MD5. Use
+           dmd5-serv-type, dmd5-host, and dmd5-serv-name --auth-extra
+           keywords now.
+* 20111221 added ability to set realm in the DIGEST-MD5 authenticator using
+           realm --auth-extra keyword.
+* 20111221 fix --auth-map parsing to accept documented format.
+* 20111222 fix handling of --auth-extra dmd5-serv-name to work around lack
+           of interface for it in Authen::SASL.
+* 20111228 updating contact links at top and adding Id keyword
+* 20111229 Change indent from 2-space to 1-tab, use 120-char width where it
+           makes sense.
+* 20111229 address some -w output related to the DIGEST-MD5 rewrite
+</pre>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
 <td valign=top><font size=-1><b>v20100211.0</b></font></td>
 <td><font size=-1>
 <B>Links:</b> <a href=swaks-20100211.0.tar.gz>Distribution</a>, <a href=swaks-20100211.0/swaks>script only</a>, <a href=swaks-20100211.0/doc/ref.txt>version docs</a>
