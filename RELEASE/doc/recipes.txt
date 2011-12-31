@@ -1,1 +1,77 @@
-Placeholder for examples of swaks' use.
+swaks - Recipes for use
+    Because swaks is a very flexible tool it can be hard to fully grasp what
+    it can do (and few people want or need to). However, I have used swaks
+    in interesting ways, and others have done the same and shared them with
+    me. I hate for these interesting ideas go to waste, so I am including
+    them in this file.
+
+Simple address verifier
+    I have had the following in my kshrc for years:
+
+         alias vrfy='swaks -q rcpt -t'
+
+    This allows you to quickly ask a mail server whether a recipient is
+    valid (depending on how the mail server is configured, of course).
+    Example output:
+
+         g3 0 /home/jj33 > vrfy proj-swaks@jetmore.org
+         === Trying mx2.balanced.spacey.mail.dreamhost.com:25...
+         === Connected to mx2.balanced.spacey.mail.dreamhost.com.
+         <-  220 spaceymail-mx3.g.dreamhost.com ESMTP
+          -> EHLO g3.jetmore.net
+         <-  250-spaceymail-mx3.g.dreamhost.com
+         <-  250-PIPELINING
+         <-  250-SIZE 40960000
+         <-  250-ETRN
+         <-  250-STARTTLS
+         <-  250 8BITMIME
+          -> MAIL FROM:<jj33@g3.jetmore.net>
+         <-  250 Ok
+          -> RCPT TO:<proj-swaks@jetmore.org>
+         <-  250 Ok
+          -> QUIT
+         <-  221 Bye
+         g3 0 /home/jj33 >
+
+    This is a valid email (the mail server returned 250 in response to my
+    RCPT request). This is fairly verbose though. Note the "0" in my command
+    prompt is the exit status of the last command ($?). Since swaks tries to
+    be good about setting a useful return value, I could make vrfy totally
+    silent:
+
+         g3 0 /home/jj33 > alias vrfy='swaks -q rcpt --silent 3 -t'
+         g3 0 /home/jj33 > vrfy proj-foobar@jetmore.org            
+         g3 24 /home/jj33 > vrfy proj-swaks@jetmore.org  
+         g3 0 /home/jj33 >
+
+    As you can see by the $? output, proj-foobar is not a valid address and
+    proj-swaks is.
+
+    This works well if you use $? in your command prompt, but if not it is
+    less useful. Also, it loses potentially useful information the mail
+    server might provide when rejecting an address. To get around this, try
+    using --silent 2, which prints only errors. Now you can expect no output
+    to mean the mail was valid, and any other output to mean an error
+    occurred:
+
+         g3 0 /home/jj33 > PS1=$HOST' $PWD > '
+         g3 /home/jj33 > alias vrfy='swaks -q rcpt --silent 2 -t'
+         g3 /home/jj33 > vrfy proj-foobar@jetmore.org
+         <** 550 <proj-foobar@jetmore.org>: Recipient address rejected: User unknown in virtual alias table
+         g3 /home/jj33 > vrfy proj-swaks@jetmore.org  
+         g3 /home/jj33 >
+
+Stress-testing an SMTP server
+    I've received a couple of different requests and a couple of different
+    patches over the years to add functionality to have swaks fork and send
+    a bunch of emails to a single address. I may still add this
+    functionality some day, but I still feel pretty strongly that ultimately
+    swaks core is a single transaction. Forking multiple swaks seems just
+    outside the scope of the tool.
+
+    However, this does seem to be something people want to do. To that end,
+    here is a quick-and-dirty shell script that is (almost) a drop in
+    replacement for swaks:
+
+         #!
+

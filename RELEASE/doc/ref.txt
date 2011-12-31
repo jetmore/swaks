@@ -547,10 +547,22 @@ AUTHENTICATION
             much more robust.
 
             The DIGEST-MD5 implementation in swaks is fairly immature. It
-            currently supports only the "auth" qop type, it doesn't expose
-            the realm option to the user, etc. If you have DIGEST-MD5
-            experience and would like to help swaks support DIGEST-MD5
-            better, please get in touch with me.
+            currently supports only the "auth" qop type, for instance. If
+            you have DIGEST-MD5 experience and would like to help swaks
+            support DIGEST-MD5 better, please get in touch with me.
+
+            The DIGEST-MD5 protocol's "realm" value can be set using the
+            --auth-extra "realm" keyword. If no realm is given, a reasonable
+            default will be used.
+
+            The DIGEST-MD5 protocol's "digest-uri" values can be set using
+            the --auth-extra option. For instance, you could create the
+            digest-uri-value of "lmtp/mail.example.com/example.com" with the
+            option "--auth-extra
+            dmd5-serv-type=lmtp,dmd5-host=mail.example.com,dmd5-serv-name=ex
+            ample.com". The "digest-uri-value" string and its components is
+            defined in RFC2831. If none of these values are given,
+            reasonable defaults will be used.
 
         CRAM-SHA1
             The CRAM-SHA1 authenticator requires the Digest::SHA1 module.
@@ -566,14 +578,10 @@ AUTHENTICATION
             Exim, Communigate, and Exchange 2007.
 
             In addition to the standard username and password, this
-            authentication type can also recognize a "domain". Rather than
-            create a new option for this single authentication type, the
-            domain can be passed by adding "%DOMAIN" to the end of the
-            username. For instance, if "-ap user@example.com%NTDOM" is
-            passed, "user@example.com" is the username and "NTDOM" is the
-            domain. Note that this has never been tested with a mail server
-            that doesn't ignore DOMAIN so this may be implemented
-            incorrectly.
+            authentication type can also recognize a "domain". The domain
+            can be set using the --auth-extra "domain" keyword. Note that
+            this has never been tested with a mail server that doesn't
+            ignore DOMAIN so this may be implemented incorrectly.
 
     -ao, --auth-optional [auth-type[,auth-type,...]]
         This option behaves identically to --auth except that it requests
@@ -598,6 +606,35 @@ AUTHENTICATION
         Provide the password to be used for authentication, or prompt the
         user for it if no argument is provided. The string <> can be
         supplied to mean an empty password.
+
+    -ae, --auth-extra [KEYWORD=value[,...]]
+        Some of the authentication types allow extra information to be
+        included in the authentication process. Rather than add a new option
+        for every nook and cranny of each authenticator, the --auth-extra
+        option allows this information to be supplied.
+
+        The following table lists the currently recognized keywords and the
+        authenticators that use them
+
+        realm, domain
+            The realm and domain keywords are synonymous. Using either will
+            set the "domain" option in NTLM/MSN/SPA and the "realm" option
+            in DIGEST-MD5
+
+        dmd5-serv-type
+            The dmd5-serv-type keyword is used by the DIGEST-MD5
+            authenticator and is used, in part, to build the
+            digest-uri-value string (see RFC2831)
+
+        dmd5-host
+            The dmd5-host keyword is used by the DIGEST-MD5 authenticator
+            and is used, in part, to build the digest-uri-value string (see
+            RFC2831)
+
+        dmd5-serv-name
+            The dmd5-serv-name keyword is used by the DIGEST-MD5
+            authenticator and is used, in part, to build the
+            digest-uri-value string (see RFC2831)
 
     -am, --auth-map [auth-alias=auth-type[,...]]
         Provides a way to map alternate names onto base authentication

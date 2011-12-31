@@ -1,3 +1,26 @@
+> 20111230 released 20111230.0
+* 20111229 address some -w output related to the DIGEST-MD5 rewrite
+* 20111229 Change indent from 2-space to 1-tab, use 120-char width where it
+           makes sense.
+* 20111228 updating contact links at top and adding Id keyword
+* 20111222 fix handling of --auth-extra dmd5-serv-name to work around lack
+           of interface for it in Authen::SASL.
+* 20111221 fix --auth-map parsing to accept documented format.
+* 20111221 added ability to set realm in the DIGEST-MD5 authenticator using
+           realm --auth-extra keyword.
+* 20111221 removed -au overloading for digest-uri string in DIGEST-MD5. Use
+           dmd5-serv-type, dmd5-host, and dmd5-serv-name --auth-extra
+           keywords now.
+* 20111221 removed -au overloading to set DOMAIN in NTLM/MSN/SPA.  Use
+           domain --auth-extra keyword now.
+* 20111221 added and documented the --auth-extra option.  Initial keywords
+           are domain, realm, dmd5-serv-type, dmd5-host, and dmd5-serv-name
+* 20111221 moved --auth-map contents in --dump into the "if auth" section.
+* 20111209 Allow specifying DIGEST-MD5's digest-uri by extending the -au
+           option (USERNAME%URI-SERV-TYPE%URI-HOST%URI-SERV-NAME)
+* 20111209 Fixed default value of DIGEST-MD5's digest-uri to always include
+           a "host" value
+> 20111203 released 20111202.0-dev to announce list for review
 * 20111202 implemented the -raw/--show-raw-text option to print a hex dump
            of the raw bytes as received on the wire.
 * 20111202 reimplemented reading of server responses in non-TLS, non-pipe

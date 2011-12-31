@@ -1,16 +1,20 @@
 #!/usr/bin/perl
 
 # use 'swaks --help' to view documentation for this program
-# Homepage: http://jetmore.org/john/code/swaks/
-# Online Docs: http://jetmore.org/john/code/swaks/latest/doc/ref.txt
-# if you want to be notified about future releases of this program,
-#	please send an email to updates-swaks@jetmore.net
+#
+#      Homepage: http://jetmore.org/john/code/swaks/
+#   Online Docs: http://jetmore.org/john/code/swaks/latest/doc/ref.txt
+#                http://jetmore.org/john/code/swaks/faq.html
+# Announce List: send mail to updates-swaks@jetmore.net
+#   Project RSS: http://jetmore.org/john/blog/c/swaks/feed/
+#       Google+: https://plus.google.com/u/0/110270727761256449657
+#       Twitter: http://www.twitter.com/SwaksSMTP
 
 use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20111202.0-dev";
+my $p_version = "20111230.0"; # $Id$
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
         Copyright (c) 2003-2008,2010-2011 John Jetmore <jj33@pobox.com>
@@ -29,74 +33,75 @@ my $p_cp      = <<'EOM';
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 EOM
-ext_usage(); # before we do anything else, check for --help
+
+# before we do anything else, check for --help
+ext_usage();
 
 # Get all input provided to our program, via file, env, command line, etc
 my %O = %{ load_args() };
 
 # Get our functional dependencies and then print and exit early if requested
 load_dependencies();
-if ($O{get_support}) { test_support(); exit(0); }
+if ($O{get_support}) {
+	test_support();
+	exit(0);
+}
 
 # We need to fix things up a bit and set a couple of global options
 my $opts = process_args(\%O);
 
 if ($G::dump_args) {
-  test_support();
-  print "dump_args        = ", $G::dump_args ? "TRUE" : "FALSE", "\n";
-  print "server_only      = ", $G::server_only ? "TRUE" : "FALSE", "\n";
-  print "show_time_lapse  = ", $G::show_time_lapse ? "TRUE" : "FALSE", "\n";
-  print "show_time_hires  = ", $G::show_time_hires ? "TRUE" : "FALSE", "\n";
-  print "auth_showpt      = ", $G::auth_showpt ? "TRUE" : "FALSE", "\n";
-  print "suppress_data    = ", $G::suppress_data ? "TRUE" : "FALSE", "\n";
-  print "no_hints         = ", $G::no_hints ? "TRUE" : "FALSE", "\n";
-  print "hide_send        = ", $G::hide_send ? "TRUE" : "FALSE", "\n";
-  print "hide_receive     = ", $G::hide_receive ? "TRUE" : "FALSE", "\n";
-  print "hide_informational = ", $G::hide_informational ? "TRUE" : "FALSE","\n";
-  print "hide_all         = ", $G::hide_all ? "TRUE" : "FALSE", "\n";
-  print "trans_fh_of      = $G::trans_fh_of ($G::trans_fh_oh,", \*STDOUT,")\n";
-  print "trans_fh_ef      = $G::trans_fh_ef ($G::trans_fh_eh,", \*STDERR,")\n";
-  print "pipeline         = ", $G::pipeline ? "TRUE" : "FALSE", "\n";
-  print "silent           = $G::silent\n";
-  print "protocol         = $G::protocol\n";
-  print "type             = $G::link{type}\n";
-  print "server           = $G::link{server}\n";
-  print "sockfile         = $G::link{sockfile}\n";
-  print "process          = $G::link{process}\n";
-  print "from             = $opts->{from}\n";
-  print "to               = $opts->{to}\n";
-  print "helo             = $opts->{helo}\n";
-  print "port             = $G::link{port}\n";
-  print "tls              = ";
-  if ($G::tls) {
-    print 'starttls (';
-    if ($G::tls_optional == 2)      { print "optional-strict)\n";
-    } elsif ($G::tls_optional == 1) { print "optional)\n";
-    } else                          { print "required)\n"; }
-  } elsif ($G::tls_on_connect)      { print "on connect (required)\n";
-  } else                            { print "no\n"; }
-  print "auth             = ";
-  if ($opts->{a_type}) {
-    if ($G::auth_optional == 2) {
-      print 'optional-strict';
-    } elsif ($G::auth_optional == 1) {
-      print 'optional';
-    } else {
-      print 'yes';
-    }
-    print " type='", join(',', @{$opts->{a_type}}),
-          "' user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
-  } else { print "no\n"; }
-  print "auth map         = ", join("\n".' 'x19,
-                              map { "$_ = ".
-                                    join(', ', @{$G::auth_map_t{$_}})
-                                  } (keys %G::auth_map_t)
-                             ), "\n";
-  print "quit after       = $G::quit_after\n";
-  print "local int        = $G::link{lint}\n";
-  print "timeout          = $G::link{timeout}\n";
-  print "data             = <<.\n$opts->{data}\n";
-  exit(0);
+	test_support();
+	print "dump_args        = ", $G::dump_args ? "TRUE" : "FALSE", "\n";
+	print "server_only      = ", $G::server_only ? "TRUE" : "FALSE", "\n";
+	print "show_time_lapse  = ", $G::show_time_lapse ? "TRUE" : "FALSE", "\n";
+	print "show_time_hires  = ", $G::show_time_hires ? "TRUE" : "FALSE", "\n";
+	print "auth_showpt      = ", $G::auth_showpt ? "TRUE" : "FALSE", "\n";
+	print "suppress_data    = ", $G::suppress_data ? "TRUE" : "FALSE", "\n";
+	print "no_hints         = ", $G::no_hints ? "TRUE" : "FALSE", "\n";
+	print "hide_send        = ", $G::hide_send ? "TRUE" : "FALSE", "\n";
+	print "hide_receive     = ", $G::hide_receive ? "TRUE" : "FALSE", "\n";
+	print "hide_informational = ", $G::hide_informational ? "TRUE" : "FALSE","\n";
+	print "hide_all         = ", $G::hide_all ? "TRUE" : "FALSE", "\n";
+	print "trans_fh_of      = $G::trans_fh_of ($G::trans_fh_oh,", \*STDOUT,")\n";
+	print "trans_fh_ef      = $G::trans_fh_ef ($G::trans_fh_eh,", \*STDERR,")\n";
+	print "pipeline         = ", $G::pipeline ? "TRUE" : "FALSE", "\n";
+	print "silent           = $G::silent\n";
+	print "protocol         = $G::protocol\n";
+	print "type             = $G::link{type}\n";
+	print "server           = $G::link{server}\n";
+	print "sockfile         = $G::link{sockfile}\n";
+	print "process          = $G::link{process}\n";
+	print "from             = $opts->{from}\n";
+	print "to               = $opts->{to}\n";
+	print "helo             = $opts->{helo}\n";
+	print "port             = $G::link{port}\n";
+	print "tls              = ";
+	if ($G::tls) {
+		print 'starttls (';
+		if ($G::tls_optional == 2)    { print "optional-strict)\n"; }
+		elsif ($G::tls_optional == 1) { print "optional)\n";        }
+		else                          { print "required)\n";        }
+	}
+	elsif ($G::tls_on_connect)      { print "on connect (required)\n"; }
+	else                            { print "no\n";                    }
+	print "auth             = ";
+	if ($opts->{a_type}) {
+		if ($G::auth_optional == 2)    { print 'optional-strict'; }
+		elsif ($G::auth_optional == 1) { print 'optional';        }
+		else                           { print 'yes';             }
+		print " type='", join(',', @{$opts->{a_type}}), "' user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
+		
+		print "auth_extras      = ", join(',', map { "$_=$G::auth_extras{$_}" } keys (%G::auth_extras)), "\n";
+		print "auth map         = ", join("\n".' 'x19,
+		                             map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (keys %G::auth_map_t)), "\n";
+	}
+	else { print "no\n"; }
+	print "quit after       = $G::quit_after\n";
+	print "local int        = $G::link{lint}\n";
+	print "timeout          = $G::link{timeout}\n";
+	print "data             = <<.\n$opts->{data}\n";
+	exit(0);
 }
 
 # we're going to abstract away the actual connection layer from the mail
@@ -114,987 +119,969 @@ teardown_link();
 exit(0);
 
 sub teardown_link {
-  if ($G::link{type} eq 'socket-inet' || $G::link{type} eq 'socket-unix') {
-    # XXX need anything special for tls teardown?
-    close($G::link{sock});
-    ptrans(11,  "Connection closed with remote host.");
-  } elsif ($G::link{type} eq 'pipe') {
-    delete($SIG{PIPE});
-    $SIG{CHLD} = 'IGNORE';
-    close($G::link{sock}{wr});
-    close($G::link{sock}{re});
-    ptrans(11,  "Connection closed with child process.");
-  }
+	if ($G::link{type} eq 'socket-inet' || $G::link{type} eq 'socket-unix') {
+		# XXX need anything special for tls teardown?
+		close($G::link{sock});
+		ptrans(11,  "Connection closed with remote host.");
+	} elsif ($G::link{type} eq 'pipe') {
+		delete($SIG{PIPE});
+		$SIG{CHLD} = 'IGNORE';
+		close($G::link{sock}{wr});
+		close($G::link{sock}{re});
+		ptrans(11,  "Connection closed with child process.");
+	}
 }
 
 sub open_link {
-  if ($G::link{type} eq 'socket-inet') {
-    ptrans(11, "Trying $G::link{server}:$G::link{port}...");
-    $@ = "";
-    $G::link{sock} = IO::Socket::INET->new(PeerAddr => $G::link{server},
-                            PeerPort  => $G::link{port}, Proto => 'tcp',
-                            Timeout   => $G::link{timeout},
-                            LocalAddr => $G::link{lint});
-
-    if ($@) {
-      ptrans(12, "Error connecting $G::link{lint} " .
-                            "to $G::link{server}:$G::link{port}:\n\t$@");
-      exit(2);
-    }
-    ptrans(11, "Connected to $G::link{server}.");
-  } elsif ($G::link{type} eq 'socket-unix') {
-    ptrans(11, "Trying $G::link{sockfile}...");
-    $SIG{PIPE} = 'IGNORE';
-    $@ = "";
-    $G::link{sock} = IO::Socket::UNIX->new(Peer => $G::link{sockfile},
-                            Timeout   => $G::link{timeout});
-
-    if ($@) {
-      ptrans(12, "Error connecting to $G::link{sockfile}:\n\t$@");
-      exit(2);
-    }
-    ptrans(11, "Connected to $G::link{sockfile}.");
-  } elsif ($G::link{type} eq 'pipe') {
-    $SIG{PIPE} = 'IGNORE';
-    $SIG{CHLD} = 'IGNORE';
-    ptrans(11, "Trying pipe to $G::link{process}...");
-    eval{
-      open2($G::link{sock}{re}, $G::link{sock}{wr}, $G::link{process});
-    };
-    if ($@) {
-      ptrans(12, "Error connecting to $G::link{process}:\n\t$@");
-      exit(2);
-    }
-    select((select($G::link{sock}{wr}), $| = 1)[0]);
-    select((select($G::link{sock}{re}), $| = 1)[0]);
-    ptrans(11, "Connected to $G::link{process}.");
-  } else {
-    ptrans(12, "Unknown or unimplemented connection type " .
-                          "$G::link{type}");
-    exit(3);
-  }
+	if ($G::link{type} eq 'socket-inet') {
+		ptrans(11, "Trying $G::link{server}:$G::link{port}...");
+		$@ = "";
+		$G::link{sock} = IO::Socket::INET->new(PeerAddr  => $G::link{server}, PeerPort => $G::link{port},
+		                                       Proto     => 'tcp',            Timeout  => $G::link{timeout},
+		                                       LocalAddr => $G::link{lint});
+		
+		if ($@) {
+			ptrans(12, "Error connecting $G::link{lint} to $G::link{server}:$G::link{port}:\n\t$@");
+			exit(2);
+		}
+		ptrans(11, "Connected to $G::link{server}.");
+	} elsif ($G::link{type} eq 'socket-unix') {
+		ptrans(11, "Trying $G::link{sockfile}...");
+		$SIG{PIPE} = 'IGNORE';
+		$@ = "";
+		$G::link{sock} = IO::Socket::UNIX->new(Peer => $G::link{sockfile}, Timeout => $G::link{timeout});
+		
+		if ($@) {
+			ptrans(12, "Error connecting to $G::link{sockfile}:\n\t$@");
+			exit(2);
+		}
+		ptrans(11, "Connected to $G::link{sockfile}.");
+	} elsif ($G::link{type} eq 'pipe') {
+		$SIG{PIPE} = 'IGNORE';
+		$SIG{CHLD} = 'IGNORE';
+		ptrans(11, "Trying pipe to $G::link{process}...");
+		eval{ open2($G::link{sock}{re}, $G::link{sock}{wr}, $G::link{process}); };
+		
+		if ($@) {
+			ptrans(12, "Error connecting to $G::link{process}:\n\t$@");
+			exit(2);
+		}
+		select((select($G::link{sock}{wr}), $| = 1)[0]);
+		select((select($G::link{sock}{re}), $| = 1)[0]);
+		ptrans(11, "Connected to $G::link{process}.");
+	} else {
+		ptrans(12, "Unknown or unimplemented connection type $G::link{type}");
+		exit(3);
+	}
 }
 
 sub sendmail {
-  my $from    = shift;	# envelope-from
-  my $to      = shift;	# envelope-to
-  my $helo    = shift;	# who am I?
-  my $data    = shift;	# body of message (content after DATA command)
-  my $a_user  = shift;	# what user to auth with?
-  my $a_pass  = shift;	# what pass to auth with
-  my $a_type  = shift;	# what kind of auth (this must be set to to attempt)
-  my $ehlo    = {};	# If server is esmtp, save advertised features here
+	my $from    = shift; # envelope-from
+	my $to      = shift; # envelope-to
+	my $helo    = shift; # who am I?
+	my $data    = shift; # body of message (content after DATA command)
+	my $a_user  = shift; # what user to auth with?
+	my $a_pass  = shift; # what pass to auth with
+	my $a_type  = shift; # what kind of auth (this must be set to to attempt)
+	my $ehlo    = {};    # If server is esmtp, save advertised features here
 
-  # start up tls if -tlsc specified
-  if ($G::tls_on_connect) {
-    if (start_tls()) {
-      tls_post_start();
-      # QUIT here if the user has asked us to do so
-      do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
-    } else {
-      ptrans(12, "TLS startup failed ($G::link{tls}{res})");
-      exit(29);
-    }
-  }
+	# start up tls if -tlsc specified
+	if ($G::tls_on_connect) {
+		if (start_tls()) {
+			tls_post_start();
+			# QUIT here if the user has asked us to do so
+			do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
+		} else {
+			ptrans(12, "TLS startup failed ($G::link{tls}{res})");
+			exit(29);
+		}
+	}
 
-  # read the server's 220 banner
-  do_smtp_gen(undef, '220') || do_smtp_quit(1, 21);
+	# read the server's 220 banner
+	do_smtp_gen(undef, '220') || do_smtp_quit(1, 21);
 
-  # QUIT here if the user has asked us to do so
-  do_smtp_quit(1, 0) if ($G::quit_after eq 'connect');
+	# QUIT here if the user has asked us to do so
+	do_smtp_quit(1, 0) if ($G::quit_after eq 'connect');
 
-  # Send a HELO string
-  do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 22);
+	# Send a HELO string
+	do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 22);
 
-  # QUIT here if the user has asked us to do so
-  do_smtp_quit(1, 0) if ($G::quit_after eq 'first-helo');
+	# QUIT here if the user has asked us to do so
+	do_smtp_quit(1, 0) if ($G::quit_after eq 'first-helo');
 
-  # handle TLS here if user has requested it
-  #if ($G::tls) {
-  #  if ($ehlo->{STARTTLS} && !avail("tls")) {
-  #    # if !avail(tls) and !auth_optional or auth_optional==1, we'll never
-  #    # get here, but if we were at auth-optional-strict, we have to error here
-  #    ptrans(12,avail_str("tls").".  Exiting");
-  #    do_smtp_quit(1, 29);
-  #  }
-  #  do_smtp_quit(1, 29) if (!do_smtp_tls($ehlo) && !$G::tls_optional);
-  #}
-  if ($G::tls) {
-    # 0 = tls succeeded
-    # 1 = tls not advertised
-    # 2 = tls advertised and attempted negotiations failed
-    # note there's some duplicate logic here (with process_args) but I think
-    # it's best to do as thorough a job covering the options in both places
-    # so as to minimize chance of options falling through the cracks
-    my $result = do_smtp_tls($ehlo);
-    if ($result == 1) {
-      ptrans(12, "Host did not advertise STARTTLS");
-      do_smtp_quit(1, 29) if (!$G::tls_optional);
-    } elsif ($result == 2) {
-      ptrans(12, "STARTTLS attempted but failed");
-      do_smtp_quit(1, 29) if ($G::tls_optional != 1);
-    }
-  } elsif ($G::tls_optional == 2 && $ehlo->{STARTTLS}) {
-    ptrans(12, "TLS requested, advertised, and locally unavailable.  Exiting");
-    do_smtp_quit(1, 29);
-  }
+	# handle TLS here if user has requested it
+	if ($G::tls) {
+		# 0 = tls succeeded
+		# 1 = tls not advertised
+		# 2 = tls advertised and attempted negotiations failed
+		# note there's some duplicate logic here (with process_args) but I think
+		# it's best to do as thorough a job covering the options in both places
+		# so as to minimize chance of options falling through the cracks
+		my $result = do_smtp_tls($ehlo);
+		if ($result == 1) {
+			ptrans(12, "Host did not advertise STARTTLS");
+			do_smtp_quit(1, 29) if (!$G::tls_optional);
+		} elsif ($result == 2) {
+			ptrans(12, "STARTTLS attempted but failed");
+			do_smtp_quit(1, 29) if ($G::tls_optional != 1);
+		}
+	} elsif ($G::tls_optional == 2 && $ehlo->{STARTTLS}) {
+		ptrans(12, "TLS requested, advertised, and locally unavailable.  Exiting");
+		do_smtp_quit(1, 29);
+	}
 
-  # QUIT here if the user has asked us to do so
-  do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
+	# QUIT here if the user has asked us to do so
+	do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 
-  #if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
-  if ($G::link{tls}{active} && !$G::tls_on_connect) {
-    # According to RFC3207, we need to forget state info and re-EHLO here
-    $ehlo = {};
-    do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 32);
-  }
+	#if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
+	if ($G::link{tls}{active} && !$G::tls_on_connect) {
+		# According to RFC3207, we need to forget state info and re-EHLO here
+		$ehlo = {};
+		do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 32);
+	}
 
-  # QUIT here if the user has asked us to do so
-  do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
+	# QUIT here if the user has asked us to do so
+	do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
 
-  # handle auth here if user has requested it
-  if ($a_type) {
-    # 0 = auth succeeded
-    # 1 = auth not advertised
-    # 2 = auth advertised but not attempted, no matching auth types
-    # 3 = auth advertised but not attempted, auth not supported
-    # 4 = auth advertised and attempted but no type succeeded
-    # note there's some duplicate logic here (with process_args) but I think
-    # it's best to do as thorough a job covering the options in both places
-    # so as to minimize chance of options falling through the cracks
-    my $result = do_smtp_auth($ehlo, $a_type, $a_user, $a_pass);
-    if ($result == 1) {
-      ptrans(12, "Host did not advertise authentication");
-      do_smtp_quit(1, 28) if (!$G::auth_optional);
-    } elsif ($result == 2) {
-      if ($G::auth_type eq 'ANY') {
-        ptrans(12, "Auth not attempted, no advertised types available");
-        do_smtp_quit(1, 28) if ($G::auth_optional != 1);
-      } else {
-        ptrans(12, "Auth not attempted, requested type not available");
-        do_smtp_quit(1, 28) if (!$G::auth_optional);
-      }
-    } elsif ($result == 3) {
-      ptrans(12, "Auth advertised but not supported locally");
-      do_smtp_quit(1, 28) if ($G::auth_optional != 1);
-    } elsif ($result == 4) {
-      ptrans(12, "No authentication type succeeded");
-      do_smtp_quit(1, 28) if ($G::auth_optional != 1);
-    }
-  } elsif ($G::auth_optional == 2 && $ehlo->{AUTH}) {
-    ptrans(12, "Auth requested, advertised, and locally unavailable.  Exiting");
-    do_smtp_quit(1, 28);
-  }
+	# handle auth here if user has requested it
+	if ($a_type) {
+		# 0 = auth succeeded
+		# 1 = auth not advertised
+		# 2 = auth advertised but not attempted, no matching auth types
+		# 3 = auth advertised but not attempted, auth not supported
+		# 4 = auth advertised and attempted but no type succeeded
+		# note there's some duplicate logic here (with process_args) but I think
+		# it's best to do as thorough a job covering the options in both places
+		# so as to minimize chance of options falling through the cracks
+		my $result = do_smtp_auth($ehlo, $a_type, $a_user, $a_pass);
+		if ($result == 1) {
+			ptrans(12, "Host did not advertise authentication");
+			do_smtp_quit(1, 28) if (!$G::auth_optional);
+		} elsif ($result == 2) {
+			if ($G::auth_type eq 'ANY') {
+				ptrans(12, "Auth not attempted, no advertised types available");
+				do_smtp_quit(1, 28) if ($G::auth_optional != 1);
+			} else {
+				ptrans(12, "Auth not attempted, requested type not available");
+				do_smtp_quit(1, 28) if (!$G::auth_optional);
+			}
+		} elsif ($result == 3) {
+			ptrans(12, "Auth advertised but not supported locally");
+			do_smtp_quit(1, 28) if ($G::auth_optional != 1);
+		} elsif ($result == 4) {
+			ptrans(12, "No authentication type succeeded");
+			do_smtp_quit(1, 28) if ($G::auth_optional != 1);
+		}
+	} elsif ($G::auth_optional == 2 && $ehlo->{AUTH}) {
+		ptrans(12, "Auth requested, advertised, and locally unavailable.  Exiting");
+		do_smtp_quit(1, 28);
+	}
 
-  # QUIT here if the user has asked us to do so
-  do_smtp_quit(1, 0) if ($G::quit_after eq 'auth');
+	# QUIT here if the user has asked us to do so
+	do_smtp_quit(1, 0) if ($G::quit_after eq 'auth');
 
-  # send MAIL
-  #do_smtp_gen("MAIL FROM:<$from>", '250') || do_smtp_quit(1, 23);
-  do_smtp_mail($from); # failures in this handled by smtp_mail_callback
+	# send MAIL
+	do_smtp_mail($from); # failures in this handled by smtp_mail_callback
 
-  # QUIT here if the user has asked us to do so
-  do_smtp_quit(1, 0) if ($G::quit_after eq 'mail');
+	# QUIT here if the user has asked us to do so
+	do_smtp_quit(1, 0) if ($G::quit_after eq 'mail');
 
-  # send RCPT (sub handles multiple, comma-delimited recips
-  #do_smtp_rcpt($to) || do_smtp_quit(1, 24);
-  do_smtp_rcpt($to); # failures in this handled by smtp_rcpt_callback
-                     # note that smtp_rcpt_callback increments
-                     # $G::smtp_rcpt_failures at every failure.  This and
-                     # $G::smtp_rcpt_total are used after DATA for LMTP
+	# send RCPT (sub handles multiple, comma-delimited recips
+	do_smtp_rcpt($to); # failures in this handled by smtp_rcpt_callback
+	                   # note that smtp_rcpt_callback increments
+	                   # $G::smtp_rcpt_failures at every failure.  This and
+	                   # $G::smtp_rcpt_total are used after DATA for LMTP
 
-  # QUIT here if the user has asked us to do so
-  do_smtp_quit(1, 0) if ($G::quit_after eq 'rcpt');
+	# QUIT here if the user has asked us to do so
+	do_smtp_quit(1, 0) if ($G::quit_after eq 'rcpt');
 
-  # send DATA
-  do_smtp_gen('DATA', '354') || do_smtp_quit(1, 25);
+	# send DATA
+	do_smtp_gen('DATA', '354') || do_smtp_quit(1, 25);
 
-  # send the actual data
-  #do_smtp_gen($data, '250', undef, $G::suppress_data) || do_smtp_quit(1, 26);
-  # this was moved to a custom sub because the server will have a custom
-  # behaviour when using LMTP
-  do_smtp_data($data, $G::suppress_data) || do_smtp_quit(1, 26);
+	# send the actual data
+	do_smtp_data($data, $G::suppress_data) || do_smtp_quit(1, 26);
 
-  # send QUIT
-  do_smtp_quit(0) || do_smtp_quit(1, 27);
+	# send QUIT
+	do_smtp_quit(0) || do_smtp_quit(1, 27);
 }
 
-#618
 sub tls_post_start {
-  ptrans(11, "TLS started w/ cipher $G::link{tls}{cipher}");
-  ptrans(11, "TLS peer subject DN=\"$G::link{tls}{cert_subject}\"");
+	ptrans(11, "TLS started w/ cipher $G::link{tls}{cipher}");
+	ptrans(11, "TLS peer subject DN=\"$G::link{tls}{cert_subject}\"");
 
-  if ($G::tls_get_peer_cert eq 'STDOUT') {
-    ptrans(11, $G::link{tls}{cert_x509});
-  } elsif ($G::tls_get_peer_cert) {
-    open(CERT, ">$G::tls_get_peer_cert") || 
-      ptrans(12, "Couldn't open $G::tls_get_peer_cert for writing: $!");
-    print CERT $G::link{tls}{cert_x509}, "\n";
-    close(CERT);
-  }
+	if ($G::tls_get_peer_cert eq 'STDOUT') {
+		ptrans(11, $G::link{tls}{cert_x509});
+	} elsif ($G::tls_get_peer_cert) {
+		open(CERT, ">$G::tls_get_peer_cert") || 
+			ptrans(12, "Couldn't open $G::tls_get_peer_cert for writing: $!");
+		print CERT $G::link{tls}{cert_x509}, "\n";
+		close(CERT);
+	}
 }
 
 sub start_tls {
-  my %t         = (); # This is a convenience var to access $G::link{tls}{...}
-  $G::link{tls} = \%t;
-
-  Net::SSLeay::load_error_strings();
-  Net::SSLeay::SSLeay_add_ssl_algorithms();
-  Net::SSLeay::randomize();
-  $t{con}    = Net::SSLeay::CTX_new() || return(0);
-  Net::SSLeay::CTX_set_options($t{con}, &Net::SSLeay::OP_ALL); # error check
-  $t{ssl}    = Net::SSLeay::new($t{con}) || return(0);
-  if ($G::link{type} eq 'pipe') {
-    Net::SSLeay::set_wfd($t{ssl}, fileno($G::link{sock}{wr})); # error check?
-    Net::SSLeay::set_rfd($t{ssl}, fileno($G::link{sock}{re})); # error check?
-  } else {
-    Net::SSLeay::set_fd($t{ssl}, fileno($G::link{sock})); # error check?
-  }
-  $t{active} = Net::SSLeay::connect($t{ssl}) == 1 ? 1 : 0;
-  $t{res}    = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error())
-                       if (!$t{active});
-  $t{cipher} = Net::SSLeay::get_cipher($t{ssl});
-  $t{cert}   = Net::SSLeay::get_peer_certificate($t{ssl});
-  chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
-  $t{cert_subject} = Net::SSLeay::X509_NAME_oneline(
-                       Net::SSLeay::X509_get_subject_name($t{cert}));
-
-  return($t{active});
+	my %t         = (); # This is a convenience var to access $G::link{tls}{...}
+	$G::link{tls} = \%t;
+	
+	Net::SSLeay::load_error_strings();
+	Net::SSLeay::SSLeay_add_ssl_algorithms();
+	Net::SSLeay::randomize();
+	$t{con}    = Net::SSLeay::CTX_new() || return(0);
+	Net::SSLeay::CTX_set_options($t{con}, &Net::SSLeay::OP_ALL); # error check
+	$t{ssl}    = Net::SSLeay::new($t{con}) || return(0);
+	if ($G::link{type} eq 'pipe') {
+		Net::SSLeay::set_wfd($t{ssl}, fileno($G::link{sock}{wr})); # error check?
+		Net::SSLeay::set_rfd($t{ssl}, fileno($G::link{sock}{re})); # error check?
+	} else {
+		Net::SSLeay::set_fd($t{ssl}, fileno($G::link{sock})); # error check?
+	}
+	$t{active} = Net::SSLeay::connect($t{ssl}) == 1 ? 1 : 0;
+	if (!$t{active}) {
+		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error())
+	}
+	$t{cipher} = Net::SSLeay::get_cipher($t{ssl});
+	$t{cert}   = Net::SSLeay::get_peer_certificate($t{ssl});
+	chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
+	$t{cert_subject} = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{cert}));
+	
+	return($t{active});
 }
 
 sub ptrans {
-  my $c = shift;  # transaction flag
-  my $m = shift;  # message to print
-  my $b = shift;  # be brief in what we print
-  #my $o = \*STDOUT;
-  my $o = $G::trans_fh_oh || \*STDOUT;
-  my $f;
+	my $c = shift;  # transaction flag
+	my $m = shift;  # message to print
+	my $b = shift;  # be brief in what we print
+	my $o = $G::trans_fh_oh || \*STDOUT;
+	my $f;
 
-  return if (($G::hide_send    && int($c/10) == 2) ||
-             ($G::hide_receive && int($c/10) == 3) ||
-             ($G::hide_informational && $c == 11)  ||
-             ($G::hide_all));
+	return if (($G::hide_send          && int($c/10) == 2)  ||
+	           ($G::hide_receive       && int($c/10) == 3)  ||
+	           ($G::hide_informational && $c         == 11) ||
+	           ($G::hide_all));
 
-  # global option silent controls what we echo to the terminal
-  # 0 - print everything
-  # 1 - don't show anything until you hit an error, then show everything
-  #     received after that (done by setting option to 0 on first error)
-  # 2 - don't show anything but errors
-  # >=3 - don't print anything
-  if ($G::silent > 0) {
-    return if ($G::silent >= 3);
-    return if ($G::silent == 2 && $c%2 != 0);
-    if ($G::silent == 1 && !$G::ptrans_seen_error) {
-      if ($c%2 != 0) {
-        return();
-      } else {
-        $G::ptrans_seen_error = 1;
-      }
-    }
-  }
+	# global option silent controls what we echo to the terminal
+	# 0 - print everything
+	# 1 - don't show anything until you hit an error, then show everything
+	#     received after that (done by setting option to 0 on first error)
+	# 2 - don't show anything but errors
+	# >=3 - don't print anything
+	if ($G::silent > 0) {
+		return if ($G::silent >= 3);
+		return if ($G::silent == 2 && $c%2 != 0);
+		if ($G::silent == 1 && !$G::ptrans_seen_error) {
+			if ($c%2 != 0) {
+				return();
+			} else {
+				$G::ptrans_seen_error = 1;
+			}
+		}
+	}
 
-  # 1x is program messages
-  # 2x is smtp send
-  # 3x is smtp recv
-  # x = 1 is info/normal
-  # x = 2 is error
-  # x = 3 dump output
-  # program info
-  if ($c == 11) { $f = '==='; }
-  # program error
-  #elsif ($c == 12) { $f = '***'; $o = \*STDERR; }
-  elsif ($c == 12) { $f = '***'; $o = $G::trans_fh_eh || \*STDERR; }
-  # smtp send info
-  elsif ($c == 21) { $f = $G::link{tls}{active} ? ' ~>' : ' ->'; }
-  # smtp send error
-  elsif ($c == 22) { $f = $G::link{tls}{active} ? '*~>' : '**>'; }
-  # smtp send dump output
-  elsif ($c == 23) { $f = '  >'; }
-  # smtp recv info
-  elsif ($c == 31) { $f = $G::link{tls}{active} ? '<~ ' : '<- '; }
-  # smtp recv error
-  elsif ($c == 32) { $f = $G::link{tls}{active} ? '<~*' : '<**'; }
-  # smtp recv dump output
-  elsif ($c == 33) { $f = '<  '; }
-  # something went unexpectedly
-  else { $c = '???'; }
+	# 1x is program messages
+	# 2x is smtp send
+	# 3x is smtp recv
+	# x = 1 is info/normal
+	# x = 2 is error
+	# x = 3 dump output
+	# program info
+	if ($c == 11)    { $f = '==='; }
+	# program error
+	elsif ($c == 12) { $f = '***'; $o = $G::trans_fh_eh || \*STDERR; }
+	# smtp send info
+	elsif ($c == 21) { $f = $G::link{tls}{active} ? ' ~>' : ' ->'; }
+	# smtp send error
+	elsif ($c == 22) { $f = $G::link{tls}{active} ? '*~>' : '**>'; }
+	# smtp send dump output
+	elsif ($c == 23) { $f = '  >'; }
+	# smtp recv info
+	elsif ($c == 31) { $f = $G::link{tls}{active} ? '<~ ' : '<- '; }
+	# smtp recv error
+	elsif ($c == 32) { $f = $G::link{tls}{active} ? '<~*' : '<**'; }
+	# smtp recv dump output
+	elsif ($c == 33) { $f = '<  '; }
+	# something went unexpectedly
+	else             { $c = '???'; }
 
-  $f .= ' ';
-  $f = '' if ($G::no_hints && int($c/10) != 1);
+	$f .= ' ';
+	$f = '' if ($G::no_hints && int($c/10) != 1);
 
-  if ($b) {
-    # split to tmp list to prevent -w gripe
-    my @t = split(/\n/ms, $m); $m = scalar(@t) . " lines sent";
-  }
-  $m =~ s/\n/\n$f/msg;
-  print $o "$f$m\n";
+	if ($b) {
+		# split to tmp list to prevent -w gripe
+		my @t = split(/\n/ms, $m); $m = scalar(@t) . " lines sent";
+	}
+	$m =~ s/\n/\n$f/msg;
+	print $o "$f$m\n";
 }
 
 sub do_smtp_quit {
-  my $exit = shift;
-  my $err  = shift;
+	my $exit = shift;
+	my $err  = shift;
 
-  $G::link{allow_lost_cxn} = 1;
-  my $r = do_smtp_gen('QUIT', '221');
-  $G::link{allow_lost_cxn} = 0;
+	$G::link{allow_lost_cxn} = 1;
+	my $r = do_smtp_gen('QUIT', '221');
+	$G::link{allow_lost_cxn} = 0;
 
-  handle_disconnect($err) if ($G::link{lost_cxn});
+	handle_disconnect($err) if ($G::link{lost_cxn});
 
-  if ($exit) {
-    teardown_link();
-    exit $err;
-  }
+	if ($exit) {
+		teardown_link();
+		exit $err;
+	}
 
-  return($r);
+	return($r);
 }
 
 sub do_smtp_tls {
-  my $e  = shift; # ehlo config hash
-    # 0 = tls succeeded
-    # 1 = tls not advertised
-    # 2 = tls advertised and attempted negotiations failed
+	my $e  = shift; # ehlo config hash
 
-  if (!$e->{STARTTLS}) {
-    #ptrans(12, "STARTTLS not supported");
-    #return $G::tls_optional ? 1 : 0;
-    return(1);
-  } elsif (!do_smtp_gen("STARTTLS", '220')) {
-    #return $G::tls_optional ? 1 : 0;
-    return(2);
-  } elsif (!start_tls()) {
-    ptrans(12, "TLS startup failed ($G::link{tls}{res})");
-    #return $G::tls_optional ? 1 : 0;
-    return(2);
-  }
-  tls_post_start();
+	# 0 = tls succeeded
+	# 1 = tls not advertised
+	# 2 = tls advertised and attempted negotiations failed
+	if (!$e->{STARTTLS}) {
+		return(1);
+	} elsif (!do_smtp_gen("STARTTLS", '220')) {
+		return(2);
+	} elsif (!start_tls()) {
+		ptrans(12, "TLS startup failed ($G::link{tls}{res})");
+		return(2);
+	}
+	tls_post_start();
 
-  return(0);
+	return(0);
 }
 
 sub do_smtp_auth {
-  my $e  = shift; # ehlo config hash
-  my $at = shift; # auth type
-  my $au = shift; # auth user
-  my $ap = shift; # auth password
+	my $e  = shift; # ehlo config hash
+	my $at = shift; # auth type
+	my $au = shift; # auth user
+	my $ap = shift; # auth password
 
-  return(1) if (!$e->{AUTH});
-  return(3) if ($G::auth_unavailable);
+	return(1) if (!$e->{AUTH});
+	return(3) if ($G::auth_unavailable);
 
-  my $auth_attempted = 0; # set to true if we ever attempt auth
+	my $auth_attempted = 0; # set to true if we ever attempt auth
 
-  foreach my $btype (@$at) {
-    # if server doesn't support, skip type (may change in future)
-    next if (!$e->{AUTH}{$btype});
+	foreach my $btype (@$at) {
+		# if server doesn't support, skip type (may change in future)
+		next if (!$e->{AUTH}{$btype});
 
-    foreach my $type (@{$G::auth_map_t{'CRAM-MD5'}}) {
-      if ($btype eq $type) {
-        return(0) if (do_smtp_auth_cram($au, $ap, $type));
-        $auth_attempted = 1;
-      }
-    }
-    foreach my $type (@{$G::auth_map_t{'CRAM-SHA1'}}) {
-      if ($btype eq $type) {
-        return(0) if (do_smtp_auth_cram($au, $ap, $type));
-        $auth_attempted = 1;
-      }
-    }
-    foreach my $type (@{$G::auth_map_t{'DIGEST-MD5'}}) {
-      if ($btype eq $type) {
-        return(0) if (do_smtp_auth_digest($au, $ap, $type));
-        $auth_attempted = 1;
-      }
-    }
-    foreach my $type (@{$G::auth_map_t{'NTLM'}}) {
-      if ($btype eq $type) {
-        return(0) if (do_smtp_auth_ntlm($au, $ap, $type));
-        $auth_attempted = 1;
-      }
-    }
-    foreach my $type (@{$G::auth_map_t{'PLAIN'}}) {
-      if ($btype eq $type) {
-        return(0) if (do_smtp_auth_plain($au, $ap, $type));
-        $auth_attempted = 1;
-      }
-    }
-    foreach my $type (@{$G::auth_map_t{'LOGIN'}}) {
-      if ($btype eq $type) {
-        return(0) if (do_smtp_auth_login($au, $ap, $type));
-        $auth_attempted = 1;
-      }
-    }
-  }
+		foreach my $type (@{$G::auth_map_t{'CRAM-MD5'}}) {
+			if ($btype eq $type) {
+				return(0) if (do_smtp_auth_cram($au, $ap, $type));
+				$auth_attempted = 1;
+			}
+		}
+		foreach my $type (@{$G::auth_map_t{'CRAM-SHA1'}}) {
+			if ($btype eq $type) {
+				return(0) if (do_smtp_auth_cram($au, $ap, $type));
+				$auth_attempted = 1;
+			}
+		}
+		foreach my $type (@{$G::auth_map_t{'DIGEST-MD5'}}) {
+			if ($btype eq $type) {
+				return(0) if (do_smtp_auth_digest($au, $ap, $type));
+				$auth_attempted = 1;
+			}
+		}
+		foreach my $type (@{$G::auth_map_t{'NTLM'}}) {
+			if ($btype eq $type) {
+				return(0) if (do_smtp_auth_ntlm($au, $ap, $type));
+				$auth_attempted = 1;
+			}
+		}
+		foreach my $type (@{$G::auth_map_t{'PLAIN'}}) {
+			if ($btype eq $type) {
+				return(0) if (do_smtp_auth_plain($au, $ap, $type));
+				$auth_attempted = 1;
+			}
+		}
+		foreach my $type (@{$G::auth_map_t{'LOGIN'}}) {
+			if ($btype eq $type) {
+				return(0) if (do_smtp_auth_login($au, $ap, $type));
+				$auth_attempted = 1;
+			}
+		}
+	}
 
-  return $auth_attempted ? 4 : 2;
+	return $auth_attempted ? 4 : 2;
 }
 
 sub do_smtp_auth_ntlm {
-  my $u = shift; # auth user
-  my $p = shift; # auth password
-  my $as = shift; # auth type (since NTLM might be SPA or MSN)
-  my $r = '';    # will store smtp response
-  my $domain;
-  ($u,$domain) = split(/%/, $u);
+	my $u  = shift; # auth user
+	my $p  = shift; # auth password
+	my $as = shift; # auth type (since NTLM might be SPA or MSN)
+	my $r  = '';    # will store smtp response
 
-  my $auth_string = "AUTH $as";
-  do_smtp_gen($auth_string, '334') || return(0);
+	my $auth_string = "AUTH $as";
+	do_smtp_gen($auth_string, '334') || return(0);
 
-  my $d = db64(Authen::NTLM::ntlm());
+	my $d = db64(Authen::NTLM::ntlm());
 
-  $auth_string = eb64($d);
-  do_smtp_gen($auth_string, '334', \$r, '', $G::auth_showpt ? "$d" : '',
-              $G::auth_showpt ? \&unencode_smtp : '') || return(0);
+	$auth_string = eb64($d);
+	do_smtp_gen($auth_string, '334', \$r, '',
+	            $G::auth_showpt ? "$d" : '',
+	            $G::auth_showpt ? \&unencode_smtp : '') || return(0);
 
-  $r =~ s/^....//; # maybe something a little better here?
-  Authen::NTLM::ntlm_domain($domain);
-  Authen::NTLM::ntlm_user($u);
-  Authen::NTLM::ntlm_password($p);
-  $d = db64(Authen::NTLM::ntlm($r));
+	$r =~ s/^....//; # maybe something a little better here?
+	Authen::NTLM::ntlm_domain($G::auth_extras{DOMAIN});
+	Authen::NTLM::ntlm_user($u);
+	Authen::NTLM::ntlm_password($p);
+	$d = db64(Authen::NTLM::ntlm($r));
 
-  $auth_string = eb64($d);
-  do_smtp_gen($auth_string, '235', \$r, '',
-              $G::auth_showpt ? "$d" : '') || return(0);
+	$auth_string = eb64($d);
+	do_smtp_gen($auth_string, '235', \$r, '', $G::auth_showpt ? "$d" : '') || return(0);
 
-  return(1);
+	return(1);
 }
 
 sub do_smtp_auth_digest {
-  my $u = shift; # auth user
-  my $p = shift; # auth password
-  my $as = shift; # auth string
-  my $r = '';    # will store smtp response
+	my $u  = shift; # auth user
+	my $p  = shift; # auth password
+	my $as = shift; # auth string
+	my $r  = '';    # will store smtp response
+	my @digest_uri = ();
+	
+	if (exists($G::auth_extras{"DMD5-SERV-TYPE"})) {
+		$digest_uri[0] = $G::auth_extras{"DMD5-SERV-TYPE"};
+	} else {
+		$digest_uri[0] = 'smtp';
+	}
+	if (exists($G::auth_extras{"DMD5-HOST"})) {
+		$digest_uri[1] = $G::auth_extras{"DMD5-HOST"};
+	} else {
+		if ($G::link{type} eq 'socket-unix') {
+			$digest_uri[1] = $G::link{sockfile};
+			$digest_uri[1] =~ s|[^a-zA-Z0-9\.\-]|-|g;
+		} elsif ($G::link{type} eq 'pipe') {
+			$digest_uri[1] = $G::link{process};
+			$digest_uri[1] =~ s|[^a-zA-Z0-9\.\-]|-|g;
+		} else {
+			$digest_uri[1] = $G::link{server};
+		}
+	}
+	if (exists($G::auth_extras{"DMD5-SERV-NAME"})) {
+		# There seems to be a hole in the Authen::SASL interface where there's
+		# no option to directory provide the digest-uri serv-name.  But we can
+		# trick it into using the value we want by tacking it onto the end of host
+		$digest_uri[1] .= '/' . $G::auth_extras{"DMD5-SERV-NAME"};
+	}
 
-  my $auth_string = "AUTH $as";
-  do_smtp_gen($auth_string, '334', \$r, '', '',
-              $G::auth_showpt ? \&unencode_smtp : '')
-      || return(0);
+	my $auth_string = "AUTH $as";
+	do_smtp_gen($auth_string, '334', \$r, '', '', $G::auth_showpt ? \&unencode_smtp : '')
+		|| return(0);
 
-  $r =~ s/^....//; # maybe something a little better here?
-  $r = db64($r);
-  
-  my $sasl = Authen::SASL->new(
-    debug => 1,
-    mechanism => 'DIGEST-MD5',
-    callback  => {
-      user => $u,
-      pass => $p,
-    },
-  );
-  my $sasl_client = $sasl->client_new("smtp");
-  
-  # Force the DIGEST-MD5 session to use qop=auth.  I'm open to exposing this setting
-  # via some swaks options, but I don't know enough about the protocol to just guess
-  # here.  I do know that letting it auto-negotiate didn't work in my reference
-  # environment.  sendmail advertised auth,auth-int,auth-conf, but when Authen::SASL
-  # chose auth-int the session would fail (server would say auth succeeded, but then
-  # immediately terminate my session when I sent MAIL).  My reference client
-  # (Mulberry) always sent auth, and indeed forcing swaks to auth also seems to work.
-  # If anyone out there knows more about this please let me know.
-  $sasl_client->property('maxssf' => 0);
+	$r =~ s/^....//; # maybe something a little better here?
+	$r = db64($r);
+	
+	my $callbacks = { user => $u, pass => $p };
+	if (exists($G::auth_extras{REALM})) {
+		$callbacks->{realm} = $G::auth_extras{REALM};
+	}
+	
+	my $sasl = Authen::SASL->new(
+		debug     => 1,
+		mechanism => 'DIGEST-MD5',
+		callback  => $callbacks,
+	);
+	my $sasl_client = $sasl->client_new(@digest_uri);
+	
+	# Force the DIGEST-MD5 session to use qop=auth.  I'm open to exposing this setting
+	# via some swaks options, but I don't know enough about the protocol to just guess
+	# here.  I do know that letting it auto-negotiate didn't work in my reference
+	# environment.  sendmail advertised auth,auth-int,auth-conf, but when Authen::SASL
+	# chose auth-int the session would fail (server would say auth succeeded, but then
+	# immediately terminate my session when I sent MAIL).  My reference client
+	# (Mulberry) always sent auth, and indeed forcing swaks to auth also seems to work.
+	# If anyone out there knows more about this please let me know.
+	$sasl_client->property('maxssf' => 0);
 
-  my $auth_string = $sasl_client->client_step($r);
-  do_smtp_gen(eb64($auth_string), '334', \$r, '', $G::auth_showpt ? "$auth_string" : '',
-              $G::auth_showpt ? \&unencode_smtp : '')
-      || return(0);
-  $r =~ s/^....//; # maybe something a little better here?
-  $r = db64($r);
+	$auth_string = $sasl_client->client_step($r);
+	do_smtp_gen(eb64($auth_string), '334', \$r, '',
+	                 $G::auth_showpt ? "$auth_string" : '',
+	                 $G::auth_showpt ? \&unencode_smtp : '')
+		|| return(0);
+	$r =~ s/^....//; # maybe something a little better here?
+	$r = db64($r);
 
-  $auth_string = $sasl_client->client_step($r);
-  do_smtp_gen(eb64($auth_string), '235', \$r, '',
-              $G::auth_showpt ? "$auth_string" : '')
-      || return(0);
-      
-  return(0) if (!$sasl_client->is_success());
+	$auth_string = $sasl_client->client_step($r);
+	do_smtp_gen(eb64($auth_string), '235', \$r, '', $G::auth_showpt ? "$auth_string" : '')
+		|| return(0);
+		
+	return(0) if (!$sasl_client->is_success());
 
-  return(1);
+	return(1);
 }
 
 # This can handle both CRAM-MD5 and CRAM-SHA1
 sub do_smtp_auth_cram {
-  my $u  = shift; # auth user
-  my $p  = shift; # auth password
-  my $as = shift; # auth string
-  my $r  = '';    # will store smtp response
+	my $u  = shift; # auth user
+	my $p  = shift; # auth password
+	my $as = shift; # auth string
+	my $r  = '';    # will store smtp response
 
-  my $auth_string = "AUTH $as";
-  do_smtp_gen($auth_string, '334', \$r, '', '',
-              $G::auth_showpt ? \&unencode_smtp : '')
-      || return(0);
+	my $auth_string = "AUTH $as";
+	do_smtp_gen($auth_string, '334', \$r, '', '', $G::auth_showpt ? \&unencode_smtp : '')
+			|| return(0);
 
-  $r =~ s/^....//; # maybe something a little better here?
-  # specify which type of digest we need based on $as
-  my $d = get_digest($p, $r, ($as =~ /-SHA1$/ ? 'sha1' : 'md5'));
-  $auth_string = eb64("$u $d");
+	$r =~ s/^....//; # maybe something a little better here?
+	# specify which type of digest we need based on $as
+	my $d = get_digest($p, $r, ($as =~ /-SHA1$/ ? 'sha1' : 'md5'));
+	$auth_string = eb64("$u $d");
 
-  do_smtp_gen($auth_string, '235', undef, '',
-              $G::auth_showpt ? "$u $d" : '') || return(0);
-  return(1);
+	do_smtp_gen($auth_string, '235', undef, '', $G::auth_showpt ? "$u $d" : '') || return(0);
+	return(1);
 }
 
 sub do_smtp_auth_login {
-  my $u  = shift; # auth user
-  my $p  = shift; # auth password
-  my $as = shift; # auth string
+	my $u  = shift; # auth user
+	my $p  = shift; # auth password
+	my $as = shift; # auth string
 
-  do_smtp_gen("AUTH $as", '334', undef, '', '',
-              $G::auth_showpt ? \&unencode_smtp : '') || return(0);
-  do_smtp_gen(eb64($u),   '334', undef, '', $G::auth_showpt ? $u : '',
-              $G::auth_showpt ? \&unencode_smtp : '') || return(0);
-  do_smtp_gen(eb64($p),   '235', undef, '',
-              $G::auth_showpt ? ($G::auth_hidepw || $p)
-                              : eb64($G::auth_hidepw || $p)) || return(0);
-  return(1);
+	do_smtp_gen("AUTH $as", '334', undef, '', '', $G::auth_showpt ? \&unencode_smtp : '')
+		|| return(0);
+	do_smtp_gen(eb64($u),   '334', undef, '', $G::auth_showpt ? $u : '', $G::auth_showpt ? \&unencode_smtp : '')
+		|| return(0);
+	do_smtp_gen(eb64($p),   '235', undef, '',
+	            $G::auth_showpt ? ($G::auth_hidepw || $p) : eb64($G::auth_hidepw || $p))
+		|| return(0);
+	return(1);
 }
 
 sub do_smtp_auth_plain {
-  my $u  = shift; # auth user
-  my $p  = shift; # auth password
-  my $as = shift; # auth string
+	my $u  = shift; # auth user
+	my $p  = shift; # auth password
+	my $as = shift; # auth string
 
-  return(do_smtp_gen("AUTH $as " . eb64("\0$u\0$p"), '235', undef, '',
-                     $G::auth_showpt ? "AUTH $as \\0$u\\0" . ($G::auth_hidepw || $p)
-                                     : "AUTH $as " . eb64("\0$u\0" . ($G::auth_hidepw || $p))));
+	return(do_smtp_gen("AUTH $as " . eb64("\0$u\0$p"), '235', undef, '',
+	                   $G::auth_showpt ? "AUTH $as \\0$u\\0" . ($G::auth_hidepw || $p)
+	                   : "AUTH $as " . eb64("\0$u\0" . ($G::auth_hidepw || $p))));
 }
 
 sub do_smtp_helo {
-  my $h = shift;  # helo string to use
-  my $e = shift;  # this is a hashref that will be populated w/ server options
-  my $p = shift;  # protocol for the transaction
-  my $r = '';     # this'll be populated by do_smtp_gen
+	my $h = shift;  # helo string to use
+	my $e = shift;  # this is a hashref that will be populated w/ server options
+	my $p = shift;  # protocol for the transaction
+	my $r = '';     # this'll be populated by do_smtp_gen
 
-  if ($p eq 'esmtp' || $p eq 'lmtp') {
-    my $l = $p eq 'lmtp' ? "LHLO" : "EHLO";
-    if (do_smtp_gen("$l $h", '250', \$r)) {
-      # $ehlo is designed to hold the advertised options, but I'm not sure how
-      # to store them all - for instance, SIZE is a simple key/value pair, but
-      # AUTH lends itself more towards a multilevel hash.  What I'm going to do
-      # is come here and add each key in the way that makes most sense in each
-      # case.  I only need auth for now.
-      foreach my $l (split(/\n/, $r)) {
-        $l =~ s/^....//;
-        if ($l =~ /^AUTH=?(.*)$/) {
-          map { $e->{AUTH}{uc($_)} = 1 } (split(' ', $1));
-        } elsif ($l =~ /^STARTTLS$/) {
-          $e->{STARTTLS} = 1;
-        } elsif ($l =~ /^PIPELINING$/) {
-          $e->{PIPELINING} = 1;
-          $G::pipeline_adv = 1;
-        }
-      }
-      return(1);
-    }
-  }
-  if ($p eq 'esmtp' || $p eq 'smtp') {
-    return(do_smtp_gen("HELO $h", '250'));
-  }
+	if ($p eq 'esmtp' || $p eq 'lmtp') {
+		my $l = $p eq 'lmtp' ? "LHLO" : "EHLO";
+		if (do_smtp_gen("$l $h", '250', \$r)) {
+			# There's not a standard structure for the $e hashref, each
+			# key is stored in the manner that makes the most sense
+			foreach my $l (split(/\n/, $r)) {
+				$l =~ s/^....//;
+				if ($l =~ /^AUTH=?(.*)$/) {
+					map { $e->{AUTH}{uc($_)} = 1 } (split(' ', $1));
+				} elsif ($l =~ /^STARTTLS$/) {
+					$e->{STARTTLS} = 1;
+				} elsif ($l =~ /^PIPELINING$/) {
+					$e->{PIPELINING} = 1;
+					$G::pipeline_adv = 1;
+				}
+			}
+			return(1);
+		}
+	}
+	if ($p eq 'esmtp' || $p eq 'smtp') {
+		return(do_smtp_gen("HELO $h", '250'));
+	}
 
-  return(0);
+	return(0);
 }
 
 sub do_smtp_mail {
-  my $m = shift;  # from address
+	my $m = shift;  # from address
 
-  transact(cxn_string => "MAIL FROM:<$m>", expect => '250', defer => 1,
-           fail_callback => \&smtp_mail_callback);
+	transact(cxn_string => "MAIL FROM:<$m>", expect => '250', defer => 1, fail_callback => \&smtp_mail_callback);
 
-  return(1); # the callback handles failures, so just return here
+	return(1); # the callback handles failures, so just return here
 }
 
 # this only really needs to exist until I figure out a clever way of making
 # do_smtp_quit the callback while still preserving the exit codes
 sub smtp_mail_callback {
-  do_smtp_quit(1, 23);
+	do_smtp_quit(1, 23);
 }
 
 sub do_smtp_rcpt {
-  my $m = shift;  # string of comma separated recipients
-  my $f = 0;      # The number of failures we've experienced
+	my $m = shift;  # string of comma separated recipients
+	my $f = 0;      # The number of failures we've experienced
+	my @a = split(/,/, $m);
+	$G::smtp_rcpt_total = scalar(@a);
+	
+	foreach my $addr (@a) {
+		transact(cxn_string => "RCPT TO:<$addr>", expect => '250', defer => 1,
+		         fail_callback => \&smtp_rcpt_callback);
+	}
 
-  my @a = split(/,/, $m);
-  $G::smtp_rcpt_total = scalar(@a);
-  foreach my $addr (@a) {
-    #$f++ if (!do_smtp_gen("RCPT TO:<$addr>", '250'));
-    transact(cxn_string => "RCPT TO:<$addr>", expect => '250', defer => 1,
-             fail_callback => \&smtp_rcpt_callback);
-  }
-
-  return(1); # the callback handles failures, so just return here
-
-#  # if at least one addr succeeded, we can proceed, else we stop here
-#  return $f == scalar(@a) ? 0 : 1;
+	return(1); # the callback handles failures, so just return here
 }
 
 sub smtp_rcpt_callback {
-  # record that a failure occurred
-  $G::smtp_rcpt_failures++;
+	# record that a failure occurred
+	$G::smtp_rcpt_failures++;
 
-  # if the number of failures is the same as the total rcpts (if every rcpt
-  # rejected), quit.
-  if ($G::smtp_rcpt_failures == $G::smtp_rcpt_total) {
-    do_smtp_quit(1, 24);
-  }
+	# if the number of failures is the same as the total rcpts (if every rcpt rejected), quit.
+	if ($G::smtp_rcpt_failures == $G::smtp_rcpt_total) {
+		do_smtp_quit(1, 24);
+	}
 }
 
 sub do_smtp_data {
-  my $m = shift; # string to send
-  my $b = shift; # be brief in the data we send
-  my $calls = $G::smtp_rcpt_total - $G::smtp_rcpt_failures;
+	my $m = shift; # string to send
+	my $b = shift; # be brief in the data we send
 
-  my $ok = transact(cxn_string => $m, expect => '250', summarize_output => $b);
+	my $calls = $G::smtp_rcpt_total - $G::smtp_rcpt_failures;
+	my $ok    = transact(cxn_string => $m, expect => '250', summarize_output => $b);
 
-  # now be a little messy - lmtp is not a lockstep after data - we need to
-  # listen for as many calls as we had accepted recipients
-  if ($G::protocol eq 'lmtp') {
-    foreach my $c (1..($calls-1)) { # -1 because we already got 1 above
-      $ok += transact(cxn_string => undef, expect => '250');
-    }
-  }
-  return($ok)
+	# now be a little messy - lmtp is not a lockstep after data - we need to
+	# listen for as many calls as we had accepted recipients
+	if ($G::protocol eq 'lmtp') {
+		foreach my $c (1..($calls-1)) { # -1 because we already got 1 above
+			$ok += transact(cxn_string => undef, expect => '250');
+		}
+	}
+	return($ok)
 }
 
 sub do_smtp_gen {
-  my $m = shift; # string to send
-  my $e = shift; # String we're expecting to get back
-  my $p = shift; # this is a scalar ref, assign the server return string to it
-  my $b = shift; # be brief in the data we send
-  my $x = shift; # if this is populated, print this instead of $m
-  my $c = shift; # if this is a code ref, call it on the return value b4 print
-  my $r = '';    # This'll be the return value from transact()
-  my $time;
+	my $m = shift; # string to send
+	my $e = shift; # String we're expecting to get back
+	my $p = shift; # this is a scalar ref, assign the server return string to it
+	my $b = shift; # be brief in the data we send
+	my $x = shift; # if this is populated, print this instead of $m
+	my $c = shift; # if this is a code ref, call it on the return value b4 print
+	my $r = '';    # This'll be the return value from transact()
+	my $time;
 
-  return transact(cxn_string => $m, expect => $e, return_text => $p,
-                  summarize_output => $b, show_string => $x,
-                  print_callback => $c);
+	return transact(cxn_string       => $m, expect      => $e, return_text => $p,
+	                summarize_output => $b, show_string => $x,
+	                print_callback   => $c
+	               );
 }
 
 # If we detect that the other side has gone away when we were expecting
 # to still be reading, come in here to error and die.  Abstracted because
 # the error message will vary depending on the type of connection
 sub handle_disconnect {
-  my $e = shift || 6; # this is the code we will exit with
-  if ($G::link{type} eq 'socket-inet') {
-    ptrans(12, "Remote host closed connection unexpectedly.");
-  } elsif ($G::link{type} eq 'socket-unix') {
-    ptrans(12, "Socket closed connection unexpectedly.");
-  } elsif ($G::link{type} eq 'pipe') {
-    ptrans(12, "Child process closed connection unexpectedly.");
-  }
-  exit($e);
+	my $e = shift || 6; # this is the code we will exit with
+	if ($G::link{type} eq 'socket-inet') {
+		ptrans(12, "Remote host closed connection unexpectedly.");
+	} elsif ($G::link{type} eq 'socket-unix') {
+		ptrans(12, "Socket closed connection unexpectedly.");
+	} elsif ($G::link{type} eq 'pipe') {
+		ptrans(12, "Child process closed connection unexpectedly.");
+	}
+	exit($e);
 }
 
 sub flush_send_buffer {
-  my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{wr} : $G::link{sock};
-  return if (!$G::send_buffer);
-  if ($G::link{tls}{active}) {
-    my $res = Net::SSLeay::write($G::link{tls}{ssl}, $G::send_buffer);
-  } else {
-    print $s $G::send_buffer;
-  }
-  ptrans(23, hdump($G::send_buffer)) if ($G::show_raw_text);
-  $G::send_buffer = '';
+	my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{wr} : $G::link{sock};
+	return if (!$G::send_buffer);
+	if ($G::link{tls}{active}) {
+		my $res = Net::SSLeay::write($G::link{tls}{ssl}, $G::send_buffer);
+	} else {
+		print $s $G::send_buffer;
+	}
+	ptrans(23, hdump($G::send_buffer)) if ($G::show_raw_text);
+	$G::send_buffer = '';
 }
 
 sub send_data {
-  my $d = shift; # data to write
-  $G::send_buffer .= "$d\r\n";
+	my $d = shift; # data to write
+	$G::send_buffer .= "$d\r\n";
 }
 
 sub recv_line {
-  # Either an IO::Socket obj or a FH to my child - the thing to read from
-  my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{re} : $G::link{sock};
-  my $r = undef;
-  my $t = undef;
-  my $c = 0;
-  
-  while ($G::recv_buffer !~ m|\n|si) {
-    last if (++$c > 1000);
-    if ($G::link{tls}{active}) {
-      $t = Net::SSLeay::read($G::link{tls}{ssl});
-      return($t) if (!defined($t));
-    } elsif ($G::link{type} eq 'pipe') {
-      $t = <$s>;
-      return($t) if (!defined($t));
-    } else {      
-      # if you're having problems with reads, swap the comments on the
-      # the following two lines
-      my $recv_r = recv($s, $t, 8192, 0);
-      #$t = <$s>;
-      return($t) if (!defined($t));
-      
-      # the above line should be good enough but it isn't returning
-      # undef for some reason.  I think heuristically it will be sufficient
-      # to just look for an empty packet (I hope.  gulp).  Comment out the
-      # following line if your swaks seems to be saying that it lost connection
-      # for no good reason.  Then email me about it.
-      return(undef()) if (!length($t));
-      
-      #print "\$t = $t (defined = ", defined($t) ? "yes" : "no",
-      #      "), \$recv_r = $recv_r (", defined($recv_r) ? "yes" : "no", ")\n";
-    }
-	$G::recv_buffer .= $t;
-    ptrans(33, hdump($t)) if ($G::show_raw_text);
-  }
-  
-  if ($c >= 1000) {
-    # If you saw this in the wild, I'd love to hear more about it
-    # at proj-swaks@jetmore.net
-    ptrans(12, "In recv_line, hit loop counter.  Continuing in unknown state");
-  }
-  
-  # using only bare newlines is bound to cause me problems in the future
-  # but it matches the expectation we've already been using.  All we can
-  # do is hone in on the proper behavior iteratively.
-  if ($G::recv_buffer =~ s|^(.*?\n)||si) {
-    $r = $1;
-  } else {
-	ptrans(12, "I'm in an impossible state");
-  }
+	# Either an IO::Socket obj or a FH to my child - the thing to read from
+	my $s = $G::link{type} eq 'pipe' ? $G::link{sock}->{re} : $G::link{sock};
+	my $r = undef;
+	my $t = undef;
+	my $c = 0;
+	
+	while ($G::recv_buffer !~ m|\n|si) {
+		last if (++$c > 1000); # Maybe I'll remove this once I trust this code more
+		if ($G::link{tls}{active}) {
+			$t = Net::SSLeay::read($G::link{tls}{ssl});
+			return($t) if (!defined($t));
+		} elsif ($G::link{type} eq 'pipe') {
+			# XXX in a future release see if I can get read() or equiv to work on a pipe
+			$t = <$s>;
+			return($t) if (!defined($t));
+		} else {      
+			# if you're having problems with reads, swap the comments on the
+			# the following two lines
+			my $recv_r = recv($s, $t, 8192, 0);
+			#$t = <$s>;
+			return($t) if (!defined($t));
+			
+			# the above line should be good enough but it isn't returning
+			# undef for some reason.  I think heuristically it will be sufficient
+			# to just look for an empty packet (I hope.  gulp).  Comment out the
+			# following line if your swaks seems to be saying that it lost connection
+			# for no good reason.  Then email me about it.
+			return(undef()) if (!length($t));
+			
+			#print "\$t = $t (defined = ", defined($t) ? "yes" : "no",
+			#      "), \$recv_r = $recv_r (", defined($recv_r) ? "yes" : "no", ")\n";
+		}
+		$G::recv_buffer .= $t;
+		ptrans(33, hdump($t)) if ($G::show_raw_text);
+	}
+	
+	if ($c >= 1000) {
+		# If you saw this in the wild, I'd love to hear more about it
+		# at proj-swaks@jetmore.net
+		ptrans(12, "In recv_line, hit loop counter.  Continuing in unknown state");
+	}
+	
+	# using only bare newlines is bound to cause me problems in the future
+	# but it matches the expectation we've already been using.  All we can
+	# do is hone in on the proper behavior iteratively.
+	if ($G::recv_buffer =~ s|^(.*?\n)||si) {
+		$r = $1;
+	} else {
+		ptrans(12, "I'm in an impossible state");
+	}
 
-  $r =~ s|\r||msg;
-  return($r);
+	$r =~ s|\r||msg;
+	return($r);
 }
 
 # any request which has immediate set will be checking the return code.
 # any non-immediate request will handle results through fail_callback().
 # therefore, only return the state of the last transaction attempted,
 # which will always be immediate
-# We still need to reimplement timing
 sub transact {
-  my %h        = @_; # this is an smtp transaction element
-  my $ret      = 1;  # this is our return value
-  my @handlers = (); # will hold any fail_handlers we need to run
-  my $time     = ''; # used in time lapse calculations
+	my %h        = @_; # this is an smtp transaction element
+	my $ret      = 1;  # this is our return value
+	my @handlers = (); # will hold any fail_handlers we need to run
+	my $time     = ''; # used in time lapse calculations
 
-  push(@G::pending_send, \%h); # push onto send queue
-  if (!($G::pipeline && $G::pipeline_adv) || !$h{defer}) {
+	push(@G::pending_send, \%h); # push onto send queue
+	if (!($G::pipeline && $G::pipeline_adv) || !$h{defer}) {
 
-    if ($G::show_time_lapse) {
-      if ($G::show_time_hires) { $time = [Time::HiRes::gettimeofday()];   }
-      else                     { $time = time(); }
-    }
+		if ($G::show_time_lapse) {
+			if ($G::show_time_hires) {$time = [Time::HiRes::gettimeofday()];   }
+			else                     { $time = time(); }
+		}
 
-    while (my $i = shift(@G::pending_send)) {
-      if (defined($i->{cxn_string})) {
-        ptrans(21,$i->{show_string}||$i->{cxn_string},$i->{summarize_output});
-        send_data($i->{cxn_string});
-      }
-      push(@G::pending_recv, $i);
-    }
-    flush_send_buffer();
-    while (my $i = shift(@G::pending_recv)) {
-      my $buff = '';
-      eval {
-        local $SIG{'ALRM'} = sub {
-          $buff ="Timeout ($G::link{timeout} secs) waiting for server response";
-          die;
-        };
-        alarm($G::link{timeout});
-        while ($buff !~ /^\d\d\d /m) {
-          my $l = recv_line();
-          $buff .= $l;
-          if (!defined($l)) {
-            $G::link{lost_cxn} = 1;
-            last;
-          }
-        }
-        chomp($buff);
-        alarm(0);
-      };
+		while (my $i = shift(@G::pending_send)) {
+			if (defined($i->{cxn_string})) {
+				ptrans(21, $i->{show_string} || $i->{cxn_string}, $i->{summarize_output});
+				send_data($i->{cxn_string});
+			}
+			push(@G::pending_recv, $i);
+		}
+		flush_send_buffer();
+		while (my $i = shift(@G::pending_recv)) {
+			my $buff = '';
+			eval {
+				local $SIG{'ALRM'} = sub {
+					$buff = "Timeout ($G::link{timeout} secs) waiting for server response";
+					die;
+				};
+				alarm($G::link{timeout});
+				while ($buff !~ /^\d\d\d /m) {
+					my $l = recv_line();
+					$buff .= $l;
+					if (!defined($l)) {
+						$G::link{lost_cxn} = 1;
+						last;
+					}
+				}
+				chomp($buff);
+				alarm(0);
+			};
 
-      if ($G::show_time_lapse) {
-        if ($G::show_time_hires) {
-          $time = sprintf("%0.03f", Time::HiRes::tv_interval($time,
-                                   [Time::HiRes::gettimeofday()]));
-          ptrans(11, "response in ${time}s");
-          $time = [Time::HiRes::gettimeofday()];
-        } else {
-          $time = time() - $time;
-          ptrans(11, "response in ${time}s");
-          $time = time();
-        }
-      }
+			if ($G::show_time_lapse) {
+				if ($G::show_time_hires) {
+					$time = sprintf("%0.03f", Time::HiRes::tv_interval($time, [Time::HiRes::gettimeofday()]));
+					ptrans(11, "response in ${time}s");
+					$time = [Time::HiRes::gettimeofday()];
+				} else {
+					$time = time() - $time;
+					ptrans(11, "response in ${time}s");
+					$time = time();
+				}
+			}
 
-      ${$i->{return_text}} = $buff;
-      $buff = &{$i->{print_callback}}($buff)
-          if (ref($i->{print_callback}) eq 'CODE');
-      my $ptc;
-      ($ret,$ptc) = $buff !~ /^$i->{expect} /m ? (0,32) : (1,31);
-      ptrans($ptc, $buff) if ($buff);
-      if ($G::link{lost_cxn}) {
-        if ($G::link{allow_lost_cxn}) {
-          # this means the calling code wants to handle a lost cxn itself
-          return($ret);
-        } else {
-          # if caller didn't want to handle, we'll handle a lost cxn ourselves
-          handle_disconnect();
-        }
-      }
-      if (!$ret && ref($i->{fail_callback}) eq 'CODE') {
-        push(@handlers, $i->{fail_callback});
-      }
-    }
-  }
-  foreach my $h (@handlers) { &{$h}(); }
-  return($ret);
+			${$i->{return_text}} = $buff;
+			$buff = &{$i->{print_callback}}($buff) if (ref($i->{print_callback}) eq 'CODE');
+			my $ptc;
+			($ret,$ptc) = $buff !~ /^$i->{expect} /m ? (0,32) : (1,31);
+			ptrans($ptc, $buff) if ($buff);
+			if ($G::link{lost_cxn}) {
+				if ($G::link{allow_lost_cxn}) {
+					# this means the calling code wants to handle a lost cxn itself
+					return($ret);
+				} else {
+					# if caller didn't want to handle, we'll handle a lost cxn ourselves
+					handle_disconnect();
+				}
+			}
+			if (!$ret && ref($i->{fail_callback}) eq 'CODE') {
+				push(@handlers, $i->{fail_callback});
+			}
+		}
+	}
+	foreach my $h (@handlers) { &{$h}(); }
+	return($ret);
 }
 
+# a quick-and-dirty hex dumper.  Currently used by --show-raw-text
 sub hdump {
-  my $r = shift;
-  my $c = 0;  # counter
-  my $i = 16; # increment value
-  my $b;      # buffer
+	my $r = shift;
+	my $c = 0;  # counter
+	my $i = 16; # increment value
+	my $b;      # buffer
 
-  while (length($r) && ($r =~ s|^(.{1,$i})||smi)) {
-    my $s = $1; # $s will be the ascii string we manipulate for display
-    my @c = map { ord($_); } (split('', $s));
-    $s =~ s|[^\x21-\x7E]|.|g;
+	while (length($r) && ($r =~ s|^(.{1,$i})||smi)) {
+		my $s = $1; # $s will be the ascii string we manipulate for display
+		my @c = map { ord($_); } (split('', $s));
+		$s =~ s|[^\x21-\x7E]|.|g;
 
-    my $hfs = ''; # This is the hex format string for printf
-    for (my $hc = 0; $hc < $i; $hc++) {
-      $hfs .= ' ' if (!($hc%4));
-      if ($hc < scalar(@c)) { $hfs .= '%02X '; } else { $hfs .= '   '; }
-    }
+		my $hfs = ''; # This is the hex format string for printf
+		for (my $hc = 0; $hc < $i; $hc++) {
+			$hfs .= ' ' if (!($hc%4));
+			if ($hc < scalar(@c)) { $hfs .= '%02X '; } else { $hfs .= '   '; }
+		}
 
-    $b .= sprintf("%04d:$hfs   %-16s\n", $c, @c, $s);
-    $c += $i;
-  }
-  chomp($b); # unelegant remnant of hdump's previous life
-  return($b)
+		$b .= sprintf("%04d:$hfs   %-16s\n", $c, @c, $s);
+		$c += $i;
+	}
+	chomp($b); # inelegant remnant of hdump's previous life
+	return($b)
 }
 
 sub unencode_smtp {
-  my $t = shift;
+	my $t = shift;
 
-  my @t = split(' ', $t);
-  return("$t[0] " . db64($t[1]));
+	my @t = split(' ', $t);
+	return("$t[0] " . db64($t[1]));
 }
 
 sub interact {
-  my $prompt     = shift;
-  my $regexp     = shift;
-  my $hide_input = shift;
-  my $response   = '';
+	my $prompt     = shift;
+	my $regexp     = shift;
+	my $hide_input = shift;
+	my $response   = '';
 
-  do {
-    print $prompt;
-    if (!$hide_input || !$G::protect_prompt || $G::interact_method eq 'default') {
-      chomp($response = <STDIN>);
-    } else {
-      if ($^O eq 'MSWin32') {
-        #if ($G::interact_method eq "win32-console" ||
-        #   (!$G::interact_method && load("Win32::Console")))
-        #{
-        #    Couldn't get this working in the time I wanted to devote to it
-        #}
-        if ($G::interact_method eq "win32-readkey" ||
-           (!$G::interact_method && load("Term::ReadKey")))
-        {
-          $G::interact_method ||= "win32-readkey";
-          # the trick to replace input w/ '*' doesn't work on Win32
-          # Term::ReadKey, so just use it as an stty replacement
-          ReadMode('noecho');
-          # need to think about this on windows some more
-          #local $SIG{INT} = sub { ReadMode('restore'); };
-          chomp($response = <STDIN>);
-          ReadMode('restore');
-        } else {
-          $G::interact_method ||= "default";
-          chomp($response = <STDIN>);
-        }
-      } else {
-        if ($G::interact_method eq "unix-readkey" ||
-           (!$G::interact_method && load("Term::ReadKey")))
-        {
-          $G::interact_method ||= "unix-readkey";
-          my @resp = ();
-          ReadMode('raw');
-          #local $SIG{INT} = 
-          # reevaluate this code - what happens if del is first char we press?
-          while ((my $kp = ReadKey(0)) ne "\n") {
-            my $kp_num = ord($kp);
-            if($kp_num == 127 || $kp_num == 8) {
-              next if (!scalar(@resp));
-              pop(@resp);
-              print "\b \b";
-            } elsif($kp_num >= 32) {
-              push(@resp, $kp);
-              print "*";
-            }
-          }
-          ReadMode('restore');
-          $response = join('', @resp);
-        } elsif ($G::interact_method eq "unix-stty" ||
-                (!$G::interact_method && open(STTY, "stty -a |")))
-        {
-          $G::interact_method ||= "unix-stty";
-          { my $foo = join('', <STTY>); }
-          system('stty', '-echo');
-          chomp($response = <STDIN>);
-          system('stty', 'echo');
-        } else {
-          $G::interact_method ||= "default";
-          chomp($response = <STDIN>);
-        }
-      }
-    }
-  } while ($regexp ne 'SKIP' && $response !~ /$regexp/);
+	do {
+		print $prompt;
+		if (!$hide_input || !$G::protect_prompt || $G::interact_method eq 'default') {
+			chomp($response = <STDIN>);
+		} else {
+			if ($^O eq 'MSWin32') {
+				#if ($G::interact_method eq "win32-console" ||
+				#   (!$G::interact_method && load("Win32::Console")))
+				#{
+				#    Couldn't get this working in the time I wanted to devote to it
+				#}
+				if ($G::interact_method eq "win32-readkey" ||
+					 (!$G::interact_method && load("Term::ReadKey")))
+				{
+					$G::interact_method ||= "win32-readkey";
+					# the trick to replace input w/ '*' doesn't work on Win32
+					# Term::ReadKey, so just use it as an stty replacement
+					ReadMode('noecho');
+					# need to think about this on windows some more
+					#local $SIG{INT} = sub { ReadMode('restore'); };
+					chomp($response = <STDIN>);
+					ReadMode('restore');
+				} else {
+					$G::interact_method ||= "default";
+					chomp($response = <STDIN>);
+				}
+			} else {
+				if ($G::interact_method eq "unix-readkey" || (!$G::interact_method && load("Term::ReadKey"))) {
+					$G::interact_method ||= "unix-readkey";
+					my @resp = ();
+					ReadMode('raw');
+					#local $SIG{INT} = 
+					# reevaluate this code - what happens if del is first char we press?
+					while ((my $kp = ReadKey(0)) ne "\n") {
+						my $kp_num = ord($kp);
+						if($kp_num == 127 || $kp_num == 8) {
+							next if (!scalar(@resp));
+							pop(@resp);
+							print "\b \b";
+						} elsif($kp_num >= 32) {
+							push(@resp, $kp);
+							print "*";
+						}
+					}
+					ReadMode('restore');
+					$response = join('', @resp);
+				} elsif ($G::interact_method eq "unix-stty" || (!$G::interact_method && open(STTY, "stty -a |"))) {
+					$G::interact_method ||= "unix-stty";
+					{ my $foo = join('', <STTY>); }
+					system('stty', '-echo');
+					chomp($response = <STDIN>);
+					system('stty', 'echo');
+				} else {
+					$G::interact_method ||= "default";
+					chomp($response = <STDIN>);
+				}
+			}
+		}
+	} while ($regexp ne 'SKIP' && $response !~ /$regexp/);
 
-  return($response);
+	return($response);
 }
 
 sub get_hostname {
-  # in some cases hostname returns value but gethostbyname doesn't.
-  return("") if (!avail("hostname"));
-  my $h = hostname();
-  return("") if (!$h);
-  my $l = (gethostbyname($h))[0];
-  return($l || $h);
+	# in some cases hostname returns value but gethostbyname doesn't.
+	return("") if (!avail("hostname"));
+	
+	my $h = hostname();
+	return("") if (!$h);
+	
+	my $l = (gethostbyname($h))[0];
+	return($l || $h);
 }
 
 sub get_server {
-  my $addr   = shift;
-  my $pref   = -1;
-  my $server = "localhost";
+	my $addr   = shift;
+	my $pref   = -1;
+	my $server = "localhost";
 
-  if ($addr =~ /\@?\[(\d+\.\d+\.\d+\.\d+)\]$/) {
-    # handle automatic routing of domain literals (user@[1.2.3.4])
-    return($1);
-  } elsif ($addr =~ /\@?\#(\d+)$/) {
-    # handle automatic routing of decimal domain literals (user@#16909060)
-    $addr = $1;
-    return(($addr/(2**24))%(2**8) . '.' . ($addr/(2**16))%(2**8) . '.'
-          .($addr/(2**8))%(2**8)  . '.' . ($addr/(2**0))%(2**8));
-  }
+	if ($addr =~ /\@?\[(\d+\.\d+\.\d+\.\d+)\]$/) {
+		# handle automatic routing of domain literals (user@[1.2.3.4])
+		return($1);
+	} elsif ($addr =~ /\@?\#(\d+)$/) {
+		# handle automatic routing of decimal domain literals (user@#16909060)
+		$addr = $1;
+		return(($addr/(2**24))%(2**8) . '.' . ($addr/(2**16))%(2**8) . '.' .
+		       ($addr/(2**8))%(2**8)  . '.' . ($addr/(2**0))%(2**8));
+	}
 
+	if (!avail("dns")) {
+		ptrans(12, avail_str("dns"). ".  Using $server as mail server");
+		return($server);
+	}
+	my $res = new Net::DNS::Resolver;
 
+	$addr =~ s/^.*\@([^\@]*)$/$1/;
+	return($server) if (!$addr);
+	$server = $addr;
 
-  if (!avail("dns")) {
-    ptrans(12, avail_str("dns").".  Using $server as mail server");
-    return($server);
-  }
-  my $res = new Net::DNS::Resolver;
-
-  #return($server) if ($addr !~ /\@/);
-
-  $addr =~ s/^.*\@([^\@]*)$/$1/;
-  return($server) if (!$addr);
-  $server = $addr;
-
-  my @mx = mx($res, $addr);
-  foreach my $rr (@mx) {
-    if ($rr->preference < $pref || $pref == -1) {
-      $pref   = $rr->preference;
-      $server = $rr->exchange;
-    }
-  }
-  return($server);
+	my @mx = mx($res, $addr);
+	foreach my $rr (@mx) {
+		if ($rr->preference < $pref || $pref == -1) {
+			$pref   = $rr->preference;
+			$server = $rr->exchange;
+		}
+	}
+	return($server);
 }
 
 sub load {
-  my $m = shift;
+	my $m = shift;
 
-  return $G::modules{$m} if (exists($G::modules{$m}));
-  eval("use $m");
-  return $G::modules{$m} = $@ ? 0 : 1;
+	return $G::modules{$m} if (exists($G::modules{$m}));
+	eval("use $m");
+	return $G::modules{$m} = $@ ? 0 : 1;
 }
 
 # Currently this is just an informational string - it's set on both
@@ -1103,1114 +1090,1082 @@ sub load {
 sub avail_str { return $G::dependencies{$_[0]}{errstr}; }
 
 sub avail {
-  my $f = shift; # this is the feature we want to check support for (auth, tls)
-  my $s = \%G::dependencies;
+	my $f = shift; # this is the feature we want to check support for (auth, tls)
+	my $s = \%G::dependencies;
 
-  # return immediately if we've already tested this.
-  return($s->{$f}{avail}) if (exists($s->{$f}{avail}));
+	# return immediately if we've already tested this.
+	return($s->{$f}{avail}) if (exists($s->{$f}{avail}));
 
-  $s->{$f}{req_failed} = [];
-  $s->{$f}{opt_failed} = [];
-  foreach my $m (@{$s->{$f}{req}}) {
-    push(@{$s->{$f}{req_failed}}, $m) if (!load($m));
-  }
-  foreach my $m (@{$s->{$f}{opt}}) {
-    push(@{$s->{$f}{opt_failed}}, $m) if (!load($m));
-  }
+	$s->{$f}{req_failed} = [];
+	$s->{$f}{opt_failed} = [];
+	foreach my $m (@{$s->{$f}{req}}) {
+		push(@{$s->{$f}{req_failed}}, $m) if (!load($m));
+	}
+	foreach my $m (@{$s->{$f}{opt}}) {
+		push(@{$s->{$f}{opt_failed}}, $m) if (!load($m));
+	}
 
-  if (scalar(@{$s->{$f}{req_failed}})) {
-    $s->{$f}{errstr} = "$s->{$f}{name} not available: requires "
-                     . join(', ', @{$s->{$f}{req_failed}});
-    if (scalar(@{$s->{$f}{opt_failed}})) {
-      $s->{$f}{errstr} .= ".  Also missing optimizing "
-                        . join(', ', @{$s->{$f}{opt_failed}});
-    }
-    return $s->{$f}{avail} = 0;
-  } else {
-    if (scalar(@{$s->{$f}{opt_failed}})) {
-      $s->{$f}{errstr} = "$s->{$f}{name} supported, but missing optimizing "
-                       . join(', ', @{$s->{$f}{opt_failed}});
-    } else {
-      $s->{$f}{errstr} = "$s->{$f}{name} supported";
-    }
-    return $s->{$f}{avail} = 1;
-  }
+	if (scalar(@{$s->{$f}{req_failed}})) {
+		$s->{$f}{errstr} = "$s->{$f}{name} not available: requires " . join(', ', @{$s->{$f}{req_failed}});
+		if (scalar(@{$s->{$f}{opt_failed}})) {
+			$s->{$f}{errstr} .= ".  Also missing optimizing " . join(', ', @{$s->{$f}{opt_failed}});
+		}
+		return $s->{$f}{avail} = 0;
+	} else {
+		if (scalar(@{$s->{$f}{opt_failed}})) {
+			$s->{$f}{errstr} = "$s->{$f}{name} supported, but missing optimizing " . 
+			                   join(', ', @{$s->{$f}{opt_failed}});
+		} else {
+			$s->{$f}{errstr} = "$s->{$f}{name} supported";
+		}
+		return $s->{$f}{avail} = 1;
+	}
 }
 
 sub get_digest {
-  my $secr = shift;
-  my $chal = shift;
-  my $type = shift || 'md5';
-  my $ipad = chr(0x36) x 64;
-  my $opad = chr(0x5c) x 64;
+	my $secr = shift;
+	my $chal = shift;
+	my $type = shift || 'md5';
+	my $ipad = chr(0x36) x 64;
+	my $opad = chr(0x5c) x 64;
 
-  if ($chal !~ /^</) {
-    chomp($chal = db64($chal));
-  }
+	if ($chal !~ /^</) {
+		chomp($chal = db64($chal));
+	}
 
-  if (length($secr) > 64) {
-    if ($type eq 'md5') {
-      $secr = Digest::MD5::md5($secr);
-    } elsif ($type eq 'sha1') {
-      $secr = Digest::SHA1::sha1($secr);
-    }
-  } else {
-    $secr .= chr(0) x (64 - length($secr));
-  }
+	if (length($secr) > 64) {
+		if ($type eq 'md5') {
+			$secr = Digest::MD5::md5($secr);
+		} elsif ($type eq 'sha1') {
+			$secr = Digest::SHA1::sha1($secr);
+		}
+	} else {
+		$secr .= chr(0) x (64 - length($secr));
+	}
 
-  my $digest = $type eq 'md5'
-               ? Digest::MD5::md5_hex(($secr ^ $opad),
-                 Digest::MD5::md5(($secr ^ $ipad), $chal))
-               : Digest::SHA1::sha1_hex(($secr ^ $opad),
-                 Digest::SHA1::sha1(($secr ^ $ipad), $chal));
-  return($digest);
+	my $digest = $type eq 'md5' ? Digest::MD5::md5_hex(($secr ^ $opad), Digest::MD5::md5(($secr ^ $ipad), $chal))
+	                            : Digest::SHA1::sha1_hex(($secr ^ $opad), Digest::SHA1::sha1(($secr ^ $ipad), $chal));
+	return($digest);
 }
 
 sub test_support {
-  my $s = \%G::dependencies;
+	my $s = \%G::dependencies;
 
-  foreach my $act (sort { $s->{$a}{name} cmp $s->{$b}{name} } keys %$s) {
-    ptrans(avail($act) ? 11 : 12, avail_str($act));
-    #if (avail($act)) {
-    #  #ptrans(11, "$s->{$act}{name} supported");
-    #  ptrans(11, avail_err($act));
-    #} else {
-    #  ptrans(12, avail_err($act));
-    #}
-  }
+	foreach my $act (sort { $s->{$a}{name} cmp $s->{$b}{name} } keys %$s) {
+		ptrans(avail($act) ? 11 : 12, avail_str($act));
+	}
 }
 
 sub time_to_seconds {
-  my $t = shift || 30;
+	my $t = shift || 30;
 
-  if ($t !~ /^(\d+)([hms])?/i) {
-    return(30); # error condition - just use default value
-  } else {
-    my $r = $1;
-    my $u = lc($2);
-    if ($u eq 'h') {
-      return($r * 3600);
-    } elsif ($u eq 'm') {
-      return($r * 60);
-    } else {
-      return($r);
-    }
-  }
+	if ($t !~ /^(\d+)([hms])?/i) {
+		return(30); # error condition - just use default value
+	} else {
+		my $r = $1;
+		my $u = lc($2);
+		if ($u eq 'h') {
+			return($r * 3600);
+		} elsif ($u eq 'm') {
+			return($r * 60);
+		} else {
+			return($r);
+		}
+	}
 }
 
 sub load_dependencies {
-  %G::dependencies = (
-    auth            => { name => "Basic AUTH",     opt => ['MIME::Base64'],
-                         req  => [] },
-    auth_cram_md5   => { name => "AUTH CRAM-MD5",  req => ['Digest::MD5'] },
-    auth_cram_sha1  => { name => "AUTH CRAM-SHA1", req => ['Digest::SHA1'] },
-    auth_ntlm       => { name => "AUTH NTLM",      req => ['Authen::NTLM'] },
-    auth_digest_md5 => { name => "AUTH DIGEST-MD5", req  => ['Authen::SASL'] },
-    dns             => { name => "MX Routing",     req => ['Net::DNS'] },
-    tls             => { name => "TLS",            req => ['Net::SSLeay'] },
-    pipe            => { name => "Pipe Transport", req => ['IPC::Open2'] },
-    socket          => { name => "Socket Transport", req => ['IO::Socket'] },
-    date_manip      => { name => "Date Manipulation", req => ['Time::Local'] },
-    hostname        => { name => "Local Hostname Detection",
-                         req  => ['Sys::Hostname'] },
-    hires_timing    => { name => "High Resolution Timing",
-                         req  => ['Time::HiRes'] },
-  );
+	%G::dependencies = (
+		auth            => { name => "Basic AUTH",               opt => ['MIME::Base64'],
+		                                                         req => []                },
+		auth_cram_md5   => { name => "AUTH CRAM-MD5",            req => ['Digest::MD5']   },
+		auth_cram_sha1  => { name => "AUTH CRAM-SHA1",           req => ['Digest::SHA1']  },
+		auth_ntlm       => { name => "AUTH NTLM",                req => ['Authen::NTLM']  },
+		auth_digest_md5 => { name => "AUTH DIGEST-MD5",          req => ['Authen::SASL']  },
+		dns             => { name => "MX Routing",               req => ['Net::DNS']      },
+		tls             => { name => "TLS",                      req => ['Net::SSLeay']   },
+		pipe            => { name => "Pipe Transport",           req => ['IPC::Open2']    },
+		socket          => { name => "Socket Transport",         req => ['IO::Socket']    },
+		date_manip      => { name => "Date Manipulation",        req => ['Time::Local']   },
+		hostname        => { name => "Local Hostname Detection", req => ['Sys::Hostname'] },
+		hires_timing    => { name => "High Resolution Timing",   req => ['Time::HiRes']   },
+	);
 }
 
 sub get_option_struct {
-  @G::raw_option_data = (
-    # location of config file
-    { opts => ['config'],                         suffix => ':s',
-      okey => 'config_file',                      type => 'scalar', },
-    # envelope-(f)rom address
-    { opts => ['f', 'from'],                      suffix => ':s',
-      okey => 'mail_from',                        type => 'scalar', },
-    # envelope-(t)o address
-    { opts => ['t', 'to'],                        suffix => ':s',
-      okey => 'mail_to',                          type => 'scalar', },
-    # (h)elo string
-    { opts => ['h', 'helo', 'ehlo', 'lhlo'],      suffix => ':s',
-      okey => 'mail_helo',                        type => 'scalar', },
-    # (s)erver to use
-    { opts => ['s', 'server'],                    suffix => ':s',
-      okey => 'mail_server',                      type => 'scalar', },
-    # copy MX/routing from another domain
-    { opts => ['copy-routing'],                   suffix => ':s',
-      okey => 'copy_routing',                     type => 'scalar', },
-    # (p)ort to use
-    { opts => ['p', 'port'],                      suffix => ':s',
-      okey => 'mail_port',                        type => 'scalar', },
-    # protocol to use (smtp, esmtp, lmtp)
-    { opts => ['protocol'],                       suffix => ':s',
-      okey => 'mail_protocol',                    type => 'scalar', },
-    # (d)ata portion ('\n' for newlines)
-    { opts => ['d', 'data'],                      suffix => ':s',
-      okey => 'mail_data',                        type => 'scalar', },
-    # timeout for each trans (def 30s)
-    { opts => ['timeout'],                        suffix => ':s',
-      okey => 'timeout',                          type => 'scalar', },
-    # (g)et data on stdin
-    { opts => ['g'],                              suffix => '',
-      okey => 'data_on_stdin',                    type => 'scalar', },
-    # emulate (M)ail command
-    { opts => ['m'],                              suffix => '',
-      okey => 'emulate_mail',                     type => 'scalar', },
-    # (q)uit after
-    { opts => ['q', 'quit', 'quit-after'],        suffix => '=s',
-      okey => 'quit_after',                       type => 'scalar', },
-    # do (n)ot print data portion
-    { opts => ['n', 'suppress-data'],             suffix => '',
-      okey => 'suppress_data',                    type => 'scalar', },
-    # force auth, exit if not supported
-    { opts => ['a', 'auth'],                      suffix => ':s',
-      okey => 'auth',                             type => 'scalar', },
-    # user for auth
-    { opts => ['au', 'auth-user'],                suffix => ':s',
-      okey => 'auth_user',                        type => 'scalar', },
-    # pass for auth
-    { opts => ['ap', 'auth-password'],            suffix => ':s',
-      okey => 'auth_pass',                        type => 'scalar', },
-    # auth type map
-    { opts => ['am', 'auth-map'],                 suffix => '=s',
-      okey => 'auth_map',                         type => 'scalar', },
-    # hide passwords when possible
-    { opts => ['ahp', 'auth-hide-password'],      suffix => ':s',
-      okey => 'auth_hidepw',                      type => 'scalar', },
-    # translate base64 strings
-    { opts => ['apt', 'auth-plaintext'],          suffix => '',
-      okey => 'auth_showpt',                      type => 'scalar', },
-    # auth optional (ignore failure)
-    { opts => ['ao', 'auth-optional'],            suffix => ':s',
-      okey => 'auth_optional',                    type => 'scalar', },
-    # req auth if avail
-    { opts => ['aos', 'auth-optional-strict'],    suffix => ':s',
-      okey => 'auth_optional_strict',             type => 'scalar', },
-    # report capabilties
-    { opts => ['support'],                        suffix => '',
-      okey => 'get_support',                      type => 'scalar', },
-    # local interface to use
-    { opts => ['li', 'local-interface'],          suffix => ':s',
-      okey => 'lint',                             type => 'scalar', },
-    # use TLS
-    { opts => ['tls'],                            suffix => '',
-      okey => 'tls',                              type => 'scalar', },
-    # use tls if available
-    { opts => ['tlso', 'tls-optional'],           suffix => '',
-      okey => 'tls_optional',                     type => 'scalar', },
-    # req tls if avail
-    { opts => ['tlsos', 'tls-optional-strict'],   suffix => ':s',
-      okey => 'tls_optional_strict',              type => 'scalar', },
-    # use tls if available
-    { opts => ['tlsc', 'tls-on-connect'],         suffix => '',
-      okey => 'tls_on_connect',                   type => 'scalar', },
-    # save tls peer certificate
-    { opts => ['tls-get-peer-cert'],              suffix => ':s',
-      okey => 'tls_get_peer_cert',                type => 'scalar', },
-    # suppress output to varying degrees
-    { opts => ['S', 'silent'],                    suffix => ':i',
-      okey => 'silent',                           type => 'sub',
-      literal => 'sub { $r->{silent} = $_[1] || 1; }', },
-    # Don't strip From_ line from DATA
-    { opts => ['nsf', 'no-strip-from'],           suffix => '',
-      okey => 'no_strip_from',                    type => 'scalar', },
-    # Use the old, one-character substitution tokens (%H, %D, etc)
-    { opts => ['use-old-data-tokens'],            suffix => '',
-      okey => 'use_old_data_tokens',              type => 'scalar', },
-    # Don't show transaction hints
-    { opts => ['nth', 'no-hints'],                suffix => '',
-      okey => 'no_hints',                         type => 'scalar', },
-    # Don't show reception lines
-    { opts => ['hr', 'hide-receive'],             suffix => '',
-      okey => 'hide_receive',                     type => 'scalar', },
-    # Don't show sending lines
-    { opts => ['hs', 'hide-send'],                suffix => '',
-      okey => 'hide_send',                        type => 'scalar', },
-    # Don't echo input on potentially sensitive prompts
-    { opts => ['pp', 'protect-prompt'],           suffix => '',
-      okey => 'protect_prompt',                   type => 'scalar', },
-    # Don't show any swaks-generated, non-error informational lines
-    { opts => ['hi', 'hide-informational'],       suffix => '',
-      okey => 'hide_informational',               type => 'scalar', },
-    # Don't send any output to the terminal
-    { opts => ['ha', 'hide-all'],                 suffix => '',
-      okey => 'hide_all',                         type => 'scalar', },
-    # print lapse for send/recv
-    { opts => ['stl', 'show-time-lapse'],         suffix => ':s',
-      okey => 'show_time_lapse',                  type => 'scalar', },
-    # don't touch the data
-    { opts => ['ndf', 'no-data-fixup'],           suffix => '',
-      okey => 'no_data_fixup',                    type => 'scalar', },
-    # show dumps of the raw read/written text
-    { opts => ['raw', 'show-raw-text'],           suffix => '',
-      okey => 'show_raw_text',                    type => 'scalar', },
-    # specify file to write to
-    { opts => ['output-file'],                    suffix => '=s',
-      okey => 'output_file',                      type => 'scalar', },
-    # specify file to write to
-    { opts => ['output-file-stdout'],             suffix => '=s',
-      okey => 'output_file_stdout',               type => 'scalar', },
-    # specify file to write to
-    { opts => ['output-file-stderr'],             suffix => '=s',
-      okey => 'output_file_stderr',               type => 'scalar', },
-    # command to communicate with
-    { opts => ['pipe'],                           suffix => ':s',
-      okey => 'pipe_cmd',                         type => 'scalar', },
-    # unix domain socket to talk to
-    { opts => ['socket'],                         suffix => ':s',
-      okey => 'socket',                           type => 'scalar', },
-    # the content of the body of the DATA
-    { opts => ['body'],                           suffix => ':s',
-      okey => 'body_822',                         type => 'scalar', },
-    # A file to attach
-    { opts => ['attach-name','attach-type','attach'], suffix => ':s',
-      okey => 'attach_822',                       type => 'list', },
-    # replacement for %NEW_HEADERS% DATA token
-    { opts => ['ah', 'add-header'],               suffix => ':s',
-      okey => 'add_header',                       type => 'list', },
-    # replace header if exist, else add
-    { opts => ['header'],                         suffix => ':s',
-      okey => 'header',                           type => 'list', },
-    # build options and dump
-    { opts => ['dump'],                           suffix => '',
-      okey => 'dump_args',                        type => 'scalar', },
-    # attempt PIPELINING
-    { opts => ['pipeline'],                       suffix => '',
-      okey => 'pipeline',                         type => 'scalar', },
-    # use getpwuid building -f
-    { opts => ['force-getpwuid'],                 suffix => '',
-      okey => 'force_getpwuid',                   type => 'scalar', },
-  );
+	@G::raw_option_data = (
+		# location of config file
+		{ opts => ['config'],                         suffix => ':s',
+		  okey => 'config_file',                      type => 'scalar', },
+		# envelope-(f)rom address
+		{ opts => ['f', 'from'],                      suffix => ':s',
+		  okey => 'mail_from',                        type => 'scalar', },
+		# envelope-(t)o address
+		{ opts => ['t', 'to'],                        suffix => ':s',
+		  okey => 'mail_to',                          type => 'scalar', },
+		# (h)elo string
+		{ opts => ['h', 'helo', 'ehlo', 'lhlo'],      suffix => ':s',
+		  okey => 'mail_helo',                        type => 'scalar', },
+		# (s)erver to use
+		{ opts => ['s', 'server'],                    suffix => ':s',
+		  okey => 'mail_server',                      type => 'scalar', },
+		# copy MX/routing from another domain
+		{ opts => ['copy-routing'],                   suffix => ':s',
+		  okey => 'copy_routing',                     type => 'scalar', },
+		# (p)ort to use
+		{ opts => ['p', 'port'],                      suffix => ':s',
+		  okey => 'mail_port',                        type => 'scalar', },
+		# protocol to use (smtp, esmtp, lmtp)
+		{ opts => ['protocol'],                       suffix => ':s',
+		  okey => 'mail_protocol',                    type => 'scalar', },
+		# (d)ata portion ('\n' for newlines)
+		{ opts => ['d', 'data'],                      suffix => ':s',
+		  okey => 'mail_data',                        type => 'scalar', },
+		# timeout for each trans (def 30s)
+		{ opts => ['timeout'],                        suffix => ':s',
+		  okey => 'timeout',                          type => 'scalar', },
+		# (g)et data on stdin
+		{ opts => ['g'],                              suffix => '',
+		  okey => 'data_on_stdin',                    type => 'scalar', },
+		# emulate (M)ail command
+		{ opts => ['m'],                              suffix => '',
+		  okey => 'emulate_mail',                     type => 'scalar', },
+		# (q)uit after
+		{ opts => ['q', 'quit', 'quit-after'],        suffix => '=s',
+		  okey => 'quit_after',                       type => 'scalar', },
+		# do (n)ot print data portion
+		{ opts => ['n', 'suppress-data'],             suffix => '',
+		  okey => 'suppress_data',                    type => 'scalar', },
+		# force auth, exit if not supported
+		{ opts => ['a', 'auth'],                      suffix => ':s',
+		  okey => 'auth',                             type => 'scalar', },
+		# user for auth
+		{ opts => ['au', 'auth-user'],                suffix => ':s',
+		  okey => 'auth_user',                        type => 'scalar', },
+		# pass for auth
+		{ opts => ['ap', 'auth-password'],            suffix => ':s',
+		  okey => 'auth_pass',                        type => 'scalar', },
+		# auth type map
+		{ opts => ['am', 'auth-map'],                 suffix => '=s',
+		  okey => 'auth_map',                         type => 'scalar', },
+		# extra, authenticator-specific options
+		{ opts => ['ae', 'auth-extra'],               suffix => '=s',
+		  okey => 'auth_extra',                       type => 'scalar', },
+		# hide passwords when possible
+		{ opts => ['ahp', 'auth-hide-password'],      suffix => ':s',
+		  okey => 'auth_hidepw',                      type => 'scalar', },
+		# translate base64 strings
+		{ opts => ['apt', 'auth-plaintext'],          suffix => '',
+		  okey => 'auth_showpt',                      type => 'scalar', },
+		# auth optional (ignore failure)
+		{ opts => ['ao', 'auth-optional'],            suffix => ':s',
+		  okey => 'auth_optional',                    type => 'scalar', },
+		# req auth if avail
+		{ opts => ['aos', 'auth-optional-strict'],    suffix => ':s',
+		  okey => 'auth_optional_strict',             type => 'scalar', },
+		# report capabilties
+		{ opts => ['support'],                        suffix => '',
+		  okey => 'get_support',                      type => 'scalar', },
+		# local interface to use
+		{ opts => ['li', 'local-interface'],          suffix => ':s',
+		  okey => 'lint',                             type => 'scalar', },
+		# use TLS
+		{ opts => ['tls'],                            suffix => '',
+		  okey => 'tls',                              type => 'scalar', },
+		# use tls if available
+		{ opts => ['tlso', 'tls-optional'],           suffix => '',
+		  okey => 'tls_optional',                     type => 'scalar', },
+		# req tls if avail
+		{ opts => ['tlsos', 'tls-optional-strict'],   suffix => ':s',
+		  okey => 'tls_optional_strict',              type => 'scalar', },
+		# use tls if available
+		{ opts => ['tlsc', 'tls-on-connect'],         suffix => '',
+		  okey => 'tls_on_connect',                   type => 'scalar', },
+		# save tls peer certificate
+		{ opts => ['tls-get-peer-cert'],              suffix => ':s',
+		  okey => 'tls_get_peer_cert',                type => 'scalar', },
+		# suppress output to varying degrees
+		{ opts => ['S', 'silent'],                    suffix => ':i',
+		  okey => 'silent',                           type => 'sub',
+		  literal => 'sub { $r->{silent} = $_[1] || 1; }',              },
+		# Don't strip From_ line from DATA
+		{ opts => ['nsf', 'no-strip-from'],           suffix => '',
+		  okey => 'no_strip_from',                    type => 'scalar', },
+		# Use the old, one-character substitution tokens (%H, %D, etc)
+		{ opts => ['use-old-data-tokens'],            suffix => '',
+		  okey => 'use_old_data_tokens',              type => 'scalar', },
+		# Don't show transaction hints
+		{ opts => ['nth', 'no-hints'],                suffix => '',
+		  okey => 'no_hints',                         type => 'scalar', },
+		# Don't show reception lines
+		{ opts => ['hr', 'hide-receive'],             suffix => '',
+		  okey => 'hide_receive',                     type => 'scalar', },
+		# Don't show sending lines
+		{ opts => ['hs', 'hide-send'],                suffix => '',
+		  okey => 'hide_send',                        type => 'scalar', },
+		# Don't echo input on potentially sensitive prompts
+		{ opts => ['pp', 'protect-prompt'],           suffix => '',
+		  okey => 'protect_prompt',                   type => 'scalar', },
+		# Don't show any swaks-generated, non-error informational lines
+		{ opts => ['hi', 'hide-informational'],       suffix => '',
+		  okey => 'hide_informational',               type => 'scalar', },
+		# Don't send any output to the terminal
+		{ opts => ['ha', 'hide-all'],                 suffix => '',
+		  okey => 'hide_all',                         type => 'scalar', },
+		# print lapse for send/recv
+		{ opts => ['stl', 'show-time-lapse'],         suffix => ':s',
+		  okey => 'show_time_lapse',                  type => 'scalar', },
+		# don't touch the data
+		{ opts => ['ndf', 'no-data-fixup'],           suffix => '',
+		  okey => 'no_data_fixup',                    type => 'scalar', },
+		# show dumps of the raw read/written text
+		{ opts => ['raw', 'show-raw-text'],           suffix => '',
+		  okey => 'show_raw_text',                    type => 'scalar', },
+		# specify file to write to
+		{ opts => ['output-file'],                    suffix => '=s',
+		  okey => 'output_file',                      type => 'scalar', },
+		# specify file to write to
+		{ opts => ['output-file-stdout'],             suffix => '=s',
+		  okey => 'output_file_stdout',               type => 'scalar', },
+		# specify file to write to
+		{ opts => ['output-file-stderr'],             suffix => '=s',
+		  okey => 'output_file_stderr',               type => 'scalar', },
+		# command to communicate with
+		{ opts => ['pipe'],                           suffix => ':s',
+		  okey => 'pipe_cmd',                         type => 'scalar', },
+		# unix domain socket to talk to
+		{ opts => ['socket'],                         suffix => ':s',
+		  okey => 'socket',                           type => 'scalar', },
+		# the content of the body of the DATA
+		{ opts => ['body'],                           suffix => ':s',
+		  okey => 'body_822',                         type => 'scalar', },
+		# A file to attach
+		{ opts => ['attach-name','attach-type','attach'], suffix => ':s',
+		  okey => 'attach_822',                           type => 'list', },
+		# replacement for %NEW_HEADERS% DATA token
+		{ opts => ['ah', 'add-header'],               suffix => ':s',
+		  okey => 'add_header',                       type => 'list', },
+		# replace header if exist, else add
+		{ opts => ['header'],                         suffix => ':s',
+		  okey => 'header',                           type => 'list', },
+		# build options and dump
+		{ opts => ['dump'],                           suffix => '',
+		  okey => 'dump_args',                        type => 'scalar', },
+		# attempt PIPELINING
+		{ opts => ['pipeline'],                       suffix => '',
+		  okey => 'pipeline',                         type => 'scalar', },
+		# use getpwuid building -f
+		{ opts => ['force-getpwuid'],                 suffix => '',
+		  okey => 'force_getpwuid',                   type => 'scalar', },
+	);
 
-  return(\@G::raw_option_data);
+	return(\@G::raw_option_data);
 }
 
 # returns %O, the large raw option hash
 sub load_args {
-  # this sub is a jumping point.  What we will do is repeatedly massage
-  # @ARGV and call GetOptions multiple times.  We are essentially "layering"
-  # options.  First we load from a config file (if exists/specified), then
-  # from any environment variables, then the actual command line.
-  
-  # First, save a copy of the real @ARGV, because that's actually what 
-  # gets processed last
-  my @real_ARGV = @ARGV; @ARGV = ();
-  my %ARGS      = ();
+	# this sub is a jumping point.  What we will do is repeatedly massage
+	# @ARGV and call GetOptions multiple times.  We are essentially "layering"
+	# options.  First we load from a config file (if exists/specified), then
+	# from any environment variables, then the actual command line.
+	
+	# First, save a copy of the real @ARGV, because that's actually what 
+	# gets processed last
+	my @real_ARGV = @ARGV;
+	my %ARGS      = ();
+	@ARGV         = ();
 
-  # we load our options processing hash here.  We abstract it back from the
-  # native getopt-format because we need to be able to intercept "no-" options
-  my $option_list = get_option_struct();
-  
-  # we want to process config files first.  There's a default config file in
-  # ~/.swaksrc, but it is possible for the user to override this with the
-  # --config options.  So, find the one and only file we will use here.
-  # If we encounter --config in later processing it is a noop.  
-  # first find the default file
-  my $config_file = ''; my $config_is_default = 1;
-  foreach my $v (qw(SWAKS_HOME HOME LOGDIR)) {
-    if ($ENV{$v}) { $config_file = "$ENV{$v}/.swaksrc"; last; }
-  }
-  # then look through the ENV args to see if another file set there
-  if (exists($ENV{SWAKS_OPT_config})) {
-    if (!$ENV{SWAKS_OPT_config}) {
-      # if exist but not set, it just means "don't use default file"
-      $config_file = "";
-    } else {
-      $config_file = $ENV{SWAKS_OPT_config};
-      $config_is_default = 0;
-    }
-  }
-  # lastly go through original command line looking for config file
-  for (my $i = 0; $i < scalar(@real_ARGV); $i++) {
-    if ($real_ARGV[$i] =~ /^-?-config$/) {
-      if ($real_ARGV[$i+1] =~ /^-/) {
-        $config_file = "";
-      } else {
-        $config_file = $real_ARGV[$i+1];
-        $config_is_default = 0;
-      }
-    }
-  }
+	# we load our options processing hash here.  We abstract it back from the
+	# native getopt-format because we need to be able to intercept "no-" options
+	my $option_list = get_option_struct();
+	
+	# we want to process config files first.  There's a default config file in
+	# ~/.swaksrc, but it is possible for the user to override this with the
+	# --config options.  So, find the one and only file we will use here.
+	# If we encounter --config in later processing it is a noop.  
+	# first find the default file
+	my $config_file       = '';
+	my $config_is_default = 1;
+	foreach my $v (qw(SWAKS_HOME HOME LOGDIR)) {
+		if ($ENV{$v}) { $config_file = "$ENV{$v}/.swaksrc"; last; }
+	}
+	# then look through the ENV args to see if another file set there
+	if (exists($ENV{SWAKS_OPT_config})) {
+		if (!$ENV{SWAKS_OPT_config}) {
+			# if exist but not set, it just means "don't use default file"
+			$config_file = "";
+		} else {
+			$config_file = $ENV{SWAKS_OPT_config};
+			$config_is_default = 0;
+		}
+	}
+	# lastly go through original command line looking for config file
+	for (my $i = 0; $i < scalar(@real_ARGV); $i++) {
+		if ($real_ARGV[$i] =~ /^-?-config$/) {
+			if ($real_ARGV[$i+1] =~ /^-/) {
+				$config_file = "";
+			} else {
+				$config_file       = $real_ARGV[$i+1];
+				$config_is_default = 0;
+			}
+		}
+	}
 
-  # All of the above will result in $config_file either being empty or
-  # containing the one and only config file we will use.
-  if ($config_file) {
-    foreach my $configf ('&DATA', $config_file) {
-      if (open(C, "<$configf")) {
-        # "#" in col 0 is a comment
-        while (defined(my $m = <C>)) {
-          next if ($m =~ m|^#|);
-          chomp($m);
-          $m = '-' . $m if ($m !~ /^-/);
-          push(@ARGV, split(/\s/, $m, 2));
-        }
-        close(C);
-      } elsif (!$config_is_default && $configf eq $config_file) {
-#} else {
-        # we only print an error if the config was specified explicitly
-        ptrans(12, "Config file $configf could not be opened ($!).  Exiting");
-        exit(1);
-      }
+	# All of the above will result in $config_file either being empty or
+	# containing the one and only config file we will use.
+	if ($config_file) {
+		foreach my $configf ('&DATA', $config_file) {
+			if (open(C, "<$configf")) {
+				# "#" in col 0 is a comment
+				while (defined(my $m = <C>)) {
+					next if ($m =~ m|^#|);
+					chomp($m);
+					$m = '-' . $m if ($m !~ /^-/);
+					push(@ARGV, split(/\s/, $m, 2));
+				}
+				close(C);
+			} elsif (!$config_is_default && $configf eq $config_file) {
+				# we only print an error if the config was specified explicitly
+				ptrans(12, "Config file $configf could not be opened ($!).  Exiting");
+				exit(1);
+			}
 
-      # OK, all that work to load @ARGV with values from the config file.  Now
-      # we just need to process it.  (don't call if nothing set in @ARGV)
-      fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
-    }
-  }
+			# OK, all that work to load @ARGV with values from the config file.  Now
+			# we just need to process it.  (don't call if nothing set in @ARGV)
+			fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
+		}
+	}
 
-  # OK, %ARGS contains all the settings from the config file.  No do it again
-  # with SWAKS_OPT_* environment variables
-  @ARGV = ();
-  foreach my $v (keys %ENV) {
-    if ($v =~ m|^SWAKS_OPT_(.*)$|) {
-      my $tv = $1; $tv =~ s|_|-|g;
-      push(@ARGV, "-$tv", $ENV{$v});
-    }
-  }
-  fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
-  
-  # and now, after all of that, process the actual cmdline args
-  @ARGV = @real_ARGV;
-  fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
+	# OK, %ARGS contains all the settings from the config file.  No do it again
+	# with SWAKS_OPT_* environment variables
+	@ARGV = ();
+	foreach my $v (keys %ENV) {
+		if ($v =~ m|^SWAKS_OPT_(.*)$|) {
+			my $tv = $1; $tv =~ s|_|-|g;
+			push(@ARGV, "-$tv", $ENV{$v});
+		}
+	}
+	fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
+	
+	# and now, after all of that, process the actual cmdline args
+	@ARGV = @real_ARGV;
+	fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
 
-  return(\%ARGS);
+	return(\%ARGS);
 }
 
 sub fetch_args {
-  my $r = shift;
-  my $l = shift;
-  
-  my %to_delete = ();
+	my $r = shift;
+	my $l = shift;
+	
+	my %to_delete = ();
 
-  # need to rewrite header-HEADER opts before std option parsing
-  # also see if there are any --no- options that need to be processed
-  RUNOPTS:
-  for (my $i = 0; $i < scalar(@ARGV); $i++) {
-    if ($ARGV[$i] =~ /^-?-(.*)$/) {
-      my $opt_name = $1;
-      foreach my $e (@$l) {
-        if (grep /^$opt_name$/, @{$e->{opts}}) {
-          delete($to_delete{$e->{okey}});
-        }
-      }
-    }
-    if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
-      $ARGV[$i] = "--header"; $ARGV[$i+1] = "$1: $ARGV[$i+1]";
-    } elsif ($ARGV[$i] =~ /^-?-(no-(.*))$/) {
-      my $whole_name = $1; my $opt_name = $2;
-      # loop through each of the options and see if it matches
-      foreach my $e (@$l) {
-        if (grep /^$whole_name$/, @{$e->{opts}}) {
-          next RUNOPTS; # this is a validopt that begins with "no-", skip
-        } elsif (grep /^$opt_name$/, @{$e->{opts}}) {
-          splice(@ARGV, $i, 1);
-          delete($r->{$e->{okey}});
-          $to_delete{$e->{okey}} = 1;          
-          redo RUNOPTS; # since we're messing with the list, redo this element
-        }
-      }
-      ptrans(12, "Unknown option $ARGV[$i], Exiting");
-      exit(1);
-    } elsif ($ARGV[$i] =~ /^-?-attach-name$/) {
-      if ($ARGV[$i+1] =~ /^-/) {
-        # in this case, the user is trying to tell us not to use
-        # a filename for the next attachment.  This means we actually have to
-        # insert an argument, flagged as a filename, with no value
-        # XXX WCSFIXME
-        splice(@ARGV, $i+1, 0, "FILENAME:");
-      } else {
-        # We were given a filename - mark it as such so we can figure
-        # it out later
-        $ARGV[$i+1] = "FILENAME:" . $ARGV[$i+1];
-      }
-    }
-  }
+	# need to rewrite header-HEADER opts before std option parsing
+	# also see if there are any --no- options that need to be processed
+	RUNOPTS:
+	for (my $i = 0; $i < scalar(@ARGV); $i++) {
+		if ($ARGV[$i] =~ /^-?-(.*)$/) {
+			my $opt_name = $1;
+			foreach my $e (@$l) {
+				if (grep /^$opt_name$/, @{$e->{opts}}) {
+					delete($to_delete{$e->{okey}});
+				}
+			}
+		}
+		if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
+			$ARGV[$i] = "--header"; $ARGV[$i+1] = "$1: $ARGV[$i+1]";
+		} elsif ($ARGV[$i] =~ /^-?-(no-(.*))$/) {
+			my $whole_name = $1; my $opt_name = $2;
+			# loop through each of the options and see if it matches
+			foreach my $e (@$l) {
+				if (grep /^$whole_name$/, @{$e->{opts}}) {
+					next RUNOPTS; # this is a validopt that begins with "no-", skip
+				} elsif (grep /^$opt_name$/, @{$e->{opts}}) {
+					splice(@ARGV, $i, 1);
+					delete($r->{$e->{okey}});
+					$to_delete{$e->{okey}} = 1;          
+					redo RUNOPTS; # since we're messing with the list, redo this element
+				}
+			}
+			ptrans(12, "Unknown option $ARGV[$i], Exiting");
+			exit(1);
+		} elsif ($ARGV[$i] =~ /^-?-attach-name$/) {
+			if ($ARGV[$i+1] =~ /^-/) {
+				# in this case, the user is trying to tell us not to use
+				# a filename for the next attachment.  This means we actually have to
+				# insert an argument, flagged as a filename, with no value
+				# XXX WCSFIXME
+				splice(@ARGV, $i+1, 0, "FILENAME:");
+			} else {
+				# We were given a filename - mark it as such so we can figure
+				# it out later
+				$ARGV[$i+1] = "FILENAME:" . $ARGV[$i+1];
+			}
+		}
+	}
 
-  # build the actual hash we will pass to GetOptions from our config list ($l):
-  # In the end I decided to build this at each call of this sub to that $r
-  # is defined.  It's not much of a performance issue.
-  my %options = ();
-  foreach my $e (@$l) {
-    my $k = join('|', @{$e->{opts}}) . $e->{suffix};
-    if ($e->{type} eq 'scalar') {
-      $options{$k} = \$r->{$e->{okey}};
-    } elsif ($e->{type} eq 'list') {
-      $options{$k} = \@{$r->{$e->{okey}}};
-    } elsif ($e->{type} eq 'sub') {
-      eval("\$options{\$k} = $e->{literal};");
-    }
-    #print "\$k = $k, $options{$k}\n";
-  }
+	# build the actual hash we will pass to GetOptions from our config list ($l):
+	# In the end I decided to build this at each call of this sub to that $r
+	# is defined.  It's not much of a performance issue.
+	my %options = ();
+	foreach my $e (@$l) {
+		my $k = join('|', @{$e->{opts}}) . $e->{suffix};
+		if ($e->{type} eq 'scalar') {
+			$options{$k} = \$r->{$e->{okey}};
+		} elsif ($e->{type} eq 'list') {
+			$options{$k} = \@{$r->{$e->{okey}}};
+		} elsif ($e->{type} eq 'sub') {
+			eval("\$options{\$k} = $e->{literal};");
+		}
+	}
 
-  if (!load("Getopt::Long")) {
-    ptrans(12, "Unable to load Getopt::Long for option processing, Exiting");
-    exit(1);
-  }
+	if (!load("Getopt::Long")) {
+		ptrans(12, "Unable to load Getopt::Long for option processing, Exiting");
+		exit(1);
+	}
 
-  Getopt::Long::Configure("bundling_override");
-  GetOptions(%options) || exit(1);
-  
-  # now remove any options that might have been added by a --no option
-  # (we have to do this here since it's legal to mix multiple OPT and --no-OPT
-  # in the same context (config file, command line, env var)
-  if (scalar keys %to_delete) {
-    foreach my $e (@$l) {
-      foreach my $opt_name (@{$e->{opts}}) {
-        if ($to_delete{$opt_name}) {
-          delete($r->{$e->{okey}});
-        }
-      }
-    }
-  }
+	Getopt::Long::Configure("bundling_override");
+	GetOptions(%options) || exit(1);
+	
+	# now remove any options that might have been added by a --no option
+	# (we have to do this here since it's legal to mix multiple OPT and --no-OPT
+	# in the same context (config file, command line, env var)
+	if (scalar keys %to_delete) {
+		foreach my $e (@$l) {
+			foreach my $opt_name (@{$e->{opts}}) {
+				if ($to_delete{$opt_name}) {
+					delete($r->{$e->{okey}});
+				}
+			}
+		}
+	}
 }
 
 # A couple of global options are set in here, they will be in the G:: namespace
 sub process_args {
-  my $o     = shift; # This is the args we got from command line
-  my %n     = ();    # This is the hash we will return w/ the fixed-up args
-  my $fconf = {};    # Hold config info from -l file if specified
+	my $o     = shift; # This is the args we got from command line
+	my %n     = ();    # This is the hash we will return w/ the fixed-up args
+	my $fconf = {};    # Hold config info from -l file if specified
 
-  # handle the output file handles early so they can be used for errors
-  # we don't need to keep track of the actual files but it will make debugging
-  # easier later
-  $G::trans_fh_oh = \*STDOUT;
-  $G::trans_fh_of = "STDOUT";
-  $G::trans_fh_eh = \*STDERR;
-  $G::trans_fh_ef = "STDERR";
-  if ($o->{output_file} &&
-        (!$o->{output_file_stderr} || !$o->{output_file_stdout}))
-  {
-    if (!open(OUTFH, ">>$o->{output_file}")) {
-      ptrans(12, "Unable to open $o->{output_file} for writing\n");
-      exit(1);
-    }
-    $G::trans_fh_oh = \*OUTFH;
-    $G::trans_fh_of = $o->{output_file};
-    $G::trans_fh_eh = \*OUTFH;
-    $G::trans_fh_ef = $o->{output_file};
-  }
-  if ($o->{output_file_stderr}) {
-    if (!open(OUTEFH, ">>$o->{output_file_stderr}")) {
-      ptrans(12, "Unable to open $o->{output_file_stderr} for writing\n");
-      exit(1);
-    }
-    $G::trans_fh_eh = \*OUTEFH;
-    $G::trans_fh_ef = $o->{output_file_stderr};
-  }
-  if ($o->{output_file_stdout}) {
-    if (!open(OUTOFH, ">>$o->{output_file_stdout}")) {
-      ptrans(12, "Unable to open $o->{output_file_stdout} for writing\n");
-      exit(1);
-    }
-    $G::trans_fh_oh = \*OUTOFH;
-    $G::trans_fh_of = $o->{output_file_stdout};
-  }
-    
+	# handle the output file handles early so they can be used for errors
+	# we don't need to keep track of the actual files but it will make debugging
+	# easier later
+	$G::trans_fh_oh = \*STDOUT;
+	$G::trans_fh_of = "STDOUT";
+	$G::trans_fh_eh = \*STDERR;
+	$G::trans_fh_ef = "STDERR";
+	if ($o->{output_file} && (!$o->{output_file_stderr} || !$o->{output_file_stdout})) {
+		if (!open(OUTFH, ">>$o->{output_file}")) {
+			ptrans(12, "Unable to open $o->{output_file} for writing\n");
+			exit(1);
+		}
+		$G::trans_fh_oh = \*OUTFH;
+		$G::trans_fh_of = $o->{output_file};
+		$G::trans_fh_eh = \*OUTFH;
+		$G::trans_fh_ef = $o->{output_file};
+	}
+	if ($o->{output_file_stderr}) {
+		if (!open(OUTEFH, ">>$o->{output_file_stderr}")) {
+			ptrans(12, "Unable to open $o->{output_file_stderr} for writing\n");
+			exit(1);
+		}
+		$G::trans_fh_eh = \*OUTEFH;
+		$G::trans_fh_ef = $o->{output_file_stderr};
+	}
+	if ($o->{output_file_stdout}) {
+		if (!open(OUTOFH, ">>$o->{output_file_stdout}")) {
+			ptrans(12, "Unable to open $o->{output_file_stdout} for writing\n");
+			exit(1);
+		}
+		$G::trans_fh_oh = \*OUTOFH;
+		$G::trans_fh_of = $o->{output_file_stdout};
+	}
+		
 
-  $G::dump_args          = 1 if ($o->{dump_args});
-  $G::suppress_data      = 1 if ($o->{suppress_data});
-  $G::no_hints           = 1 if ($o->{no_hints});
-  $G::hide_send          = 1 if ($o->{hide_send});
-  $G::hide_receive       = 1 if ($o->{hide_receive});
-  $G::hide_informational = 1 if ($o->{hide_informational});
-  $G::hide_all           = 1 if ($o->{hide_all});
-  $G::show_raw_text      = 1 if ($o->{show_raw_text});
-  $G::protect_prompt     = 1 if ($o->{protect_prompt});
-  $G::pipeline           = 1 if ($o->{pipeline});
-  $G::silent             = $o->{silent} || 0;
+	$G::dump_args          = 1 if ($o->{dump_args});
+	$G::suppress_data      = 1 if ($o->{suppress_data});
+	$G::no_hints           = 1 if ($o->{no_hints});
+	$G::hide_send          = 1 if ($o->{hide_send});
+	$G::hide_receive       = 1 if ($o->{hide_receive});
+	$G::hide_informational = 1 if ($o->{hide_informational});
+	$G::hide_all           = 1 if ($o->{hide_all});
+	$G::show_raw_text      = 1 if ($o->{show_raw_text});
+	$G::protect_prompt     = 1 if ($o->{protect_prompt});
+	$G::pipeline           = 1 if ($o->{pipeline});
+	$G::silent             = $o->{silent} || 0;
 
-  # it is an error if >1 of --server, --socket, or --pipe is specified
-  if ((defined($o->{mail_server}) && defined($o->{socket}))   ||
-      (defined($o->{mail_server}) && defined($o->{pipe_cmd})) ||
-      (defined($o->{pipe_cmd})    && defined($o->{socket})))
-  {
-    ptrans(12, "Multiple transport types specified, exiting");
-    exit(1);
-  }
+	# it is an error if >1 of --server, --socket, or --pipe is specified
+	if ((defined($o->{mail_server}) && defined($o->{socket}))   ||
+	    (defined($o->{mail_server}) && defined($o->{pipe_cmd})) ||
+	    (defined($o->{pipe_cmd})    && defined($o->{socket})))
+	{
+		ptrans(12, "Multiple transport types specified, exiting");
+		exit(1);
+	}
 
-  my %protos = ( 
-    smtp    => { proto => 'smtp',  auth => 0, tls => '0' },
-    ssmtp   => { proto => 'esmtp', auth => 0, tls => 'c' },
-    ssmtpa  => { proto => 'esmtp', auth => 1, tls => 'c' },
-    smtps   => { proto => 'smtp',  auth => 0, tls => 'c' },
-    esmtp   => { proto => 'esmtp', auth => 0, tls => '0' },
-    esmtpa  => { proto => 'esmtp', auth => 1, tls => '0' },
-    esmtps  => { proto => 'esmtp', auth => 0, tls => 's' },
-    esmtpsa => { proto => 'esmtp', auth => 1, tls => 's' },
-    lmtp    => { proto => 'lmtp',  auth => 0, tls => '0' },
-    lmtpa   => { proto => 'lmtp',  auth => 1, tls => '0' },
-    lmtps   => { proto => 'lmtp',  auth => 0, tls => 's' },
-    lmtpsa  => { proto => 'lmtp',  auth => 1, tls => 's' },
-  );
-  $G::protocol = lc($o->{mail_protocol}) || 'esmtp';
-  if (!$protos{$G::protocol}) {
-    ptrans(12, "Unknown protocol $G::protocol specified, exiting");
-    exit(1);
-  }
-  if ($protos{$G::protocol}{auth} && !$o->{auth_user} && !$o->{auth_pass} &&
-      !$o->{auth_optional} && !$o->{auth_optional_strict} && !$o->{auth})
-  {
-    $o->{auth} = ''; # cause auth to be processed below
-  }
-  if ($protos{$G::protocol}{tls} && !$o->{tls} && !$o->{tls_optional} &&
-      !$o->{tls_optional_strict} && !$o->{tls_on_connect})
-  { # 'touch' the variable so we process it below
-    if ($protos{$G::protocol}{tls} eq 's') {
-      $o->{tls} = '';
-    } elsif ($protos{$G::protocol}{tls} eq 'c') {
-      $o->{tls_on_connect} = '';
-    }
-  }
-  $G::protocol = $protos{$G::protocol}{proto};
+	my %protos = ( 
+		smtp    => { proto => 'smtp',  auth => 0, tls => '0' },
+		ssmtp   => { proto => 'esmtp', auth => 0, tls => 'c' },
+		ssmtpa  => { proto => 'esmtp', auth => 1, tls => 'c' },
+		smtps   => { proto => 'smtp',  auth => 0, tls => 'c' },
+		esmtp   => { proto => 'esmtp', auth => 0, tls => '0' },
+		esmtpa  => { proto => 'esmtp', auth => 1, tls => '0' },
+		esmtps  => { proto => 'esmtp', auth => 0, tls => 's' },
+		esmtpsa => { proto => 'esmtp', auth => 1, tls => 's' },
+		lmtp    => { proto => 'lmtp',  auth => 0, tls => '0' },
+		lmtpa   => { proto => 'lmtp',  auth => 1, tls => '0' },
+		lmtps   => { proto => 'lmtp',  auth => 0, tls => 's' },
+		lmtpsa  => { proto => 'lmtp',  auth => 1, tls => 's' },
+	);
+	$G::protocol = lc($o->{mail_protocol}) || 'esmtp';
+	if (!$protos{$G::protocol}) {
+		ptrans(12, "Unknown protocol $G::protocol specified, exiting");
+		exit(1);
+	}
+	if ($protos{$G::protocol}{auth} && !$o->{auth_user}     && 
+	    !$o->{auth_pass}            && !$o->{auth_optional} &&
+	    !$o->{auth_optional_strict} && !$o->{auth})
+	{
+		$o->{auth} = ''; # cause auth to be processed below
+	}
+	if ($protos{$G::protocol}{tls} && !$o->{tls} && !$o->{tls_optional} &&
+	    !$o->{tls_optional_strict} && !$o->{tls_on_connect})
+	{
+		# 'touch' the variable so we process it below
+		if ($protos{$G::protocol}{tls} eq 's') {
+			$o->{tls} = '';
+		} elsif ($protos{$G::protocol}{tls} eq 'c') {
+			$o->{tls_on_connect} = '';
+		}
+	}
+	$G::protocol = $protos{$G::protocol}{proto};
 
-  # set global option of -q option
-  if ($o->{quit_after}) {
-    $G::quit_after = lc($o->{quit_after});
-    if ($G::quit_after =~ /^[el]hlo$/)     { $G::quit_after = 'helo';       }
-    elsif ($G::quit_after =~ /first-[el]hlo/) { $G::quit_after = 'first-helo'; }
-    elsif ($G::quit_after eq 'starttls')   { $G::quit_after = 'tls';        }
-    elsif ($G::quit_after eq 'banner')     { $G::quit_after = 'connect';    }
-    elsif ($G::quit_after eq 'from')       { $G::quit_after = 'mail';       }
-    elsif ($G::quit_after eq 'to')         { $G::quit_after = 'rcpt';       }
-    elsif ($G::quit_after ne 'connect' && $G::quit_after ne 'first-helo' &&
-           $G::quit_after ne 'tls'     && $G::quit_after ne 'helo'       &&
-           $G::quit_after ne 'auth'    && $G::quit_after ne 'mail'       &&
-           $G::quit_after ne 'rcpt')
-    {
-      ptrans(12, "Unknown quit value $G::quit_after, exiting");
-      exit(1);
-    }
-    # only rcpt _requires_ a to address
-    $G::server_only = 1 if ($G::quit_after ne 'rcpt');
-  } else {
-    $G::quit_after = '';
-  }
+	# set global option of -q option
+	if ($o->{quit_after}) {
+		$G::quit_after = lc($o->{quit_after});
+		if ($G::quit_after =~ /^[el]hlo$/)        { $G::quit_after = 'helo';       }
+		elsif ($G::quit_after =~ /first-[el]hlo/) { $G::quit_after = 'first-helo'; }
+		elsif ($G::quit_after eq 'starttls')      { $G::quit_after = 'tls';        }
+		elsif ($G::quit_after eq 'banner')        { $G::quit_after = 'connect';    }
+		elsif ($G::quit_after eq 'from')          { $G::quit_after = 'mail';       }
+		elsif ($G::quit_after eq 'to')            { $G::quit_after = 'rcpt';       }
+		elsif ($G::quit_after ne 'connect' && $G::quit_after ne 'first-helo' &&
+		       $G::quit_after ne 'tls'     && $G::quit_after ne 'helo'       &&
+		       $G::quit_after ne 'auth'    && $G::quit_after ne 'mail'       &&
+		       $G::quit_after ne 'rcpt')
+		{
+			ptrans(12, "Unknown quit value $G::quit_after, exiting");
+			exit(1);
+		}
+		# only rcpt _requires_ a to address
+		$G::server_only = 1 if ($G::quit_after ne 'rcpt');
+	} else {
+		$G::quit_after = '';
+	}
 
-  # set global flag for -stl flag
-  $G::show_time_lapse = time() if (defined($o->{show_time_lapse}));
-  $G::show_time_hires = 1 if ($G::show_time_lapse &&
-                              avail("hires_timing") &&
-                              $o->{show_time_lapse} !~ /^i/i);
+	# set global flag for -stl flag
+	$G::show_time_lapse = time() if (defined($o->{show_time_lapse}));
+	$G::show_time_hires = 1      if ($G::show_time_lapse && avail("hires_timing") &&
+	                                                        $o->{show_time_lapse} !~ /^i/i);
 
-  if ($o->{emulate_mail}) { # set up for -m option
-    $n{to} = shift if (!defined($o->{mail_to}));
-    $o->{mail_data} = ''; # define it here so we get it on stdin later
-  }
+	if ($o->{emulate_mail}) { # set up for -m option
+		$n{to}          = shift if (!defined($o->{mail_to}));
+		$o->{mail_data} = ''; # define it here so we get it on stdin later
+	}
 
-  # pipe command, if one is specified
-  $G::link{process}   = $o->{pipe_cmd} || interact("Pipe: ", '^.+$')
-      if (defined($o->{pipe_cmd}));
-  $G::link{process} ||= $fconf->{PIPE} || "";
-  if ($G::link{process}) { $G::link{type} = 'pipe';   }
-  else                   { delete($G::link{process}); }
+	# pipe command, if one is specified
+	$G::link{process}   = $o->{pipe_cmd} || interact("Pipe: ", '^.+$')
+		if (defined($o->{pipe_cmd}));
+	$G::link{process} ||= $fconf->{PIPE} || "";
+	if ($G::link{process}) { $G::link{type} = 'pipe';   }
+	else                   { delete($G::link{process}); }
 
-  # socket file, if one is specified
-  $G::link{sockfile}   = $o->{socket} || interact("Socket File: ", '^.+$')
-      if (defined($o->{socket}));
-  $G::link{sockfile} ||= $fconf->{SOCKET} || "";
-  if ($G::link{sockfile}) { $G::link{type} = 'socket-unix'; }
-  else                    { delete($G::link{sockfile});     }
+	# socket file, if one is specified
+	$G::link{sockfile}   = $o->{socket} || interact("Socket File: ", '^.+$')
+		if (defined($o->{socket}));
+	$G::link{sockfile} ||= $fconf->{SOCKET} || "";
+	if ($G::link{sockfile}) { $G::link{type} = 'socket-unix'; }
+	else                    { delete($G::link{sockfile});     }
 
-  my $user     = get_username($o->{force_getpwuid});
-  my $hostname = get_hostname();
+	my $user     = get_username($o->{force_getpwuid});
+	my $hostname = get_hostname();
 
-  # SMTP mail from
-  $n{from} = $o->{mail_from} || interact("From: ", '^.*$')
-      if (defined($o->{mail_from}));
-  $n{from} ||= $fconf->{FROM} || ($hostname || ($G::server_only &&
-                                                $G::quit_after ne 'mail')
-                                    ? "$user\@$hostname"
-                                    : interact("From: ", '^.*$'));
-  $n{from} = '' if ($n{from} eq '<>');
+	# SMTP mail from
+	$n{from}   = $o->{mail_from} || interact("From: ", '^.*$')
+		if (defined($o->{mail_from}));
+	$n{from} ||= $fconf->{FROM} || ($hostname || ($G::server_only && $G::quit_after ne 'mail')
+	                                ? "$user\@$hostname"
+	                                : interact("From: ", '^.*$'));
+	$n{from}   = '' if ($n{from} eq '<>');
 
-  # SMTP helo/ehlo
-  $n{helo}   = $o->{mail_helo} || interact("Helo: ", '^.*$')
-      if (defined($o->{mail_helo}));
-  $n{helo} ||= $fconf->{HELO} || ($hostname || ($G::quit_after eq 'connect')
-                                    ? $hostname
-                                    : interact("Helo: ", '^.*$'));
+	# SMTP helo/ehlo
+	$n{helo}   = $o->{mail_helo} || interact("Helo: ", '^.*$')
+		if (defined($o->{mail_helo}));
+	$n{helo} ||= $fconf->{HELO} || ($hostname || ($G::quit_after eq 'connect')
+	                                ? $hostname
+	                                : interact("Helo: ", '^.*$'));
 
-  # SMTP server and rcpt to are interdependant, so they are handled together
-  $G::link{server}   = $o->{mail_server} || interact("Server: ", '^.*$')
-      if (defined($o->{mail_server}));
-  $G::link{server} ||= $fconf->{SERVER};
-  $o->{mail_port}  ||= $1 if ($G::link{server} =~ s|:([^:]+)$||);
-  $n{to}             = $o->{mail_to} || interact("To: ", '^.*$')
-      if (defined($o->{mail_to}));
-  $n{to}           ||= $fconf->{TO};
-  $n{to}             = interact("To: ", '^.*$')
-      if (!$n{to} && !($G::server_only && ($G::link{server} ||
-                                           $G::link{type} eq 'socket-unix' ||
-                                           $G::link{type} eq 'pipe')));
-  if (!$G::link{type}) {
-    $G::link{server} = get_server($o->{copy_routing} ?  $o->{copy_routing}
-                                : $n{to}) if (!$G::link{server});
-    $G::link{type}   = "socket-inet";
-  }
+	# SMTP server and rcpt to are interdependant, so they are handled together
+	$G::link{server}   = $o->{mail_server} || interact("Server: ", '^.*$')
+		if (defined($o->{mail_server}));
+	$G::link{server} ||= $fconf->{SERVER};
+	$o->{mail_port}  ||= $1 if ($G::link{server} =~ s|:([^:]+)$||);
+	$n{to}             = $o->{mail_to} || interact("To: ", '^.*$')
+		if (defined($o->{mail_to}));
+	$n{to}           ||= $fconf->{TO};
+	$n{to}             = interact("To: ", '^.*$')
+		if (!$n{to} && !($G::server_only &&
+		   ($G::link{server} || $G::link{type} eq 'socket-unix' || $G::link{type} eq 'pipe')));
+	if (!$G::link{type}) {
+		$G::link{server} = get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to}) if (!$G::link{server});
+		$G::link{type}   = "socket-inet";
+	}
 
-  # Verify we are able to handle the requested transport
-  if ($G::link{type} eq 'pipe') {
-    if (!avail("pipe")) {
-      ptrans(12, avail_str("pipe").".  Exiting");
-      exit(2);
-    }
-  } else {
-    if (!avail("socket")) {
-      ptrans(12, avail_str("socket").".  Exiting");
-      exit(2);
-    }
-  }
+	# Verify we are able to handle the requested transport
+	if ($G::link{type} eq 'pipe') {
+		if (!avail("pipe")) {
+			ptrans(12, avail_str("pipe").".  Exiting");
+			exit(2);
+		}
+	} else {
+		if (!avail("socket")) {
+			ptrans(12, avail_str("socket").".  Exiting");
+			exit(2);
+		}
+	}
 
-  # local interface to connect from
-  $G::link{lint}   = $o->{lint} || interact("Interface: ", '^.*$')
-      if (defined($o->{lint}));
-  $G::link{lint} ||= $fconf->{INTERFACE} || '0.0.0.0';
+	# local interface to connect from
+	$G::link{lint}   = $o->{lint} || interact("Interface: ", '^.*$')
+		if (defined($o->{lint}));
+	$G::link{lint} ||= $fconf->{INTERFACE} || '0.0.0.0';
 
-  # SMTP timeout
-  $o->{timeout}       = '0s' if ($o->{timeout} eq '0'); # used 'eq' on purpose
-  $G::link{timeout}   = $o->{timeout} || interact("Timeout: ", '^\d+[hHmMsS]?$')
-      if (defined($o->{timeout}));
-  $G::link{timeout} ||= $fconf->{TIMEOUT} || '30s';
-  $G::link{timeout}   = time_to_seconds($G::link{timeout});
+	# SMTP timeout
+	$o->{timeout}       = '0s' if ($o->{timeout} eq '0'); # used 'eq' on purpose
+	$G::link{timeout}   = $o->{timeout} || interact("Timeout: ", '^\d+[hHmMsS]?$')
+		if (defined($o->{timeout}));
+	$G::link{timeout} ||= $fconf->{TIMEOUT} || '30s';
+	$G::link{timeout}   = time_to_seconds($G::link{timeout});
 
-  my $body  = 'This is a test mailing'; # default message body
-  my $bound = "";
-  my $stdin = undef;
-  if (defined($o->{body_822})) {
-    # the --body option is the entire 822 body and trumps and other options
-    # that mess with the body
-    if (!$o->{body_822}) {
-      $body = interact("Body: ", '.+');
-    } elsif ($o->{body_822} eq '-') {
-      $stdin = join('', <STDIN>);
-      $body  = $stdin;
-    } else {
-      $body = $o->{body_822};
-    }
-    if (open(I, "<$body")) {
-      $body = join('', <I>);
-      close(I);
-    }
-  }
-  if (defined($o->{attach_822}) && ref($o->{attach_822}) eq 'ARRAY'
-                                && scalar(@{$o->{attach_822}}))
-  {
-    # this option is a list of files (or STDIN) to attach.  In this case,
-    # the message become a mime message and the "body" goes in the
-    # first text/plain part
-    my $mime_type = 'application/octet-stream';
-    my $next_name = undef();
-    my @parts = ( { body => $body, type => 'text/plain' } );
-    $bound = "----=_MIME_BOUNDARY_000_$$";
-    while (defined(my $t = shift(@{$o->{attach_822}}))) {
-      if ($t =~ m|^[^/]+/[^/]+$| && !stat($t)) {
-        $mime_type = $t;
-      } elsif ($t =~ /^FILENAME:(.*)$/) {
-        $next_name = $1;
-      } else {
-        push(@parts, { body => "$t", type => $mime_type });
-        if (defined($next_name)) {
-          $parts[-1]{name} = $next_name;
-          $next_name = undef();
-        }
-      }
-    }
-    $body = '';
-    foreach my $p (@parts) {
-      if ($p->{body} eq '-') {
-        if ($stdin) {
-          $p->{body} = $stdin;
-        } else {
-          $p->{body} = join('', <STDIN>);
-          $stdin     = $p->{body};
-        }
-      } elsif (open(I, "<$p->{body}")) {
-        if (!exists($p->{name})) {
-          ($p->{name}) = $p->{body} =~ m|/?([^/]+)$|;
-        }
-        $p->{body} = join('', <I>);
-        close(I);
-        
-      }
-      $body .= "--$bound\n";
-      if ($p->{type} =~ m|^text/plain$|i && !$p->{name}) {
-        $body .= "Content-Type: $p->{type}\n\n" . $p->{body} . "\n";
-      } else {
-        if ($p->{name}) {
-          $body .= "Content-Type: $p->{type}; name=\"$p->{name}\"\n"
-                .  "Content-Description: $p->{name}\n"
-                .  "Content-Disposition: attachment; filename=\"$p->{name}\"\n";
-        } else {
-          $body .= "Content-Type: $p->{type}\n"
-                .  "Content-Disposition: attachment\n";
-        }
-        $body .= "Content-Transfer-Encoding: BASE64\n"
-              .  "\n" . eb64($p->{body}, "\n") . "\n";
-      }
-    }
-    $body .= "--$bound--\n";
-  }
+	my $body  = 'This is a test mailing'; # default message body
+	my $bound = "";
+	my $stdin = undef;
+	if (defined($o->{body_822})) {
+		# the --body option is the entire 822 body and trumps and other options
+		# that mess with the body
+		if (!$o->{body_822}) {
+			$body = interact("Body: ", '.+');
+		} elsif ($o->{body_822} eq '-') {
+			$stdin = join('', <STDIN>);
+			$body  = $stdin;
+		} else {
+			$body = $o->{body_822};
+		}
+		if (open(I, "<$body")) {
+			$body = join('', <I>);
+			close(I);
+		}
+	}
+	if (defined($o->{attach_822}) && ref($o->{attach_822}) eq 'ARRAY' && scalar(@{$o->{attach_822}})) {
+		# this option is a list of files (or STDIN) to attach.  In this case,
+		# the message become a mime message and the "body" goes in the
+		# first text/plain part
+		my $mime_type = 'application/octet-stream';
+		my $next_name = undef();
+		my @parts     = ( { body => $body, type => 'text/plain' } );
+		$bound        = "----=_MIME_BOUNDARY_000_$$";
+		while (defined(my $t = shift(@{$o->{attach_822}}))) {
+			if ($t =~ m|^[^/]+/[^/]+$| && !stat($t)) {
+				$mime_type = $t;
+			} elsif ($t =~ /^FILENAME:(.*)$/) {
+				$next_name = $1;
+			} else {
+				push(@parts, { body => "$t", type => $mime_type });
+				if (defined($next_name)) {
+					$parts[-1]{name} = $next_name;
+					$next_name       = undef();
+				}
+			}
+		}
+		$body = '';
+		foreach my $p (@parts) {
+			if ($p->{body} eq '-') {
+				if ($stdin) {
+					$p->{body} = $stdin;
+				} else {
+					$p->{body} = join('', <STDIN>);
+					$stdin     = $p->{body};
+				}
+			} elsif (open(I, "<$p->{body}")) {
+				if (!exists($p->{name})) {
+					($p->{name}) = $p->{body} =~ m|/?([^/]+)$|;
+				}
+				$p->{body} = join('', <I>);
+				close(I);
+			}
+			$body .= "--$bound\n";
+			if ($p->{type} =~ m|^text/plain$|i && !$p->{name}) {
+				$body .= "Content-Type: $p->{type}\n\n" . $p->{body} . "\n";
+			} else {
+				if ($p->{name}) {
+					$body .= "Content-Type: $p->{type}; name=\"$p->{name}\"\n"
+					      .  "Content-Description: $p->{name}\n"
+					      .  "Content-Disposition: attachment; filename=\"$p->{name}\"\n";
+				} else {
+					$body .= "Content-Type: $p->{type}\n"
+					      .  "Content-Disposition: attachment\n";
+				}
+				$body .= "Content-Transfer-Encoding: BASE64\n"
+				      .  "\n" . eb64($p->{body}, "\n") . "\n";
+			}
+		}
+		$body .= "--$bound--\n";
+	}
 
-  # add-header option.  In a strict technical sense all this is is a text
-  # string that will replace %NEW_HEADERS% in the DATA.  Because of where
-  # %NEW_HEADERS% is placed in the default DATA, in practice this is used
-  # to add headers to the stock DATA w/o having to craft a custom DATA portion
-  @{$o->{add_header}} = map { split(/\\n/) } @{$o->{add_header}};
+	# add-header option.  In a strict technical sense this is only a text
+	# string that will replace %NEW_HEADERS% in the DATA.  Because of where
+	# %NEW_HEADERS% is placed in the default DATA, in practice this is used
+	# to add headers to the stock DATA w/o having to craft a custom DATA portion
+	@{$o->{add_header}} = map { split(/\\n/) } @{$o->{add_header}};
 
-  # SMTP DATA
-  # a '-' arg to -d is the same as setting -g
-  if ($o->{mail_data} eq '-') {
-    undef($o->{mail_data});
-    $o->{data_on_stdin} = 1;
-  }
-  if (defined($o->{mail_data}) && !defined($o->{data_on_stdin})) {
-    if (defined($o->{emulate_mail})) {
-      $n{data} = "Subject: " . interact("Subject: ", 'SKIP') . "\n\n";
-      do {
-        $n{data} .= interact('', 'SKIP') . "\n";
-      } while ($n{data} !~ /\n\.\n$/ms);
-      $n{data} =~ s/\n\.\n$//ms;
-    } else {
-      $n{data} = $o->{mail_data} || interact("Data: ", '^.*$');
-    }
-  }
-  $n{data} ||= $fconf->{DATA}
-           || 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n'
-             ."X-Mailer: swaks v$p_version jetmore.org/john/code/swaks/".'\n'
-             . ($bound ?  'MIME-Version: 1.0\n'
-                         .'Content-Type: multipart/mixed; '
-                         .'boundary="'.$bound.'"\n'
-                       : '')
-             .'%NEW_HEADERS%' # newline will be added in replacement if it exists
-             .'\n'
-             .'%BODY%\n';
-  # The -g option trumps all other methods of getting the data
-  if ($o->{data_on_stdin}) {
-    $n{data} = join('', <STDIN>);
-  } elsif ($n{data} !~ m/(\\n|\n)/ && open(F, "<$n{data}")) {
-    $n{data} = join('', <F>);
-    close(F);
-  }
-  if (!$o->{no_data_fixup}) {
-    $n{data} =~ s/%BODY%/$body/g;
-    $n{data} =~ s/%B/$body/g if ($O{use_old_data_tokens});
-    if (defined($o->{header}) && ref($o->{header}) eq 'ARRAY'
-                              && scalar(@{$o->{header}}))
-    {
-      foreach my $l (map { split(/\\n/) } @{$o->{header}}) {
-        if (my($h) = $l =~ /^([^:]+):/) {
-          if ($n{data} !~ s/(^|\\n|\n)$h:.*?($|\\n|\n)/$1$l$2/) {
-            push(@{$o->{add_header}}, $l);
-          }
-        } else { push(@{$o->{add_header}}, $l); }
-      }
-    }
-    $n{add_header} = join('\n', @{$o->{add_header}}) . "\n"
-        if (@{$o->{add_header}});
-    if ($n{data} =~ /%NEW_HEADERS%/ || ($O{use_old_data_tokens} && $n{data} =~ /%H/)) {
-      $n{data} =~ s/%NEW_HEADERS%/$n{add_header}/g;
-      $n{data} =~ s/%H/$n{add_header}/g if ($O{use_old_data_tokens});
-    } else {
-      $n{data} =~ s/(\n|\\n)(\r?\n|\\n)/$1$n{add_header}$2/;
-    }
-    $n{data} =~ s/\\n/\r\n/g;
-    $n{data} =~ s/%FROM_ADDRESS%/$n{from}/g;
-    $n{data} =~ s/%F/$n{from}/g if ($O{use_old_data_tokens});
-    $n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
-    $n{data} =~ s/%T/$n{to}/g if ($O{use_old_data_tokens});
-    { my $date_string = get_date_string();
-      $n{data} =~ s/%DATE%/$date_string/g;
-      $n{data} =~ s/%D/$date_string/g if ($O{use_old_data_tokens});
-    }
-    $n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
-    $n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
-    $n{data} =~ s/\n\./\n../g;         # quote any other leading dots
-    # translate line endings - run twice to get consecutive \n correctly
-    $n{data} =~ s/([^\r])\n/$1\r\n/gs;
-    $n{data} =~ s/([^\r])\n/$1\r\n/gs; # this identical call not a bug
-    $n{data} .= "\r\n.";               # add a trailing dot
-  }
+	# SMTP DATA
+	# a '-' arg to -d is the same as setting -g
+	if ($o->{mail_data} eq '-') {
+		undef($o->{mail_data});
+		$o->{data_on_stdin} = 1;
+	}
+	if (defined($o->{mail_data}) && !defined($o->{data_on_stdin})) {
+		if (defined($o->{emulate_mail})) {
+			$n{data} = "Subject: " . interact("Subject: ", 'SKIP') . "\n\n";
+			do {
+				$n{data} .= interact('', 'SKIP') . "\n";
+			} while ($n{data} !~ /\n\.\n$/ms);
+			$n{data} =~ s/\n\.\n$//ms;
+		} else {
+			$n{data} = $o->{mail_data} || interact("Data: ", '^.*$');
+		}
+	}
+	$n{data} ||= $fconf->{DATA}
+	         || 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
+	            "X-Mailer: swaks v$p_version jetmore.org/john/code/swaks/".'\n' .
+	            ($bound ? 'MIME-Version: 1.0\nContent-Type: multipart/mixed; boundary="'.$bound.'"\n' : '') .
+	            '%NEW_HEADERS%' . # newline will be added in replacement if it exists
+	            '\n' .
+	            '%BODY%\n';
+	# The -g option trumps all other methods of getting the data
+	if ($o->{data_on_stdin}) {
+		$n{data} = join('', <STDIN>);
+	} elsif ($n{data} !~ m/(\\n|\n)/ && open(F, "<$n{data}")) {
+		$n{data} = join('', <F>);
+		close(F);
+	}
+	if (!$o->{no_data_fixup}) {
+		$n{data} =~ s/%BODY%/$body/g;
+		$n{data} =~ s/%B/$body/g if ($O{use_old_data_tokens});
+		if (defined($o->{header}) && ref($o->{header}) eq 'ARRAY' && scalar(@{$o->{header}})) {
+			foreach my $l (map { split(/\\n/) } @{$o->{header}}) {
+				if (my($h) = $l =~ /^([^:]+):/) {
+					if ($n{data} !~ s/(^|\\n|\n)$h:.*?($|\\n|\n)/$1$l$2/) {
+						push(@{$o->{add_header}}, $l);
+					}
+				} else {
+					push(@{$o->{add_header}}, $l);
+				}
+			}
+		}
+		$n{add_header} = join('\n', @{$o->{add_header}}) . "\n" if (@{$o->{add_header}});
+		if ($n{data} =~ /%NEW_HEADERS%/ || ($O{use_old_data_tokens} && $n{data} =~ /%H/)) {
+			$n{data} =~ s/%NEW_HEADERS%/$n{add_header}/g;
+			$n{data} =~ s/%H/$n{add_header}/g if ($O{use_old_data_tokens});
+		} else {
+			$n{data} =~ s/(\n|\\n)(\r?\n|\\n)/$1$n{add_header}$2/;
+		}
+		$n{data} =~ s/\\n/\r\n/g;
+		$n{data} =~ s/%FROM_ADDRESS%/$n{from}/g;
+		$n{data} =~ s/%F/$n{from}/g if ($O{use_old_data_tokens});
+		$n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
+		$n{data} =~ s/%T/$n{to}/g   if ($O{use_old_data_tokens});
+		{  # braces are to limit scope of $date_string
+			my $date_string = get_date_string();
+			$n{data} =~ s/%DATE%/$date_string/g;
+			$n{data} =~ s/%D/$date_string/g if ($O{use_old_data_tokens});
+		}
+		$n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
+		$n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
+		$n{data} =~ s/\n\./\n../g;         # quote any other leading dots
+		# translate line endings - run twice to get consecutive \n correctly
+		$n{data} =~ s/([^\r])\n/$1\r\n/gs;
+		$n{data} =~ s/([^\r])\n/$1\r\n/gs; # this identical call is not a bug
+		$n{data} .= "\r\n.";               # add a trailing dot
+	}
 
-  # Handle TLS options
-  # tls =>
-  #   0 - no.  STARTTLS must be advertised and must succeed, else error
-  #   1 - yes.  success if not advertised, advertised and fails _or_ succeeds
-  #   2 - strict.  satisfied if not advertised, or advertised and succeeded.
-  #                however, if it's advertised and fails, it's an error
-  $G::tls_optional      = 1 if (defined($o->{tls_optional}));
-  $G::tls_optional      = 2 if (defined($o->{tls_optional_strict}));
-  $G::tls               = 1 if (defined($o->{tls}) || $G::tls_optional);
-  $G::tls_on_connect    = 1 if (defined($o->{tls_on_connect}));
-  $G::link{tls}{active} = 0;
-  if ($G::tls || $G::tls_on_connect) {
-    if (!avail("tls")) {
-      if ($G::tls_optional) {
-        $G::tls = undef; # so we won't try it later
-        ptrans(12,avail_str("tls"));
-      } else {
-        ptrans(12,avail_str("tls").".  Exiting");
-        exit(10);
-      }
-    }
-  }
-  if ($o->{tls_get_peer_cert}) {
-    $G::tls_get_peer_cert = $o->{tls_get_peer_cert};
-  } elsif (defined($o->{tls_get_peer_cert})) {
-    $G::tls_get_peer_cert = "STDOUT";
-  }
+	# Handle TLS options
+	# tls => 0 - no.  STARTTLS must be advertised and must succeed, else error.
+	#        1 - yes.  Success if not advertised, advertised and fails _or_ succeeds.
+	#        2 - strict.  Satisfied if not advertised, or advertised and succeeded.
+	#                     However, if it's advertised and fails, it's an error.
+	$G::tls_optional      = 1 if (defined($o->{tls_optional}));
+	$G::tls_optional      = 2 if (defined($o->{tls_optional_strict}));
+	$G::tls               = 1 if (defined($o->{tls}) || $G::tls_optional);
+	$G::tls_on_connect    = 1 if (defined($o->{tls_on_connect}));
+	$G::link{tls}{active} = 0;
+	if ($G::tls || $G::tls_on_connect) {
+		if (!avail("tls")) {
+			if ($G::tls_optional) {
+				$G::tls = undef; # so we won't try it later
+				ptrans(12,avail_str("tls"));
+			} else {
+				ptrans(12,avail_str("tls").".  Exiting");
+				exit(10);
+			}
+		}
+	}
+	if ($o->{tls_get_peer_cert}) {
+		$G::tls_get_peer_cert = $o->{tls_get_peer_cert};
+	} elsif (defined($o->{tls_get_peer_cert})) {
+		$G::tls_get_peer_cert = "STDOUT";
+	}
 
-  # SMTP port
-  $G::link{port}   = $o->{mail_port} || interact("Port: ", '^\w+$')
-      if (defined($o->{mail_port}));
-  $G::link{port} ||= $fconf->{PORT};
-  if ($G::link{port}) {
-    # in here, the user has either specified a port, or that they _want_
-    # to, so if it isn't a resolvable port, ,keep prompting for another one
-    my $o_port = $G::link{port};
-    if ($G::link{port} !~ /^\d+$/) {
-      $G::link{port} = getservbyname($G::link{port}, 'tcp');
-      while (!$G::link{port}) {
-        $G::link{port} = $o_port =
-            interact("Unable to resolve port $o_port\nPort: ", '^\w+$');
-        $G::link{port} = getservbyname($G::link{port}, 'tcp')
-            if ($G::link{port} !~ /^\d+$/);
-      }
-    }
-  } else {
-    # in here, user wants us to use default ports, so try look up services,
-    # use default numbers is service names don't resolve.  Never prompt user
-    if ($G::protocol eq 'lmtp') {
-      $G::link{port} = getservbyname('lmtp',  'tcp') || '24';
-    } elsif ($G::tls_on_connect) {
-      $G::link{port} = getservbyname('smtps', 'tcp') || '465';
-    } else {
-      $G::link{port} = getservbyname('smtp',  'tcp') || '25';
-    }
-  }
-  
+	# SMTP port
+	$G::link{port}   = $o->{mail_port} || interact("Port: ", '^\w+$')
+		if (defined($o->{mail_port}));
+	$G::link{port} ||= $fconf->{PORT};
+	if ($G::link{port}) {
+		# in here, the user has either specified a port, or that they _want_
+		# to, so if it isn't a resolvable port, keep prompting for another one
+		my $o_port = $G::link{port};
+		if ($G::link{port} !~ /^\d+$/) {
+			$G::link{port} = getservbyname($G::link{port}, 'tcp');
+			while (!$G::link{port}) {
+				$G::link{port} = $o_port = interact("Unable to resolve port $o_port\nPort: ", '^\w+$');
+				$G::link{port} = getservbyname($G::link{port}, 'tcp') if ($G::link{port} !~ /^\d+$/);
+			}
+		}
+	} else {
+		# in here, user wants us to use default ports, so try look up services,
+		# use default numbers is service names don't resolve.  Never prompt user
+		if ($G::protocol eq 'lmtp') {
+			$G::link{port} = getservbyname('lmtp',  'tcp') || '24';
+		} elsif ($G::tls_on_connect) {
+			$G::link{port} = getservbyname('smtps', 'tcp') || '465';
+		} else {
+			$G::link{port} = getservbyname('smtp',  'tcp') || '25';
+		}
+	}
+	
 
-  # Handle AUTH options
-  # auth_optional =>
-  #   0 - no.  auth must be advertised and must succeed, else error
-  #   1 - yes.  success if not advertised, advertised and fails _or_ succeeds
-  #   2 - strict.  satisfied if not advertised, or advertised and succeeded.
-  #                however, if it's advertised and fails, it's an error
-  $G::auth_optional = 1 if (defined($o->{auth_optional}));
-  $G::auth_optional = 2 if (defined($o->{auth_optional_strict}));
-  $o->{auth_types} = [];
-  if ($o->{auth}) {
-    @{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth}));
-  } elsif ($o->{auth_optional_strict}) {
-    @{$o->{auth_types}} =
-        map { uc($_) } (split(/,/, $o->{auth_optional_strict}));
-  } elsif ($o->{auth_optional}) {
-    @{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth_optional}));
-  } elsif (defined($o->{auth_user}) || defined($o->{auth_pass}) ||
-           $G::auth_optional || (defined($o->{auth}) && !$o->{auth}))
-  {
-    $o->{auth_types}[0] = 'ANY';
-    $o->{auth} = 'ANY'; # this is checked below
-    $G::auth_type = 'ANY';
-  }
-  # if after that processing we've defined some auth type, do some more
-  # specific processing
-  if (scalar(@{$o->{auth_types}})) {
-    # there's a lot of option processing below.  If any type looks like it
-    # will succeed later, set this to true
-    my $valid_auth_found = 0;
+	# Handle AUTH options
+	# auth_optional => 0 - no.     Auth must be advertised and must succeed, else error.
+	#                  1 - yes.    Success if not advertised, advertised and fails _or_ succeeds.
+	#                  2 - strict. Satisfied if not advertised, or advertised and succeeded.
+	#                              However, if it's advertised and fails, it's an error.
+	$G::auth_optional = 1 if (defined($o->{auth_optional}));
+	$G::auth_optional = 2 if (defined($o->{auth_optional_strict}));
+	$o->{auth_types} = [];
+	if ($o->{auth}) {
+		@{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth}));
+	} elsif ($o->{auth_optional_strict}) {
+		@{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth_optional_strict}));
+	} elsif ($o->{auth_optional}) {
+		@{$o->{auth_types}} = map { uc($_) } (split(/,/, $o->{auth_optional}));
+	} elsif (defined($o->{auth_user}) || defined($o->{auth_pass}) ||
+	         $G::auth_optional        || (defined($o->{auth})     && !$o->{auth}))
+	{
+		$o->{auth_types}[0] = 'ANY';
+		$o->{auth}          = 'ANY'; # this is checked below
+		$G::auth_type       = 'ANY';
+	}
+	# if after that processing we've defined some auth type, do some more
+	# specific processing
+	if (scalar(@{$o->{auth_types}})) {
+		# there's a lot of option processing below.  If any type looks like it
+		# will succeed later, set this to true
+		my $valid_auth_found = 0;
 
-    # handle the --auth-map options plus our default mappings
-    foreach (split(/\s+,\s+/, $o->{auth_map}),"PLAIN=PLAIN","LOGIN=LOGIN",
-             "CRAM-MD5=CRAM-MD5","DIGEST-MD5=DIGEST-MD5","CRAM-SHA1=CRAM-SHA1",
-             "NTLM=NTLM","SPA=NTLM","MSN=NTLM")
-    {
-      my($alias,$type) = split(/=/, uc($_), 2);
-      # this gives us a list of all aliases and what the alias
-      $G::auth_map_f{$alias} = $type;
-      # this gives a list of all base types and any aliases for it.
-      $G::auth_map_t{$type} ||= [];
-      push(@{$G::auth_map_t{$type}}, $alias);
-    }
-    if (!avail("auth")) { # check for general auth requirements
-      if ($G::auth_optional == 2) {
-        # we don't know yet if this is really an error.  If the server
-        # doesn't advertise auth, then it's not really an error.  So just
-        # save it in case we need it later
-        $G::auth_unavailable = avail_str("auth");
-        ptrans(12, avail_str("auth"));
-      } elsif ($G::auth_optional == 1) {
-        ptrans(12, avail_str("auth"). ".  Skipping optional AUTH");
-      } else {
-        ptrans(12, avail_str("auth"). ".  Exiting");
-        exit(10);
-      }
-    } else {
-      # if the user doesn't specify an auth type, create a list from our
-      # auth-map data.  Simplifies processing later
-      if ($o->{auth_types}[0] eq 'ANY') {
-        $o->{auth_types} = [sort keys %G::auth_map_f];
-      }
+		# handle the --auth-map options plus our default mappings
+		foreach (split(/\s*,\s*/, $o->{auth_map}),"PLAIN=PLAIN","LOGIN=LOGIN",
+		                          "CRAM-MD5=CRAM-MD5","DIGEST-MD5=DIGEST-MD5",
+		                          "CRAM-SHA1=CRAM-SHA1","NTLM=NTLM","SPA=NTLM","MSN=NTLM")
+		{
+			my($alias,$type)        = split(/=/, uc($_), 2);
+			# this gives us a list of all aliases and what the alias
+			$G::auth_map_f{$alias}  = $type;
+			# this gives a list of all base types and any aliases for it.
+			$G::auth_map_t{$type} ||= [];
+			push(@{$G::auth_map_t{$type}}, $alias);
+		}
+		# Now handle the --auth-extra options
+		foreach (split(/\s*,\s*/, $o->{auth_extra})) {
+			my($keyword,$value)       = split(/=/, $_, 2);
+			$keyword                  = uc($keyword);
+			$G::auth_extras{$keyword} = $value;
+		}
+		# handle the realm/domain synonyms
+		if ($G::auth_extras{DOMAIN}) {
+			$G::auth_extras{REALM}  = $G::auth_extras{DOMAIN};
+		} elsif ($G::auth_extras{DOMAIN}) {
+			$G::auth_extras{DOMAIN} = $G::auth_extras{REALM};
+		}
+		if (!avail("auth")) { # check for general auth requirements
+			if ($G::auth_optional == 2) {
+				# we don't know yet if this is really an error.  If the server
+				# doesn't advertise auth, then it's not really an error.  So just
+				# save it in case we need it later
+				$G::auth_unavailable = avail_str("auth");
+				ptrans(12, avail_str("auth"));
+			} elsif ($G::auth_optional == 1) {
+				ptrans(12, avail_str("auth"). ".  Skipping optional AUTH");
+			} else {
+				ptrans(12, avail_str("auth"). ".  Exiting");
+				exit(10);
+			}
+		} else {
+			# if the user doesn't specify an auth type, create a list from our
+			# auth-map data.  Simplifies processing later
+			if ($o->{auth_types}[0] eq 'ANY') {
+				$o->{auth_types} = [sort keys %G::auth_map_f];
+			}
 
-      foreach my $type (@{$o->{auth_types}}) {
-        # we need to evaluate whether we will be able to run the auth types
-        # specified by the user
+			foreach my $type (@{$o->{auth_types}}) {
+				# we need to evaluate whether we will be able to run the auth types
+				# specified by the user
+				if (!$G::auth_map_f{$type}) {
+					ptrans(12, "$type is not a recognized auth type, skipping");
+				} elsif ($G::auth_map_f{$type} eq 'CRAM-MD5'   && !avail("auth_cram_md5")) {
+					ptrans(12, avail_str("auth_cram_md5"))   if ($o->{auth} ne 'ANY');
+				} elsif ($G::auth_map_f{$type} eq 'CRAM-SHA1'  && !avail("auth_cram_sha1")) {
+					ptrans(12, avail_str("auth_cram_sha1"))  if ($o->{auth} ne 'ANY');
+				} elsif ($G::auth_map_f{$type} eq 'NTLM'       && !avail("auth_ntlm")) {
+					ptrans(12, avail_str("auth_ntlm"))       if ($o->{auth} ne 'ANY');
+				} elsif ($G::auth_map_f{$type} eq 'DIGEST-MD5' && !avail("auth_digest_md5")) {
+					ptrans(12, avail_str("auth_digest_md5")) if ($o->{auth} ne 'ANY');
+				} else {
+					$valid_auth_found = 1;
+					push(@{$n{a_type}}, $type);
+				}
+			}
 
-        if (!$G::auth_map_f{$type}) {
-          ptrans(12, "$type is not a recognized auth type, skipping");
-        }
+			if (!$valid_auth_found) {
+				ptrans(12, "No auth types supported");
+				if ($G::auth_optional == 2) {
+					$G::auth_unavailable .= "No auth types supported";
+				} elsif ($G::auth_optional == 1) {
+					$n{a_user} = $n{a_pass} = $n{a_type} = undef;
+				} else {
+					exit(10);
+				}
+			} else {
+				$n{a_user}   = $o->{auth_user} if (defined($o->{auth_user}));
+				$n{a_user} ||= $fconf->{USER};
+				$n{a_user} ||= interact("Username: ", 'SKIP');
+				$n{a_user}   = '' if ($n{a_user} eq '<>');
 
-        elsif ($G::auth_map_f{$type} eq 'CRAM-MD5' && !avail("auth_cram_md5"))
-        {
-          ptrans(12, avail_str("auth_cram_md5")) if ($o->{auth} ne 'ANY');
-        }
+				$n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
+				$n{a_pass} ||= $fconf->{PASS};
+				$n{a_pass} ||= interact("Password: ", 'SKIP', 1);
+				$n{a_pass}   = '' if ($n{a_pass} eq '<>');
 
-        elsif ($G::auth_map_f{$type} eq 'CRAM-SHA1' && !avail("auth_cram_sha1"))
-        {
-          ptrans(12, avail_str("auth_cram_sha1")) if ($o->{auth} ne 'ANY');
-        }
+				$G::auth_showpt = 1 if (defined($o->{auth_showpt}));
+				if (length($o->{auth_hidepw})) {
+					$G::auth_hidepw = $o->{auth_hidepw};
+				} elsif (defined($o->{auth_hidepw})) {
+					$G::auth_hidepw = "DEADBEEFDEADBEEF";
+				}
+			}
+		} # end avail("auth")
+	} # end auth parsing
 
-        elsif ($G::auth_map_f{$type} eq 'NTLM' && !avail("auth_ntlm"))
-        {
-          ptrans(12, avail_str("auth_ntlm")) if ($o->{auth} ne 'ANY');
-        }
-
-        elsif ($G::auth_map_f{$type} eq 'DIGEST-MD5' &&
-               !avail("auth_digest_md5"))
-        {
-          ptrans(12, avail_str("auth_digest_md5")) if ($o->{auth} ne 'ANY');
-        }
-
-        else {
-          $valid_auth_found = 1;
-          push(@{$n{a_type}}, $type);
-        }
-
-      } # foreach
-
-      if (!$valid_auth_found) {
-        ptrans(12, "No auth types supported");
-        if ($G::auth_optional == 2) {
-          $G::auth_unavailable .= "No auth types supported";
-        } elsif ($G::auth_optional == 1) {
-          $n{a_user} = $n{a_pass} = $n{a_type} = undef;
-        } else {
-          exit(10);
-        }
-      } else {
-        $n{a_user}   = $o->{auth_user} if (defined($o->{auth_user}));
-        $n{a_user} ||= $fconf->{USER};
-        $n{a_user} ||= interact("Username: ", 'SKIP');
-        $n{a_user}   = '' if ($n{a_user} eq '<>');
-
-        $n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
-        $n{a_pass} ||= $fconf->{PASS};
-        $n{a_pass} ||= interact("Password: ", 'SKIP', 1);
-        $n{a_pass}   = '' if ($n{a_pass} eq '<>');
-
-        $G::auth_showpt = 1 if (defined($o->{auth_showpt}));
-        if (length($o->{auth_hidepw})) {
-          $G::auth_hidepw = $o->{auth_hidepw};
-        } elsif (defined($o->{auth_hidepw})) {
-          $G::auth_hidepw = "DEADBEEFDEADBEEF";
-        }
-      }
-    } # end avail("auth")
-  } # end auth parsing
-
-  return(\%n);
+	return(\%n);
 }
 
 sub get_username {
-  my $force_getpwuid = shift;
-  if ($^O eq 'MSWin32') {
-    require Win32;
-    return Win32::LoginName();
-  }
-  if ($force_getpwuid) {
-    return (getpwuid($<))[0];
-  }
-  return $ENV{LOGNAME} || (getpwuid($<))[0];
+	my $force_getpwuid = shift;
+	if ($^O eq 'MSWin32') {
+		require Win32;
+		return Win32::LoginName();
+	}
+	if ($force_getpwuid) {
+		return (getpwuid($<))[0];
+	}
+	return $ENV{LOGNAME} || (getpwuid($<))[0];
 }
 
 sub get_date_string {
-  return($G::date_string) if (length($G::date_string) > 0);
+	return($G::date_string) if (length($G::date_string) > 0);
 
-  my $et = time();
+	my $et = time();
+	my @l  = localtime($et);
+	my $o  = 0;
 
-  my @l = localtime($et);
-  my $o = 0;
-
-  if (!avail("date_manip")) {
-    ptrans(12, avail_str("date_manip").".  Date strings will be in GMT");
-    @l = gmtime($et);
-  } else {
-    my @g = gmtime($et);
-    $o = (timelocal(@l) - timelocal(@g)) / 60;
-    # Adjust to hours and minutes and not hours and hour-hundreths
-    # See debian bug 646084
-    $o = int($o / 60)*100 + ($o%60)*($o > 0 ? 1 : -1);
-  }
-  $G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
-                 (qw(Sun Mon Tue Wed Thu Fri Sat))[$l[6]],
-                 $l[3],
-                 (qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec))[$l[4]],
-                 $l[5]+1900, $l[2], $l[1], $l[0],
-                 $o
-  );
+	if (!avail("date_manip")) {
+		ptrans(12, avail_str("date_manip").".  Date strings will be in GMT");
+		@l = gmtime($et);
+	} else {
+		my @g = gmtime($et);
+		$o = (timelocal(@l) - timelocal(@g)) / 60;
+		# Adjust to hours and minutes and not hours and hour-hundreths
+		# See debian bug 646084
+		$o = int($o / 60)*100 + ($o%60)*($o > 0 ? 1 : -1);
+	}
+	$G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
+	                          (qw(Sun Mon Tue Wed Thu Fri Sat))[$l[6]],
+	                          $l[3],
+	                          (qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec))[$l[4]],
+	                          $l[5]+1900, $l[2], $l[1], $l[0],
+	                          $o);
 }
 
 # partially Cribbed from "Programming Perl" and MIME::Base64 v2.12
 sub db64 {
-  my $s =  shift;
-  if (load("MIME::Base64")) {
-    return(decode_base64($s));
-  } else {
-    $s    =~ tr#A-Za-z0-9+/##cd;
-    $s    =~ s|=+$||;
-    $s    =~ tr#A-Za-z0-9+/# -_#;
-    my $r = '';
-    while ($s =~ s/(.{1,60})//s) {
-      $r .= unpack("u", chr(32 + int(length($1)*3/4)) . $1);
-    }
-    return($r);
-  }
+	my $s =  shift;
+	if (load("MIME::Base64")) {
+		return(decode_base64($s));
+	} else {
+		$s =~ tr#A-Za-z0-9+/##cd;
+		$s =~ s|=+$||;
+		$s =~ tr#A-Za-z0-9+/# -_#;
+		my $r = '';
+		while ($s =~ s/(.{1,60})//s) {
+			$r .= unpack("u", chr(32 + int(length($1)*3/4)) . $1);
+		}
+		return($r);
+	}
 }
 
 # partially Cribbed from MIME::Base64 v2.12
 sub eb64 {
-  my $s    =  shift;
-  my $e    =  shift || ''; # line ending to use "empty by default"
-  if (load("MIME::Base64")) {
-    return(encode_base64($s, $e));
-  } else {
-    my $l    =  length($s);
-    chomp($s =  pack("u", $s));
-    $s       =~ s|\n.||gms;
-    $s       =~ s|\A.||gms;
-    $s       =~ tr#` -_#AA-Za-z0-9+/#;
-    my $p    =  (3 - $l%3) % 3;
-    $s       =~ s/.{$p}$/'=' x $p/e if ($p);
-    $s       =~ s/(.{1,76})/$1$e/g if (length($e));
-    return($s);
-  }
+	my $s =  shift;
+	my $e =  shift || ''; # line ending to use "empty by default"
+	if (load("MIME::Base64")) {
+		return(encode_base64($s, $e));
+	} else {
+		my $l =  length($s);
+		chomp($s = pack("u", $s));
+		$s =~ s|\n.||gms;
+		$s =~ s|\A.||gms;
+		$s =~ tr#` -_#AA-Za-z0-9+/#;
+		my $p = (3 - $l%3) % 3;
+		$s =~ s/.{$p}$/'=' x $p/e if ($p);
+		$s =~ s/(.{1,76})/$1$e/g  if (length($e));
+		return($s);
+	}
 }
 
 sub ext_usage {
-  if ($ARGV[0] =~ /^--help$/i) {
-    require Config;
-    $ENV{PATH} .= ":" unless $ENV{PATH} eq "";
-    $ENV{PATH} = "$ENV{PATH}$Config::Config{'installscript'}";
-    $< = $> = 1 if ($> == 0 || $< == 0);
-    exec("perldoc", $0) || exit(1);
-    # make parser happy
-    %Config::Config = ();
-  } elsif ($ARGV[0] =~ /^--version$/i) {
-    print "$p_name version $p_version\n\n$p_cp\n";
-  } else {
-    return;
-  }
+	if ($ARGV[0] =~ /^--help$/i) {
+		require Config;
+		$ENV{PATH} .= ":" unless $ENV{PATH} eq "";
+		$ENV{PATH}  = "$ENV{PATH}$Config::Config{'installscript'}";
+		$< = $> = 1 if ($> == 0 || $< == 0);
+		exec("perldoc", $0) || exit(1);
+		# make parser happy
+		%Config::Config = ();
+	} elsif ($ARGV[0] =~ /^--version$/i) {
+		print "$p_name version $p_version\n\n$p_cp\n";
+	} else {
+		return;
+	}
 
-  exit(0);
+	exit(0);
 }
 
 
@@ -2625,7 +2580,11 @@ The CRAM-MD5 authenticator requires the Digest::MD5 module.  It is fully tested 
 
 The DIGEST-MD5 authenticator (RFC2831) requires the Authen::SASL module.  Version 20100211.0 and earlier used Authen::DigestMD5 which had some protocol level errors which prevented it from working with some servers.  Authen::SASL's DIGEST-MD5 handling is much more robust.
 
-The DIGEST-MD5 implementation in swaks is fairly immature.  It currently supports only the "auth" qop type, it doesn't expose the realm option to the user, etc.  If you have DIGEST-MD5 experience and would like to help swaks support DIGEST-MD5 better, please get in touch with me.
+The DIGEST-MD5 implementation in swaks is fairly immature.  It currently supports only the "auth" qop type, for instance.  If you have DIGEST-MD5 experience and would like to help swaks support DIGEST-MD5 better, please get in touch with me.
+
+The DIGEST-MD5 protocol's "realm" value can be set using the --auth-extra "realm" keyword.  If no realm is given, a reasonable default will be used.
+
+The DIGEST-MD5 protocol's "digest-uri" values can be set using the --auth-extra option.  For instance, you could create the digest-uri-value of "lmtp/mail.example.com/example.com" with the option "--auth-extra dmd5-serv-type=lmtp,dmd5-host=mail.example.com,dmd5-serv-name=example.com".  The "digest-uri-value" string and its components is defined in RFC2831.  If none of these values are given, reasonable defaults will be used.
 
 =item CRAM-SHA1
 
@@ -2635,7 +2594,7 @@ The CRAM-SHA1 authenticator requires the Digest::SHA1 module.  This type has onl
 
 These authenticators require the Authen::NTLM module.  Note that there are two modules using the Authen::NTLM namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.03.tar.gz) is the version required by swaks.  This type has been tested against Exim, Communigate, and Exchange 2007.
 
-In addition to the standard username and password, this authentication type can also recognize a "domain".  Rather than create a new option for this single authentication type, the domain can be passed by adding "%DOMAIN" to the end of the username.  For instance, if "-ap user@example.com%NTDOM" is passed, "user@example.com" is the username and "NTDOM" is the domain.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
+In addition to the standard username and password, this authentication type can also recognize a "domain".  The domain can be set using the --auth-extra "domain" keyword.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
 
 =back
 
@@ -2654,6 +2613,32 @@ Provide the username to be used for authentication, or prompt the user for it if
 =item -ap, --auth-password [password]
 
 Provide the password to be used for authentication, or prompt the user for it if no argument is provided.  The string <> can be supplied to mean an empty password.
+
+=item -ae, --auth-extra [KEYWORD=value[,...]]
+
+Some of the authentication types allow extra information to be included in the authentication process.  Rather than add a new option for every nook and cranny of each authenticator, the --auth-extra option allows this information to be supplied.
+
+The following table lists the currently recognized keywords and the authenticators that use them
+
+=over 4
+
+=item realm, domain
+
+The realm and domain keywords are synonymous.  Using either will set the "domain" option in NTLM/MSN/SPA and the "realm" option in DIGEST-MD5
+
+=item dmd5-serv-type
+
+The dmd5-serv-type keyword is used by the DIGEST-MD5 authenticator and is used, in part, to build the digest-uri-value string (see RFC2831)
+
+=item dmd5-host
+
+The dmd5-host keyword is used by the DIGEST-MD5 authenticator and is used, in part, to build the digest-uri-value string (see RFC2831)
+
+=item dmd5-serv-name
+
+The dmd5-serv-name keyword is used by the DIGEST-MD5 authenticator and is used, in part, to build the digest-uri-value string (see RFC2831)
+
+=back
 
 =item -am, --auth-map [auth-alias=auth-type[,...]]
 
