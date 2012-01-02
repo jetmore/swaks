@@ -15,7 +15,7 @@ Deliver a standard test email to user@example.com on port 25 of test-server.exam
 
 =over 4
 
-swaks --to user@example.com --server test-server.example.net
+ swaks --to user@example.com --server test-server.example.net
 
 =back
 
@@ -23,7 +23,7 @@ Deliver a standard test email, requiring CRAM-MD5 authentication as user me@exam
 
 =over 4
 
-swaks --to user@example.com --from me@example.com --auth CRAM-MD5 --auth-user me@example.com --header-X-Test "test email"
+ swaks --to user@example.com --from me@example.com --auth CRAM-MD5 --auth-user me@example.com --header-X-Test "test email"
 
 =back
 
@@ -31,7 +31,7 @@ Test a virus scanner using EICAR in an attachment.  Don't show the message DATA 
 
 =over 4
 
-swaks -t user@example.com --attach - --server test-server.example.com --suppress-data </path/to/eicar.txt
+ swaks -t user@example.com --attach - --server test-server.example.com --suppress-data </path/to/eicar.txt
 
 =back
 
@@ -39,7 +39,7 @@ Test a spam scanner using GTUBE in the body of an email, routed via the MX recor
 
 =over 4
 
-swaks --to user@example.com --body /path/to/gtube/file
+ swaks --to user@example.com --body /path/to/gtube/file
 
 =back
 
@@ -47,7 +47,7 @@ Deliver a standard test email to user@example.com using the LMTP protocol via a 
 
 =over 4
 
-swaks --to user@example.com --socket /var/lda.sock --protocol LMTP
+ swaks --to user@example.com --socket /var/lda.sock --protocol LMTP
 
 =back
 
@@ -55,11 +55,11 @@ Report all the recipients in a text file that are non-verifyiable on a test serv
 
 =over 4
 
-    for E in `cat /path/to/email/file`
-    do
-        swaks --to $E --server test-server.example.com --quit-after RCPT --hide-all
-        [ $? -ne 0 ] && echo $E
-    done
+ for E in `cat /path/to/email/file`
+ do
+     swaks --to $E --server test-server.example.com --quit-after RCPT --hide-all
+     [ $? -ne 0 ] && echo $E
+ done
 
 =back
 
@@ -689,6 +689,10 @@ In previous releases the -S option could be additive (i.e., "-S -S" was equivale
 =item --support
 
 Print capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and displays which functionality is available and which isn't, and which modules would need to be added to gain the missing functionality.
+
+=item --dump
+
+This option causes swaks to print the results of option processing, immediately before mail would have been sent.  No mail will be sent when --dump is used.
 
 =item --help
 
