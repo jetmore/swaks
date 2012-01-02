@@ -564,3 +564,4 @@
            makes sense.
 * 20111229 address some -w output related to the DIGEST-MD5 rewrite
 > 20111230 released 20111230.0
+* 20120101 typo fix in docs (rep. Andreas Metzler)
