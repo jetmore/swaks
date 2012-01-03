@@ -14,7 +14,7 @@ use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "DEVRELEASE"; # $Id$
+my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
         Copyright (c) 2003-2008,2010-2012 John Jetmore <jj33@pobox.com>
@@ -52,6 +52,7 @@ my $opts = process_args(\%O);
 
 if ($G::dump_args) {
 	test_support();
+	print "app_info         = $p_name v$p_version\n";
 	print "dump_args        = ", $G::dump_args ? "TRUE" : "FALSE", "\n";
 	print "server_only      = ", $G::server_only ? "TRUE" : "FALSE", "\n";
 	print "show_time_lapse  = ", $G::show_time_lapse ? "TRUE" : "FALSE", "\n";
@@ -2131,6 +2132,23 @@ sub eb64 {
 		$s =~ s/.{$p}$/'=' x $p/e if ($p);
 		$s =~ s/(.{1,76})/$1$e/g  if (length($e));
 		return($s);
+	}
+}
+
+sub build_version {
+	my $static = shift;
+	my $svn    = shift;
+
+	if ($static ne 'DEVRELEASE') {
+		# if gen-util passed in a static version, use it unconditionally
+		return $static;
+	} elsif ($svn =~ /\$Id:\s+\S+\s+(\d+)\s+(\d+)-(\d+)-(\d+)\s+/) {
+		# otherwise, this is a dev copy, dynamically build a version string for it
+		return("$2$3$4.$1-dev");
+	} else {
+		# we wanted a dynamic version, but the SVN Id tag wasn't in the format
+		# we expected, punt
+		return("DEVRELEASE");
 	}
 }
 

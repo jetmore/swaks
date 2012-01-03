@@ -13,7 +13,8 @@ print "Building swaks... ";
 open(O, ">$release_d/swaks") || die "can't write to $release_d/swaks: $!\n";
 open(I, "<$home/swaks") || die "can't read from $home/swaks\n";
 while (<I>) {
-  s|DEVRELEASE|$release|g;
+  # build_version("DEVRELEASE"
+  s|build_version\("DEVRELEASE"|build_version("$release"|g;
   print O;
 }
 close(I);
