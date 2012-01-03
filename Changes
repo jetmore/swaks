@@ -568,3 +568,5 @@
 * 20120101 changed the indent formatting so all the examples are at a
            consistent indent.
 * 20120101 Finally documenting the --dump option
+* 20120103 Removed the code for the -m option which had been deprecated
+           since 20071218.

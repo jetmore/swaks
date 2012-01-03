@@ -1227,9 +1227,6 @@ sub get_option_struct {
 		# (g)et data on stdin
 		{ opts => ['g'],                              suffix => '',
 		  okey => 'data_on_stdin',                    type => 'scalar', },
-		# emulate (M)ail command
-		{ opts => ['m'],                              suffix => '',
-		  okey => 'emulate_mail',                     type => 'scalar', },
 		# (q)uit after
 		{ opts => ['q', 'quit', 'quit-after'],        suffix => '=s',
 		  okey => 'quit_after',                       type => 'scalar', },
@@ -1668,11 +1665,6 @@ sub process_args {
 	$G::show_time_hires = 1      if ($G::show_time_lapse && avail("hires_timing") &&
 	                                                        $o->{show_time_lapse} !~ /^i/i);
 
-	if ($o->{emulate_mail}) { # set up for -m option
-		$n{to}          = shift if (!defined($o->{mail_to}));
-		$o->{mail_data} = ''; # define it here so we get it on stdin later
-	}
-
 	# pipe command, if one is specified
 	$G::link{process}   = $o->{pipe_cmd} || interact("Pipe: ", '^.+$')
 		if (defined($o->{pipe_cmd}));
@@ -1834,15 +1826,7 @@ sub process_args {
 		$o->{data_on_stdin} = 1;
 	}
 	if (defined($o->{mail_data}) && !defined($o->{data_on_stdin})) {
-		if (defined($o->{emulate_mail})) {
-			$n{data} = "Subject: " . interact("Subject: ", 'SKIP') . "\n\n";
-			do {
-				$n{data} .= interact('', 'SKIP') . "\n";
-			} while ($n{data} !~ /\n\.\n$/ms);
-			$n{data} =~ s/\n\.\n$//ms;
-		} else {
-			$n{data} = $o->{mail_data} || interact("Data: ", '^.*$');
-		}
+		$n{data} = $o->{mail_data} || interact("Data: ", '^.*$');
 	}
 	$n{data} ||= $fconf->{DATA}
 	         || 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
