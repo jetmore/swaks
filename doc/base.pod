@@ -800,6 +800,22 @@ error in EHLO following TLS negotiation
 
 =back
 
+=head1 ABOUT THE NAME
+
+The name "swaks" is a (sort-of) acronym for "SWiss Army Smtp".  It was chosen to be fairly distinct and pronounceable.  While "swaks" is unique as the name of a software package, it has some other, non-software meanings.  Please send in other uses of "swak" or "swaks" for inclusion.
+
+=over 4
+
+=item "Sealed With A Kiss"
+
+SWAK/SWAKs turns up occasionally on the internet with the meaning "with love".
+
+=item bad / poor / ill (Afrikaans)
+
+Seen it in the headline "SA se bes en swaks gekledes in 2011", which was translated as "best and worst dressed" by native speakers.  Google Translate doesn't like "swaks gekledes", but it will translate "swak" as "poor" and "swak geklede" as "ill-dressed".
+
+=back
+
 =head1 CONTACT
 
 =over 4

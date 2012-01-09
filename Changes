@@ -573,3 +573,5 @@
 * 20120103 Updating copyright note through 2012
 * 20120103 Changed swaks to build version string dynamically for dev builds;
            updated gen-release.pl's method for setting release versions
+* 20120109 Added "ABOUT THE NAME" section to base.pod
+
