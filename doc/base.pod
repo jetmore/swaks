@@ -139,8 +139,6 @@ In a configuration file lines beginning with a hash (#) are ignored.  All other 
     # entire argument.
     h-From: "Fred Example" <fred@example.com>
 
-There was an option --input-file (or -l) that was a predecessor to the current configuration file system.  It was deprecated and undocumented before this release.  The code for it is being removed in this release, and this mention of it will be removed in the next release.  If you were still using it please move to using one of the other configuration methods.
-
 =item ENVIRONMENT VARIABLES
 
 Options can be supplied via environment variables.  The variables are in the form $SWAKS_OPT_name, where name is the name of the option that would be specified on the command line.  Because dashes aren't allowed in environment variable names in most unix-ish shells, no leading dashes should be used and any dashes inside the option's name should be replaced with underscores.  The following would create the same options shown in the configuration file example:
@@ -683,8 +681,6 @@ Do not display any content to the terminal.
 =item -S, --silent [level]
 
 Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.
-
-In previous releases the -S option could be additive (i.e., "-S -S" was equivalent to "-S 2").  This was marked deprecated in previous releases.  The functionality has been removed from code in this release.  This mention of the functionality is left as a breadcrumb only and will be removed in the next release.  If you are still using the additive method, please change to the method described above.
 
 =item --support
 
