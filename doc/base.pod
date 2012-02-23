@@ -162,33 +162,43 @@ The following demonstrates the example shown in the configuration file and envir
 
 =head1 TRANSPORTS
 
-swaks can connect to a destination via unix pipes ("pipes"), unix domain sockets ("unix sockets"), or internet domain sockets ("network sockets").  Connecting via network sockets is the default behavior.  Because of the singular nature of the transport used, each set of options in the following section is mutually exclusive.  Specifying more than one of --server, --pipe, or --socket will result in an error.  Mixing other options between transport types will only result in the irrelevant options being ignored.  Below is a brief description of each type of transport and the options that are specific to that transport type.
+swaks can connect to a target via unix pipes ("pipes"), unix domain sockets ("unix sockets"), or internet domain sockets ("network sockets").  Connecting via network sockets is the default behavior.  Because of the singular nature of the transport used, each set of options in the following section is mutually exclusive.  Specifying more than one of --server, --pipe, or --socket will result in an error.  Mixing other options between transport types will only result in the irrelevant options being ignored.  Below is a brief description of each type of transport and the options that are specific to that transport type.
 
 =over 4
 
 =item NETWORK SOCKETS
 
-This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for swaks.  If none of --server, --pipe, or --socket are given then this transport is used and the destination server is determined from the recipient's domain (see --server below for more details).
+This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for swaks.  If none of --server, --pipe, or --socket are given then this transport is used and the target server is determined from the recipient's domain (see --server below for more details).
 
 This transport requires the IO::Socket module which is part of the standard perl distribution.  If this module is not loadable, attempting to use a this transport will result in an error and program termination.
 
+IPv6 is supported when the IO::Socket::INET6 module is present.
+
 =over 4
 
-=item -s, --server [destination mail server[:port]]
+=item -s, --server [target mail server[:port]]
 
-Explicitly tell swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the Net::DNS module.  If Net::DNS is not available swaks will attempt to connect to localhost to deliver.  See also --copy-routing.
+Explicitly tell swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the Net::DNS module.  If Net::DNS is not available swaks will attempt to connect to localhost to deliver.  The target port can optionally be set here.  Supported formats for this include SERVER:PORT (supporting names and IPv4 addresses); [SERVER]:PORT and SERVER/PORT (supporting names, IPv4 and IPv6 addresses).  See also --copy-routing.
 
 =item -p, --port [port]
 
 Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is determined by the --protocol option.  See --protocol for more details.
 
-=item -li, --local-interface [IP or hostname]
+=item -li, --local-interface [IP or hostname[:port]]
 
-Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose local interface.
+Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose local interface.  See --server for additional comments on :port format.
+
+=item -lp, --local-port [port]
+
+Specify the outgoing port to originate the transaction from.  If this option is not specified the system will pick an ephemeral port.  Note that regular users cannot specify some ports.
 
 =item --copy-routing [domain]
 
-The argument is interpreted as the domain part of an email address and it is used to find the destination server using the same logic that would be used to look up the destination server for an recipient email address.  See  --to option for more details on how the target is determined from the email domain.
+The argument is interpreted as the domain part of an email address and it is used to find the target server using the same logic that would be used to look up the target server for an recipient email address.  See  --to option for more details on how the target is determined from the email domain.
+
+=item -4, -6
+
+Force IPv4 or IPv6.
 
 =back
 

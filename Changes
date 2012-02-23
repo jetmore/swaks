@@ -576,3 +576,14 @@
 * 20120109 Added "ABOUT THE NAME" section to base.pod
 * 20120214 Removed final breadcrumbs of removed --input-file and additive
            --silent from docs
+* 20120223 First pass at IPv6 support.  Static routing only, implemented -4 and
+           -6, no MX logic yet.
+* 20120223 updated --server parsing to allow alternate syntaxes for specifying
+           port (SERVER, [SERVER], [SERVER]:PORT, IPV4_OR_HOST:PORT,
+           SERVER/PORT, [SERVER]/PORT)
+* 20120223 Added --local-port option, updated --local-interface to support
+           specifying a local port using same logic at --server
+* 20120223 Slight change in connection failure error - local interface only
+           shown if one was set in the first place
+* 20120223 changed several instances of "destination" to "target" in base.pod
+           to stay consistent with "terms and conventions" section.
