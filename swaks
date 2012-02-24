@@ -1093,17 +1093,28 @@ sub get_server {
 		ptrans(12, avail_str("dns"). ".  Using $server as mail server");
 		return($server);
 	}
-	my $res = new Net::DNS::Resolver;
+	my $res = Net::DNS::Resolver->new();
 
 	$addr =~ s/^.*\@([^\@]*)$/$1/;
 	return($server) if (!$addr);
 	$server = $addr;
 
 	my @mx = mx($res, $addr);
-	foreach my $rr (@mx) {
-		if ($rr->preference < $pref || $pref == -1) {
-			$pref   = $rr->preference;
+	foreach my $rr (sort { $a->preference <=> $b->preference } @mx) {
+		if ($G::link{force_ipv4}) {
+			if ($res->query($rr->exchange, 'A')) {
+				$server = $rr->exchange;
+				last;
+			}
+		} elsif ($G::link{force_ipv6}) {
+			if ($res->query($rr->exchange, 'AAAA') || $res->query($rr->exchange, 'A6')) {
+				$server = $rr->exchange;
+				last;
+			}
+		} else {
+			# this is the old default behavior.  Take the best priority MX, no matter what.
 			$server = $rr->exchange;
+			last;
 		}
 	}
 	return($server);
@@ -1759,10 +1770,11 @@ sub process_args {
 	$n{to}             = interact("To: ", '^.*$')
 		if (!$n{to} && !($G::server_only &&
 		   ($G::link{server} || $G::link{type} eq 'socket-unix' || $G::link{type} eq 'pipe')));
-	if (!$G::link{type}) {
-		$G::link{server} = get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to}) if (!$G::link{server});
-		$G::link{type}   = "socket-inet";
-	}
+	$G::link{type} ||= 'socket-inet';
+	#if (!$G::link{type}) {
+	#	$G::link{server} = get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to}) if (!$G::link{server});
+	#	$G::link{type}   = "socket-inet";
+	#}
 	
 	# try to catch obvious -s/-li/-4/-6 errors as soon as possible.  We don't actually do any DNS
 	# lookups ourselves, so errors like -s being a domain with only A RRs and -li being a domain 
@@ -1773,7 +1785,15 @@ sub process_args {
 		if ($o->{force_ipv4} && $o->{force_ipv6}) {
 			ptrans(12, "Options -4 and -6 are mutually exclusive, cannot proceed");
 			exit 1;
-		} elsif ($o->{force_ipv4} && $G::link{server} =~ m|:|) {
+		} elsif ($o->{force_ipv6}) {
+			$G::link{force_ipv6} = 1;
+		} elsif ($o->{force_ipv4}) {
+			$G::link{force_ipv4} = 1;
+		}
+		
+		$G::link{server} ||= get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to});
+		
+		if ($o->{force_ipv4} && $G::link{server} =~ m|:|) {
 			ptrans(12, "Option -4 is set but server appears to be ipv6, cannot proceed");
 			exit 1;
 		} elsif ($o->{force_ipv4} && $G::link{lint} =~ m|:|) {
@@ -1791,10 +1811,6 @@ sub process_args {
 		} elsif ($G::link{server} =~ m|^\d+\.\d+\.\d+\.\d+$| && $G::link{lint} =~ m|:|) {
 			ptrans(12, "server is ipv4 but local-interface is ipv6, cannot proceed");
 			exit 1;
-		} elsif ($o->{force_ipv6}) {
-			$G::link{force_ipv6} = 1;
-		} elsif ($o->{force_ipv4}) {
-			$G::link{force_ipv4} = 1;
 		}
 	}
 	

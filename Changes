@@ -587,3 +587,5 @@
            shown if one was set in the first place
 * 20120223 changed several instances of "destination" to "target" in base.pod
            to stay consistent with "terms and conventions" section.
+* 20120223 MX tweaks to try to find exchangers with the correct IP type when
+           -4 or -6 are used
