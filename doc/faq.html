@@ -22,6 +22,7 @@ If you are trying to figure out something using swaks, drop me a line at proj-sw
 <li><a href="#install_macosx">How do I install on Mac OS X?</a>
 <li><a href="#install_windows">How do I install on Windows?</a>
 <li><a href="#send_html_email">How do I send HTML email?</a>
+<li><a href="#support_ipv6">Does swaks support IPv6?</a>
 </ol>
 </font>
 </td></tr>
@@ -108,6 +109,15 @@ swaks --body report.html --add-header "MIME-Version: 1.0" --add-header "Content-
 </pre>
 <P>
 One potential issue with this path is that the contents of report.html won't be encoded as they would if it was processed using --attach.  Whether this will be an issue or not depends on the contents of the file, the mail server(s) used to handle the mail, and the MUA used to view the mail
+</font>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
+<td valign=top><font size=-1><b><a name="support_ipv6">IPv6 Support</a></b></font></td>
+<td><font size=-1>
+<B>Does swaks support IPv6?</b>
+<P>
+Yes and No.  Currently no official release supports it, but there is a development release available with an implementation of IPv6 support for testing.  See <a href="http://www.jetmore.org/john/blog/2012/02/swaks-ipv6-support-initial-draft/">http://www.jetmore.org/john/blog/2012/02/swaks-ipv6-support-initial-draft/</a> for some discussion, or download directly from <a href="http://jetmore.org/john/code/swaks/swaks-20120224.291-dev">http://jetmore.org/john/code/swaks/swaks-20120224.291-dev</a>.  If you do tets it, please consider leaving feedback, even if it's just "works for me".  Thanks!
 </font>
 </td></tr>
 <!-- y8y
