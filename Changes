@@ -590,3 +590,6 @@
 * 20120223 MX tweaks to try to find exchangers with the correct IP type when
            -4 or -6 are used
 > 20120223 released 20120224.291-dev
+* 20120319 Rearrange --dump output, group settings closer to how options
+           are organized in the docs
+

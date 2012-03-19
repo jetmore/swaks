@@ -52,32 +52,49 @@ my $opts = process_args(\%O);
 
 if ($G::dump_args) {
 	test_support();
-	print "app_info         = $p_name v$p_version\n";
-	print "dump_args        = ", $G::dump_args ? "TRUE" : "FALSE", "\n";
-	print "server_only      = ", $G::server_only ? "TRUE" : "FALSE", "\n";
-	print "show_time_lapse  = ", $G::show_time_lapse ? "TRUE" : "FALSE", "\n";
-	print "show_time_hires  = ", $G::show_time_hires ? "TRUE" : "FALSE", "\n";
-	print "auth_showpt      = ", $G::auth_showpt ? "TRUE" : "FALSE", "\n";
-	print "suppress_data    = ", $G::suppress_data ? "TRUE" : "FALSE", "\n";
-	print "no_hints         = ", $G::no_hints ? "TRUE" : "FALSE", "\n";
-	print "hide_send        = ", $G::hide_send ? "TRUE" : "FALSE", "\n";
-	print "hide_receive     = ", $G::hide_receive ? "TRUE" : "FALSE", "\n";
-	print "hide_informational = ", $G::hide_informational ? "TRUE" : "FALSE","\n";
-	print "hide_all         = ", $G::hide_all ? "TRUE" : "FALSE", "\n";
-	print "trans_fh_of      = $G::trans_fh_of ($G::trans_fh_oh,", \*STDOUT,")\n";
-	print "trans_fh_ef      = $G::trans_fh_ef ($G::trans_fh_eh,", \*STDERR,")\n";
-	print "pipeline         = ", $G::pipeline ? "TRUE" : "FALSE", "\n";
-	print "silent           = $G::silent\n";
-	print "protocol         = $G::protocol\n";
-	print "type             = $G::link{type}\n";
-	print "server           = $G::link{server}\n";
-	print "sockfile         = $G::link{sockfile}\n";
-	print "process          = $G::link{process}\n";
-	print "from             = $opts->{from}\n";
-	print "to               = $opts->{to}\n";
-	print "helo             = $opts->{helo}\n";
-	print "port             = $G::link{port}\n";
-	print "tls              = ";
+	print "\n";
+	
+	print "App Info:\n";
+	print "  X-Mailer = $p_name v$p_version jetmore.org/john/code/swaks/\n";
+	print "\n";
+
+	print "Output Info:\n";
+	print "  show_time_lapse    = ", $G::show_time_lapse ? "TRUE" : "FALSE", "\n";
+	print "  show_time_hires    = ", $G::show_time_hires ? "TRUE" : "FALSE", "\n";
+	print "  suppress_data      = ", $G::suppress_data ? "TRUE" : "FALSE", "\n";
+	print "  no_hints           = ", $G::no_hints ? "TRUE" : "FALSE", "\n";
+	print "  silent             = $G::silent\n";
+	print "  hide_send          = ", $G::hide_send ? "TRUE" : "FALSE", "\n";
+	print "  hide_receive       = ", $G::hide_receive ? "TRUE" : "FALSE", "\n";
+	print "  hide_informational = ", $G::hide_informational ? "TRUE" : "FALSE","\n";
+	print "  hide_all           = ", $G::hide_all ? "TRUE" : "FALSE", "\n";
+	print "  trans_fh_of        = $G::trans_fh_of ($G::trans_fh_oh,", \*STDOUT,")\n";
+	print "  trans_fh_ef        = $G::trans_fh_ef ($G::trans_fh_eh,", \*STDERR,")\n";
+	print "\n";
+
+	print "Transport Info:\n";
+	print "  type            = $G::link{type}\n";
+	print "  server          = $G::link{server}\n";
+	print "  port            = $G::link{port}\n";
+	print "  local interface = $G::link{lint}\n";
+	print "  local port      = $G::link{lport}\n";
+	print "  sockfile        = $G::link{sockfile}\n";
+	print "  process         = $G::link{process}\n";
+	print "\n";
+
+	print "Protocol Info:\n";
+	print "  protocol    = $G::protocol\n";
+	print "  helo        = $opts->{helo}\n";
+	print "  from        = $opts->{from}\n";
+	print "  to          = $opts->{to}\n";
+	print "  quit after  = $G::quit_after\n";
+	print "  server_only = ", $G::server_only ? "TRUE" : "FALSE", "\n";
+	print "  timeout     = $G::link{timeout}\n";
+	print "  pipeline    = ", $G::pipeline ? "TRUE" : "FALSE", "\n";
+	print "\n";
+
+	print "TLS / Encryption Info:\n";
+	print "  tls         = ";
 	if ($G::tls) {
 		print 'starttls (';
 		if ($G::tls_optional == 2)    { print "optional-strict)\n"; }
@@ -86,23 +103,28 @@ if ($G::dump_args) {
 	}
 	elsif ($G::tls_on_connect)      { print "on connect (required)\n"; }
 	else                            { print "no\n";                    }
-	print "auth             = ";
+	print "\n";
+
+	print "Authentication Info:\n";
+	print "  auth        = ";
 	if ($opts->{a_type}) {
 		if ($G::auth_optional == 2)    { print 'optional-strict'; }
 		elsif ($G::auth_optional == 1) { print 'optional';        }
 		else                           { print 'yes';             }
 		print " type='", join(',', @{$opts->{a_type}}), "' user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
 		
-		print "auth_extras      = ", join(',', map { "$_=$G::auth_extras{$_}" } keys (%G::auth_extras)), "\n";
-		print "auth map         = ", join("\n".' 'x19,
-		                             map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (keys %G::auth_map_t)), "\n";
+		print "  auth_extras = ", join(',', map { "$_=$G::auth_extras{$_}" } keys (%G::auth_extras)), "\n";
+		print "  auth_showpt = ", $G::auth_showpt ? "TRUE" : "FALSE", "\n";
+		print "  auth map    = ", join("\n".' 'x16,
+		                          map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (keys %G::auth_map_t)), "\n";
 	}
 	else { print "no\n"; }
-	print "quit after       = $G::quit_after\n";
-	print "local interface  = $G::link{lint}\n";
-	print "local port       = $G::link{lport}\n";
-	print "timeout          = $G::link{timeout}\n";
-	print "data             = <<.\n$opts->{data}\n";
+	print "\n";
+
+	print "DATA Info:\n";
+	print "  data        = <<.\n$opts->{data}\n";
+
+
 	exit(0);
 }
 
