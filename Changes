@@ -592,4 +592,7 @@
 > 20120223 released 20120224.291-dev
 * 20120319 Rearrange --dump output, group settings closer to how options
            are organized in the docs
+* 20120319 still more removal of code supporing the -l option (r253 removed
+           the function parsing the file, but we still checked the now-
+           never-populated $fconf in lots of option processing)
 

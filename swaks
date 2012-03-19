@@ -1618,7 +1618,6 @@ sub fetch_args {
 sub process_args {
 	my $o     = shift; # This is the args we got from command line
 	my %n     = ();    # This is the hash we will return w/ the fixed-up args
-	my $fconf = {};    # Hold config info from -l file if specified
 
 	# handle the output file handles early so they can be used for errors
 	# we don't need to keep track of the actual files but it will make debugging
@@ -1744,14 +1743,12 @@ sub process_args {
 	# pipe command, if one is specified
 	$G::link{process}   = $o->{pipe_cmd} || interact("Pipe: ", '^.+$')
 		if (defined($o->{pipe_cmd}));
-	$G::link{process} ||= $fconf->{PIPE} || "";
 	if ($G::link{process}) { $G::link{type} = 'pipe';   }
 	else                   { delete($G::link{process}); }
 
 	# socket file, if one is specified
 	$G::link{sockfile}   = $o->{socket} || interact("Socket File: ", '^.+$')
 		if (defined($o->{socket}));
-	$G::link{sockfile} ||= $fconf->{SOCKET} || "";
 	if ($G::link{sockfile}) { $G::link{type} = 'socket-unix'; }
 	else                    { delete($G::link{sockfile});     }
 
@@ -1761,15 +1758,14 @@ sub process_args {
 	# SMTP mail from
 	$n{from}   = $o->{mail_from} || interact("From: ", '^.*$')
 		if (defined($o->{mail_from}));
-	$n{from} ||= $fconf->{FROM} || ($hostname || ($G::server_only && $G::quit_after ne 'mail')
-	                                ? "$user\@$hostname"
-	                                : interact("From: ", '^.*$'));
+	$n{from} ||= ($hostname || ($G::server_only && $G::quit_after ne 'mail')
+	              ? "$user\@$hostname"
+	              : interact("From: ", '^.*$'));
 	$n{from}   = '' if ($n{from} eq '<>');
 
 	# local interface to connect from
 	$G::link{lint}   = $o->{lint} || interact("Interface: ", '^.*$')
 		if (defined($o->{lint}));
-	$G::link{lint} ||= $fconf->{INTERFACE};
 	if ($G::link{lint}) {
 		($G::link{lint},$o->{lport}) = parse_server($G::link{lint}, $o->{lport});
 	}
@@ -1777,18 +1773,16 @@ sub process_args {
 	# SMTP helo/ehlo
 	$n{helo}   = $o->{mail_helo} || interact("Helo: ", '^.*$')
 		if (defined($o->{mail_helo}));
-	$n{helo} ||= $fconf->{HELO} || ($hostname || ($G::quit_after eq 'connect')
-	                                ? $hostname
-	                                : interact("Helo: ", '^.*$'));
+	$n{helo} ||= ($hostname || ($G::quit_after eq 'connect')
+	              ? $hostname
+	              : interact("Helo: ", '^.*$'));
 
 	# SMTP server and rcpt to are interdependant, so they are handled together
 	$G::link{server}   = $o->{mail_server} || interact("Server: ", '^.*$')
 		if (defined($o->{mail_server}));
-	$G::link{server} ||= $fconf->{SERVER};
 	($G::link{server},$o->{mail_port}) = parse_server($G::link{server}, $o->{mail_port});
 	$n{to}             = $o->{mail_to} || interact("To: ", '^.*$')
 		if (defined($o->{mail_to}));
-	$n{to}           ||= $fconf->{TO};
 	$n{to}             = interact("To: ", '^.*$')
 		if (!$n{to} && !($G::server_only &&
 		   ($G::link{server} || $G::link{type} eq 'socket-unix' || $G::link{type} eq 'pipe')));
@@ -1856,7 +1850,7 @@ sub process_args {
 	$o->{timeout}       = '0s' if ($o->{timeout} eq '0'); # used 'eq' on purpose
 	$G::link{timeout}   = $o->{timeout} || interact("Timeout: ", '^\d+[hHmMsS]?$')
 		if (defined($o->{timeout}));
-	$G::link{timeout} ||= $fconf->{TIMEOUT} || '30s';
+	$G::link{timeout} ||= '30s';
 	$G::link{timeout}   = time_to_seconds($G::link{timeout});
 
 	my $body  = 'This is a test mailing'; # default message body
@@ -1949,8 +1943,7 @@ sub process_args {
 	if (defined($o->{mail_data}) && !defined($o->{data_on_stdin})) {
 		$n{data} = $o->{mail_data} || interact("Data: ", '^.*$');
 	}
-	$n{data} ||= $fconf->{DATA}
-	         || 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
+	$n{data} ||= 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
 	            "X-Mailer: swaks v$p_version jetmore.org/john/code/swaks/".'\n' .
 	            ($bound ? 'MIME-Version: 1.0\nContent-Type: multipart/mixed; boundary="'.$bound.'"\n' : '') .
 	            '%NEW_HEADERS%' . # newline will be added in replacement if it exists
@@ -2033,7 +2026,6 @@ sub process_args {
 	# SMTP port
 	$G::link{port}   = $o->{mail_port} || interact("Port: ", '^\w+$')
 		if (defined($o->{mail_port}));
-	$G::link{port} ||= $fconf->{PORT};
 	if ($G::link{port}) {
 		# in here, the user has either specified a port, or that they _want_
 		# to, so if it isn't a resolvable port, keep prompting for another one
@@ -2163,12 +2155,10 @@ sub process_args {
 				}
 			} else {
 				$n{a_user}   = $o->{auth_user} if (defined($o->{auth_user}));
-				$n{a_user} ||= $fconf->{USER};
 				$n{a_user} ||= interact("Username: ", 'SKIP');
 				$n{a_user}   = '' if ($n{a_user} eq '<>');
 
 				$n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
-				$n{a_pass} ||= $fconf->{PASS};
 				$n{a_pass} ||= interact("Password: ", 'SKIP', 1);
 				$n{a_pass}   = '' if ($n{a_pass} eq '<>');
 
