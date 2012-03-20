@@ -602,3 +602,5 @@
            result in b64-encoded response if successful, plaintest response
            if an error.  --auth-plaintext didn't play well with the
            plaintext error.
+* 20120320 added reconstruct_options() to generate an effective command line.
+           Added to --dump output

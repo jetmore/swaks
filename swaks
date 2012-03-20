@@ -47,6 +47,9 @@ if ($O{get_support}) {
 	exit(0);
 }
 
+# This 'synthetic' command line used for debug and reference
+my $cmdline = reconstruct_options(\%O);
+
 # We need to fix things up a bit and set a couple of global options
 my $opts = process_args(\%O);
 
@@ -54,8 +57,10 @@ if ($G::dump_args) {
 	test_support();
 	print "\n";
 	
+	my $t_cmdline = $cmdline; $t_cmdline =~ s%'PROVIDED_BUT_REMOVED'%shquote($opts->{a_pass})%e;
 	print "App Info:\n";
 	print "  X-Mailer = $p_name v$p_version jetmore.org/john/code/swaks/\n";
+	print "  Cmd Line = $0 $t_cmdline\n";
 	print "\n";
 
 	print "Output Info:\n";
@@ -1618,6 +1623,44 @@ sub fetch_args {
 			}
 		}
 	}
+}
+
+# take a string and quote it such that it could be used in the shell
+# O'Reilley -> 'O'\''Reilley'
+sub shquote { my $s = shift; $s =~ s%'%'\\''%g; return "'$s'"; }
+
+sub reconstruct_options {
+	my $o = shift; # ref to raw option hash (as returned by load_args)
+	my @c = ();    # array to hold our reconstructed command line
+	
+	foreach my $opt (@G::raw_option_data) {
+		if (exists($o->{$opt->{okey}}) && defined($o->{$opt->{okey}})) {
+			# Ideally we could rely on the first opt name in the list being the "primary" option,
+			# but we can't right now and I don't want to alter the option list.  For now just grab
+			# the longest option available as the primary
+			my $lopt = (sort { length($b) <=> length($a) } (@{$opt->{opts}}))[0];
+			
+			if ($opt->{type} eq 'list') {
+				next if (ref($o->{$opt->{okey}}) ne 'ARRAY');
+				#next if (scalar(@{$o->{$opt->{okey}}}) == 0);
+				foreach my $sopt (@{$o->{$opt->{okey}}}) {
+					push(@c, "--$lopt", shquote($sopt));
+				}
+			} else {
+				push(@c, "--$lopt");
+				if (length($o->{$opt->{okey}}) > 0) {
+					# offer rudimenary protection against sending pw in email
+					if ($opt->{okey} eq 'auth_pass') {
+						push(@c, shquote('PROVIDED_BUT_REMOVED'));
+					} else {
+						push(@c, shquote($o->{$opt->{okey}}));
+					}
+				}
+			}
+		}
+	}
+	#print join(', ', @c), "\n";
+	return join(' ', @c);
 }
 
 # A couple of global options are set in here, they will be in the G:: namespace
