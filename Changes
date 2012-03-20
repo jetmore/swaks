@@ -597,3 +597,4 @@
            never-populated $fconf in lots of option processing)
 * 20120319 change all references for Digest::SHA1 to Digest::SHA, included
            in perl core since at least 5.9. Suggested by Andreas Metzler
+* 20120319 fixed a couple of exit codes to be more specific

@@ -1834,12 +1834,12 @@ sub process_args {
 	if ($G::link{type} eq 'pipe') {
 		if (!avail("pipe")) {
 			ptrans(12, avail_str("pipe").".  Exiting");
-			exit(2);
+			exit(10);
 		}
 	} else {
 		if (!avail("socket")) {
 			ptrans(12, avail_str("socket").".  Exiting");
-			exit(2);
+			exit(10);
 		} elsif ($o->{force_ipv6} && !avail("ipv6")) {
 			ptrans(12, avail_str("ipv6").".  Exiting");
 			exit(10);
