@@ -1203,14 +1203,14 @@ sub get_digest {
 		if ($type eq 'md5') {
 			$secr = Digest::MD5::md5($secr);
 		} elsif ($type eq 'sha1') {
-			$secr = Digest::SHA1::sha1($secr);
+			$secr = Digest::SHA::sha1($secr);
 		}
 	} else {
 		$secr .= chr(0) x (64 - length($secr));
 	}
 
 	my $digest = $type eq 'md5' ? Digest::MD5::md5_hex(($secr ^ $opad), Digest::MD5::md5(($secr ^ $ipad), $chal))
-	                            : Digest::SHA1::sha1_hex(($secr ^ $opad), Digest::SHA1::sha1(($secr ^ $ipad), $chal));
+	                            : Digest::SHA::sha1_hex(($secr ^ $opad), Digest::SHA::sha1(($secr ^ $ipad), $chal));
 	return($digest);
 }
 
@@ -1245,7 +1245,7 @@ sub load_dependencies {
 		auth            => { name => "Basic AUTH",               opt => ['MIME::Base64'],
 		                                                         req => []                    },
 		auth_cram_md5   => { name => "AUTH CRAM-MD5",            req => ['Digest::MD5']       },
-		auth_cram_sha1  => { name => "AUTH CRAM-SHA1",           req => ['Digest::SHA1']      },
+		auth_cram_sha1  => { name => "AUTH CRAM-SHA1",           req => ['Digest::SHA']      },
 		auth_ntlm       => { name => "AUTH NTLM",                req => ['Authen::NTLM']      },
 		auth_digest_md5 => { name => "AUTH DIGEST-MD5",          req => ['Authen::SASL']      },
 		dns             => { name => "MX Routing",               req => ['Net::DNS']          },

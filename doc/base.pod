@@ -426,7 +426,7 @@ The DIGEST-MD5 protocol's "digest-uri" values can be set using the --auth-extra 
 
 =item CRAM-SHA1
 
-The CRAM-SHA1 authenticator requires the Digest::SHA1 module.  This type has only been tested against a non-standard implementation on an Exim server and may therefore have some implementation deficiencies.
+The CRAM-SHA1 authenticator requires the Digest::SHA module.  This type has only been tested against a non-standard implementation on an Exim server and may therefore have some implementation deficiencies.
 
 =item NTLM/SPA/MSN
 
