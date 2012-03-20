@@ -1012,8 +1012,14 @@ sub hdump {
 sub unencode_smtp {
 	my $t = shift;
 
-	my @t = split(' ', $t);
-	return("$t[0] " . db64($t[1]));
+	my @t = split(' ', $t, 2);
+	if ($t[1] =~ /\s/) {
+		# very occasionally we can have a situation where a successful response will
+		# be b64 encoded, while an error will not be.  Try to tell the difference.
+		return($t);	
+	} else {
+		return("$t[0] " . db64($t[1]));
+	}
 }
 
 sub interact {

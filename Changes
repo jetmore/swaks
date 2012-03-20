@@ -598,3 +598,7 @@
 * 20120319 change all references for Digest::SHA1 to Digest::SHA, included
            in perl core since at least 5.9. Suggested by Andreas Metzler
 * 20120319 fixed a couple of exit codes to be more specific
+* 20120319 There are some interactions (DIGEST-MD5 specificallY) which can
+           result in b64-encoded response if successful, plaintest response
+           if an error.  --auth-plaintext didn't play well with the
+           plaintext error.

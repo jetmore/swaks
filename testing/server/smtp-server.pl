@@ -85,6 +85,7 @@ sub handle_session {
   #send_line("250-AUTH CRAM-MD5");
   #send_line("250-AUTH PLAIN");
   send_line("250-AUTH DIGEST-MD5");
+  #send_line("250-AUTH DIGEST-MD5");
   #send_line("250-AUTH=login");
   send_line("250 HELP");
 
@@ -94,13 +95,25 @@ sub handle_session {
   #get_line(); # EHLO
   #send_line("250-SERVER Hello Server [1.1.1.1]\n250 HELP");
 
+  #get_line(); # AUTH DIGEST-MD5
+  #send_line("334 bm9uY2U9IlFpdERwa1BFN2VXS0pYUytDdnFCNWFlajkrcCtpa2dWN2hOQVFOZThTMlU9IixyZWFsbT0ibGFwcHkuamV0bW9yZS5uZXQiLHFvcD0iYXV0aCxhdXRoLWludCxhdXRoLWNvbmYiLGNpcGhlcj0icmM0LTQwLHJjNC01NixyYzQsZGVzLDNkZXMiLG1heGJ1Zj04MTkyLGNoYXJzZXQ9dXRmLTgsYWxnb3JpdGhtPW1kNS1zZXNz");
+  ##send_line("334 bm9uY2U9Ijk0Mjk4NWExMTY3NzA1NDQ1YXZtLnFzZXJ2ZXJzeXN0ZW1zLmNvbSIscW9wPSJhdXRoIixhbGdvcml0aG09bWQ1LXNlc3M=");
+  #get_line(); # AUTH DIGEST-MD5 digest
+  #send_line("334 cnNwYXV0aD1mYjI2NjZlOGM3YWJiNTllM2M1ZWI1ZDU0Y2VjMjc3Zg==");
+  #get_line(); # AUTH DIGEST-MD5 digest
+  ##send_line("235 Authentication succeeded");
+  #send_line("235 Authentication succeeded");
+
   get_line(); # AUTH DIGEST-MD5
   send_line("334 bm9uY2U9IlFpdERwa1BFN2VXS0pYUytDdnFCNWFlajkrcCtpa2dWN2hOQVFOZThTMlU9IixyZWFsbT0ibGFwcHkuamV0bW9yZS5uZXQiLHFvcD0iYXV0aCxhdXRoLWludCxhdXRoLWNvbmYiLGNpcGhlcj0icmM0LTQwLHJjNC01NixyYzQsZGVzLDNkZXMiLG1heGJ1Zj04MTkyLGNoYXJzZXQ9dXRmLTgsYWxnb3JpdGhtPW1kNS1zZXNz");
-  #send_line("334 bm9uY2U9Ijk0Mjk4NWExMTY3NzA1NDQ1YXZtLnFzZXJ2ZXJzeXN0ZW1zLmNvbSIscW9wPSJhdXRoIixhbGdvcml0aG09bWQ1LXNlc3M=");
   get_line(); # AUTH DIGEST-MD5 digest
-  send_line("334 cnNwYXV0aD1mYjI2NjZlOGM3YWJiNTllM2M1ZWI1ZDU0Y2VjMjc3Zg==");
-  get_line(); # AUTH DIGEST-MD5 digest
-  send_line("235 Authentication succeeded");
+  send_line("535 5.7.0 authentication failed");
+  get_line();
+  send_line("221 SERVER closing connection");
+  return();
+  #get_line(); # AUTH DIGEST-MD5 digest
+  #send_line("235 Authentication succeeded");
+  #send_line("235 Authentication succeeded");
 
   #get_line(); # AUTH PLAIN
   #send_line("235 Authentication succeeded");
