@@ -1,3 +1,49 @@
+> 20120320 released 20120320.0
+* 20120320 Small patch to handle (-6 not set, --server IPv6, ipv6 not
+           available) gracefully. Report from and patch by Ulrich Zehl.
+* 20120320 twiddled the --dump code to allow for reuse with --dump-as-body.
+           noted that plaintext passwords can be shown i --dump output.
+* 20120320 add --dump-as-body and --dump-as-body-shows-password.
+* 20120320 added reconstruct_options() to generate an effective command line.
+           Added to --dump output
+* 20120319 There are some interactions (DIGEST-MD5 specificallY) which can
+           result in b64-encoded response if successful, plaintest response
+           if an error.  --auth-plaintext didn't play well with the
+           plaintext error.
+* 20120319 fixed a couple of exit codes to be more specific
+* 20120319 change all references for Digest::SHA1 to Digest::SHA, included
+           in perl core since at least 5.9. Suggested by Andreas Metzler
+* 20120319 still more removal of code supporing the -l option (r253 removed
+           the function parsing the file, but we still checked the now-
+           never-populated $fconf in lots of option processing)
+* 20120319 Rearrange --dump output, group settings closer to how options
+           are organized in the docs
+> 20120223 released 20120224.291-dev
+* 20120223 MX tweaks to try to find exchangers with the correct IP type when
+           -4 or -6 are used
+* 20120223 changed several instances of "destination" to "target" in base.pod
+           to stay consistent with "terms and conventions" section.
+* 20120223 Slight change in connection failure error - local interface only
+           shown if one was set in the first place
+* 20120223 Added --local-port option, updated --local-interface to support
+           specifying a local port using same logic at --server
+* 20120223 updated --server parsing to allow alternate syntaxes for specifying
+           port (SERVER, [SERVER], [SERVER]:PORT, IPV4_OR_HOST:PORT,
+           SERVER/PORT, [SERVER]/PORT)
+* 20120223 First pass at IPv6 support.  Static routing only, implemented -4 and
+           -6, no MX logic yet.
+* 20120214 Removed final breadcrumbs of removed --input-file and additive
+           --silent from docs
+* 20120109 Added "ABOUT THE NAME" section to base.pod
+* 20120103 Changed swaks to build version string dynamically for dev builds;
+           updated gen-release.pl's method for setting release versions
+* 20120103 Updating copyright note through 2012
+* 20120103 Removed the code for the -m option which had been deprecated
+           since 20071218.
+* 20120101 Finally documenting the --dump option
+* 20120101 changed the indent formatting so all the examples are at a
+           consistent indent.
+* 20120101 typo fix in docs (rep. Andreas Metzler)
 > 20111230 released 20111230.0
 * 20111229 address some -w output related to the DIGEST-MD5 rewrite
 * 20111229 Change indent from 2-space to 1-tab, use 120-char width where it
@@ -66,7 +112,7 @@
 * 20110321 fixed bug which prevented message data to be provided in a file 
            with a "n" or "\" in the filename.  Reported and fix suggested
            by dietrich.rebmann#freenet.de
-* 20110309 added --protect-password option to make best effort not to
+* 20110309 added --protect-prompt option to make best effort not to
            echo user input on sensitive fields (*nix and Win32)
 * 20110309 misc typos/style
 * 20110309 updated copyright date to 2011

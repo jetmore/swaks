@@ -15,7 +15,7 @@ Deliver a standard test email to user@example.com on port 25 of test-server.exam
 
 =over 4
 
-swaks --to user@example.com --server test-server.example.net
+ swaks --to user@example.com --server test-server.example.net
 
 =back
 
@@ -23,7 +23,7 @@ Deliver a standard test email, requiring CRAM-MD5 authentication as user me@exam
 
 =over 4
 
-swaks --to user@example.com --from me@example.com --auth CRAM-MD5 --auth-user me@example.com --header-X-Test "test email"
+ swaks --to user@example.com --from me@example.com --auth CRAM-MD5 --auth-user me@example.com --header-X-Test "test email"
 
 =back
 
@@ -31,7 +31,7 @@ Test a virus scanner using EICAR in an attachment.  Don't show the message DATA 
 
 =over 4
 
-swaks -t user@example.com --attach - --server test-server.example.com --suppress-data </path/to/eicar.txt
+ swaks -t user@example.com --attach - --server test-server.example.com --suppress-data </path/to/eicar.txt
 
 =back
 
@@ -39,7 +39,7 @@ Test a spam scanner using GTUBE in the body of an email, routed via the MX recor
 
 =over 4
 
-swaks --to user@example.com --body /path/to/gtube/file
+ swaks --to user@example.com --body /path/to/gtube/file
 
 =back
 
@@ -47,7 +47,7 @@ Deliver a standard test email to user@example.com using the LMTP protocol via a 
 
 =over 4
 
-swaks --to user@example.com --socket /var/lda.sock --protocol LMTP
+ swaks --to user@example.com --socket /var/lda.sock --protocol LMTP
 
 =back
 
@@ -55,11 +55,11 @@ Report all the recipients in a text file that are non-verifyiable on a test serv
 
 =over 4
 
-    for E in `cat /path/to/email/file`
-    do
-        swaks --to $E --server test-server.example.com --quit-after RCPT --hide-all
-        [ $? -ne 0 ] && echo $E
-    done
+ for E in `cat /path/to/email/file`
+ do
+     swaks --to $E --server test-server.example.com --quit-after RCPT --hide-all
+     [ $? -ne 0 ] && echo $E
+ done
 
 =back
 
@@ -139,8 +139,6 @@ In a configuration file lines beginning with a hash (#) are ignored.  All other 
     # entire argument.
     h-From: "Fred Example" <fred@example.com>
 
-There was an option --input-file (or -l) that was a predecessor to the current configuration file system.  It was deprecated and undocumented before this release.  The code for it is being removed in this release, and this mention of it will be removed in the next release.  If you were still using it please move to using one of the other configuration methods.
-
 =item ENVIRONMENT VARIABLES
 
 Options can be supplied via environment variables.  The variables are in the form $SWAKS_OPT_name, where name is the name of the option that would be specified on the command line.  Because dashes aren't allowed in environment variable names in most unix-ish shells, no leading dashes should be used and any dashes inside the option's name should be replaced with underscores.  The following would create the same options shown in the configuration file example:
@@ -164,33 +162,43 @@ The following demonstrates the example shown in the configuration file and envir
 
 =head1 TRANSPORTS
 
-swaks can connect to a destination via unix pipes ("pipes"), unix domain sockets ("unix sockets"), or internet domain sockets ("network sockets").  Connecting via network sockets is the default behavior.  Because of the singular nature of the transport used, each set of options in the following section is mutually exclusive.  Specifying more than one of --server, --pipe, or --socket will result in an error.  Mixing other options between transport types will only result in the irrelevant options being ignored.  Below is a brief description of each type of transport and the options that are specific to that transport type.
+swaks can connect to a target via unix pipes ("pipes"), unix domain sockets ("unix sockets"), or internet domain sockets ("network sockets").  Connecting via network sockets is the default behavior.  Because of the singular nature of the transport used, each set of options in the following section is mutually exclusive.  Specifying more than one of --server, --pipe, or --socket will result in an error.  Mixing other options between transport types will only result in the irrelevant options being ignored.  Below is a brief description of each type of transport and the options that are specific to that transport type.
 
 =over 4
 
 =item NETWORK SOCKETS
 
-This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for swaks.  If none of --server, --pipe, or --socket are given then this transport is used and the destination server is determined from the recipient's domain (see --server below for more details).
+This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for swaks.  If none of --server, --pipe, or --socket are given then this transport is used and the target server is determined from the recipient's domain (see --server below for more details).
 
 This transport requires the IO::Socket module which is part of the standard perl distribution.  If this module is not loadable, attempting to use a this transport will result in an error and program termination.
 
+IPv6 is supported when the IO::Socket::INET6 module is present.
+
 =over 4
 
-=item -s, --server [destination mail server[:port]]
+=item -s, --server [target mail server[:port]]
 
-Explicitly tell swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the Net::DNS module.  If Net::DNS is not available swaks will attempt to connect to localhost to deliver.  See also --copy-routing.
+Explicitly tell swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the Net::DNS module.  If Net::DNS is not available swaks will attempt to connect to localhost to deliver.  The target port can optionally be set here.  Supported formats for this include SERVER:PORT (supporting names and IPv4 addresses); [SERVER]:PORT and SERVER/PORT (supporting names, IPv4 and IPv6 addresses).  See also --copy-routing.
 
 =item -p, --port [port]
 
 Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is determined by the --protocol option.  See --protocol for more details.
 
-=item -li, --local-interface [IP or hostname]
+=item -li, --local-interface [IP or hostname[:port]]
 
-Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose local interface.
+Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose local interface.  See --server for additional comments on :port format.
+
+=item -lp, --local-port [port]
+
+Specify the outgoing port to originate the transaction from.  If this option is not specified the system will pick an ephemeral port.  Note that regular users cannot specify some ports.
 
 =item --copy-routing [domain]
 
-The argument is interpreted as the domain part of an email address and it is used to find the destination server using the same logic that would be used to look up the destination server for an recipient email address.  See  --to option for more details on how the target is determined from the email domain.
+The argument is interpreted as the domain part of an email address and it is used to find the target server using the same logic that would be used to look up the target server for an recipient email address.  See  --to option for more details on how the target is determined from the email domain.
+
+=item -4, -6
+
+Force IPv4 or IPv6.
 
 =back
 
@@ -418,7 +426,7 @@ The DIGEST-MD5 protocol's "digest-uri" values can be set using the --auth-extra 
 
 =item CRAM-SHA1
 
-The CRAM-SHA1 authenticator requires the Digest::SHA1 module.  This type has only been tested against a non-standard implementation on an Exim server and may therefore have some implementation deficiencies.
+The CRAM-SHA1 authenticator requires the Digest::SHA module.  This type has only been tested against a non-standard implementation on an Exim server and may therefore have some implementation deficiencies.
 
 =item NTLM/SPA/MSN
 
@@ -528,6 +536,14 @@ Replaced with the value specified by the --body option.  See --body for default.
 
 In previous versions of swaks the DATA tokens as described in the --data option above used single-character tokens (e.g., %F).  These were not a great choice for default tokens, and proved especially troublesome with encoded, non-english languages where these character combinations might be common.  The single-character tokens were replaced with the slightly-less-error-prone versions listed above.  The retention of the old tokens and the inclusion of this option to activate them are intended as a temporary aid to users who have an existing message corpus using the old tokens.  The single-character tokens and the --use-old-data-tokens option should be considered deprecated and likely to be removed in the next release.
 
+=item -dab, --dump-as-body
+
+If --dump-as-body is used and no other option is used to changed the default body of the message, the body is replaced with output similar to the output of what is provided by --dump.  --dump's initial program capability stanza is not displayed, and the "data" section is not included.  Additionally, --dump always includes passwords.  By default --dump-as-body does not include passwords, though this can be changed with --dump-as-body-shows-password.
+
+=item -dabsp, --dump-as-body-shows-password
+
+Cause --dump-as-body to include plaintext passwords.  This option is not recommended.  This option implies --dump-as-body.
+
 =item --body [body-specification]
 
 Specify the body of the email.  The default is "This is a test mailing".  If no argument to --body is given, prompt to supply one interactively.  If '-' is supplied, the body will be read from standard input.  If any other text is provided and the text represents an open-able file, the content of that file is used as the body.  If it does not represent an open-able file, the text itself is used as the body.
@@ -554,7 +570,7 @@ This option sets the filename that will be included in the MIME part created for
 
 This option allows headers to be added to the DATA.  If %H is present in the DATA it is replaced with the argument to this option.  If %H is not present, the argument is inserted between the first two consecutive newlines in the DATA (that is, it is inserted at the end of the existing headers).
 
-The option can either be specified multiple times or a single time with multiple headers seperated by a literal '\n' string.  So, "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header 'Foo: bar\nBaz: foo'" end up adding the same two headers.
+The option can either be specified multiple times or a single time with multiple headers separated by a literal '\n' string.  So, "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header 'Foo: bar\nBaz: foo'" end up adding the same two headers.
 
 =item --header [header-and-data], --h-Header [data]
 
@@ -684,11 +700,13 @@ Do not display any content to the terminal.
 
 Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.
 
-In previous releases the -S option could be additive (i.e., "-S -S" was equivalent to "-S 2").  This was marked deprecated in previous releases.  The functionality has been removed from code in this release.  This mention of the functionality is left as a breadcrumb only and will be removed in the next release.  If you are still using the additive method, please change to the method described above.
-
 =item --support
 
 Print capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and displays which functionality is available and which isn't, and which modules would need to be added to gain the missing functionality.
+
+=item --dump
+
+This option causes swaks to print the results of option processing, immediately before mail would have been sent.  No mail will be sent when --dump is used.  Note that --dump is considered to be a pure self-diagnosis tool and no effort is made or will ever be made to mask passwords in the --dump output.
 
 =item --help
 
@@ -793,6 +811,22 @@ error in TLS transaction
 =item 32
 
 error in EHLO following TLS negotiation
+
+=back
+
+=head1 ABOUT THE NAME
+
+The name "swaks" is a (sort-of) acronym for "SWiss Army Smtp".  It was chosen to be fairly distinct and pronounceable.  While "swaks" is unique as the name of a software package, it has some other, non-software meanings.  Please send in other uses of "swak" or "swaks" for inclusion.
+
+=over 4
+
+=item "Sealed With A Kiss"
+
+SWAK/SWAKs turns up occasionally on the internet with the meaning "with love".
+
+=item bad / poor / ill (Afrikaans)
+
+Seen it in the headline "SA se bes en swaks gekledes in 2011", which was translated as "best and worst dressed" by native speakers.  Google Translate doesn't like "swaks gekledes", but it will translate "swak" as "poor" and "swak geklede" as "ill-dressed".
 
 =back
 

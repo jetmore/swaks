@@ -14,10 +14,10 @@ use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = "20111230.0"; # $Id$
+my $p_version = build_version("20120320.0", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010-2011 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2010-2012 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,60 +47,23 @@ if ($O{get_support}) {
 	exit(0);
 }
 
+# This 'synthetic' command line used for debug and reference
+$G::cmdline = reconstruct_options(\%O);
+
 # We need to fix things up a bit and set a couple of global options
 my $opts = process_args(\%O);
 
 if ($G::dump_args) {
 	test_support();
-	print "dump_args        = ", $G::dump_args ? "TRUE" : "FALSE", "\n";
-	print "server_only      = ", $G::server_only ? "TRUE" : "FALSE", "\n";
-	print "show_time_lapse  = ", $G::show_time_lapse ? "TRUE" : "FALSE", "\n";
-	print "show_time_hires  = ", $G::show_time_hires ? "TRUE" : "FALSE", "\n";
-	print "auth_showpt      = ", $G::auth_showpt ? "TRUE" : "FALSE", "\n";
-	print "suppress_data    = ", $G::suppress_data ? "TRUE" : "FALSE", "\n";
-	print "no_hints         = ", $G::no_hints ? "TRUE" : "FALSE", "\n";
-	print "hide_send        = ", $G::hide_send ? "TRUE" : "FALSE", "\n";
-	print "hide_receive     = ", $G::hide_receive ? "TRUE" : "FALSE", "\n";
-	print "hide_informational = ", $G::hide_informational ? "TRUE" : "FALSE","\n";
-	print "hide_all         = ", $G::hide_all ? "TRUE" : "FALSE", "\n";
-	print "trans_fh_of      = $G::trans_fh_of ($G::trans_fh_oh,", \*STDOUT,")\n";
-	print "trans_fh_ef      = $G::trans_fh_ef ($G::trans_fh_eh,", \*STDERR,")\n";
-	print "pipeline         = ", $G::pipeline ? "TRUE" : "FALSE", "\n";
-	print "silent           = $G::silent\n";
-	print "protocol         = $G::protocol\n";
-	print "type             = $G::link{type}\n";
-	print "server           = $G::link{server}\n";
-	print "sockfile         = $G::link{sockfile}\n";
-	print "process          = $G::link{process}\n";
-	print "from             = $opts->{from}\n";
-	print "to               = $opts->{to}\n";
-	print "helo             = $opts->{helo}\n";
-	print "port             = $G::link{port}\n";
-	print "tls              = ";
-	if ($G::tls) {
-		print 'starttls (';
-		if ($G::tls_optional == 2)    { print "optional-strict)\n"; }
-		elsif ($G::tls_optional == 1) { print "optional)\n";        }
-		else                          { print "required)\n";        }
-	}
-	elsif ($G::tls_on_connect)      { print "on connect (required)\n"; }
-	else                            { print "no\n";                    }
-	print "auth             = ";
-	if ($opts->{a_type}) {
-		if ($G::auth_optional == 2)    { print 'optional-strict'; }
-		elsif ($G::auth_optional == 1) { print 'optional';        }
-		else                           { print 'yes';             }
-		print " type='", join(',', @{$opts->{a_type}}), "' user='$opts->{a_user}' pass='$opts->{a_pass}'\n";
-		
-		print "auth_extras      = ", join(',', map { "$_=$G::auth_extras{$_}" } keys (%G::auth_extras)), "\n";
-		print "auth map         = ", join("\n".' 'x19,
-		                             map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (keys %G::auth_map_t)), "\n";
-	}
-	else { print "no\n"; }
-	print "quit after       = $G::quit_after\n";
-	print "local int        = $G::link{lint}\n";
-	print "timeout          = $G::link{timeout}\n";
-	print "data             = <<.\n$opts->{data}\n";
+	print "\n";
+
+	my $running_state = get_running_state($opts);
+	# --dump is intended as a debug tool for swaks internally.  Always,
+	# unconditionally, show the user's auth password if one is given
+	$running_state =~ s%'PROVIDED_BUT_REMOVED'%shquote($opts->{a_pass})%ge;
+	print $running_state;
+	print "\nDATA Info:\n"
+	   .  "  data = <<.\n$opts->{data}\n";
 	exit(0);
 }
 
@@ -136,12 +99,43 @@ sub open_link {
 	if ($G::link{type} eq 'socket-inet') {
 		ptrans(11, "Trying $G::link{server}:$G::link{port}...");
 		$@ = "";
-		$G::link{sock} = IO::Socket::INET->new(PeerAddr  => $G::link{server}, PeerPort => $G::link{port},
-		                                       Proto     => 'tcp',            Timeout  => $G::link{timeout},
-		                                       LocalAddr => $G::link{lint});
+		
+		my @extra_options = ();
+		push(@extra_options, "LocalAddr", $G::link{lint})  if ($G::link{lint});
+		push(@extra_options, "LocalPort", $G::link{lport}) if ($G::link{lport});
+		
+		# INET6 also support v4, so use it for everything if it's available.  That
+		# allows the module to handle A vs AAAA records on domain lookups where te
+		# user hasn't set a specific ip version to be used.  If INET6 isn't available
+		# and it's a domain that only has AAAA records, INET will just handle it like
+		# a bogus record and we just won't be able to connect
+		if (avail("ipv6")) {
+			if ($G::link{force_ipv6}) {
+				push(@extra_options, "Domain", Socket::AF_INET6() );
+			} elsif ($G::link{force_ipv4}) {
+				push(@extra_options, "Domain", Socket::AF_INET() );
+			}
+			
+			$G::link{sock} = IO::Socket::INET6->new(
+				PeerAddr  => $G::link{server},
+				PeerPort  => $G::link{port},
+				Proto     => 'tcp',
+				Timeout   => $G::link{timeout},
+				@extra_options
+			);
+		} else {
+			$G::link{sock} = IO::Socket::INET->new(
+				PeerAddr  => $G::link{server},
+				PeerPort  => $G::link{port},
+				Proto     => 'tcp',
+				Timeout   => $G::link{timeout},
+				@extra_options
+			);
+		}
 		
 		if ($@) {
-			ptrans(12, "Error connecting $G::link{lint} to $G::link{server}:$G::link{port}:\n\t$@");
+			ptrans(12, "Error connecting" . ($G::link{lint} ? " $G::link{lint}" : '') .
+			           " to $G::link{server}:$G::link{port}:\n\t$@");
 			exit(2);
 		}
 		ptrans(11, "Connected to $G::link{server}.");
@@ -957,8 +951,14 @@ sub hdump {
 sub unencode_smtp {
 	my $t = shift;
 
-	my @t = split(' ', $t);
-	return("$t[0] " . db64($t[1]));
+	my @t = split(' ', $t, 2);
+	if ($t[1] =~ /\s/) {
+		# very occasionally we can have a situation where a successful response will
+		# be b64 encoded, while an error will not be.  Try to tell the difference.
+		return($t);	
+	} else {
+		return("$t[0] " . db64($t[1]));
+	}
 }
 
 sub interact {
@@ -1060,17 +1060,28 @@ sub get_server {
 		ptrans(12, avail_str("dns"). ".  Using $server as mail server");
 		return($server);
 	}
-	my $res = new Net::DNS::Resolver;
+	my $res = Net::DNS::Resolver->new();
 
 	$addr =~ s/^.*\@([^\@]*)$/$1/;
 	return($server) if (!$addr);
 	$server = $addr;
 
 	my @mx = mx($res, $addr);
-	foreach my $rr (@mx) {
-		if ($rr->preference < $pref || $pref == -1) {
-			$pref   = $rr->preference;
+	foreach my $rr (sort { $a->preference <=> $b->preference } @mx) {
+		if ($G::link{force_ipv4}) {
+			if ($res->query($rr->exchange, 'A')) {
+				$server = $rr->exchange;
+				last;
+			}
+		} elsif ($G::link{force_ipv6}) {
+			if ($res->query($rr->exchange, 'AAAA') || $res->query($rr->exchange, 'A6')) {
+				$server = $rr->exchange;
+				last;
+			}
+		} else {
+			# this is the old default behavior.  Take the best priority MX, no matter what.
 			$server = $rr->exchange;
+			last;
 		}
 	}
 	return($server);
@@ -1137,14 +1148,14 @@ sub get_digest {
 		if ($type eq 'md5') {
 			$secr = Digest::MD5::md5($secr);
 		} elsif ($type eq 'sha1') {
-			$secr = Digest::SHA1::sha1($secr);
+			$secr = Digest::SHA::sha1($secr);
 		}
 	} else {
 		$secr .= chr(0) x (64 - length($secr));
 	}
 
 	my $digest = $type eq 'md5' ? Digest::MD5::md5_hex(($secr ^ $opad), Digest::MD5::md5(($secr ^ $ipad), $chal))
-	                            : Digest::SHA1::sha1_hex(($secr ^ $opad), Digest::SHA1::sha1(($secr ^ $ipad), $chal));
+	                            : Digest::SHA::sha1_hex(($secr ^ $opad), Digest::SHA::sha1(($secr ^ $ipad), $chal));
 	return($digest);
 }
 
@@ -1177,18 +1188,19 @@ sub time_to_seconds {
 sub load_dependencies {
 	%G::dependencies = (
 		auth            => { name => "Basic AUTH",               opt => ['MIME::Base64'],
-		                                                         req => []                },
-		auth_cram_md5   => { name => "AUTH CRAM-MD5",            req => ['Digest::MD5']   },
-		auth_cram_sha1  => { name => "AUTH CRAM-SHA1",           req => ['Digest::SHA1']  },
-		auth_ntlm       => { name => "AUTH NTLM",                req => ['Authen::NTLM']  },
-		auth_digest_md5 => { name => "AUTH DIGEST-MD5",          req => ['Authen::SASL']  },
-		dns             => { name => "MX Routing",               req => ['Net::DNS']      },
-		tls             => { name => "TLS",                      req => ['Net::SSLeay']   },
-		pipe            => { name => "Pipe Transport",           req => ['IPC::Open2']    },
-		socket          => { name => "Socket Transport",         req => ['IO::Socket']    },
-		date_manip      => { name => "Date Manipulation",        req => ['Time::Local']   },
-		hostname        => { name => "Local Hostname Detection", req => ['Sys::Hostname'] },
-		hires_timing    => { name => "High Resolution Timing",   req => ['Time::HiRes']   },
+		                                                         req => []                    },
+		auth_cram_md5   => { name => "AUTH CRAM-MD5",            req => ['Digest::MD5']       },
+		auth_cram_sha1  => { name => "AUTH CRAM-SHA1",           req => ['Digest::SHA']      },
+		auth_ntlm       => { name => "AUTH NTLM",                req => ['Authen::NTLM']      },
+		auth_digest_md5 => { name => "AUTH DIGEST-MD5",          req => ['Authen::SASL']      },
+		dns             => { name => "MX Routing",               req => ['Net::DNS']          },
+		tls             => { name => "TLS",                      req => ['Net::SSLeay']       },
+		pipe            => { name => "Pipe Transport",           req => ['IPC::Open2']        },
+		socket          => { name => "Socket Transport",         req => ['IO::Socket']        },
+		ipv6            => { name => "IPv6",                     req => ['IO::Socket::INET6'] },
+		date_manip      => { name => "Date Manipulation",        req => ['Time::Local']       },
+		hostname        => { name => "Local Hostname Detection", req => ['Sys::Hostname']     },
+		hires_timing    => { name => "High Resolution Timing",   req => ['Time::HiRes']       },
 	);
 }
 
@@ -1209,6 +1221,12 @@ sub get_option_struct {
 		# (s)erver to use
 		{ opts => ['s', 'server'],                    suffix => ':s',
 		  okey => 'mail_server',                      type => 'scalar', },
+		# force ipv4 only
+		{ opts => ['4'],                              suffix => '',
+		  okey => 'force_ipv4',                       type => 'scalar', },
+		# force ipv6 only
+		{ opts => ['6'],                              suffix => '',
+		  okey => 'force_ipv6',                       type => 'scalar', },
 		# copy MX/routing from another domain
 		{ opts => ['copy-routing'],                   suffix => ':s',
 		  okey => 'copy_routing',                     type => 'scalar', },
@@ -1221,15 +1239,18 @@ sub get_option_struct {
 		# (d)ata portion ('\n' for newlines)
 		{ opts => ['d', 'data'],                      suffix => ':s',
 		  okey => 'mail_data',                        type => 'scalar', },
+		# use the --dump text as default body
+		{ opts => ['dab', 'dump-as-body'],            suffix => '',
+		  okey => 'dump_as_body',                     type => 'scalar', },
+		# implies --dump-as-body; forces raw passwords to be used
+		{ opts => ['dabsp', 'dump-as-body-shows-password'], suffix => '',
+		  okey => 'dab_sp',                           type => 'scalar', },
 		# timeout for each trans (def 30s)
 		{ opts => ['timeout'],                        suffix => ':s',
 		  okey => 'timeout',                          type => 'scalar', },
 		# (g)et data on stdin
 		{ opts => ['g'],                              suffix => '',
 		  okey => 'data_on_stdin',                    type => 'scalar', },
-		# emulate (M)ail command
-		{ opts => ['m'],                              suffix => '',
-		  okey => 'emulate_mail',                     type => 'scalar', },
 		# (q)uit after
 		{ opts => ['q', 'quit', 'quit-after'],        suffix => '=s',
 		  okey => 'quit_after',                       type => 'scalar', },
@@ -1269,6 +1290,9 @@ sub get_option_struct {
 		# local interface to use
 		{ opts => ['li', 'local-interface'],          suffix => ':s',
 		  okey => 'lint',                             type => 'scalar', },
+		# local port
+		{ opts => ['lp', 'lport'],                    suffix => ':s',
+		  okey => 'lport',                            type => 'scalar', },
 		# use TLS
 		{ opts => ['tls'],                            suffix => '',
 		  okey => 'tls',                              type => 'scalar', },
@@ -1541,11 +1565,48 @@ sub fetch_args {
 	}
 }
 
+# take a string and quote it such that it could be used in the shell
+# O'Reilley -> 'O'\''Reilley'
+sub shquote { my $s = shift; $s =~ s%'%'\\''%g; return "'$s'"; }
+
+sub reconstruct_options {
+	my $o = shift; # ref to raw option hash (as returned by load_args)
+	my @c = ();    # array to hold our reconstructed command line
+	
+	foreach my $opt (@G::raw_option_data) {
+		if (exists($o->{$opt->{okey}}) && defined($o->{$opt->{okey}})) {
+			# Ideally we could rely on the first opt name in the list being the "primary" option,
+			# but we can't right now and I don't want to alter the option list.  For now just grab
+			# the longest option available as the primary
+			my $lopt = (sort { length($b) <=> length($a) } (@{$opt->{opts}}))[0];
+			
+			if ($opt->{type} eq 'list') {
+				next if (ref($o->{$opt->{okey}}) ne 'ARRAY');
+				#next if (scalar(@{$o->{$opt->{okey}}}) == 0);
+				foreach my $sopt (@{$o->{$opt->{okey}}}) {
+					push(@c, "--$lopt", shquote($sopt));
+				}
+			} else {
+				push(@c, "--$lopt");
+				if (length($o->{$opt->{okey}}) > 0) {
+					# offer rudimenary protection against sending pw in email
+					if ($opt->{okey} eq 'auth_pass') {
+						push(@c, shquote('PROVIDED_BUT_REMOVED'));
+					} else {
+						push(@c, shquote($o->{$opt->{okey}}));
+					}
+				}
+			}
+		}
+	}
+	#print join(', ', @c), "\n";
+	return join(' ', @c);
+}
+
 # A couple of global options are set in here, they will be in the G:: namespace
 sub process_args {
 	my $o     = shift; # This is the args we got from command line
 	my %n     = ();    # This is the hash we will return w/ the fixed-up args
-	my $fconf = {};    # Hold config info from -l file if specified
 
 	# handle the output file handles early so they can be used for errors
 	# we don't need to keep track of the actual files but it will make debugging
@@ -1668,22 +1729,15 @@ sub process_args {
 	$G::show_time_hires = 1      if ($G::show_time_lapse && avail("hires_timing") &&
 	                                                        $o->{show_time_lapse} !~ /^i/i);
 
-	if ($o->{emulate_mail}) { # set up for -m option
-		$n{to}          = shift if (!defined($o->{mail_to}));
-		$o->{mail_data} = ''; # define it here so we get it on stdin later
-	}
-
 	# pipe command, if one is specified
 	$G::link{process}   = $o->{pipe_cmd} || interact("Pipe: ", '^.+$')
 		if (defined($o->{pipe_cmd}));
-	$G::link{process} ||= $fconf->{PIPE} || "";
 	if ($G::link{process}) { $G::link{type} = 'pipe';   }
 	else                   { delete($G::link{process}); }
 
 	# socket file, if one is specified
 	$G::link{sockfile}   = $o->{socket} || interact("Socket File: ", '^.+$')
 		if (defined($o->{socket}));
-	$G::link{sockfile} ||= $fconf->{SOCKET} || "";
 	if ($G::link{sockfile}) { $G::link{type} = 'socket-unix'; }
 	else                    { delete($G::link{sockfile});     }
 
@@ -1693,60 +1747,104 @@ sub process_args {
 	# SMTP mail from
 	$n{from}   = $o->{mail_from} || interact("From: ", '^.*$')
 		if (defined($o->{mail_from}));
-	$n{from} ||= $fconf->{FROM} || ($hostname || ($G::server_only && $G::quit_after ne 'mail')
-	                                ? "$user\@$hostname"
-	                                : interact("From: ", '^.*$'));
+	$n{from} ||= ($hostname || ($G::server_only && $G::quit_after ne 'mail')
+	              ? "$user\@$hostname"
+	              : interact("From: ", '^.*$'));
 	$n{from}   = '' if ($n{from} eq '<>');
-
-	# SMTP helo/ehlo
-	$n{helo}   = $o->{mail_helo} || interact("Helo: ", '^.*$')
-		if (defined($o->{mail_helo}));
-	$n{helo} ||= $fconf->{HELO} || ($hostname || ($G::quit_after eq 'connect')
-	                                ? $hostname
-	                                : interact("Helo: ", '^.*$'));
-
-	# SMTP server and rcpt to are interdependant, so they are handled together
-	$G::link{server}   = $o->{mail_server} || interact("Server: ", '^.*$')
-		if (defined($o->{mail_server}));
-	$G::link{server} ||= $fconf->{SERVER};
-	$o->{mail_port}  ||= $1 if ($G::link{server} =~ s|:([^:]+)$||);
-	$n{to}             = $o->{mail_to} || interact("To: ", '^.*$')
-		if (defined($o->{mail_to}));
-	$n{to}           ||= $fconf->{TO};
-	$n{to}             = interact("To: ", '^.*$')
-		if (!$n{to} && !($G::server_only &&
-		   ($G::link{server} || $G::link{type} eq 'socket-unix' || $G::link{type} eq 'pipe')));
-	if (!$G::link{type}) {
-		$G::link{server} = get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to}) if (!$G::link{server});
-		$G::link{type}   = "socket-inet";
-	}
-
-	# Verify we are able to handle the requested transport
-	if ($G::link{type} eq 'pipe') {
-		if (!avail("pipe")) {
-			ptrans(12, avail_str("pipe").".  Exiting");
-			exit(2);
-		}
-	} else {
-		if (!avail("socket")) {
-			ptrans(12, avail_str("socket").".  Exiting");
-			exit(2);
-		}
-	}
 
 	# local interface to connect from
 	$G::link{lint}   = $o->{lint} || interact("Interface: ", '^.*$')
 		if (defined($o->{lint}));
-	$G::link{lint} ||= $fconf->{INTERFACE} || '0.0.0.0';
+	if ($G::link{lint}) {
+		($G::link{lint},$o->{lport}) = parse_server($G::link{lint}, $o->{lport});
+	}
+
+	# SMTP helo/ehlo
+	$n{helo}   = $o->{mail_helo} || interact("Helo: ", '^.*$')
+		if (defined($o->{mail_helo}));
+	$n{helo} ||= ($hostname || ($G::quit_after eq 'connect')
+	              ? $hostname
+	              : interact("Helo: ", '^.*$'));
+
+	# SMTP server and rcpt to are interdependant, so they are handled together
+	$G::link{server}   = $o->{mail_server} || interact("Server: ", '^.*$')
+		if (defined($o->{mail_server}));
+	($G::link{server},$o->{mail_port}) = parse_server($G::link{server}, $o->{mail_port});
+	$n{to}             = $o->{mail_to} || interact("To: ", '^.*$')
+		if (defined($o->{mail_to}));
+	$n{to}             = interact("To: ", '^.*$')
+		if (!$n{to} && !($G::server_only &&
+		   ($G::link{server} || $G::link{type} eq 'socket-unix' || $G::link{type} eq 'pipe')));
+	$G::link{type} ||= 'socket-inet';
+	#if (!$G::link{type}) {
+	#	$G::link{server} = get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to}) if (!$G::link{server});
+	#	$G::link{type}   = "socket-inet";
+	#}
+	
+	# try to catch obvious -s/-li/-4/-6 errors as soon as possible.  We don't actually do any DNS
+	# lookups ourselves, so errors like -s being a domain with only A RRs and -li being a domain 
+	# with only AAAA RRs, or -s being an ipv6 and -li being a domain with only A RRs, will
+	# get passed into the IO::Socket module to deal with and will just registed as a connection
+	# failure.
+	if ($G::link{type} eq 'socket-inet') {
+		if ($o->{force_ipv4} && $o->{force_ipv6}) {
+			ptrans(12, "Options -4 and -6 are mutually exclusive, cannot proceed");
+			exit 1;
+		} elsif ($o->{force_ipv6}) {
+			$G::link{force_ipv6} = 1;
+		} elsif ($o->{force_ipv4}) {
+			$G::link{force_ipv4} = 1;
+		}
+		
+		$G::link{server} ||= get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to});
+		
+		if ($o->{force_ipv4} && $G::link{server} =~ m|:|) {
+			ptrans(12, "Option -4 is set but server appears to be ipv6, cannot proceed");
+			exit 1;
+		} elsif ($o->{force_ipv4} && $G::link{lint} =~ m|:|) {
+			ptrans(12, "Option -4 is set but local-interface appears to be ipv6, cannot proceed");
+			exit 1;
+		} elsif ($o->{force_ipv6} && $G::link{server} =~ m|^\d+\.\d+\.\d+\.\d+$|) {
+			ptrans(12, "Option -6 is set but server appears to be ipv4, cannot proceed");
+			exit 1;
+		} elsif ($o->{force_ipv6} && $G::link{lint} =~ m|^\d+\.\d+\.\d+\.\d+$|) {
+			ptrans(12, "Option -6 is set but local-interface appears to be ipv4, cannot proceed");
+			exit 1;
+		} elsif ($G::link{server} =~ m|:| && $G::link{lint} =~ m|^\d+\.\d+\.\d+\.\d+$|) {
+			ptrans(12, "server is ipv6 but local-interface is ipv4, cannot proceed");
+			exit 1;
+		} elsif ($G::link{server} =~ m|^\d+\.\d+\.\d+\.\d+$| && $G::link{lint} =~ m|:|) {
+			ptrans(12, "server is ipv4 but local-interface is ipv6, cannot proceed");
+			exit 1;
+		}
+	}
+	
+	# Verify we are able to handle the requested transport
+	if ($G::link{type} eq 'pipe') {
+		if (!avail("pipe")) {
+			ptrans(12, avail_str("pipe").".  Exiting");
+			exit(10);
+		}
+	} else {
+		if (!avail("socket")) {
+			ptrans(12, avail_str("socket").".  Exiting");
+			exit(10);
+		} elsif (($o->{force_ipv6} || $G::link{server} =~ m|:| ||  $G::link{lint} =~ m|:|) && !avail("ipv6")) {
+			ptrans(12, avail_str("ipv6").".  Exiting");
+			exit(10);
+		}
+	}
 
 	# SMTP timeout
 	$o->{timeout}       = '0s' if ($o->{timeout} eq '0'); # used 'eq' on purpose
 	$G::link{timeout}   = $o->{timeout} || interact("Timeout: ", '^\d+[hHmMsS]?$')
 		if (defined($o->{timeout}));
-	$G::link{timeout} ||= $fconf->{TIMEOUT} || '30s';
+	$G::link{timeout} ||= '30s';
 	$G::link{timeout}   = time_to_seconds($G::link{timeout});
 
+	$o->{dump_as_body} = 1 if ($o->{dab_sp});
 	my $body  = 'This is a test mailing'; # default message body
+	$body = 'DUMP_AS_BODY_HAS_BEEN_SET' if ($o->{dump_as_body});
 	my $bound = "";
 	my $stdin = undef;
 	if (defined($o->{body_822})) {
@@ -1834,18 +1932,9 @@ sub process_args {
 		$o->{data_on_stdin} = 1;
 	}
 	if (defined($o->{mail_data}) && !defined($o->{data_on_stdin})) {
-		if (defined($o->{emulate_mail})) {
-			$n{data} = "Subject: " . interact("Subject: ", 'SKIP') . "\n\n";
-			do {
-				$n{data} .= interact('', 'SKIP') . "\n";
-			} while ($n{data} !~ /\n\.\n$/ms);
-			$n{data} =~ s/\n\.\n$//ms;
-		} else {
-			$n{data} = $o->{mail_data} || interact("Data: ", '^.*$');
-		}
+		$n{data} = $o->{mail_data} || interact("Data: ", '^.*$');
 	}
-	$n{data} ||= $fconf->{DATA}
-	         || 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
+	$n{data} ||= 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
 	            "X-Mailer: swaks v$p_version jetmore.org/john/code/swaks/".'\n' .
 	            ($bound ? 'MIME-Version: 1.0\nContent-Type: multipart/mixed; boundary="'.$bound.'"\n' : '') .
 	            '%NEW_HEADERS%' . # newline will be added in replacement if it exists
@@ -1928,7 +2017,6 @@ sub process_args {
 	# SMTP port
 	$G::link{port}   = $o->{mail_port} || interact("Port: ", '^\w+$')
 		if (defined($o->{mail_port}));
-	$G::link{port} ||= $fconf->{PORT};
 	if ($G::link{port}) {
 		# in here, the user has either specified a port, or that they _want_
 		# to, so if it isn't a resolvable port, keep prompting for another one
@@ -1951,7 +2039,10 @@ sub process_args {
 			$G::link{port} = getservbyname('smtp',  'tcp') || '25';
 		}
 	}
-	
+
+	# local port
+	$G::link{lport}   = $o->{lport} || interact("Local Port: ", '^\w+$')
+		if (defined($o->{lport}));
 
 	# Handle AUTH options
 	# auth_optional => 0 - no.     Auth must be advertised and must succeed, else error.
@@ -2055,12 +2146,10 @@ sub process_args {
 				}
 			} else {
 				$n{a_user}   = $o->{auth_user} if (defined($o->{auth_user}));
-				$n{a_user} ||= $fconf->{USER};
 				$n{a_user} ||= interact("Username: ", 'SKIP');
 				$n{a_user}   = '' if ($n{a_user} eq '<>');
 
 				$n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
-				$n{a_pass} ||= $fconf->{PASS};
 				$n{a_pass} ||= interact("Password: ", 'SKIP', 1);
 				$n{a_pass}   = '' if ($n{a_pass} eq '<>');
 
@@ -2068,13 +2157,128 @@ sub process_args {
 				if (length($o->{auth_hidepw})) {
 					$G::auth_hidepw = $o->{auth_hidepw};
 				} elsif (defined($o->{auth_hidepw})) {
-					$G::auth_hidepw = "DEADBEEFDEADBEEF";
+					$G::auth_hidepw = "PROVIDED_BUT_REMOVED";
 				}
 			}
 		} # end avail("auth")
 	} # end auth parsing
+	
+	# the very last thing we do is swap out the body if --dump-as-body used
+	if ($o->{dump_as_body}) {
+		$n{data} =~ s|DUMP_AS_BODY_HAS_BEEN_SET|get_running_state(\%n)|e;
+		if ($o->{dab_sp}) {
+			$n{data} =~ s%PROVIDED_BUT_REMOVED%$n{a_pass}%g;
+		} elsif ($G::auth_hidepw) {
+			$n{data} =~ s%PROVIDED_BUT_REMOVED%$G::auth_hidepw%g;
+		}
+	}
 
 	return(\%n);
+}
+
+sub parse_server {
+	my $server = shift;
+	my $port   = shift;
+	
+	if ($server =~ m|^\[([^\]]+)\]:(.*)$|) {
+		# [1.2.3.4]:25
+		# [hostname]:25
+		# [1:2::3]:25
+		return($1, $2);
+	} elsif ($server =~ m|^([^:]+):([^:]+)$|) {
+		# 1.2.3.4:25
+		# hostname:25
+		return($1, $2);
+	} elsif ($server =~ m|^\[?([^/\]]*)\]?/(\w+)$|) {
+		# 1.2.3.4/25   [1.2.3.4]/25
+		# hostname/25  [hostname]/25
+		# 1:2::3/25    [1:2::3]/25
+		return($1, $2);
+	} elsif ($server =~ m|^\[([^\]]+)\]$|) {
+		# [1.2.3.4]
+		# [hostname]
+		# [1:2::3]
+		return($1, $port);
+	}
+	return($server, $port);
+}
+
+sub get_running_state {
+	my $opts = shift;
+	
+	if ($G::running_state) {
+		return($G::running_state);
+	}
+	my $s = '';
+	
+	$s .= "App Info:\n"
+	   .  "  X-Mailer = $p_name v$p_version jetmore.org/john/code/swaks/\n"
+	   .  "  Cmd Line = $0 $G::cmdline\n"
+	   .  "\n";
+
+	$s .= "Output Info:\n"
+	   .  "  show_time_lapse    = " . ($G::show_time_lapse    ? "TRUE" : "FALSE") . "\n"
+	   .  "  show_time_hires    = " . ($G::show_time_hires    ? "TRUE" : "FALSE") . "\n"
+	   .  "  suppress_data      = " . ($G::suppress_data      ? "TRUE" : "FALSE") . "\n"
+	   .  "  no_hints           = " . ($G::no_hints           ? "TRUE" : "FALSE") . "\n"
+	   .  "  silent             = $G::silent\n"
+	   .  "  hide_send          = " . ($G::hide_send          ? "TRUE" : "FALSE") . "\n"
+	   .  "  hide_receive       = " . ($G::hide_receive       ? "TRUE" : "FALSE") . "\n"
+	   .  "  hide_informational = " . ($G::hide_informational ? "TRUE" : "FALSE") ."\n"
+	   .  "  hide_all           = " . ($G::hide_all           ? "TRUE" : "FALSE") . "\n"
+	   .  "  trans_fh_of        = $G::trans_fh_of ($G::trans_fh_oh," . \*STDOUT . ")\n"
+	   .  "  trans_fh_ef        = $G::trans_fh_ef ($G::trans_fh_eh," . \*STDERR . ")\n"
+	   .  "\n";
+
+	$s .= "Transport Info:\n"
+	   .  "  type            = $G::link{type}\n"
+	   .  "  server          = $G::link{server}\n"
+	   .  "  port            = $G::link{port}\n"
+	   .  "  local interface = $G::link{lint}\n"
+	   .  "  local port      = $G::link{lport}\n"
+	   .  "  sockfile        = $G::link{sockfile}\n"
+	   .  "  process         = $G::link{process}\n"
+	   .  "\n";
+
+	$s .= "Protocol Info:\n"
+	   .  "  protocol    = $G::protocol\n"
+	   .  "  helo        = $opts->{helo}\n"
+	   .  "  from        = $opts->{from}\n"
+	   .  "  to          = $opts->{to}\n"
+	   .  "  quit after  = $G::quit_after\n"
+	   .  "  server_only = " . ($G::server_only ? "TRUE" : "FALSE") . "\n"
+	   .  "  timeout     = $G::link{timeout}\n"
+	   .  "  pipeline    = " . ($G::pipeline    ? "TRUE" : "FALSE") . "\n"
+	   .  "\n";
+
+	$s .= "TLS / Encryption Info:\n"
+	   .  "  tls         = ";
+	if ($G::tls) {
+		$s .= 'starttls (';
+		if ($G::tls_optional == 2)    { $s .= "optional-strict)\n"; }
+		elsif ($G::tls_optional == 1) { $s .= "optional)\n";        }
+		else                          { $s .= "required)\n";        }
+	}
+	elsif ($G::tls_on_connect)      { $s .= "on connect (required)\n"; }
+	else                            { $s .= "no\n";                    }
+	$s .= "\n";
+
+	$s .= "Authentication Info:\n"
+	   .  "  auth        = ";
+	if ($opts->{a_type}) {
+		if ($G::auth_optional == 2)    { $s .= 'optional-strict'; }
+		elsif ($G::auth_optional == 1) { $s .= 'optional';        }
+		else                           { $s .= 'yes';             }
+		$s .= " type='" . join(',', @{$opts->{a_type}}) . "' user='$opts->{a_user}' pass='PROVIDED_BUT_REMOVED'\n";
+		
+		$s .= "  auth_extras = " . join(',', map { "$_=$G::auth_extras{$_}" } keys (%G::auth_extras)) . "\n";
+		$s .= "  auth_showpt = " . ($G::auth_showpt ? "TRUE" : "FALSE") . "\n";
+		$s .= "  auth map    = " . join("\n".' 'x16,
+		                          map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (keys %G::auth_map_t)) . "\n";
+	}
+	else { $s .= "no\n"; }
+	
+	return $G::running_state = $s;
 }
 
 sub get_username {
@@ -2150,6 +2354,23 @@ sub eb64 {
 	}
 }
 
+sub build_version {
+	my $static = shift;
+	my $svn    = shift;
+
+	if ($static ne 'DEVRELEASE') {
+		# if gen-util passed in a static version, use it unconditionally
+		return $static;
+	} elsif ($svn =~ /\$Id:\s+\S+\s+(\d+)\s+(\d+)-(\d+)-(\d+)\s+/) {
+		# otherwise, this is a dev copy, dynamically build a version string for it
+		return("$2$3$4.$1-dev");
+	} else {
+		# we wanted a dynamic version, but the SVN Id tag wasn't in the format
+		# we expected, punt
+		return("DEVRELEASE");
+	}
+}
+
 sub ext_usage {
 	if ($ARGV[0] =~ /^--help$/i) {
 		require Config;
@@ -2185,7 +2406,7 @@ Deliver a standard test email to user@example.com on port 25 of test-server.exam
 
 =over 4
 
-swaks --to user@example.com --server test-server.example.net
+ swaks --to user@example.com --server test-server.example.net
 
 =back
 
@@ -2193,7 +2414,7 @@ Deliver a standard test email, requiring CRAM-MD5 authentication as user me@exam
 
 =over 4
 
-swaks --to user@example.com --from me@example.com --auth CRAM-MD5 --auth-user me@example.com --header-X-Test "test email"
+ swaks --to user@example.com --from me@example.com --auth CRAM-MD5 --auth-user me@example.com --header-X-Test "test email"
 
 =back
 
@@ -2201,7 +2422,7 @@ Test a virus scanner using EICAR in an attachment.  Don't show the message DATA 
 
 =over 4
 
-swaks -t user@example.com --attach - --server test-server.example.com --suppress-data </path/to/eicar.txt
+ swaks -t user@example.com --attach - --server test-server.example.com --suppress-data </path/to/eicar.txt
 
 =back
 
@@ -2209,7 +2430,7 @@ Test a spam scanner using GTUBE in the body of an email, routed via the MX recor
 
 =over 4
 
-swaks --to user@example.com --body /path/to/gtube/file
+ swaks --to user@example.com --body /path/to/gtube/file
 
 =back
 
@@ -2217,7 +2438,7 @@ Deliver a standard test email to user@example.com using the LMTP protocol via a 
 
 =over 4
 
-swaks --to user@example.com --socket /var/lda.sock --protocol LMTP
+ swaks --to user@example.com --socket /var/lda.sock --protocol LMTP
 
 =back
 
@@ -2225,11 +2446,11 @@ Report all the recipients in a text file that are non-verifyiable on a test serv
 
 =over 4
 
-    for E in `cat /path/to/email/file`
-    do
-        swaks --to $E --server test-server.example.com --quit-after RCPT --hide-all
-        [ $? -ne 0 ] && echo $E
-    done
+ for E in `cat /path/to/email/file`
+ do
+     swaks --to $E --server test-server.example.com --quit-after RCPT --hide-all
+     [ $? -ne 0 ] && echo $E
+ done
 
 =back
 
@@ -2309,8 +2530,6 @@ In a configuration file lines beginning with a hash (#) are ignored.  All other 
     # entire argument.
     h-From: "Fred Example" <fred@example.com>
 
-There was an option --input-file (or -l) that was a predecessor to the current configuration file system.  It was deprecated and undocumented before this release.  The code for it is being removed in this release, and this mention of it will be removed in the next release.  If you were still using it please move to using one of the other configuration methods.
-
 =item ENVIRONMENT VARIABLES
 
 Options can be supplied via environment variables.  The variables are in the form $SWAKS_OPT_name, where name is the name of the option that would be specified on the command line.  Because dashes aren't allowed in environment variable names in most unix-ish shells, no leading dashes should be used and any dashes inside the option's name should be replaced with underscores.  The following would create the same options shown in the configuration file example:
@@ -2334,33 +2553,43 @@ The following demonstrates the example shown in the configuration file and envir
 
 =head1 TRANSPORTS
 
-swaks can connect to a destination via unix pipes ("pipes"), unix domain sockets ("unix sockets"), or internet domain sockets ("network sockets").  Connecting via network sockets is the default behavior.  Because of the singular nature of the transport used, each set of options in the following section is mutually exclusive.  Specifying more than one of --server, --pipe, or --socket will result in an error.  Mixing other options between transport types will only result in the irrelevant options being ignored.  Below is a brief description of each type of transport and the options that are specific to that transport type.
+swaks can connect to a target via unix pipes ("pipes"), unix domain sockets ("unix sockets"), or internet domain sockets ("network sockets").  Connecting via network sockets is the default behavior.  Because of the singular nature of the transport used, each set of options in the following section is mutually exclusive.  Specifying more than one of --server, --pipe, or --socket will result in an error.  Mixing other options between transport types will only result in the irrelevant options being ignored.  Below is a brief description of each type of transport and the options that are specific to that transport type.
 
 =over 4
 
 =item NETWORK SOCKETS
 
-This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for swaks.  If none of --server, --pipe, or --socket are given then this transport is used and the destination server is determined from the recipient's domain (see --server below for more details).
+This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for swaks.  If none of --server, --pipe, or --socket are given then this transport is used and the target server is determined from the recipient's domain (see --server below for more details).
 
 This transport requires the IO::Socket module which is part of the standard perl distribution.  If this module is not loadable, attempting to use a this transport will result in an error and program termination.
 
+IPv6 is supported when the IO::Socket::INET6 module is present.
+
 =over 4
 
-=item -s, --server [destination mail server[:port]]
+=item -s, --server [target mail server[:port]]
 
-Explicitly tell swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the Net::DNS module.  If Net::DNS is not available swaks will attempt to connect to localhost to deliver.  See also --copy-routing.
+Explicitly tell swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the Net::DNS module.  If Net::DNS is not available swaks will attempt to connect to localhost to deliver.  The target port can optionally be set here.  Supported formats for this include SERVER:PORT (supporting names and IPv4 addresses); [SERVER]:PORT and SERVER/PORT (supporting names, IPv4 and IPv6 addresses).  See also --copy-routing.
 
 =item -p, --port [port]
 
 Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is determined by the --protocol option.  See --protocol for more details.
 
-=item -li, --local-interface [IP or hostname]
+=item -li, --local-interface [IP or hostname[:port]]
 
-Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose local interface.
+Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose local interface.  See --server for additional comments on :port format.
+
+=item -lp, --local-port [port]
+
+Specify the outgoing port to originate the transaction from.  If this option is not specified the system will pick an ephemeral port.  Note that regular users cannot specify some ports.
 
 =item --copy-routing [domain]
 
-The argument is interpreted as the domain part of an email address and it is used to find the destination server using the same logic that would be used to look up the destination server for an recipient email address.  See  --to option for more details on how the target is determined from the email domain.
+The argument is interpreted as the domain part of an email address and it is used to find the target server using the same logic that would be used to look up the target server for an recipient email address.  See  --to option for more details on how the target is determined from the email domain.
+
+=item -4, -6
+
+Force IPv4 or IPv6.
 
 =back
 
@@ -2588,7 +2817,7 @@ The DIGEST-MD5 protocol's "digest-uri" values can be set using the --auth-extra 
 
 =item CRAM-SHA1
 
-The CRAM-SHA1 authenticator requires the Digest::SHA1 module.  This type has only been tested against a non-standard implementation on an Exim server and may therefore have some implementation deficiencies.
+The CRAM-SHA1 authenticator requires the Digest::SHA module.  This type has only been tested against a non-standard implementation on an Exim server and may therefore have some implementation deficiencies.
 
 =item NTLM/SPA/MSN
 
@@ -2698,6 +2927,14 @@ Replaced with the value specified by the --body option.  See --body for default.
 
 In previous versions of swaks the DATA tokens as described in the --data option above used single-character tokens (e.g., %F).  These were not a great choice for default tokens, and proved especially troublesome with encoded, non-english languages where these character combinations might be common.  The single-character tokens were replaced with the slightly-less-error-prone versions listed above.  The retention of the old tokens and the inclusion of this option to activate them are intended as a temporary aid to users who have an existing message corpus using the old tokens.  The single-character tokens and the --use-old-data-tokens option should be considered deprecated and likely to be removed in the next release.
 
+=item -dab, --dump-as-body
+
+If --dump-as-body is used and no other option is used to changed the default body of the message, the body is replaced with output similar to the output of what is provided by --dump.  --dump's initial program capability stanza is not displayed, and the "data" section is not included.  Additionally, --dump always includes passwords.  By default --dump-as-body does not include passwords, though this can be changed with --dump-as-body-shows-password.
+
+=item -dabsp, --dump-as-body-shows-password
+
+Cause --dump-as-body to include plaintext passwords.  This option is not recommended.  This option implies --dump-as-body.
+
 =item --body [body-specification]
 
 Specify the body of the email.  The default is "This is a test mailing".  If no argument to --body is given, prompt to supply one interactively.  If '-' is supplied, the body will be read from standard input.  If any other text is provided and the text represents an open-able file, the content of that file is used as the body.  If it does not represent an open-able file, the text itself is used as the body.
@@ -2724,7 +2961,7 @@ This option sets the filename that will be included in the MIME part created for
 
 This option allows headers to be added to the DATA.  If %H is present in the DATA it is replaced with the argument to this option.  If %H is not present, the argument is inserted between the first two consecutive newlines in the DATA (that is, it is inserted at the end of the existing headers).
 
-The option can either be specified multiple times or a single time with multiple headers seperated by a literal '\n' string.  So, "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header 'Foo: bar\nBaz: foo'" end up adding the same two headers.
+The option can either be specified multiple times or a single time with multiple headers separated by a literal '\n' string.  So, "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header 'Foo: bar\nBaz: foo'" end up adding the same two headers.
 
 =item --header [header-and-data], --h-Header [data]
 
@@ -2854,11 +3091,13 @@ Do not display any content to the terminal.
 
 Cause swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.
 
-In previous releases the -S option could be additive (i.e., "-S -S" was equivalent to "-S 2").  This was marked deprecated in previous releases.  The functionality has been removed from code in this release.  This mention of the functionality is left as a breadcrumb only and will be removed in the next release.  If you are still using the additive method, please change to the method described above.
-
 =item --support
 
 Print capabilities and exit.  Certain features require non-standard perl modules.  This options evaluates whether these modules are present and displays which functionality is available and which isn't, and which modules would need to be added to gain the missing functionality.
+
+=item --dump
+
+This option causes swaks to print the results of option processing, immediately before mail would have been sent.  No mail will be sent when --dump is used.  Note that --dump is considered to be a pure self-diagnosis tool and no effort is made or will ever be made to mask passwords in the --dump output.
 
 =item --help
 
@@ -2963,6 +3202,22 @@ error in TLS transaction
 =item 32
 
 error in EHLO following TLS negotiation
+
+=back
+
+=head1 ABOUT THE NAME
+
+The name "swaks" is a (sort-of) acronym for "SWiss Army Smtp".  It was chosen to be fairly distinct and pronounceable.  While "swaks" is unique as the name of a software package, it has some other, non-software meanings.  Please send in other uses of "swak" or "swaks" for inclusion.
+
+=over 4
+
+=item "Sealed With A Kiss"
+
+SWAK/SWAKs turns up occasionally on the internet with the meaning "with love".
+
+=item bad / poor / ill (Afrikaans)
+
+Seen it in the headline "SA se bes en swaks gekledes in 2011", which was translated as "best and worst dressed" by native speakers.  Google Translate doesn't like "swaks gekledes", but it will translate "swak" as "poor" and "swak geklede" as "ill-dressed".
 
 =back
 
