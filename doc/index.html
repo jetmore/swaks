@@ -20,11 +20,11 @@ swaks' primary design goal is to be a flexible, scriptable, transaction-oriented
 <tr><td align=center colspan=2><hr width=25%></td></tr>
 <td valign=top><font size=-1><b>News</b><br>(<a href="http://www.jetmore.org/john/blog/c/swaks/feed/">rss</a>)</font></td>
 <td><font size=-1>
+* 2012-03-20 - <a href="http://www.jetmore.org/john/blog/2012/03/swaks-release-20120320-0-available/">Swaks Release 20120320.0 Available</a><br>
 * 2012-02-23 - <a href="http://www.jetmore.org/john/blog/2012/02/swaks-ipv6-support-initial-draft/">Swaks IPv6 Support - Initial Draft</a><br>
 * 2012-01-09 - <a href="http://www.jetmore.org/john/blog/2012/01/about-the-name-swaks/">About The Name Swaks...</a><br>
 * 2011-12-30 - <a href="http://www.jetmore.org/john/blog/2011/12/swaks-release-20111230-0-available/">Swaks Release 20111230.0 Available</a><br>
 * 2011-12-03 - <a href="http://www.jetmore.org/john/blog/2011/12/swaks-release-preview-20111202-0-dev-available/">Swaks Release Preview 20111202.0-dev Available</a><br>
-* 2011-12-03 - <a href="http://www.jetmore.org/john/blog/2011/12/more-places-to-hear-about-swaks/">More places to hear about swaks</a><br>
 </td></tr>
 
 
@@ -41,6 +41,85 @@ Download latest (<a href=latest.tar.gz>entire distribution</a>, <a href=latest/s
 <a href='https://plus.google.com/u/0/110270727761256449657/'>Follow Swaks</a> on Google+<br>
 <a href='mailto:proj-swaks@jetmore.net'>Contact the author</a> - suggestion, tips, patches, feedback, critiques always welcome<br>
 <a href=http://www.jetmore.org/john/blog/c/swaks/>Blog</a> - Best place to stay up to date if you need to pull RSS<br>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
+<td valign=top><font size=-1><b>v20120320.0</b></font></td>
+<td><font size=-1>
+<B>Links:</b> <a href=swaks-20120320.0.tar.gz>Distribution</a>, <a href=swaks-20120320.0/swaks>script only</a>, <a href=swaks-20120320.0/doc/ref.txt>version docs</a>
+<P>
+<B>Change Summary:</B><BR>
+<pre>
+New Features:
+  * IPv6 support
+  * -4 and -6 options to force IPv4 or IPv6.
+  * Added --local-port option
+  * Added --dump-as-body and --dump-as-body-shows-password options, allowing
+    session configuration information to be sent in the test email itself.
+    (Suggested by Chris Pimlott)
+  * --dump (and therefore --dump-as-body) includes a new line for a
+    "reconstructed command line".  This is a sort of a synthetic command
+    line including the real command line, any environment variable configs,
+    and any config files.
+Notable Changes
+  * The DIGEST-SHA1 authentication type now requires the Digest::SHA
+    perl module instead of Digest::SHA1.  Digest::SHA1 has always been
+    an extra install step, while Digest::SHA has been in the core perl
+    distribution for many years. (Suggested by Andreas Metzler)
+  * The -m option, marked deprecated since 2007, has been removed.
+Notable Bugs Fixed
+  * In some very rare cases, a server response can be a base64-encoded
+    success response, or a plaintext failure.  Previously in that
+    situation swaks did not handle the case of the plaintext error and
+    the --auth-plaintext option well, resulting in confusing output.
+</pre>
+<B>Changelog:</B><BR>
+<pre>
+* 20120101 typo fix in docs (rep. Andreas Metzler)
+* 20120101 changed the indent formatting so all the examples are at a
+           consistent indent.
+* 20120101 Finally documenting the --dump option
+* 20120103 Removed the code for the -m option which had been deprecated
+           since 20071218.
+* 20120103 Updating copyright note through 2012
+* 20120103 Changed swaks to build version string dynamically for dev builds;
+           updated gen-release.pl's method for setting release versions
+* 20120109 Added "ABOUT THE NAME" section to base.pod
+* 20120214 Removed final breadcrumbs of removed --input-file and additive
+           --silent from docs
+* 20120223 First pass at IPv6 support.  Static routing only, implemented -4 and
+           -6, no MX logic yet.
+* 20120223 updated --server parsing to allow alternate syntaxes for specifying
+           port (SERVER, [SERVER], [SERVER]:PORT, IPV4_OR_HOST:PORT,
+           SERVER/PORT, [SERVER]/PORT)
+* 20120223 Added --local-port option, updated --local-interface to support
+           specifying a local port using same logic at --server
+* 20120223 Slight change in connection failure error - local interface only
+           shown if one was set in the first place
+* 20120223 changed several instances of "destination" to "target" in base.pod
+           to stay consistent with "terms and conventions" section.
+* 20120223 MX tweaks to try to find exchangers with the correct IP type when
+           -4 or -6 are used
+* 20120319 Rearrange --dump output, group settings closer to how options
+           are organized in the docs
+* 20120319 still more removal of code supporing the -l option (r253 removed
+           the function parsing the file, but we still checked the now-
+           never-populated $fconf in lots of option processing)
+* 20120319 change all references for Digest::SHA1 to Digest::SHA, included
+           in perl core since at least 5.9. Suggested by Andreas Metzler
+* 20120319 fixed a couple of exit codes to be more specific
+* 20120319 There are some interactions (DIGEST-MD5 specificallY) which can
+           result in b64-encoded response if successful, plaintest response
+           if an error.  --auth-plaintext didn't play well with the
+           plaintext error.
+* 20120320 added reconstruct_options() to generate an effective command line.
+           Added to --dump output
+* 20120320 add --dump-as-body and --dump-as-body-shows-password.
+* 20120320 twiddled the --dump code to allow for reuse with --dump-as-body.
+           noted that plaintext passwords can be shown i --dump output.
+* 20120320 Small patch to handle (-6 not set, --server IPv6, ipv6 not
+           available) gracefully. Report from and patch by Ulrich Zehl.
+</pre>
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>
 <tr>
