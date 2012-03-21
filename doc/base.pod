@@ -536,6 +536,14 @@ Replaced with the value specified by the --body option.  See --body for default.
 
 In previous versions of swaks the DATA tokens as described in the --data option above used single-character tokens (e.g., %F).  These were not a great choice for default tokens, and proved especially troublesome with encoded, non-english languages where these character combinations might be common.  The single-character tokens were replaced with the slightly-less-error-prone versions listed above.  The retention of the old tokens and the inclusion of this option to activate them are intended as a temporary aid to users who have an existing message corpus using the old tokens.  The single-character tokens and the --use-old-data-tokens option should be considered deprecated and likely to be removed in the next release.
 
+=item -dab, --dump-as-body
+
+If --dump-as-body is used and no other option is used to changed the default body of the message, the body is replaced with output similar to the output of what is provided by --dump.  --dump's initial program capability stanza is not displayed, and the "data" section is not included.  Additionally, --dump always includes passwords.  By default --dump-as-body does not include passwords, though this can be changed with --dump-as-body-shows-password.
+
+=item -dabsp, --dump-as-body-shows-password
+
+Cause --dump-as-body to include plaintext passwords.  This option is not recommended.  This option implies --dump-as-body.
+
 =item --body [body-specification]
 
 Specify the body of the email.  The default is "This is a test mailing".  If no argument to --body is given, prompt to supply one interactively.  If '-' is supplied, the body will be read from standard input.  If any other text is provided and the text represents an open-able file, the content of that file is used as the body.  If it does not represent an open-able file, the text itself is used as the body.
@@ -698,7 +706,7 @@ Print capabilities and exit.  Certain features require non-standard perl modules
 
 =item --dump
 
-This option causes swaks to print the results of option processing, immediately before mail would have been sent.  No mail will be sent when --dump is used.
+This option causes swaks to print the results of option processing, immediately before mail would have been sent.  No mail will be sent when --dump is used.  Note that --dump is considered to be a pure self-diagnosis tool and no effort is made or will ever be made to mask passwords in the --dump output.
 
 =item --help
 
