@@ -607,3 +607,5 @@
 * 20120320 add --dump-as-body and --dump-as-body-shows-password.
 * 20120320 twiddled the --dump code to allow for reuse with --dump-as-body.
            noted that plaintext passwords can be shown i --dump output.
+* 20120320 Small patch to handle (-6 not set, --server IPv6, ipv6 not
+           available) gracefully. Report from and patch by Ulrich Zehl.

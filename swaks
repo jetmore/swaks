@@ -1829,7 +1829,7 @@ sub process_args {
 		if (!avail("socket")) {
 			ptrans(12, avail_str("socket").".  Exiting");
 			exit(10);
-		} elsif ($o->{force_ipv6} && !avail("ipv6")) {
+		} elsif (($o->{force_ipv6} || $G::link{server} =~ m|:| ||  $G::link{lint} =~ m|:|) && !avail("ipv6")) {
 			ptrans(12, avail_str("ipv6").".  Exiting");
 			exit(10);
 		}
