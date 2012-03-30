@@ -322,6 +322,18 @@ sub start_tls {
 	Net::SSLeay::randomize();
 	$t{con}    = Net::SSLeay::CTX_new() || return(0);
 	Net::SSLeay::CTX_set_options($t{con}, &Net::SSLeay::OP_ALL); # error check
+	if ($G::tls_cert && $G::tls_key) {
+		if (!Net::SSLeay::CTX_use_certificate_file($t{con}, $G::tls_cert, &Net::SSLeay::FILETYPE_PEM)) {
+			$t{res} = "Unable to add cert file $G::tls_cert to SSL CTX: "
+			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+			return(0);
+		}
+		if (!Net::SSLeay::CTX_use_PrivateKey_file($t{con}, $G::tls_key, &Net::SSLeay::FILETYPE_PEM)) {
+			$t{res} = "Unable to add key file $G::tls_key to SSL CTX: "
+			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+			return(0);
+		}
+	}
 	$t{ssl}    = Net::SSLeay::new($t{con}) || return(0);
 	if ($G::link{type} eq 'pipe') {
 		Net::SSLeay::set_wfd($t{ssl}, fileno($G::link{sock}{wr})); # error check?
@@ -331,7 +343,7 @@ sub start_tls {
 	}
 	$t{active} = Net::SSLeay::connect($t{ssl}) == 1 ? 1 : 0;
 	if (!$t{active}) {
-		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error())
+		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 	}
 	$t{cipher} = Net::SSLeay::get_cipher($t{ssl});
 	$t{cert}   = Net::SSLeay::get_peer_certificate($t{ssl});
@@ -1305,6 +1317,12 @@ sub get_option_struct {
 		# use tls if available
 		{ opts => ['tlsc', 'tls-on-connect'],         suffix => '',
 		  okey => 'tls_on_connect',                   type => 'scalar', },
+		# local cert to present to server
+		{ opts => ['tls-cert'],                       suffix => '=s',
+		  okey => 'tls_cert',                         type => 'scalar', },
+		# local key to present to server
+		{ opts => ['tls-key'],                        suffix => '=s',
+		  okey => 'tls_key',                          type => 'scalar', },
 		# save tls peer certificate
 		{ opts => ['tls-get-peer-cert'],              suffix => ':s',
 		  okey => 'tls_get_peer_cert',                type => 'scalar', },
@@ -2007,6 +2025,12 @@ sub process_args {
 				exit(10);
 			}
 		}
+		$G::tls_cert = $o->{tls_cert};
+		$G::tls_key  = $o->{tls_key};
+		if (($G::tls_cert || $G::tls_key) && !($G::tls_cert && $G::tls_key)) {
+			ptrans(12, "--tls-cert and --tls-key require each other.  Exiting");
+			exit(10);
+		}
 	}
 	if ($o->{tls_get_peer_cert}) {
 		$G::tls_get_peer_cert = $o->{tls_get_peer_cert};
@@ -2253,13 +2277,18 @@ sub get_running_state {
 
 	$s .= "TLS / Encryption Info:\n"
 	   .  "  tls         = ";
-	if ($G::tls) {
-		$s .= 'starttls (';
-		if ($G::tls_optional == 2)    { $s .= "optional-strict)\n"; }
-		elsif ($G::tls_optional == 1) { $s .= "optional)\n";        }
-		else                          { $s .= "required)\n";        }
+	if ($G::tls || $G::tls_optional) {
+		if ($G::tls) {
+			$s .= 'starttls (';
+			if ($G::tls_optional == 2)    { $s .= "optional-strict)\n"; }
+			elsif ($G::tls_optional == 1) { $s .= "optional)\n";        }
+			else                          { $s .= "required)\n";        }
+		}
+		elsif ($G::tls_on_connect)      { $s .= "on connect (required)\n"; }
+		$s .= "  peer cert   = $G::tls_get_peer_cert\n"
+		   .  "  local cert  = $G::tls_cert\n"
+		   .  "  local key   = $G::tls_key\n";
 	}
-	elsif ($G::tls_on_connect)      { $s .= "on connect (required)\n"; }
 	else                            { $s .= "no\n";                    }
 	$s .= "\n";
 

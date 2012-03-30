@@ -610,3 +610,8 @@
 * 20120320 Small patch to handle (-6 not set, --server IPv6, ipv6 not
            available) gracefully. Report from and patch by Ulrich Zehl.
 > 20120320 released 20120320.0
+* 20120330 add --tls-get-peer-cert to --dump output
+* 20120330 add --tls-cert and --tls-key options to allow swaks to use
+           certs for its half of the session.  debian bug 497654,
+           Luis E. Muñoz provided a patch that was the basis for the
+           eventual implementation.
