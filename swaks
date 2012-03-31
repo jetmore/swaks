@@ -325,7 +325,10 @@ sub start_tls {
 	Net::SSLeay::load_error_strings();
 	Net::SSLeay::SSLeay_add_ssl_algorithms();
 	Net::SSLeay::randomize();
-	$t{con}    = Net::SSLeay::CTX_new() || return(0);
+	if (!($t{con} = Net::SSLeay::CTX_new())) {
+		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		return(0);
+	}
 	Net::SSLeay::CTX_set_options($t{con}, &Net::SSLeay::OP_ALL); # error check
 	if ($G::tls_cert && $G::tls_key) {
 		if (!Net::SSLeay::CTX_use_certificate_file($t{con}, $G::tls_cert, &Net::SSLeay::FILETYPE_PEM)) {
@@ -340,7 +343,11 @@ sub start_tls {
 		}
 	}
 	
-	$t{ssl}    = Net::SSLeay::new($t{con}) || return(0);
+	if (!($t{ssl} = Net::SSLeay::new($t{con}))) {
+		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		return(0);
+	}
+
 		
 	if ($G::link{type} eq 'pipe') {
 		Net::SSLeay::set_wfd($t{ssl}, fileno($G::link{sock}{wr})); # error check?
@@ -348,10 +355,13 @@ sub start_tls {
 	} else {
 		Net::SSLeay::set_fd($t{ssl}, fileno($G::link{sock})); # error check?
 	}
+
 	$t{active} = Net::SSLeay::connect($t{ssl}) == 1 ? 1 : 0;
 	if (!$t{active}) {
 		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		return(0);
 	}
+
 	$t{cipher}          = Net::SSLeay::get_cipher($t{ssl});
 	$t{cert}            = Net::SSLeay::get_peer_certificate($t{ssl});
 	chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));

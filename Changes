@@ -619,3 +619,7 @@
            "peer subject DN" to "peer DN".
 * 20120330 Add a new TLS info line, either logging the DN of the local
            cert or print that no local cert is being used
+* 20120330 A bit more TLS error checking.  Some added on general principle.
+           Specifically fixed error where swaks would die silently during
+           SSL protocol negotiation (could replicate by doing -tlsc
+           against port 25)
