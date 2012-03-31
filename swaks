@@ -300,8 +300,13 @@ sub sendmail {
 }
 
 sub tls_post_start {
-	ptrans(11, "TLS started w/ cipher $G::link{tls}{cipher}");
-	ptrans(11, "TLS peer subject DN=\"$G::link{tls}{cert_subject}\"");
+	ptrans(11, "TLS started with cipher $G::link{tls}{cipher}");
+	if ($G::link{tls}{local_cert_subject}) {
+		ptrans(11, "TLS local DN=\"$G::link{tls}{cert_subject}\"");
+	} else {
+		ptrans(11, "TLS no local certificate set");
+	}
+	ptrans(11, "TLS peer DN=\"$G::link{tls}{cert_subject}\"");
 
 	if ($G::tls_get_peer_cert eq 'STDOUT') {
 		ptrans(11, $G::link{tls}{cert_x509});
@@ -334,7 +339,9 @@ sub start_tls {
 			return(0);
 		}
 	}
+	
 	$t{ssl}    = Net::SSLeay::new($t{con}) || return(0);
+		
 	if ($G::link{type} eq 'pipe') {
 		Net::SSLeay::set_wfd($t{ssl}, fileno($G::link{sock}{wr})); # error check?
 		Net::SSLeay::set_rfd($t{ssl}, fileno($G::link{sock}{re})); # error check?
@@ -345,10 +352,16 @@ sub start_tls {
 	if (!$t{active}) {
 		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 	}
-	$t{cipher} = Net::SSLeay::get_cipher($t{ssl});
-	$t{cert}   = Net::SSLeay::get_peer_certificate($t{ssl});
+	$t{cipher}          = Net::SSLeay::get_cipher($t{ssl});
+	$t{cert}            = Net::SSLeay::get_peer_certificate($t{ssl});
 	chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
-	$t{cert_subject} = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{cert}));
+	$t{cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{cert}));
+	
+	if ($G::tls_cert && $G::tls_key) {
+		$t{local_cert}            = Net::SSLeay::get_certificate($t{ssl});
+		chomp($t{local_cert_x509} = Net::SSLeay::PEM_get_string_X509($t{local_cert}));
+		$t{local_cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{local_cert}));
+	}
 	
 	return($t{active});
 }

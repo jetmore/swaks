@@ -615,3 +615,7 @@
            certs for its half of the session.  debian bug 497654,
            Luis E. Muñoz provided a patch that was the basis for the
            eventual implementation.
+* 20120330 cleaned up TLS info lines.  Changed "w/" to "with", changed
+           "peer subject DN" to "peer DN".
+* 20120330 Add a new TLS info line, either logging the DN of the local
+           cert or print that no local cert is being used
