@@ -623,3 +623,5 @@
            Specifically fixed error where swaks would die silently during
            SSL protocol negotiation (could replicate by doing -tlsc
            against port 25)
+* 20120330 Change the TLS cipher info line from just the NAME to 
+           VERSION:NAME:BITS

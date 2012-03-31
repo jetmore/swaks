@@ -300,7 +300,7 @@ sub sendmail {
 }
 
 sub tls_post_start {
-	ptrans(11, "TLS started with cipher $G::link{tls}{cipher}");
+	ptrans(11, "TLS started with cipher $G::link{tls}{cipher_string}");
 	if ($G::link{tls}{local_cert_subject}) {
 		ptrans(11, "TLS local DN=\"$G::link{tls}{cert_subject}\"");
 	} else {
@@ -362,10 +362,25 @@ sub start_tls {
 		return(0);
 	}
 
+	$t{version} = Net::SSLeay::version($t{ssl});
+	if ($t{version} == 0x0002) {
+		$t{version} = "SSLv2";
+	} elsif ($t{version} == 0x0300) {
+		$t{version} = "SSLv3";
+	} elsif ($t{version} == 0x0301) {
+		$t{version} = "TLSv1";
+	} elsif ($t{version} == 0xFEFF) {
+		$t{version} = "DTLSv1";
+	} else {
+		$t{version} = "UNKNOWN";
+	}
 	$t{cipher}          = Net::SSLeay::get_cipher($t{ssl});
+	$t{cipher_bits}     = Net::SSLeay::get_cipher_bits($t{ssl}, undef);
+	$t{cipher_string}   = sprintf("%s:%s:%s", $t{version}, $t{cipher}, $t{cipher_bits});
 	$t{cert}            = Net::SSLeay::get_peer_certificate($t{ssl});
 	chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
 	$t{cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{cert}));
+	#print STDERR Net::SSLeay::get_cipher_bits($t{ssl}, undef), "\n";
 	
 	if ($G::tls_cert && $G::tls_key) {
 		$t{local_cert}            = Net::SSLeay::get_certificate($t{ssl});
