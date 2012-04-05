@@ -14,7 +14,7 @@ use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = build_version("20120320.0", '$Id$');
+my $p_version = build_version("20120405.0-dev", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
         Copyright (c) 2003-2008,2010-2012 John Jetmore <jj33@pobox.com>
@@ -203,6 +203,30 @@ sub sendmail {
 	# QUIT here if the user has asked us to do so
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'first-helo');
 
+	if ($G::xclient{try}) {
+		# 0 - xclient succeeded normally
+		# 1 - xclient not advertised
+		# 2 - xclient advertised but not attempted, mismatch in requested attrs
+		# 3 - xclient attempted but did not succeed
+		my $result = do_smtp_xclient($ehlo);
+		if ($result == 1) {
+			ptrans(12, "Host did not advertise XCLIENT");
+			do_smtp_quit(1, 33) if (!$G::xclient{optional});
+		} elsif ($result == 2) {
+			ptrans(12, "Host did not advertise requested XCLIENT attributes");
+			do_smtp_quit(1, 33) if (!$G::xclient{optional});
+		} elsif ($result == 3) {
+			ptrans(12, "XCLIENT attempted but failed.  Exiting");
+			do_smtp_quit(1, 33) if ($G::xclient{optional} != 1);
+		} else {
+			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient');
+			
+			# re-helo if the XCLIENT command succeeded
+			do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 34);
+			do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
+		}
+	}
+
 	# handle TLS here if user has requested it
 	if ($G::tls) {
 		# 0 = tls succeeded
@@ -300,8 +324,13 @@ sub sendmail {
 }
 
 sub tls_post_start {
-	ptrans(11, "TLS started w/ cipher $G::link{tls}{cipher}");
-	ptrans(11, "TLS peer subject DN=\"$G::link{tls}{cert_subject}\"");
+	ptrans(11, "TLS started with cipher $G::link{tls}{cipher_string}");
+	if ($G::link{tls}{local_cert_subject}) {
+		ptrans(11, "TLS local DN=\"$G::link{tls}{cert_subject}\"");
+	} else {
+		ptrans(11, "TLS no local certificate set");
+	}
+	ptrans(11, "TLS peer DN=\"$G::link{tls}{cert_subject}\"");
 
 	if ($G::tls_get_peer_cert eq 'STDOUT') {
 		ptrans(11, $G::link{tls}{cert_x509});
@@ -320,23 +349,68 @@ sub start_tls {
 	Net::SSLeay::load_error_strings();
 	Net::SSLeay::SSLeay_add_ssl_algorithms();
 	Net::SSLeay::randomize();
-	$t{con}    = Net::SSLeay::CTX_new() || return(0);
+	if (!($t{con} = Net::SSLeay::CTX_new())) {
+		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		return(0);
+	}
 	Net::SSLeay::CTX_set_options($t{con}, &Net::SSLeay::OP_ALL); # error check
-	$t{ssl}    = Net::SSLeay::new($t{con}) || return(0);
+	if ($G::tls_cert && $G::tls_key) {
+		if (!Net::SSLeay::CTX_use_certificate_file($t{con}, $G::tls_cert, &Net::SSLeay::FILETYPE_PEM)) {
+			$t{res} = "Unable to add cert file $G::tls_cert to SSL CTX: "
+			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+			return(0);
+		}
+		if (!Net::SSLeay::CTX_use_PrivateKey_file($t{con}, $G::tls_key, &Net::SSLeay::FILETYPE_PEM)) {
+			$t{res} = "Unable to add key file $G::tls_key to SSL CTX: "
+			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+			return(0);
+		}
+	}
+	
+	if (!($t{ssl} = Net::SSLeay::new($t{con}))) {
+		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		return(0);
+	}
+
+		
 	if ($G::link{type} eq 'pipe') {
 		Net::SSLeay::set_wfd($t{ssl}, fileno($G::link{sock}{wr})); # error check?
 		Net::SSLeay::set_rfd($t{ssl}, fileno($G::link{sock}{re})); # error check?
 	} else {
 		Net::SSLeay::set_fd($t{ssl}, fileno($G::link{sock})); # error check?
 	}
+
 	$t{active} = Net::SSLeay::connect($t{ssl}) == 1 ? 1 : 0;
 	if (!$t{active}) {
-		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error())
+		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		return(0);
 	}
-	$t{cipher} = Net::SSLeay::get_cipher($t{ssl});
-	$t{cert}   = Net::SSLeay::get_peer_certificate($t{ssl});
+
+	$t{version} = Net::SSLeay::version($t{ssl});
+	if ($t{version} == 0x0002) {
+		$t{version} = "SSLv2";
+	} elsif ($t{version} == 0x0300) {
+		$t{version} = "SSLv3";
+	} elsif ($t{version} == 0x0301) {
+		$t{version} = "TLSv1";
+	} elsif ($t{version} == 0xFEFF) {
+		$t{version} = "DTLSv1";
+	} else {
+		$t{version} = "UNKNOWN";
+	}
+	$t{cipher}          = Net::SSLeay::get_cipher($t{ssl});
+	$t{cipher_bits}     = Net::SSLeay::get_cipher_bits($t{ssl}, undef);
+	$t{cipher_string}   = sprintf("%s:%s:%s", $t{version}, $t{cipher}, $t{cipher_bits});
+	$t{cert}            = Net::SSLeay::get_peer_certificate($t{ssl});
 	chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
-	$t{cert_subject} = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{cert}));
+	$t{cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{cert}));
+	#print STDERR Net::SSLeay::get_cipher_bits($t{ssl}, undef), "\n";
+	
+	if ($G::tls_cert && $G::tls_key) {
+		$t{local_cert}            = Net::SSLeay::get_certificate($t{ssl});
+		chomp($t{local_cert_x509} = Net::SSLeay::PEM_get_string_X509($t{local_cert}));
+		$t{local_cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{local_cert}));
+	}
 	
 	return($t{active});
 }
@@ -441,6 +515,33 @@ sub do_smtp_tls {
 	}
 	tls_post_start();
 
+	return(0);
+}
+
+sub do_smtp_xclient {
+	my $e = shift;
+	
+	# 0 - xclient succeeded normally
+	# 1 - xclient not advertised
+	# 2 - xclient advertised but not attempted, mismatch in requested attrs
+	# 3 - xclient attempted but did not succeed
+	if (!$e->{XCLIENT}) {
+		return(1);
+	}
+	my @parts = ();
+	foreach my $attr (keys %{$G::xclient{attr}}) {
+		if (!$e->{XCLIENT}{$attr}) {
+			return(2);
+		}
+		# see xtext encoding in http://tools.ietf.org/html/rfc1891
+		push(@parts, "$attr=" . join('', map { ($_ == 0x2b || $_ == 0x3D || $_ <= 20 || $_ >= 127)
+		                                        ? sprintf("+%02X", $_)
+		                                        : chr($_)
+		                                     } (unpack("C*", $G::xclient{attr}{$attr}))));
+	}
+	push(@parts, $G::xclient{raw}) if ($G::xclient{raw});
+	my $str = "XCLIENT " . join(' ', @parts);
+	do_smtp_gen($str, '220') || return(3);
 	return(0);
 }
 
@@ -666,6 +767,8 @@ sub do_smtp_helo {
 				$l =~ s/^....//;
 				if ($l =~ /^AUTH=?(.*)$/) {
 					map { $e->{AUTH}{uc($_)} = 1 } (split(' ', $1));
+				} elsif ($l =~ /^XCLIENT\s+(.*)$/) {
+					map { $e->{XCLIENT}{uc($_)} = 1 } (split(' ', $1));
 				} elsif ($l =~ /^STARTTLS$/) {
 					$e->{STARTTLS} = 1;
 				} elsif ($l =~ /^PIPELINING$/) {
@@ -1305,6 +1408,12 @@ sub get_option_struct {
 		# use tls if available
 		{ opts => ['tlsc', 'tls-on-connect'],         suffix => '',
 		  okey => 'tls_on_connect',                   type => 'scalar', },
+		# local cert to present to server
+		{ opts => ['tls-cert'],                       suffix => '=s',
+		  okey => 'tls_cert',                         type => 'scalar', },
+		# local key to present to server
+		{ opts => ['tls-key'],                        suffix => '=s',
+		  okey => 'tls_key',                          type => 'scalar', },
 		# save tls peer certificate
 		{ opts => ['tls-get-peer-cert'],              suffix => ':s',
 		  okey => 'tls_get_peer_cert',                type => 'scalar', },
@@ -1381,6 +1490,39 @@ sub get_option_struct {
 		# use getpwuid building -f
 		{ opts => ['force-getpwuid'],                 suffix => '',
 		  okey => 'force_getpwuid',                   type => 'scalar', },
+		# argument is a raw XCLIENT string
+		{ opts => ['xclient'],                        suffix => ':s',
+		  okey => 'xclient_raw',                      type => 'scalar', },
+		# if set, XCLIENT will proceed even if XCLIENT not advertised
+		{ opts => ['xclient-optional'],               suffix => '',
+		  okey => 'xclient_optional',                 type => 'scalar', },
+		# proceed if xclient not offered, but fail if offered and not accepted
+		{ opts => ['xclient-optional-strict'],        suffix => '',
+		  okey => 'xclient_optional_strict',          type => 'scalar', },
+		## xclient send by default after first helo, but can be sent almost anywhere (cf quit-after)
+		#{ opts => ['xclient-after'],                  suffix => ':s',
+		#  okey => 'xclient_after',                    type => 'scalar', },
+		# XCLIENT NAME
+		{ opts => ['xclient-name'],                   suffix => ':s',
+		  okey => 'xclient_name',                     type => 'scalar', },
+		# XCLIENT ADDR
+		{ opts => ['xclient-addr'],                   suffix => ':s',
+		  okey => 'xclient_addr',                     type => 'scalar', },
+		# XCLIENT PORT
+		{ opts => ['xclient-port'],                   suffix => ':s',
+		  okey => 'xclient_port',                     type => 'scalar', },
+		# XCLIENT PROTO
+		{ opts => ['xclient-proto'],                  suffix => ':s',
+		  okey => 'xclient_proto',                    type => 'scalar', },
+		# XCLIENT HELO
+		{ opts => ['xclient-helo'],                   suffix => ':s',
+		  okey => 'xclient_helo',                     type => 'scalar', },
+		# XCLIENT LOGIN
+		{ opts => ['xclient-login'],                  suffix => ':s',
+		  okey => 'xclient_login',                    type => 'scalar', },
+		# XCLIENT REVERSE_NAME
+		{ opts => ['xclient-reverse-name'],           suffix => ':s',
+		  okey => 'xclient_reverse_name',             type => 'scalar', },
 	);
 
 	return(\@G::raw_option_data);
@@ -1713,7 +1855,7 @@ sub process_args {
 		elsif ($G::quit_after ne 'connect' && $G::quit_after ne 'first-helo' &&
 		       $G::quit_after ne 'tls'     && $G::quit_after ne 'helo'       &&
 		       $G::quit_after ne 'auth'    && $G::quit_after ne 'mail'       &&
-		       $G::quit_after ne 'rcpt')
+		       $G::quit_after ne 'rcpt'    && $G::quit_after ne 'xclient')
 		{
 			ptrans(12, "Unknown quit value $G::quit_after, exiting");
 			exit(1);
@@ -2007,6 +2149,12 @@ sub process_args {
 				exit(10);
 			}
 		}
+		$G::tls_cert = $o->{tls_cert};
+		$G::tls_key  = $o->{tls_key};
+		if (($G::tls_cert || $G::tls_key) && !($G::tls_cert && $G::tls_key)) {
+			ptrans(12, "--tls-cert and --tls-key require each other.  Exiting");
+			exit(10);
+		}
 	}
 	if ($o->{tls_get_peer_cert}) {
 		$G::tls_get_peer_cert = $o->{tls_get_peer_cert};
@@ -2043,6 +2191,21 @@ sub process_args {
 	# local port
 	$G::link{lport}   = $o->{lport} || interact("Local Port: ", '^\w+$')
 		if (defined($o->{lport}));
+	
+	# XCLIENT
+	$G::xclient{try}  = 0;
+	$G::xclient{attr} = {};
+	foreach my $attr ('name', 'addr', 'port', 'proto', 'helo', 'login', 'reverse_name') {
+		$G::xclient{attr}{uc($attr)} = $o->{"xclient_" . $attr} || interact("XCLIENT $attr: ", '^.+$')
+			if (defined($o->{"xclient_" . $attr}));
+	}
+	$G::xclient{try}      = 1 if ($G::xclient{raw} || scalar(keys(%{$G::xclient{attr}})));
+	$G::xclient{optional} = 1 if (defined($o->{xclient_optional}));
+	$G::xclient{optional} = 2 if (defined($o->{xclient_optional_strict}));
+	$G::xclient{raw}      = $o->{"xclient_raw"} || interact("XCLIENT string: ", '^.+$')
+		if (defined($o->{"xclient_raw"}));
+	#$G::xclient{after}    = $o->{"xclient_after"} || interact("XCLIENT quit after: ", '^.+$')
+	#	if (defined($o->{"xclient_after"}));
 
 	# Handle AUTH options
 	# auth_optional => 0 - no.     Auth must be advertised and must succeed, else error.
@@ -2251,15 +2414,34 @@ sub get_running_state {
 	   .  "  pipeline    = " . ($G::pipeline    ? "TRUE" : "FALSE") . "\n"
 	   .  "\n";
 
+	$s .= "XCLIENT Info:\n"
+	   .  "  xclient     = ";
+	if ($G::xclient{try}) {
+		if ($G::xclient{optional} == 2)    { $s .= "optional-strict\n"; }
+		elsif ($G::xclient{optional} == 1) { $s .= "optional\n";        }
+		else                               { $s .= "yes\n";        }
+		$s .= "  raw string  = " . ($G::xclient{raw} || 'no') . "\n";
+		$s .= "  attributes  = " . join("\n".' 'x16,
+		                           map { uc($_)."=".$G::xclient{attr}{$_} } (keys %{$G::xclient{attr}})) . "\n";
+	} else {
+		$s .= "no\n";
+	}
+	$s .= "\n";
+
 	$s .= "TLS / Encryption Info:\n"
 	   .  "  tls         = ";
-	if ($G::tls) {
-		$s .= 'starttls (';
-		if ($G::tls_optional == 2)    { $s .= "optional-strict)\n"; }
-		elsif ($G::tls_optional == 1) { $s .= "optional)\n";        }
-		else                          { $s .= "required)\n";        }
+	if ($G::tls || $G::tls_optional) {
+		if ($G::tls) {
+			$s .= 'starttls (';
+			if ($G::tls_optional == 2)    { $s .= "optional-strict)\n"; }
+			elsif ($G::tls_optional == 1) { $s .= "optional)\n";        }
+			else                          { $s .= "required)\n";        }
+		}
+		elsif ($G::tls_on_connect)      { $s .= "on connect (required)\n"; }
+		$s .= "  peer cert   = $G::tls_get_peer_cert\n"
+		   .  "  local cert  = $G::tls_cert\n"
+		   .  "  local key   = $G::tls_key\n";
 	}
-	elsif ($G::tls_on_connect)      { $s .= "on connect (required)\n"; }
 	else                            { $s .= "no\n";                    }
 	$s .= "\n";
 
@@ -2274,7 +2456,7 @@ sub get_running_state {
 		$s .= "  auth_extras = " . join(',', map { "$_=$G::auth_extras{$_}" } keys (%G::auth_extras)) . "\n";
 		$s .= "  auth_showpt = " . ($G::auth_showpt ? "TRUE" : "FALSE") . "\n";
 		$s .= "  auth map    = " . join("\n".' 'x16,
-		                          map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (keys %G::auth_map_t)) . "\n";
+		                           map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (keys %G::auth_map_t)) . "\n";
 	}
 	else { $s .= "no\n"; }
 	
@@ -2655,13 +2837,17 @@ Terminate the session after receiving the greeting banner from the target.
 
 In a STARTTLS (but not tls-on-connect) session, terminate the transaction after the first of two HELOs.  In a non-STARTTLS transaction, behaves the same as HELO (see below).
 
+=item XCLIENT
+
+Quit after XCLIENT is sent
+
 =item TLS
 
 Quit the transaction immediately following TLS negotiation.  Note that this happens in different places depending on whether STARTTLS or tls-on-connect are used.  This always quits after the point where TLS would have been negotiated, regardless of whether it was attempted.
 
 =item HELO, EHLO, LHLO
 
-In a STARTTLS session, quit after the second HELO.  Otherwise quit after the first and only HELO.
+In a STARTTLS or XCLIENT session, quit after the second HELO.  Otherwise quit after the first and only HELO.
 
 =item AUTH
 
@@ -2751,6 +2937,8 @@ Tell swaks to use the getpwuid method of finding the default sender local-part i
 
 These are options related to encrypting the transaction.  These have been tested and confirmed to work with all three transport methods.  The Net::SSLeay module is used to perform encryption when it is requested.  If this module is not loadable swaks will either ignore the TLS request or error out, depending on whether the request was optional.  STARTTLS is defined as an extension in the ESMTP protocol and will be unavailable if --protocol is set to a variation of smtp.  Because it is not defined in the protocol itself, --tls-on-connect is available for any protocol type if the target supports it.
 
+A local certificate is not required for a TLS connection to be negotiated.  However, some servers use client certificate checking to verify that the client is allowed to connect.  swaks can be told to use a specific local certificate through the use of the --tls-cert and --tls-key options.
+
 =over 4
 
 =item -tls
@@ -2768,6 +2956,14 @@ Attempt to use STARTTLS if available.  Proceed with transaction if TLS is negoti
 =item --tlsc, --tls-on-connect
 
 Initiate a TLS connection immediately on connection.  Following common convention, if this option is specified the default port changes from 25 to 465, though this can still be overridden with the --port option.
+
+=item --tls-cert /path/to/file
+
+Provide a path to a file containing the local certificate swaks should use if TLS is negotiated.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, --tls-key is also required.
+
+=item --tls-key /path/to/file
+
+Provide a path to a file containing the local private key swaks should use if TLS is negotiated.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, --tls-cert is also required.
 
 =item --tls-get-peer-cert [/path/to/file]
 
@@ -2882,6 +3078,44 @@ Instead of showing AUTH strings base64 encoded as they are transmitted, translat
 If this option is specified, any time a readable password would be printed to the terminal (specifically AUTH PLAIN and AUTH LOGIN) the password is replaced with a dummy string (or the contents of "replacement string" if provided).  The dummy string will be base64 encoded or not contingent on the --auth-plaintext option.
 
 Note that --auth-hide-password is similar, but not identical, to the --protect-prompt option.  The former protects passwords from being displayed in the SMTP transaction regardless of how they are entered.  The latter protects sensitive strings when the user types them at the terminal, regardless of how the string would be used.
+
+=back
+
+=head1 XCLIENT OPTIONS
+
+XCLIENT is an SMTP extension introduced by the Postfix project.  XCLIENT allows a (properly-authorized) client to tell a server to use alternate information, such as IP address or hostname, for the client.  This allows much easier paths for testing mail server configurations.  Full details on the protocol are available at http://www.postfix.org/XCLIENT_README.html.
+
+=over 4
+
+=item --xclient-addr [VALUE]
+
+=item --xclient-name [VALUE]
+
+=item --xclient-port [VALUE]
+
+=item --xclient-proto [VALUE]
+
+=item --xclient-helo [VALUE]
+
+=item --xclient-login [VALUE]
+
+=item --xclient-reverse-name [VALUE]
+
+These options specify XCLIENT attrubutes that should be sent to the target server.  If [VALUE] is not provided, swaks will prompt and read the value on STDIN.  See http://www.postfix.org/XCLIENT_README.html for official documentation for what the attributes mean and theire possible values, including the special "[UNAVAILABLE]" and "[TEMPUNAVAIL]" values.
+
+By way of simple example, setting "--xclient-name foo.example.com --xclient-addr 192.168.1.1" will cause swaks to send the SMTP command "XCLIENT NAME=foo.example.com ADDR=192.168.1.1".
+
+Note that the "REVERSE_NAME" attribute doesn't seem to appear in the official documentation.  There is a mailing list thread that documents it, viewable at http://comments.gmane.org/gmane.mail.postfix.user/192623.
+
+=item --xclient [XCLIENT_STRING]
+
+This is the "free form" XCLIENT option.  Whatever value is provided for XCLIENT_STRING will be sent verbatim as the argument to the XCLIENT smtp command.  For example, if "--xclient 'NAME= ADDR=192.168.1.1 FOO=bar'" is used, swaks will send the SMTP command "XCLIENT NAME= ADDR=192.168.1.1 FOO=bar".  The primary advantage to this over the more specific options above is that there is no XCLIENT syntax validation here.  This allows you to send invalid XCLIENT to the target server for testing.  If no XCLIENT_STRING is passed on command line, swaks will prompt and read the value on STDIN.
+
+=item --xclient-optional
+
+=item --xclient-optional-strict
+
+In normal operation, setting one of the --xclient* options will cause a successful XCLIENT transaction to take place in order to proceed (that is, XCLIENT needs to be advertised, all the user-requested attributes need to have been advertised, and the server needs to have accepted swaks' XCLIENT request).  These options change that behavior.  --xclient-optional tells swaks to proceed unconditionally past the XCLIENT stage of the SMTP transaction, regardless of whether it was successful.  --xclient-optional-strict is similar but more granular.  The strict version will continue to XCLIENT was not advertised, but will fail if XCLIENT was attempted but did not succeed.
 
 =back
 
@@ -3202,6 +3436,14 @@ error in TLS transaction
 =item 32
 
 error in EHLO following TLS negotiation
+
+=item 33
+
+error in XCLIENT transaction
+
+=item 34
+
+error in EHLO following XCLIENT
 
 =back
 

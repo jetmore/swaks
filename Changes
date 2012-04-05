@@ -633,3 +633,5 @@
            33,34 exit codes
 * 20120404 add and document new --quit-after option 'xclient'
 * 20120404 added xtext encoding for the xclient options
+> 20120405 released 20120405.0-dev to Kevin San Diego and Kurt Anderson
+           (submitters of independent XCLIENT patches) for comment

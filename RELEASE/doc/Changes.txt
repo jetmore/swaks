@@ -1,3 +1,28 @@
+> 20120405 released 20120405.0-dev to Kevin San Diego and Kurt Anderson
+           (submitters of independent XCLIENT patches) for comment
+* 20120404 added xtext encoding for the xclient options
+* 20120404 add and document new --quit-after option 'xclient'
+* 20120404 implemented the SMTP portion of XCLIENT, documented the 
+           --xclient-optional(-strict)? behavior.  Added and documented
+           33,34 exit codes
+* 20120402 xclient second pass.  option processing and --dump
+* 20120402 xclient first pass.  Added -xclient* options to data struct
+           made first pass at documenting feature and options
+* 20120330 Change the TLS cipher info line from just the NAME to 
+           VERSION:NAME:BITS
+* 20120330 A bit more TLS error checking.  Some added on general principle.
+           Specifically fixed error where swaks would die silently during
+           SSL protocol negotiation (could replicate by doing -tlsc
+           against port 25)
+* 20120330 Add a new TLS info line, either logging the DN of the local
+           cert or print that no local cert is being used
+* 20120330 cleaned up TLS info lines.  Changed "w/" to "with", changed
+           "peer subject DN" to "peer DN".
+* 20120330 add --tls-cert and --tls-key options to allow swaks to use
+           certs for its half of the session.  debian bug 497654,
+           Luis E. Muñoz provided a patch that was the basis for the
+           eventual implementation.
+* 20120330 add --tls-get-peer-cert to --dump output
 > 20120320 released 20120320.0
 * 20120320 Small patch to handle (-6 not set, --server IPv6, ipv6 not
            available) gracefully. Report from and patch by Ulrich Zehl.
