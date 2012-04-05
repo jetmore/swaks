@@ -625,3 +625,11 @@
            against port 25)
 * 20120330 Change the TLS cipher info line from just the NAME to 
            VERSION:NAME:BITS
+* 20120402 xclient first pass.  Added -xclient* options to data struct
+           made first pass at documenting feature and options
+* 20120402 xclient second pass.  option processing and --dump
+* 20120404 implemented the SMTP portion of XCLIENT, documented the 
+           --xclient-optional(-strict)? behavior.  Added and documented
+           33,34 exit codes
+* 20120404 add and document new --quit-after option 'xclient'
+* 20120404 added xtext encoding for the xclient options

@@ -203,6 +203,30 @@ sub sendmail {
 	# QUIT here if the user has asked us to do so
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'first-helo');
 
+	if ($G::xclient{try}) {
+		# 0 - xclient succeeded normally
+		# 1 - xclient not advertised
+		# 2 - xclient advertised but not attempted, mismatch in requested attrs
+		# 3 - xclient attempted but did not succeed
+		my $result = do_smtp_xclient($ehlo);
+		if ($result == 1) {
+			ptrans(12, "Host did not advertise XCLIENT");
+			do_smtp_quit(1, 33) if (!$G::xclient{optional});
+		} elsif ($result == 2) {
+			ptrans(12, "Host did not advertise requested XCLIENT attributes");
+			do_smtp_quit(1, 33) if (!$G::xclient{optional});
+		} elsif ($result == 3) {
+			ptrans(12, "XCLIENT attempted but failed.  Exiting");
+			do_smtp_quit(1, 33) if ($G::xclient{optional} != 1);
+		} else {
+			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient');
+			
+			# re-helo if the XCLIENT command succeeded
+			do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 34);
+			do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
+		}
+	}
+
 	# handle TLS here if user has requested it
 	if ($G::tls) {
 		# 0 = tls succeeded
@@ -494,6 +518,33 @@ sub do_smtp_tls {
 	return(0);
 }
 
+sub do_smtp_xclient {
+	my $e = shift;
+	
+	# 0 - xclient succeeded normally
+	# 1 - xclient not advertised
+	# 2 - xclient advertised but not attempted, mismatch in requested attrs
+	# 3 - xclient attempted but did not succeed
+	if (!$e->{XCLIENT}) {
+		return(1);
+	}
+	my @parts = ();
+	foreach my $attr (keys %{$G::xclient{attr}}) {
+		if (!$e->{XCLIENT}{$attr}) {
+			return(2);
+		}
+		# see xtext encoding in http://tools.ietf.org/html/rfc1891
+		push(@parts, "$attr=" . join('', map { ($_ == 0x2b || $_ == 0x3D || $_ <= 20 || $_ >= 127)
+		                                        ? sprintf("+%02X", $_)
+		                                        : chr($_)
+		                                     } (unpack("C*", $G::xclient{attr}{$attr}))));
+	}
+	push(@parts, $G::xclient{raw}) if ($G::xclient{raw});
+	my $str = "XCLIENT " . join(' ', @parts);
+	do_smtp_gen($str, '220') || return(3);
+	return(0);
+}
+
 sub do_smtp_auth {
 	my $e  = shift; # ehlo config hash
 	my $at = shift; # auth type
@@ -716,6 +767,8 @@ sub do_smtp_helo {
 				$l =~ s/^....//;
 				if ($l =~ /^AUTH=?(.*)$/) {
 					map { $e->{AUTH}{uc($_)} = 1 } (split(' ', $1));
+				} elsif ($l =~ /^XCLIENT\s+(.*)$/) {
+					map { $e->{XCLIENT}{uc($_)} = 1 } (split(' ', $1));
 				} elsif ($l =~ /^STARTTLS$/) {
 					$e->{STARTTLS} = 1;
 				} elsif ($l =~ /^PIPELINING$/) {
@@ -1437,6 +1490,39 @@ sub get_option_struct {
 		# use getpwuid building -f
 		{ opts => ['force-getpwuid'],                 suffix => '',
 		  okey => 'force_getpwuid',                   type => 'scalar', },
+		# argument is a raw XCLIENT string
+		{ opts => ['xclient'],                        suffix => ':s',
+		  okey => 'xclient_raw',                      type => 'scalar', },
+		# if set, XCLIENT will proceed even if XCLIENT not advertised
+		{ opts => ['xclient-optional'],               suffix => '',
+		  okey => 'xclient_optional',                 type => 'scalar', },
+		# proceed if xclient not offered, but fail if offered and not accepted
+		{ opts => ['xclient-optional-strict'],        suffix => '',
+		  okey => 'xclient_optional_strict',          type => 'scalar', },
+		## xclient send by default after first helo, but can be sent almost anywhere (cf quit-after)
+		#{ opts => ['xclient-after'],                  suffix => ':s',
+		#  okey => 'xclient_after',                    type => 'scalar', },
+		# XCLIENT NAME
+		{ opts => ['xclient-name'],                   suffix => ':s',
+		  okey => 'xclient_name',                     type => 'scalar', },
+		# XCLIENT ADDR
+		{ opts => ['xclient-addr'],                   suffix => ':s',
+		  okey => 'xclient_addr',                     type => 'scalar', },
+		# XCLIENT PORT
+		{ opts => ['xclient-port'],                   suffix => ':s',
+		  okey => 'xclient_port',                     type => 'scalar', },
+		# XCLIENT PROTO
+		{ opts => ['xclient-proto'],                  suffix => ':s',
+		  okey => 'xclient_proto',                    type => 'scalar', },
+		# XCLIENT HELO
+		{ opts => ['xclient-helo'],                   suffix => ':s',
+		  okey => 'xclient_helo',                     type => 'scalar', },
+		# XCLIENT LOGIN
+		{ opts => ['xclient-login'],                  suffix => ':s',
+		  okey => 'xclient_login',                    type => 'scalar', },
+		# XCLIENT REVERSE_NAME
+		{ opts => ['xclient-reverse-name'],           suffix => ':s',
+		  okey => 'xclient_reverse_name',             type => 'scalar', },
 	);
 
 	return(\@G::raw_option_data);
@@ -1769,7 +1855,7 @@ sub process_args {
 		elsif ($G::quit_after ne 'connect' && $G::quit_after ne 'first-helo' &&
 		       $G::quit_after ne 'tls'     && $G::quit_after ne 'helo'       &&
 		       $G::quit_after ne 'auth'    && $G::quit_after ne 'mail'       &&
-		       $G::quit_after ne 'rcpt')
+		       $G::quit_after ne 'rcpt'    && $G::quit_after ne 'xclient')
 		{
 			ptrans(12, "Unknown quit value $G::quit_after, exiting");
 			exit(1);
@@ -2105,6 +2191,21 @@ sub process_args {
 	# local port
 	$G::link{lport}   = $o->{lport} || interact("Local Port: ", '^\w+$')
 		if (defined($o->{lport}));
+	
+	# XCLIENT
+	$G::xclient{try}  = 0;
+	$G::xclient{attr} = {};
+	foreach my $attr ('name', 'addr', 'port', 'proto', 'helo', 'login', 'reverse_name') {
+		$G::xclient{attr}{uc($attr)} = $o->{"xclient_" . $attr} || interact("XCLIENT $attr: ", '^.+$')
+			if (defined($o->{"xclient_" . $attr}));
+	}
+	$G::xclient{try}      = 1 if ($G::xclient{raw} || scalar(keys(%{$G::xclient{attr}})));
+	$G::xclient{optional} = 1 if (defined($o->{xclient_optional}));
+	$G::xclient{optional} = 2 if (defined($o->{xclient_optional_strict}));
+	$G::xclient{raw}      = $o->{"xclient_raw"} || interact("XCLIENT string: ", '^.+$')
+		if (defined($o->{"xclient_raw"}));
+	#$G::xclient{after}    = $o->{"xclient_after"} || interact("XCLIENT quit after: ", '^.+$')
+	#	if (defined($o->{"xclient_after"}));
 
 	# Handle AUTH options
 	# auth_optional => 0 - no.     Auth must be advertised and must succeed, else error.
@@ -2313,6 +2414,20 @@ sub get_running_state {
 	   .  "  pipeline    = " . ($G::pipeline    ? "TRUE" : "FALSE") . "\n"
 	   .  "\n";
 
+	$s .= "XCLIENT Info:\n"
+	   .  "  xclient     = ";
+	if ($G::xclient{try}) {
+		if ($G::xclient{optional} == 2)    { $s .= "optional-strict\n"; }
+		elsif ($G::xclient{optional} == 1) { $s .= "optional\n";        }
+		else                               { $s .= "yes\n";        }
+		$s .= "  raw string  = " . ($G::xclient{raw} || 'no') . "\n";
+		$s .= "  attributes  = " . join("\n".' 'x16,
+		                           map { uc($_)."=".$G::xclient{attr}{$_} } (keys %{$G::xclient{attr}})) . "\n";
+	} else {
+		$s .= "no\n";
+	}
+	$s .= "\n";
+
 	$s .= "TLS / Encryption Info:\n"
 	   .  "  tls         = ";
 	if ($G::tls || $G::tls_optional) {
@@ -2341,7 +2456,7 @@ sub get_running_state {
 		$s .= "  auth_extras = " . join(',', map { "$_=$G::auth_extras{$_}" } keys (%G::auth_extras)) . "\n";
 		$s .= "  auth_showpt = " . ($G::auth_showpt ? "TRUE" : "FALSE") . "\n";
 		$s .= "  auth map    = " . join("\n".' 'x16,
-		                          map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (keys %G::auth_map_t)) . "\n";
+		                           map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (keys %G::auth_map_t)) . "\n";
 	}
 	else { $s .= "no\n"; }
 	
