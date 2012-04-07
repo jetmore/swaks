@@ -635,3 +635,5 @@
 * 20120404 added xtext encoding for the xclient options
 > 20120405 released 20120405.0-dev to Kevin San Diego and Kurt Anderson
            (submitters of independent XCLIENT patches) for comment
+* 20120407 fix bug w/ xclient impl, using just --xclient didn't cause
+           XCLIENT to be sent

@@ -2199,13 +2199,13 @@ sub process_args {
 		$G::xclient{attr}{uc($attr)} = $o->{"xclient_" . $attr} || interact("XCLIENT $attr: ", '^.+$')
 			if (defined($o->{"xclient_" . $attr}));
 	}
-	$G::xclient{try}      = 1 if ($G::xclient{raw} || scalar(keys(%{$G::xclient{attr}})));
 	$G::xclient{optional} = 1 if (defined($o->{xclient_optional}));
 	$G::xclient{optional} = 2 if (defined($o->{xclient_optional_strict}));
 	$G::xclient{raw}      = $o->{"xclient_raw"} || interact("XCLIENT string: ", '^.+$')
 		if (defined($o->{"xclient_raw"}));
 	#$G::xclient{after}    = $o->{"xclient_after"} || interact("XCLIENT quit after: ", '^.+$')
 	#	if (defined($o->{"xclient_after"}));
+	$G::xclient{try}      = 1 if ($G::xclient{raw} || scalar(keys(%{$G::xclient{attr}})));
 
 	# Handle AUTH options
 	# auth_optional => 0 - no.     Auth must be advertised and must succeed, else error.
