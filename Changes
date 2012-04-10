@@ -637,3 +637,4 @@
            (submitters of independent XCLIENT patches) for comment
 * 20120407 fix bug w/ xclient impl, using just --xclient didn't cause
            XCLIENT to be sent
+* 20120410 typo fixes and clarifications for XCLIENT docs
