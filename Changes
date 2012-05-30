@@ -641,3 +641,4 @@
 * 20120529 Added some more error checking in TLS code, breadcrumbs to the
            existing errors (spurred by debian bug 675009, though the
            specific issue in that bug was fixed by commit 311).
+* 20120530 Fix the botched TLS checks in the last commit

@@ -399,18 +399,18 @@ sub start_tls {
 		$t{version} = "UNKNOWN";
 	}
 	$t{cipher}          = Net::SSLeay::get_cipher($t{ssl});
-	if ($t{cipher}) {
+	if (!$t{cipher}) {
 		$t{res} = "empty response from get_cipher()";
 		return(0);
 	}
 	$t{cipher_bits}     = Net::SSLeay::get_cipher_bits($t{ssl}, undef);
-	if ($t{cipher_bits}) {
+	if (!$t{cipher_bits}) {
 		$t{res} = "empty response from get_cipher_bits()";
 		return(0);
 	}
 	$t{cipher_string}   = sprintf("%s:%s:%s", $t{version}, $t{cipher}, $t{cipher_bits});
 	$t{cert}            = Net::SSLeay::get_peer_certificate($t{ssl});
-	if ($t{cert}) {
+	if (!$t{cert}) {
 		$t{res} = "error response from get_peer_certificate()";
 		return(0);
 	}
