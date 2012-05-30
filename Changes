@@ -638,3 +638,6 @@
 * 20120407 fix bug w/ xclient impl, using just --xclient didn't cause
            XCLIENT to be sent
 * 20120410 typo fixes and clarifications for XCLIENT docs
+* 20120529 Added some more error checking in TLS code, breadcrumbs to the
+           existing errors (spurred by debian bug 675009, though the
+           specific issue in that bug was fixed by commit 311).

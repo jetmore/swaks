@@ -350,7 +350,7 @@ sub start_tls {
 	Net::SSLeay::SSLeay_add_ssl_algorithms();
 	Net::SSLeay::randomize();
 	if (!($t{con} = Net::SSLeay::CTX_new())) {
-		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		$t{res} = "CTX_new(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 		return(0);
 	}
 	Net::SSLeay::CTX_set_options($t{con}, &Net::SSLeay::OP_ALL); # error check
@@ -368,7 +368,7 @@ sub start_tls {
 	}
 	
 	if (!($t{ssl} = Net::SSLeay::new($t{con}))) {
-		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		$t{res} = "new(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 		return(0);
 	}
 
@@ -382,7 +382,7 @@ sub start_tls {
 
 	$t{active} = Net::SSLeay::connect($t{ssl}) == 1 ? 1 : 0;
 	if (!$t{active}) {
-		$t{res} = Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		$t{res} = "connect(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 		return(0);
 	}
 
@@ -399,9 +399,21 @@ sub start_tls {
 		$t{version} = "UNKNOWN";
 	}
 	$t{cipher}          = Net::SSLeay::get_cipher($t{ssl});
+	if ($t{cipher}) {
+		$t{res} = "empty response from get_cipher()";
+		return(0);
+	}
 	$t{cipher_bits}     = Net::SSLeay::get_cipher_bits($t{ssl}, undef);
+	if ($t{cipher_bits}) {
+		$t{res} = "empty response from get_cipher_bits()";
+		return(0);
+	}
 	$t{cipher_string}   = sprintf("%s:%s:%s", $t{version}, $t{cipher}, $t{cipher_bits});
 	$t{cert}            = Net::SSLeay::get_peer_certificate($t{ssl});
+	if ($t{cert}) {
+		$t{res} = "error response from get_peer_certificate()";
+		return(0);
+	}
 	chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
 	$t{cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{cert}));
 	#print STDERR Net::SSLeay::get_cipher_bits($t{ssl}, undef), "\n";
