@@ -642,3 +642,14 @@
            existing errors (spurred by debian bug 675009, though the
            specific issue in that bug was fixed by commit 311).
 * 20120530 Fix the botched TLS checks in the last commit
+* 20120530 In a secure session, if the protocol version is unknown, print
+           the raw version number in the post-tls-negotiation info lines
+* 20120530 Add tlsv1_1 and tlsv1_2 as "known" protocols in the
+           post-tls-negotiation info lines
+* 20120531 Change around tls_get_peer_cert processing so that it's not
+           touched if TLS isn't going to be attempted
+* 20120531 Add "available protocols" to the tls section of --dump
+* 20120531 fixed wrong exit code for improper use of --tls-key/--tls-cert
+* 20120531 Added in --tls-protocol option to specify or exclude specific tls
+           protocols.
+* 20120531 Added --tls-cipher option to set preferred ciphers list

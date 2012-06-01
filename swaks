@@ -353,7 +353,34 @@ sub start_tls {
 		$t{res} = "CTX_new(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 		return(0);
 	}
-	Net::SSLeay::CTX_set_options($t{con}, &Net::SSLeay::OP_ALL); # error check
+	
+	my $ctx_options = &Net::SSLeay::OP_ALL;
+	if (scalar(@G::tls_protocols)) {
+		if ($G::tls_protocols[0] =~ /^no_/i) {
+			foreach my $p (@G::tls_supported_protocols) {
+				if (grep /^no_$p$/i, @G::tls_protocols) {
+					no strict "refs";
+					$ctx_options |= &{"Net::SSLeay::OP_NO_$p"}();
+				}
+			}
+		} else {
+			foreach my $p (@G::tls_supported_protocols) {
+				if (!grep /^$p$/i, @G::tls_protocols) {
+					no strict "refs";
+					$ctx_options |= &{"Net::SSLeay::OP_NO_$p"}();
+				}
+			}
+		}
+	}
+	Net::SSLeay::CTX_set_options($t{con}, $ctx_options);
+
+	if ($G::tls_cipher) {
+		if (!Net::SSLeay::CTX_set_cipher_list($t{con}, $G::tls_cipher)) {
+			$t{res} = "Unable to set cipher list to $G::tls_cipher: "
+			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+			return(0);
+		}
+	}
 	if ($G::tls_cert && $G::tls_key) {
 		if (!Net::SSLeay::CTX_use_certificate_file($t{con}, $G::tls_cert, &Net::SSLeay::FILETYPE_PEM)) {
 			$t{res} = "Unable to add cert file $G::tls_cert to SSL CTX: "
@@ -372,7 +399,6 @@ sub start_tls {
 		return(0);
 	}
 
-		
 	if ($G::link{type} eq 'pipe') {
 		Net::SSLeay::set_wfd($t{ssl}, fileno($G::link{sock}{wr})); # error check?
 		Net::SSLeay::set_rfd($t{ssl}, fileno($G::link{sock}{re})); # error check?
@@ -393,10 +419,14 @@ sub start_tls {
 		$t{version} = "SSLv3";
 	} elsif ($t{version} == 0x0301) {
 		$t{version} = "TLSv1";
+	} elsif ($t{version} == 0x0302) {
+		$t{version} = "TLSv1.1"; # openssl/tls1.h
+	} elsif ($t{version} == 0x0303) {
+		$t{version} = "TLSv1.2"; # openssl/tls1.h
 	} elsif ($t{version} == 0xFEFF) {
 		$t{version} = "DTLSv1";
 	} else {
-		$t{version} = "UNKNOWN";
+		$t{version} = sprintf("UNKNOWN(0x%04X)", $t{version});
 	}
 	$t{cipher}          = Net::SSLeay::get_cipher($t{ssl});
 	if (!$t{cipher}) {
@@ -416,7 +446,6 @@ sub start_tls {
 	}
 	chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
 	$t{cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{cert}));
-	#print STDERR Net::SSLeay::get_cipher_bits($t{ssl}, undef), "\n";
 	
 	if ($G::tls_cert && $G::tls_key) {
 		$t{local_cert}            = Net::SSLeay::get_certificate($t{ssl});
@@ -1426,6 +1455,12 @@ sub get_option_struct {
 		# local key to present to server
 		{ opts => ['tls-key'],                        suffix => '=s',
 		  okey => 'tls_key',                          type => 'scalar', },
+		# local key to present to server
+		{ opts => ['tlsp', 'tls-protocol'],           suffix => '=s',
+		  okey => 'tls_protocol',                     type => 'scalar', },
+		# local key to present to server
+		{ opts => ['tls-cipher'],                     suffix => '=s',
+		  okey => 'tls_cipher',                       type => 'scalar', },
 		# save tls peer certificate
 		{ opts => ['tls-get-peer-cert'],              suffix => ':s',
 		  okey => 'tls_get_peer_cert',                type => 'scalar', },
@@ -2161,17 +2196,53 @@ sub process_args {
 				exit(10);
 			}
 		}
-		$G::tls_cert = $o->{tls_cert};
-		$G::tls_key  = $o->{tls_key};
+		$G::tls_cipher = $o->{tls_cipher};
+		$G::tls_cert   = $o->{tls_cert};
+		$G::tls_key    = $o->{tls_key};
 		if (($G::tls_cert || $G::tls_key) && !($G::tls_cert && $G::tls_key)) {
 			ptrans(12, "--tls-cert and --tls-key require each other.  Exiting");
-			exit(10);
+			exit(1);
 		}
-	}
-	if ($o->{tls_get_peer_cert}) {
-		$G::tls_get_peer_cert = $o->{tls_get_peer_cert};
-	} elsif (defined($o->{tls_get_peer_cert})) {
-		$G::tls_get_peer_cert = "STDOUT";
+		
+		# this is kind of a kludge.  There doesn't appear to be a specific openssl call to find supported
+		# protocols, but the OP_NO_protocol functions exist for supported protocols.  Loop through
+		# "known" protocols (which will unfortunately need to be added-to by hand when new protocols
+		# become available) to find out which of them are available
+		@G::tls_supported_protocols = ();
+		foreach my $p (qw(SSLv2 SSLv3 TLSv1 TLSv1_1 TLSv1_2)) {
+			eval { no strict "refs"; &{"Net::SSLeay::OP_NO_$p"}(); };
+			push(@G::tls_supported_protocols, $p) if (!$@);
+		}
+		
+		if ($o->{tls_protocol}) {
+			@G::tls_protocols = ();
+			my @requested = split(/,\s*/, $o->{tls_protocol});
+			if (my $c = scalar(grep(/^no_/i, @requested))) {
+				if ($c != scalar(@requested)) {
+					ptrans(12, "cannot mix X and no_X forms in --tls-protocol option");
+					exit(1);
+				}
+			}
+			foreach my $p (@requested) {
+				my $t = $p;
+				$t =~ s/^no_//i;
+				if (grep /^$t$/i, @G::tls_supported_protocols) {
+					push(@G::tls_protocols, $p);
+				} else {
+					ptrans(12, "$p in --tls-protocol is not a known/supported protocol");
+				}
+			}
+			if (!scalar(@G::tls_protocols)) {
+				ptrans(12, "no valid arguments provided to --tls-protocol, exiting");
+				exit(1);
+			}
+		}
+		
+		if ($o->{tls_get_peer_cert}) {
+			$G::tls_get_peer_cert = $o->{tls_get_peer_cert};
+		} elsif (defined($o->{tls_get_peer_cert})) {
+			$G::tls_get_peer_cert = "STDOUT";
+		}
 	}
 
 	# SMTP port
@@ -2441,7 +2512,7 @@ sub get_running_state {
 	$s .= "\n";
 
 	$s .= "TLS / Encryption Info:\n"
-	   .  "  tls         = ";
+	   .  "  tls                 = ";
 	if ($G::tls || $G::tls_optional) {
 		if ($G::tls) {
 			$s .= 'starttls (';
@@ -2450,9 +2521,12 @@ sub get_running_state {
 			else                          { $s .= "required)\n";        }
 		}
 		elsif ($G::tls_on_connect)      { $s .= "on connect (required)\n"; }
-		$s .= "  peer cert   = $G::tls_get_peer_cert\n"
-		   .  "  local cert  = $G::tls_cert\n"
-		   .  "  local key   = $G::tls_key\n";
+		$s .= "  peer cert           = $G::tls_get_peer_cert\n"
+		   .  "  local cert          = $G::tls_cert\n"
+		   .  "  local key           = $G::tls_key\n"
+		   .  "  local cipher list   = $G::tls_cipher\n"
+		   .  "  available protocols = " . join(', ', @G::tls_supported_protocols) . "\n"
+		   .  "  requested protocols = " . join(', ', @G::tls_protocols) . "\n";
 	}
 	else                            { $s .= "no\n";                    }
 	$s .= "\n";
