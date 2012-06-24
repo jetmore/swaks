@@ -1,0 +1,24 @@
+TLS verification (any self-signed mail server)
+# should fail
+--tls --tls-verify
+# should succeed
+--tls
+
+
+TLS verifications against a correctly signed mail server (local CA example is from a debian 6 server)
+# should succeed
+--tls --tls-verify --server sasl.smtp.pobox.com:587
+# should succeed
+--tls --server sasl.smtp.pobox.com:587
+
+Alternate CAs paths against a validly-signed mail server
+# should fail
+--tls --tls-verify --tls-ca-path /tmp --server sasl.smtp.pobox.com:587
+# should fail
+touch /tmp/FOOFOO ; --tls --tls-verify --tls-ca-path /tmp/FOOFOO --server sasl.smtp.pobox.com:587
+# should succeed
+--tls --tls-verify --tls-ca-path /etc/ssl/certs --server sasl.smtp.pobox.com:587
+# should succeed
+--tls --tls-verify --tls-ca-path /etc/ssl/certs/Equifax_Secure_CA.pem --server sasl.smtp.pobox.com:587
+# should fail
+--tls --tls-verify --tls-ca-path /etc/ssl/certs/GTE_CyberTrust_Global_Root.pem --server sasl.smtp.pobox.com:587

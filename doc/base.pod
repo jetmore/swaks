@@ -374,11 +374,11 @@ Require connection to use STARTTLS.  Exit if TLS not available for any reason (n
 
 =item -tlso, --tls-optional
 
-Attempt to use STARTTLS if available, continue with normal transaction if TLS was unable to be negotiated for any reason
+Attempt to use STARTTLS if available, continue with normal transaction if TLS was unable to be negotiated for any reason.  Note that this is a semi-useless option as currently implemented because after a negotiation failure the state of the connection is unknown.  In some cases, like a version mismatch, the connection should be left as plaintext.  In others, like a verification failure, the server-side may think that it should continue speaking TLS while the client thinks it is plaintext.  There may be an attempt to add more granular state detection in the future, but for now just be aware that odd things may happen with this option if the TLS negotiation is attempted and fails.
 
 =item -tlsos, --tls-optional-strict
 
-Attempt to use STARTTLS if available.  Proceed with transaction if TLS is negotiated successfully or STARTTLS not advertised.  If STARTTLS is advertised but TLS negotiations fail, treat as an error and abort transaction.
+Attempt to use STARTTLS if available.  Proceed with transaction if TLS is negotiated successfully or STARTTLS not advertised.  If STARTTLS is advertised but TLS negotiations fail, treat as an error and abort transaction.  Due to the caveat noted above, this is a much more sane option than --tls-optional.
 
 =item --tlsc, --tls-on-connect
 
@@ -393,6 +393,14 @@ The specification string is a comma-delimited list of protocols that can be used
 =item -tls-cipher CIPHER_STRING
 
 Th argument to this option is passed to the underlying OpenSSL library to set the list of acceptable ciphers to the be used for the connection.  The format of this string is opaque to swaks and is defined in http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT.  An brief example would be --tls-cipher '3DES:+RSA'.
+
+=item --tls-verify
+
+By default swaks does not do any certificate verification.  Setting --tls-verify will cause swaks to attempt to verify the server's certificate.  If this option is set and the server's certificate is not verifiable (either using the system-default CA information, or custom CA information (see --tls-ca-path)) TLS negotiation will not succeed.
+
+=item --tls-ca-path [ /path/to/CAfile | /path/to/CAdir/ ]
+
+By default swaks will use the underlying OpenSSL library's default CA information for verifying server certificates.  --tls-ca-path allows you to specify an alternate location.  See http://www.openssl.org/docs/ssl/SSL_CTX_load_verify_locations.html for details of the file/directory contents.
 
 =item --tls-cert /path/to/file
 

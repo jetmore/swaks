@@ -241,7 +241,7 @@ sub sendmail {
 			do_smtp_quit(1, 29) if (!$G::tls_optional);
 		} elsif ($result == 2) {
 			ptrans(12, "STARTTLS attempted but failed");
-			do_smtp_quit(1, 29) if ($G::tls_optional != 1);
+			exit(29) if ($G::tls_optional != 1);
 		}
 	} elsif ($G::tls_optional == 2 && $ehlo->{STARTTLS}) {
 		ptrans(12, "TLS requested, advertised, and locally unavailable.  Exiting");
@@ -373,7 +373,20 @@ sub start_tls {
 		}
 	}
 	Net::SSLeay::CTX_set_options($t{con}, $ctx_options);
-
+	Net::SSLeay::CTX_set_verify($t{con}, 0x01, 0) if ($G::tls_verify);
+	
+	if ($G::tls_ca_path) {
+		my @args = ('', $G::tls_ca_path);
+		@args    = ($G::tls_ca_path, '') if (-f $G::tls_ca_path);
+		if (!Net::SSLeay::CTX_load_verify_locations($t{con}, @args)) {
+			$t{res} = "Unable to set set CA path to (" . join(',', @args) . "): "
+			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+			return(0);
+		}
+	} else {
+		Net::SSLeay::CTX_set_default_verify_paths($t{con});
+	}
+	
 	if ($G::tls_cipher) {
 		if (!Net::SSLeay::CTX_set_cipher_list($t{con}, $G::tls_cipher)) {
 			$t{res} = "Unable to set cipher list to $G::tls_cipher: "
@@ -1464,6 +1477,12 @@ sub get_option_struct {
 		# save tls peer certificate
 		{ opts => ['tls-get-peer-cert'],              suffix => ':s',
 		  okey => 'tls_get_peer_cert',                type => 'scalar', },
+		# require verification of server certificate
+		{ opts => ['tls-verify'],                     suffix => '',
+		  okey => 'tls_verify',                       type => 'scalar', },
+		# local key to present to server
+		{ opts => ['tls-ca-path'],                    suffix => '=s',
+		  okey => 'tls_ca_path',                      type => 'scalar', },
 		# suppress output to varying degrees
 		{ opts => ['S', 'silent'],                    suffix => ':i',
 		  okey => 'silent',                           type => 'sub',
@@ -2196,12 +2215,20 @@ sub process_args {
 				exit(10);
 			}
 		}
-		$G::tls_cipher = $o->{tls_cipher};
-		$G::tls_cert   = $o->{tls_cert};
-		$G::tls_key    = $o->{tls_key};
+		$G::tls_verify  = 1 if (defined($o->{tls_verify}));
+		$G::tls_cipher  = $o->{tls_cipher};
+		$G::tls_cert    = $o->{tls_cert};
+		$G::tls_key     = $o->{tls_key};
 		if (($G::tls_cert || $G::tls_key) && !($G::tls_cert && $G::tls_key)) {
 			ptrans(12, "--tls-cert and --tls-key require each other.  Exiting");
 			exit(1);
+		}
+		if ($o->{tls_ca_path}) {
+			$G::tls_ca_path = $o->{tls_ca_path};
+			if (!-f $G::tls_ca_path && !-d $G::tls_ca_path) {
+				ptrans(12, "--tls-ca-path: $G::tls_ca_path is not a valid file or directory.  Exiting.");
+				exit(1);
+			}
 		}
 		
 		# this is kind of a kludge.  There doesn't appear to be a specific openssl call to find supported
@@ -2525,6 +2552,8 @@ sub get_running_state {
 		   .  "  local cert          = $G::tls_cert\n"
 		   .  "  local key           = $G::tls_key\n"
 		   .  "  local cipher list   = $G::tls_cipher\n"
+		   .  "  ca path             = $G::tls_ca_path\n"
+		   .  "  verify server cert  = " . ($G::tls_verify ? "TRUE" : "FALSE") . "\n"
 		   .  "  available protocols = " . join(', ', @G::tls_supported_protocols) . "\n"
 		   .  "  requested protocols = " . join(', ', @G::tls_protocols) . "\n";
 	}

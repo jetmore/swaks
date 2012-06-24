@@ -653,3 +653,10 @@
 * 20120531 Added in --tls-protocol option to specify or exclude specific tls
            protocols.
 * 20120531 Added --tls-cipher option to set preferred ciphers list
+* 20120601 Added --tls-verify option
+* 20120624 If TLS is attempted but failed, just exit, don't attempt to
+           send quit because we don't know what state the cxn is in.  This
+           will likey cause problems with tls-optional connections,
+           documenting the concern there.
+* 20120624 Added --tls-ca-path option to specify alternate certs for use in
+           verification
