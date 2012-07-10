@@ -660,3 +660,6 @@
            documenting the concern there.
 * 20120624 Added --tls-ca-path option to specify alternate certs for use in
            verification
+* 20120710 Typo/phrasing review of RELEASE/README.  Adding doc for release
+           process (failed to update README for 20120320.0)
+

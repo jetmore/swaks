@@ -2,10 +2,10 @@
 INSTALL
 ------------------------------
 swaks is designed to be a self contained script.  It should run on any system
-That has perl installed, although its capabilites may be limited by which
-modules are or are not installed.
+that has Perl installed, although its capabilites may be limited by which
+modules are installed.
 
-To get a snapshot of what swaks can and cannot do on a given system, run:
+To get a view of what swaks can and cannot do on a given system, run:
 
     swaks --support
 
@@ -42,7 +42,7 @@ Check the following files
 ------------------------------
 Communication
 ------------------------------
-The main swaks website is currently http://jetmore.org/john/code/swaks/.
+The main swaks website is currently http://jetmore.org/john/code/swaks/
 
 Ways to stay up to date on new releases:
       Homepage: http://jetmore.org/john/code/swaks/
