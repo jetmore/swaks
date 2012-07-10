@@ -1,0 +1,3 @@
+This file is used to document the formal release process.  Populate
+the next time I do a real release.  Needed because I apparently forgot
+to manually update the "Change Summary" section of RELEASE/README.
