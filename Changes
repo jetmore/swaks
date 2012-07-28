@@ -662,4 +662,9 @@
            verification
 * 20120710 Typo/phrasing review of RELEASE/README.  Adding doc for release
            process (failed to update README for 20120320.0)
+* 20120728 Reworked website, placing all files in swaks/files and redirecting
+           where necessary; simplified index.html to cut down on casual
+           consumer confusion; split version/change information into
+           version.html; applied consistent style to all pages; new style
+           guideline, changing "swaks" to "Swaks" when used as proper noun
 

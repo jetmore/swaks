@@ -1,28 +1,54 @@
-<html><head><title>swaks - Occasionally Asked Questions</title></head>
+<html><head><title>Swaks - Swiss Army Knife for SMTP</title>
+<style type="text/css">
+a:link { color: blue }
+a:visited { color: blue }
+a:active { color: navy }
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: normal;
+    line-height: 1.7em;
+}
+</style>
+</head>
 <body>
 <table width=100% height=100%><tr><td valign=middle align=center>
-<font size=-1><a href=/>www.jetmore.org</a>/<a href=/john/>john</a>/<a href=/john/code/>code</a>/<a href=/john/code/swaks>swaks</a></font>/<font size=+2>faq.html</font>
-<P>
-<table cellpadding=3 border=0 width=75%>
-<tr><td colspan=2><hr></td></tr>
-<tr><td colspan=2 align=left><font size=-1>
+<table cellpadding=3 border=0 width=600>
+<tr><td align=center>
 <a name=swaks>
-<font size=+2><B>swaks</B> - Occasionally Asked Questions</font>
-<p>
+<font size=+3><B>Swaks</B> - Swiss Army Knife for SMTP</font>
+</a>
+<br>
+<font size=-1>A scriptable, transaction-oriented SMTP test tool</font>
+</td></tr><tr><td>
+<P><hr><P>
+<font size=+1><B>Occasionally Asked Questions</B></font>
+<P>
 These are questions that I occasionally get asked or I see pop up in a Google query string.
 <P>
-If you are trying to figure out something using swaks, drop me a line at proj-swaks@jetmore.net.  swaks is a low-traffic project and I enjoy making it better, whether it's docs or code or just a hint in an email.
-</font></td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
+If you are trying to figure out something using Swaks, drop me a line at <a href=mailto:proj-swaks@jetmore.net>proj-swaks@jetmore.net</a>.  Swaks is a low-traffic project and I enjoy making it better, whether it's docs or code or just giving a hint in an email.
+<P>
+<a href=index.html>return to main page</a>
+<P><hr><P>
+</tr></td></table>
+
+
+
+
+
+<table cellpadding=3 border=0 width=600>
+<tr>
 <td valign=top><font size=-1><b>Table of Contents</b></font></td>
 <td><font size=-1>
 <ol>
-<li><a href="#mult_recip">How do I use swaks to send email to multiple recipients?</a>
+<li><a href="#mult_recip">How do I use Swaks to send email to multiple recipients?</a>
 <li><a href="#adding_header">How do I add a header?</a>
 <li><a href="#install_macosx">How do I install on Mac OS X?</a>
 <li><a href="#install_windows">How do I install on Windows?</a>
 <li><a href="#send_html_email">How do I send HTML email?</a>
-<li><a href="#support_ipv6">Does swaks support IPv6?</a>
+<li><a href="#support_ipv6">Does Swaks support IPv6?</a>
 </ol>
 </font>
 </td></tr>
@@ -30,7 +56,7 @@ If you are trying to figure out something using swaks, drop me a line at proj-sw
 <tr>
 <td valign=top><font size=-1><b><a name="mult_recip">Multiple Recipients</a></b></font></td>
 <td><font size=-1>
-<B>How do I use swaks to send email to multiple recipients?</b>
+<B>How do I use Swaks to send email to multiple recipients?</b>
 <P>
 Multiple recipients can be specified by passing them as a single argument to the "--to" option.  Any of the following will result in mail being sent to both foo@example.net and bar@example.com:
 <P>
@@ -47,9 +73,9 @@ Config file:
 echo "--to foo@example.net,bar@example.com" >> .swaksrc
 swaks --config .swaksrc
 </pre>
-The argument to the --to option is passed deep into the heart of swaks with no real validation checking.  This is done on purpose because swaks is meant to be a test tool, so oddball values should be allowed.  This does mean though that you can't have a space after the comma, or you will try to send an email to an address that begins with a comma, which is probably not what you want.
+The argument to the --to option is passed deep into the heart of Swaks with no real validation checking.  This is done on purpose because Swaks is meant to be a test tool, so oddball values should be allowed.  This does mean though that you can't have a space after the comma, or you will try to send an email to an address that begins with a comma, which is probably not what you want.
 <P>
-There is one additional consideration here.  Since swaks is oriented around a single smtp-session per invocation, it will only ever connect to a single server, even if multiple recipients are specified.  In the example above, both emails will be delivered to the MX server for example.com (since, as documented, the mail routing for the last domain in the list is used).  This may or may not work, depending on the type of email server you are testing.
+There is one additional consideration here.  Since Swaks is oriented around a single smtp-session per invocation, it will only ever connect to a single server, even if multiple recipients are specified.  In the example above, both emails will be delivered to the MX server for example.com (since, as documented, the mail routing for the last domain in the list is used).  This may or may not work, depending on the type of email server you are testing.
 </font>
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>
@@ -72,9 +98,9 @@ There are lots more examples in <a href=http://jetmore.org/john/code/swaks/lates
 <td><font size=-1>
 <B>How do I install on Mac OS X?</b>
 <P>
-Copy and paste or right-click, save-as works great for me =).  I don't know if anyone's packaged swaks for Mac OS X, but, at the layer swaks operates, it's just UNIX.  Much of the first part of swaks' life was developed on a tibook running 10.3.x and 10.4.x and recently it has been on a MacBook running 10.6.x
+Copy and paste or right-click, save-as works great for me =).  I don't know if anyone's packaged Swaks for Mac OS X, but, at the layer Swaks operates, it's just UNIX.  Much of the first part of Swaks' life was developed on a tibook running 10.3.x and 10.4.x and recently it has been on a MacBook running 10.6.x
 <P>
-It is true that there are a couple of modules that make swaks much more fun to use, but they are all easy to install.  If you have any specific questions I'd be happy to listen to them, especially if I can enhance this question with specific help.
+It is true that there are a couple of modules that make Swaks much more fun to use, but they are all easy to install.  If you have any specific questions I'd be happy to listen to them, especially if I can enhance this question with specific help.
 </font>
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>
@@ -83,7 +109,7 @@ It is true that there are a couple of modules that make swaks much more fun to u
 <td><font size=-1>
 <B>How do I install on Windows?</b>
 <P>
-swaks has been tested much less on Windows than Mac OS X or Linux (or even Solaris, swaks' birth-OS), but it has worked when I tested it.  I installed ActiveState Perl, saved the latest version of swaks as swaks.pl, and used ppm to install perl modules.  Worked fine, but if you are having specific issues let me know.
+Swaks has been tested much less on Windows than Mac OS X or Linux (or even Solaris, Swaks' birth-OS), but it has worked when I tested it.  I installed ActiveState Perl, saved the latest version of Swaks as swaks.pl, and used ppm to install perl modules.  Worked fine, but if you are having specific issues let me know.
 </font>
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>
@@ -92,9 +118,9 @@ swaks has been tested much less on Windows than Mac OS X or Linux (or even Solar
 <td><font size=-1>
 <B>How do I send HTML email?</b>
 <P>
-This really depends on what you want to do.  At its base, swaks is agnostic about what it sends in its DATA section, so you can craft whatever email you want and use it as the DATA of the message using the --data option.  This is the best route for testing, where you usually have a fixed set of test cases to run, or you want to run the same command many times.  If you don't know what a raw email looks like, send yourself an email to a gmail account and select "Show Original".  The entire text file is the format that the --data option expects (though it will probably be more complicated and have more headers than you need)
+This really depends on what you want to do.  At its base, Swaks is agnostic about what it sends in its DATA section, so you can craft whatever email you want and use it as the DATA of the message using the --data option.  This is the best route for testing, where you usually have a fixed set of test cases to run, or you want to run the same command many times.  If you don't know what a raw email looks like, send yourself an email to a gmail account and select "Show Original".  The entire text file is the format that the --data option expects (though it will probably be more complicated and have more headers than you need)
 <P>
-On the other hand, if you're trying to do something like use swaks to send an email copy of a nightly HTML file, and you want the file to show up correctly in your MUA, swaks does have a couple of helper options.
+On the other hand, if you're trying to do something like use Swaks to send an email copy of a nightly HTML file, and you want the file to show up correctly in your MUA, Swaks does have a couple of helper options.
 <P>
 First, if you want the HTML file to be an attachment that can be openable or saveable from your MUA, you want the --attach option.  For instance, the following command will attach the file report.html.  --attach-type is optional, but setting it will help your MUA know what to do with the attachment:
 <P>
@@ -102,11 +128,11 @@ First, if you want the HTML file to be an attachment that can be openable or sav
 swaks --attach-type text/html --attach report.html
 </pre>
 <P>
-Another interpretation of this question is "How do I send email which has an HTML-encoded body".  This means sending an email that your MUA will display as HTML.  swaks always treats the "body" portion of a MIME email as text/plain, so you have to "cheat" and add the MIME headers yourself.  The following should work:
+Another interpretation of this question is "How do I send email which has an HTML-encoded body".  This means sending an email that your MUA will display as HTML.  Swaks always treats the "body" portion of a MIME email as text/plain, so you have to "cheat" and add the MIME headers yourself.  The following should work:
 <P>
-<pre>
+<code>
 swaks --body report.html --add-header "MIME-Version: 1.0" --add-header "Content-Type: text/html"
-</pre>
+</code>
 <P>
 One potential issue with this path is that the contents of report.html won't be encoded as they would if it was processed using --attach.  Whether this will be an issue or not depends on the contents of the file, the mail server(s) used to handle the mail, and the MUA used to view the mail
 </font>
@@ -115,7 +141,7 @@ One potential issue with this path is that the contents of report.html won't be 
 <tr>
 <td valign=top><font size=-1><b><a name="support_ipv6">IPv6 Support</a></b></font></td>
 <td><font size=-1>
-<B>Does swaks support IPv6?</b>
+<B>Does Swaks support IPv6?</b>
 <P>
 Yes, as of release 20120320.0!  Woo!
 </font>
@@ -125,7 +151,7 @@ Yes, as of release 20120320.0!  Woo!
 <tr>
 <td valign=top><font size=-1><b><a name="">Multiple Recipients</a></b></font></td>
 <td><font size=-1>
-<B>How do I use swaks to send email to multiple recipients?</b>
+<B>How do I use Swaks to send email to multiple recipients?</b>
 <P>
 </font>
 </td></tr>
