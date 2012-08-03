@@ -734,7 +734,17 @@ Summarizes the DATA portion of the SMTP transaction instead of printing every li
 
 Display time lapse between send/receive pairs.  This option is most useful when Time::HiRes is available, in which case the time lapse will be displayed in thousandths of a second.  If Time::HiRes is unavailable or "i" is given as an argument the lapse will be displayed in integer seconds only.
 
+=item -nih, --no-info-hints
+
+Don't display the transaction hint for informational transactions.  This is most useful when needing to copy some portiong of the informational lines, for instance the certificate output from --tls-get-peer-cert.
+
+=item -nsh, --no-send-hints
+
+=item -nrh, --no-receive-hints
+
 =item -nth, --no-hints
+
+--no-send-hints and --no-receive-hints supress the transaction prefix from send and receive lines, respectively.  This is often useful when copying some portion of the transaction for use elsewhere (for instance, "--no-send-hints --hide-receive --hide-informational" is a useful way to get only the client-side commands for a given transaction).  --no-hints is identical to specifying both --no-send-hints and --no-receive-hints.
 
 Don't show transaction hints (useful in conjunction with -hr to create copy/paste-able transactions).
 

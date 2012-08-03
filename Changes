@@ -668,4 +668,7 @@
            version.html; applied consistent style to all pages; new style
            guideline, changing "swaks" to "Swaks" when used as proper noun
 * 20120803 Fixed probably-never-traversed bug in last-resort transaction hint
+* 20120803 Implemented new --no-send-hints, --no-receive-hints, and
+           --no-info-hints options (mostly so I could can copy certs from
+           the output of --tls-get-peer-cert).
 

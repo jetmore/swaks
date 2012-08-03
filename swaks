@@ -474,7 +474,7 @@ sub ptrans {
 	my $m = shift;  # message to print
 	my $b = shift;  # be brief in what we print
 	my $o = $G::trans_fh_oh || \*STDOUT;
-	my $f;
+	my $f = '';
 
 	return if (($G::hide_send          && int($c/10) == 2)  ||
 	           ($G::hide_receive       && int($c/10) == 3)  ||
@@ -498,7 +498,7 @@ sub ptrans {
 			}
 		}
 	}
-
+	
 	# 1x is program messages
 	# 2x is smtp send
 	# 3x is smtp recv
@@ -506,26 +506,25 @@ sub ptrans {
 	# x = 2 is error
 	# x = 3 dump output
 	# program info
-	if ($c == 11)    { $f = '==='; }
+	if    ($c == 11) { $f = $G::no_hints_info ? '' : '==='; }
 	# program error
-	elsif ($c == 12) { $f = '***'; $o = $G::trans_fh_eh || \*STDERR; }
+	elsif ($c == 12) { $f = $G::no_hints_info ? '' : '***'; $o = $G::trans_fh_eh || \*STDERR; }
 	# smtp send info
-	elsif ($c == 21) { $f = $G::link{tls}{active} ? ' ~>' : ' ->'; }
+	elsif ($c == 21) { $f = $G::no_hints_send ? '' : ($G::link{tls}{active} ? ' ~>' : ' ->'); }
 	# smtp send error
-	elsif ($c == 22) { $f = $G::link{tls}{active} ? '*~>' : '**>'; }
+	elsif ($c == 22) { $f = $G::no_hints_send ? '' : ($G::link{tls}{active} ? '*~>' : '**>'); }
 	# smtp send dump output
-	elsif ($c == 23) { $f = '  >'; }
+	elsif ($c == 23) { $f = $G::no_hints_send ? '' : '  >'; }
 	# smtp recv info
-	elsif ($c == 31) { $f = $G::link{tls}{active} ? '<~ ' : '<- '; }
+	elsif ($c == 31) { $f = $G::no_hints_recv ? '' : ($G::link{tls}{active} ? '<~ ' : '<- '); }
 	# smtp recv error
-	elsif ($c == 32) { $f = $G::link{tls}{active} ? '<~*' : '<**'; }
+	elsif ($c == 32) { $f = $G::no_hints_recv ? '' : ($G::link{tls}{active} ? '<~*' : '<**'); }
 	# smtp recv dump output
-	elsif ($c == 33) { $f = '<  '; }
+	elsif ($c == 33) { $f = $G::no_hints_recv ? '' : '<  '; }
 	# something went unexpectedly
 	else             { $f = '???'; }
 
-	$f .= ' ';
-	$f = '' if ($G::no_hints && int($c/10) != 1);
+	$f .= ' ' if ($f);
 
 	if ($b) {
 		# split to tmp list to prevent -w gripe
@@ -1493,9 +1492,18 @@ sub get_option_struct {
 		# Use the old, one-character substitution tokens (%H, %D, etc)
 		{ opts => ['use-old-data-tokens'],            suffix => '',
 		  okey => 'use_old_data_tokens',              type => 'scalar', },
-		# Don't show transaction hints
+		# Don't show send/receive hints (legacy)
 		{ opts => ['nth', 'no-hints'],                suffix => '',
 		  okey => 'no_hints',                         type => 'scalar', },
+		# Don't show transaction hints
+		{ opts => ['nsh', 'no-send-hints'],           suffix => '',
+		  okey => 'no_hints_send',                    type => 'scalar', },
+		# Don't show transaction hints
+		{ opts => ['nrh', 'no-receive-hints'],        suffix => '',
+		  okey => 'no_hints_recv',                    type => 'scalar', },
+		# Don't show transaction hints
+		{ opts => ['nih', 'no-info-hints'],           suffix => '',
+		  okey => 'no_hints_info',                    type => 'scalar', },
 		# Don't show reception lines
 		{ opts => ['hr', 'hide-receive'],             suffix => '',
 		  okey => 'hide_receive',                     type => 'scalar', },
@@ -1853,7 +1861,9 @@ sub process_args {
 
 	$G::dump_args          = 1 if ($o->{dump_args});
 	$G::suppress_data      = 1 if ($o->{suppress_data});
-	$G::no_hints           = 1 if ($o->{no_hints});
+	$G::no_hints_send      = 1 if ($o->{no_hints_send} || $o->{no_hints});
+	$G::no_hints_recv      = 1 if ($o->{no_hints_recv} || $o->{no_hints});
+	$G::no_hints_info      = 1 if ($o->{no_hints_info});
 	$G::hide_send          = 1 if ($o->{hide_send});
 	$G::hide_receive       = 1 if ($o->{hide_receive});
 	$G::hide_informational = 1 if ($o->{hide_informational});
@@ -2493,7 +2503,9 @@ sub get_running_state {
 	   .  "  show_time_lapse    = " . ($G::show_time_lapse    ? "TRUE" : "FALSE") . "\n"
 	   .  "  show_time_hires    = " . ($G::show_time_hires    ? "TRUE" : "FALSE") . "\n"
 	   .  "  suppress_data      = " . ($G::suppress_data      ? "TRUE" : "FALSE") . "\n"
-	   .  "  no_hints           = " . ($G::no_hints           ? "TRUE" : "FALSE") . "\n"
+	   .  "  no_hints_send      = " . ($G::no_hints_send      ? "TRUE" : "FALSE") . "\n"
+	   .  "  no_hints_recv      = " . ($G::no_hints_recv      ? "TRUE" : "FALSE") . "\n"
+	   .  "  no_hints_info      = " . ($G::no_hints_info      ? "TRUE" : "FALSE") . "\n"
 	   .  "  silent             = $G::silent\n"
 	   .  "  hide_send          = " . ($G::hide_send          ? "TRUE" : "FALSE") . "\n"
 	   .  "  hide_receive       = " . ($G::hide_receive       ? "TRUE" : "FALSE") . "\n"
