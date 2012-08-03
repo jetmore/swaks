@@ -522,7 +522,7 @@ sub ptrans {
 	# smtp recv dump output
 	elsif ($c == 33) { $f = '<  '; }
 	# something went unexpectedly
-	else             { $c = '???'; }
+	else             { $f = '???'; }
 
 	$f .= ' ';
 	$f = '' if ($G::no_hints && int($c/10) != 1);

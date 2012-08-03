@@ -667,4 +667,5 @@
            consumer confusion; split version/change information into
            version.html; applied consistent style to all pages; new style
            guideline, changing "swaks" to "Swaks" when used as proper noun
+* 20120803 Fixed probably-never-traversed bug in last-resort transaction hint
 
