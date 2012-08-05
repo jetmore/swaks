@@ -954,10 +954,34 @@ sub recv_line {
 		if ($G::link{tls}{active}) {
 			$t = Net::SSLeay::read($G::link{tls}{ssl});
 			return($t) if (!defined($t));
+			
+			# THIS CODE COPIED FROM THE ELSE BELOW.  Found I could trip this condition
+			# by having the server sever the connection but not have swaks realize the
+			# connection was gone.  For instance, send a PIPELINE mail that includes a 
+			# "-q rcpt".  There wass a bug in swaks that made it try to send another quit
+			# later, thus tripping this "1000 reads" error (but only in TLS).
+			# Short term: add line below to prevent these reads
+			# Short Term: fix the "double-quit" bug
+			# Longer term: test to see if remote side closed connection
+			
+			# the above line should be good enough but it isn't returning
+			# undef for some reason.  I think heuristically it will be sufficient
+			# to just look for an empty packet (I hope.  gulp).  Comment out the
+			# following line if your swaks seems to be saying that it lost connection
+			# for no good reason.  Then email me about it.
+			return(undef()) if (!length($t));
 		} elsif ($G::link{type} eq 'pipe') {
 			# XXX in a future release see if I can get read() or equiv to work on a pipe
 			$t = <$s>;
 			return($t) if (!defined($t));
+			
+			# THIS CODE COPIED FROM THE ELSE BELOW.
+			# the above line should be good enough but it isn't returning
+			# undef for some reason.  I think heuristically it will be sufficient
+			# to just look for an empty packet (I hope.  gulp).  Comment out the
+			# following line if your swaks seems to be saying that it lost connection
+			# for no good reason.  Then email me about it.
+			return(undef()) if (!length($t));
 		} else {      
 			# if you're having problems with reads, swap the comments on the
 			# the following two lines

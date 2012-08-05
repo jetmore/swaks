@@ -671,4 +671,6 @@
 * 20120803 Implemented new --no-send-hints, --no-receive-hints, and
            --no-info-hints options (mostly so I could can copy certs from
            the output of --tls-get-peer-cert).
+* 20120805 Fixed bug in TLS and pipe recv code when server has closed
+           connection but swaks is expecting data to be present
 
