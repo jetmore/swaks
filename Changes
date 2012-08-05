@@ -673,4 +673,7 @@
            the output of --tls-get-peer-cert).
 * 20120805 Fixed bug in TLS and pipe recv code when server has closed
            connection but swaks is expecting data to be present
+* 20120805 Fixed bug causing swaks to "double-quit" when a rejected MAIL of
+           RCPT was sent _AND_ a --quit MAIL or --quit RCPT was used _AND_
+           --pipeline as used.
 

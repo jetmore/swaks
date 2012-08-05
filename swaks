@@ -537,6 +537,12 @@ sub ptrans {
 sub do_smtp_quit {
 	my $exit = shift;
 	my $err  = shift;
+	
+	# Ugh.  Because PIPELINING allows mail's and rcpt's send to be disconnected,
+	# and possibly with a QUIT between them, we need to set a global "we have
+	# told the server we quit already" flag to prevent double-quits
+	return(1) if ($G::link{quit_sent});
+	$G::link{quit_sent} = 1;
 
 	$G::link{allow_lost_cxn} = 1;
 	my $r = do_smtp_gen('QUIT', '221');
