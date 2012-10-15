@@ -693,6 +693,7 @@ sub do_smtp_auth_digest {
 	my $p  = shift; # auth password
 	my $as = shift; # auth string
 	my $r  = '';    # will store smtp response
+	my $e  = '';    # will store Authen::SASL errors
 	my @digest_uri = ();
 	
 	if (exists($G::auth_extras{"DMD5-SERV-TYPE"})) {
@@ -750,6 +751,11 @@ sub do_smtp_auth_digest {
 	$sasl_client->property('maxssf' => 0);
 
 	$auth_string = $sasl_client->client_step($r);
+	if ($e = $sasl_client->error()) {
+		ptrans('12', "Error received from Authen::SASL sub-system: $e");
+		return(0);
+	}
+	
 	do_smtp_gen(eb64($auth_string), '334', \$r, '',
 	                 $G::auth_showpt ? "$auth_string" : '',
 	                 $G::auth_showpt ? \&unencode_smtp : '')
@@ -758,9 +764,17 @@ sub do_smtp_auth_digest {
 	$r = db64($r);
 
 	$auth_string = $sasl_client->client_step($r);
-	do_smtp_gen(eb64($auth_string), '235', \$r, '', $G::auth_showpt ? "$auth_string" : '')
+	if ($e = $sasl_client->error()) {
+		ptrans('12', "Canceling SASL exchange, error received from Authen::SASL sub-system: $e");
+		$auth_string = '*';
+	}
+	#do_smtp_gen(eb64($auth_string), '235', \$r, '', $G::auth_showpt ? "$auth_string" : '')
+	do_smtp_gen($auth_string, '235', \$r, '', $auth_string)
 		|| return(0);
-		
+	if ($e = $sasl_client->error()) {
+		ptrans('12', "Error received from Authen::SASL sub-system: $e");
+		return(0);
+	}
 	return(0) if (!$sasl_client->is_success());
 
 	return(1);
