@@ -1,7 +1,7 @@
 ------------------------------
 INSTALL
 ------------------------------
-swaks is designed to be a self contained script.  It should run on any system
+Swaks is designed to be a self contained script.  It should run on any system
 that has Perl installed, although its capabilites may be limited by which
 modules are installed.
 
@@ -56,43 +56,39 @@ Ways to stay up to date on new releases:
 ------------------------------
 Change Summary
 ------------------------------
-v20111230.0
+v20130209.0
   New Features:
-    * Added --output-file family of options to capture some or all output
-      without requiring shell redirection
-    * Added --protect-password option to protect "sensitive" user input
-      (currently only auth passwords)
-    * Added --auth-hide-password to replace recoverable passwords in SMTP
-      session output with a dummy string
-    * Added --auth-extra to have a single interface to pass non-standard
-      authentication options into swaks.  Currently used by NTLM and
-      DIGEST-MD5.
-    * Added --show-raw-text option to provide more details of exact data
-      being sent on the wire
+    * Support for the XCLIENT SMTP extension
+      (see http://www.postfix.org/XCLIENT_README.html)
+    * Added --no-send-hints, --no-receive-hints, and --no-info-hints
+      output control options
+    * The TLS subsystem got a major facelift, including
+      * Added --tls-cert and --tls-key options to specify the certificate
+        Swaks will use when negotiationg TLS (debian bug 497654)
+      * Added more error checking and logging around protocol negotiation
+      * Added tlsv1_1 and tlsv1_2 as "known" protocol versions
+      * Added --tls-protocol option
+      * Added --tls-cipher option
+      * Added --tls-verify option
+      * Added --tls-ca-path option
   Notable Changes
-    * SMTP Data token parsing has been changed from single-character (%F) to
-      multi-character (%FROM_ADDRESS%) to reduce chance of collisions with
-      message text, especially non-ascii language encoding.  See
-      --use-old-data-tokens to recover old tokens while transitioning.
-      (issue reported by Peter Baranyi)
-    * Specifying the NTLM/MSN/SPA DOMAIN by appending "%DOMAIN" to the
-      username is no longer supported.  See the new --auth-extra command.
-    * The DIGEST-MD5 authentication no longer uses the (buggy)
-      Authen::DigestMD5 module.  The Authen::SASL module is now used.
+    * The TLS information lines have changed some:
+      * Changed "w/" to "with" and "peer subject DN" to "peer DN"
+      * Changed the TLS cipher line from just NAME to VERSION:NAME:BITS
+      * Added new line stating the DN of local cert or that none is being used
+      * If the negotiated protocol version is unknown, print raw version number
+    * Changes to --dump output
+      * Added --tls-get-peer-cert setting
+      * Added locally-available TLS/SSL protocol versions
+    * Swaks no longer attempts to send QUIT down a connection when TLS
+      negotiation fails.  This may cause issues with the use of --tls-optional
   Notable Bugs Fixed
-    * Previous release broke ability to use --header to set custom headers
-      (first reported by David Favor)
-    * Previous release would not allow a file to be used to provide the
-      message data if the file name contained the character "n".
-      (first reported by dietrich.rebmann@******)
-    * swaks has never properly handled creating date strings for timezones
-      that are not on an even hour boundary.
-      (report from, and patch provided by, Peter Samuelson)
-    * The documented behavior of the "no-" prefix on swaks' options did not
-      work when --OPTION and --no-OPTION were given in the same context.
-    * The DIGEST-MD5 auth type was not completely implemented.  Worked
-      extensively with Erwan Legrand to get as complete and useful an
-      implementation as possible.
-    * Previous release contained a regression in which TLS responses sent in
-      multiple packets were not processed correctly.
-      (reported by Peter J. Holzer)
+    * Previous release did not properly "cancel" SASL session when server
+      did not behave properly (reported by Erwan Legrand)
+    * Swaks would send QUIT twice in specific cases involving mail rejections,
+      the --quit-after option, and --pipeline
+    * Swaks would die silently during errors in the SSL protocol negotiation
+      (-tlsc -p 25 would cause it)
+    * Swaks could fail to handle the end of a TLS session over a pipe transport
+      when the server has closed the connection but Swaks is expecting to read
+      more data

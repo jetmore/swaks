@@ -1,3 +1,49 @@
+> 20130209 released 20130209.0
+* 20121014 Fixed to send proper "cancel" of SASL transaction (bare '*') when
+           the server returns an improper rspauth.  swaks would understand
+           that auth failed, but later than it should have (reported by
+           Erwan Legrand)
+* 20120805 Fixed bug causing swaks to "double-quit" when a rejected MAIL of
+           RCPT was sent _AND_ a --quit MAIL or --quit RCPT was used _AND_
+           --pipeline as used.
+* 20120805 Fixed bug in TLS and pipe recv code when server has closed
+           connection but swaks is expecting data to be present
+* 20120803 Implemented new --no-send-hints, --no-receive-hints, and
+           --no-info-hints options (mostly so I could can copy certs from
+           the output of --tls-get-peer-cert).
+* 20120803 Fixed probably-never-traversed bug in last-resort transaction hint
+* 20120728 Reworked website, placing all files in swaks/files and redirecting
+           where necessary; simplified index.html to cut down on casual
+           consumer confusion; split version/change information into
+           version.html; applied consistent style to all pages; new style
+           guideline, changing "swaks" to "Swaks" when used as proper noun
+* 20120710 Typo/phrasing review of RELEASE/README.  Adding doc for release
+           process (failed to update README for 20120320.0)
+* 20120624 Added --tls-ca-path option to specify alternate certs for use in
+           verification
+* 20120624 If TLS is attempted but failed, just exit, don't attempt to
+           send quit because we don't know what state the cxn is in.  This
+           will likey cause problems with tls-optional connections,
+           documenting the concern there.
+* 20120601 Added --tls-verify option
+* 20120531 Added --tls-cipher option to set preferred ciphers list
+* 20120531 Added in --tls-protocol option to specify or exclude specific tls
+           protocols.
+* 20120531 fixed wrong exit code for improper use of --tls-key/--tls-cert
+* 20120531 Add "available protocols" to the tls section of --dump
+* 20120531 Change around tls_get_peer_cert processing so that it's not
+           touched if TLS isn't going to be attempted
+* 20120530 Add tlsv1_1 and tlsv1_2 as "known" protocols in the
+           post-tls-negotiation info lines
+* 20120530 In a secure session, if the protocol version is unknown, print
+           the raw version number in the post-tls-negotiation info lines
+* 20120530 Fix the botched TLS checks in the last commit
+* 20120529 Added some more error checking in TLS code, breadcrumbs to the
+           existing errors (spurred by debian bug 675009, though the
+           specific issue in that bug was fixed by commit 311).
+* 20120410 typo fixes and clarifications for XCLIENT docs
+* 20120407 fix bug w/ xclient impl, using just --xclient didn't cause
+           XCLIENT to be sent
 > 20120405 released 20120405.0-dev to Kevin San Diego and Kurt Anderson
            (submitters of independent XCLIENT patches) for comment
 * 20120404 added xtext encoding for the xclient options

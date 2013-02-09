@@ -908,7 +908,7 @@ error in EHLO following XCLIENT
 
 =head1 ABOUT THE NAME
 
-The name "swaks" is a (sort-of) acronym for "SWiss Army Smtp".  It was chosen to be fairly distinct and pronounceable.  While "swaks" is unique as the name of a software package, it has some other, non-software meanings.  Please send in other uses of "swak" or "swaks" for inclusion.
+The name "swaks" is a (sort-of) acronym for "SWiss Army Knife Smtp".  It was chosen to be fairly distinct and pronounceable.  While "swaks" is unique as the name of a software package, it has some other, non-software meanings.  Please send in other uses of "swak" or "swaks" for inclusion.
 
 =over 4
 
