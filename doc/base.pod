@@ -698,7 +698,7 @@ Indicates a TLS-encrypted, unexpected line sent by swaks to target server
 
 =item >
 
-Indicates a raw chunk of test sent by swaks to a target server (see --show-raw-text).  There is no concept of "expected" or "unexpected" at this level.
+Indicates a raw chunk of text sent by swaks to a target server (see --show-raw-text).  There is no concept of "expected" or "unexpected" at this level.
 
 =item <-
 

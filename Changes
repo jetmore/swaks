@@ -681,3 +681,5 @@
            that auth failed, but later than it should have (reported by
            Erwan Legrand)
 > 20130209 released 20130209.0
+* 20130422 Fixed typo in man page ("test" -> "text"), reported by
+           Graeme Hewson.
