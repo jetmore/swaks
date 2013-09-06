@@ -683,3 +683,6 @@
 > 20130209 released 20130209.0
 * 20130422 Fixed typo in man page ("test" -> "text"), reported by
            Graeme Hewson.
+* 20130906 Fixed some POD formatting errors. Exit code formatting reported by
+           both debian and redhat maintainers, caused by Pod::Simple change
+           in perl-5.18.1.  Others found playing with podchecker.
