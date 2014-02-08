@@ -73,9 +73,9 @@ Config file:
 echo "--to foo@example.net,bar@example.com" >> .swaksrc
 swaks --config .swaksrc
 </pre>
-The argument to the --to option is passed deep into the heart of Swaks with no real validation checking.  This is done on purpose because Swaks is meant to be a test tool, so oddball values should be allowed.  This does mean though that you can't have a space after the comma, or you will try to send an email to an address that begins with a comma, which is probably not what you want.
+The argument to the --to option is passed deep into the heart of Swaks with no real validation checking.  This is done intentionally - because Swaks is meant to be a test tool, oddball values should be allowed.  One side effect of this is that including a space after the comma will result in an email address that starts with a comma, which is probably not what you want.
 <P>
-There is one additional consideration here.  Since Swaks is oriented around a single smtp-session per invocation, it will only ever connect to a single server, even if multiple recipients are specified.  In the example above, both emails will be delivered to the MX server for example.com (since, as documented, the mail routing for the last domain in the list is used).  This may or may not work, depending on the type of email server you are testing.
+There is one additional consideration here.  Since Swaks is oriented around a single smtp-session per invocation, it will only ever connect to a single server, even if multiple recipients are specified.  In the example above, both emails will be delivered to the MX server for example.com (since, as documented, the mail routing for the last domain in the list is used).  This may or may not work, depending on the configuration of email server you are testing.
 </font>
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>
@@ -89,7 +89,7 @@ Use the --add-header option:
 swaks --add-header "X-Test-Header: foo"
 </pre>
 <P>
-There are lots more examples in <a href=http://jetmore.org/john/code/swaks/latest/doc/ref.txt>the spec</a>, look for --header and --add-header for details and nuance about each.  A quick rule of thumb though is that you want --header to overwrite a header that already exists in you test email, and you want --add-header to add a completely new header, even if that same header already exists in your test email.
+There are lots more examples in <a href=http://jetmore.org/john/code/swaks/latest/doc/ref.txt>the spec</a>, look for --header and --add-header for details and nuance about each.  A quick rule of thumb though is that you want --header to overwrite a header that already exists in your test email, and you want --add-header to add a completely new header, even if that same header already exists in your test email.
 </font>
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>
@@ -98,9 +98,7 @@ There are lots more examples in <a href=http://jetmore.org/john/code/swaks/lates
 <td><font size=-1>
 <B>How do I install on Mac OS X?</b>
 <P>
-Copy and paste or right-click, save-as works great for me =).  I don't know if anyone's packaged Swaks for Mac OS X, but, at the layer Swaks operates, it's just UNIX.  Much of the first part of Swaks' life was developed on a tibook running 10.3.x and 10.4.x and recently it has been on a MacBook running 10.6.x
-<P>
-It is true that there are a couple of modules that make Swaks much more fun to use, but they are all easy to install.  If you have any specific questions I'd be happy to listen to them, especially if I can enhance this question with specific help.
+Copy and paste or right-click, save-as works great for me.  If you prefer a package manager, both <a href="http://www.macports.org/">MacPorts</a> and <a href="http://brew.sh/">Homebrew</a> provide Swaks.
 </font>
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>
@@ -109,7 +107,7 @@ It is true that there are a couple of modules that make Swaks much more fun to u
 <td><font size=-1>
 <B>How do I install on Windows?</b>
 <P>
-Swaks has been tested much less on Windows than Mac OS X or Linux (or even Solaris, Swaks' birth-OS), but it has worked when I tested it.  I installed ActiveState Perl, saved the latest version of Swaks as swaks.pl, and used ppm to install perl modules.  Worked fine, but if you are having specific issues let me know.
+Swaks has been tested much less on Windows than Mac OS X or Linux (or even Solaris, Swaks' birth-OS), but it has worked when I tested it.  I installed ActiveState Perl, saved the latest version of Swaks as swaks.pl, and used ppm to install perl modules.  It worked fine for me, but if you are having specific issues let me know.
 </font>
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>

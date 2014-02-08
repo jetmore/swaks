@@ -17,7 +17,7 @@ my($p_name)   = $0 =~ m|/?([^/]+)$|;
 my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010-2013 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2010-2014 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -99,11 +99,11 @@ sub open_link {
 	if ($G::link{type} eq 'socket-inet') {
 		ptrans(11, "Trying $G::link{server}:$G::link{port}...");
 		$@ = "";
-		
+
 		my @extra_options = ();
 		push(@extra_options, "LocalAddr", $G::link{lint})  if ($G::link{lint});
 		push(@extra_options, "LocalPort", $G::link{lport}) if ($G::link{lport});
-		
+
 		# INET6 also support v4, so use it for everything if it's available.  That
 		# allows the module to handle A vs AAAA records on domain lookups where te
 		# user hasn't set a specific ip version to be used.  If INET6 isn't available
@@ -115,7 +115,7 @@ sub open_link {
 			} elsif ($G::link{force_ipv4}) {
 				push(@extra_options, "Domain", Socket::AF_INET() );
 			}
-			
+
 			$G::link{sock} = IO::Socket::INET6->new(
 				PeerAddr  => $G::link{server},
 				PeerPort  => $G::link{port},
@@ -132,7 +132,7 @@ sub open_link {
 				@extra_options
 			);
 		}
-		
+
 		if ($@) {
 			ptrans(12, "Error connecting" . ($G::link{lint} ? " $G::link{lint}" : '') .
 			           " to $G::link{server}:$G::link{port}:\n\t$@");
@@ -144,7 +144,7 @@ sub open_link {
 		$SIG{PIPE} = 'IGNORE';
 		$@ = "";
 		$G::link{sock} = IO::Socket::UNIX->new(Peer => $G::link{sockfile}, Timeout => $G::link{timeout});
-		
+
 		if ($@) {
 			ptrans(12, "Error connecting to $G::link{sockfile}:\n\t$@");
 			exit(2);
@@ -155,7 +155,7 @@ sub open_link {
 		$SIG{CHLD} = 'IGNORE';
 		ptrans(11, "Trying pipe to $G::link{process}...");
 		eval{ open2($G::link{sock}{re}, $G::link{sock}{wr}, $G::link{process}); };
-		
+
 		if ($@) {
 			ptrans(12, "Error connecting to $G::link{process}:\n\t$@");
 			exit(2);
@@ -220,7 +220,7 @@ sub sendmail {
 			do_smtp_quit(1, 33) if ($G::xclient{optional} != 1);
 		} else {
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient');
-			
+
 			# re-helo if the XCLIENT command succeeded
 			do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 34);
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
@@ -335,7 +335,7 @@ sub tls_post_start {
 	if ($G::tls_get_peer_cert eq 'STDOUT') {
 		ptrans(11, $G::link{tls}{cert_x509});
 	} elsif ($G::tls_get_peer_cert) {
-		open(CERT, ">$G::tls_get_peer_cert") || 
+		open(CERT, ">$G::tls_get_peer_cert") ||
 			ptrans(12, "Couldn't open $G::tls_get_peer_cert for writing: $!");
 		print CERT $G::link{tls}{cert_x509}, "\n";
 		close(CERT);
@@ -345,7 +345,7 @@ sub tls_post_start {
 sub start_tls {
 	my %t         = (); # This is a convenience var to access $G::link{tls}{...}
 	$G::link{tls} = \%t;
-	
+
 	Net::SSLeay::load_error_strings();
 	Net::SSLeay::SSLeay_add_ssl_algorithms();
 	Net::SSLeay::randomize();
@@ -353,7 +353,7 @@ sub start_tls {
 		$t{res} = "CTX_new(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 		return(0);
 	}
-	
+
 	my $ctx_options = &Net::SSLeay::OP_ALL;
 	if (scalar(@G::tls_protocols)) {
 		if ($G::tls_protocols[0] =~ /^no_/i) {
@@ -374,7 +374,7 @@ sub start_tls {
 	}
 	Net::SSLeay::CTX_set_options($t{con}, $ctx_options);
 	Net::SSLeay::CTX_set_verify($t{con}, 0x01, 0) if ($G::tls_verify);
-	
+
 	if ($G::tls_ca_path) {
 		my @args = ('', $G::tls_ca_path);
 		@args    = ($G::tls_ca_path, '') if (-f $G::tls_ca_path);
@@ -386,7 +386,7 @@ sub start_tls {
 	} else {
 		Net::SSLeay::CTX_set_default_verify_paths($t{con});
 	}
-	
+
 	if ($G::tls_cipher) {
 		if (!Net::SSLeay::CTX_set_cipher_list($t{con}, $G::tls_cipher)) {
 			$t{res} = "Unable to set cipher list to $G::tls_cipher: "
@@ -406,7 +406,7 @@ sub start_tls {
 			return(0);
 		}
 	}
-	
+
 	if (!($t{ssl} = Net::SSLeay::new($t{con}))) {
 		$t{res} = "new(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 		return(0);
@@ -459,13 +459,13 @@ sub start_tls {
 	}
 	chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
 	$t{cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{cert}));
-	
+
 	if ($G::tls_cert && $G::tls_key) {
 		$t{local_cert}            = Net::SSLeay::get_certificate($t{ssl});
 		chomp($t{local_cert_x509} = Net::SSLeay::PEM_get_string_X509($t{local_cert}));
 		$t{local_cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{local_cert}));
 	}
-	
+
 	return($t{active});
 }
 
@@ -498,7 +498,7 @@ sub ptrans {
 			}
 		}
 	}
-	
+
 	# 1x is program messages
 	# 2x is smtp send
 	# 3x is smtp recv
@@ -537,7 +537,7 @@ sub ptrans {
 sub do_smtp_quit {
 	my $exit = shift;
 	my $err  = shift;
-	
+
 	# Ugh.  Because PIPELINING allows mail's and rcpt's send to be disconnected,
 	# and possibly with a QUIT between them, we need to set a global "we have
 	# told the server we quit already" flag to prevent double-quits
@@ -579,7 +579,7 @@ sub do_smtp_tls {
 
 sub do_smtp_xclient {
 	my $e = shift;
-	
+
 	# 0 - xclient succeeded normally
 	# 1 - xclient not advertised
 	# 2 - xclient advertised but not attempted, mismatch in requested attrs
@@ -695,7 +695,7 @@ sub do_smtp_auth_digest {
 	my $r  = '';    # will store smtp response
 	my $e  = '';    # will store Authen::SASL errors
 	my @digest_uri = ();
-	
+
 	if (exists($G::auth_extras{"DMD5-SERV-TYPE"})) {
 		$digest_uri[0] = $G::auth_extras{"DMD5-SERV-TYPE"};
 	} else {
@@ -727,19 +727,19 @@ sub do_smtp_auth_digest {
 
 	$r =~ s/^....//; # maybe something a little better here?
 	$r = db64($r);
-	
+
 	my $callbacks = { user => $u, pass => $p };
 	if (exists($G::auth_extras{REALM})) {
 		$callbacks->{realm} = $G::auth_extras{REALM};
 	}
-	
+
 	my $sasl = Authen::SASL->new(
 		debug     => 1,
 		mechanism => 'DIGEST-MD5',
 		callback  => $callbacks,
 	);
 	my $sasl_client = $sasl->client_new(@digest_uri);
-	
+
 	# Force the DIGEST-MD5 session to use qop=auth.  I'm open to exposing this setting
 	# via some swaks options, but I don't know enough about the protocol to just guess
 	# here.  I do know that letting it auto-negotiate didn't work in my reference
@@ -755,7 +755,7 @@ sub do_smtp_auth_digest {
 		ptrans('12', "Error received from Authen::SASL sub-system: $e");
 		return(0);
 	}
-	
+
 	do_smtp_gen(eb64($auth_string), '334', \$r, '',
 	                 $G::auth_showpt ? "$auth_string" : '',
 	                 $G::auth_showpt ? \&unencode_smtp : '')
@@ -878,7 +878,7 @@ sub do_smtp_rcpt {
 	my $f = 0;      # The number of failures we've experienced
 	my @a = split(/,/, $m);
 	$G::smtp_rcpt_total = scalar(@a);
-	
+
 	foreach my $addr (@a) {
 		transact(cxn_string => "RCPT TO:<$addr>", expect => '250', defer => 1,
 		         fail_callback => \&smtp_rcpt_callback);
@@ -968,22 +968,22 @@ sub recv_line {
 	my $r = undef;
 	my $t = undef;
 	my $c = 0;
-	
+
 	while ($G::recv_buffer !~ m|\n|si) {
 		last if (++$c > 1000); # Maybe I'll remove this once I trust this code more
 		if ($G::link{tls}{active}) {
 			$t = Net::SSLeay::read($G::link{tls}{ssl});
 			return($t) if (!defined($t));
-			
+
 			# THIS CODE COPIED FROM THE ELSE BELOW.  Found I could trip this condition
 			# by having the server sever the connection but not have swaks realize the
-			# connection was gone.  For instance, send a PIPELINE mail that includes a 
+			# connection was gone.  For instance, send a PIPELINE mail that includes a
 			# "-q rcpt".  There wass a bug in swaks that made it try to send another quit
 			# later, thus tripping this "1000 reads" error (but only in TLS).
 			# Short term: add line below to prevent these reads
 			# Short Term: fix the "double-quit" bug
 			# Longer term: test to see if remote side closed connection
-			
+
 			# the above line should be good enough but it isn't returning
 			# undef for some reason.  I think heuristically it will be sufficient
 			# to just look for an empty packet (I hope.  gulp).  Comment out the
@@ -994,7 +994,7 @@ sub recv_line {
 			# XXX in a future release see if I can get read() or equiv to work on a pipe
 			$t = <$s>;
 			return($t) if (!defined($t));
-			
+
 			# THIS CODE COPIED FROM THE ELSE BELOW.
 			# the above line should be good enough but it isn't returning
 			# undef for some reason.  I think heuristically it will be sufficient
@@ -1002,33 +1002,33 @@ sub recv_line {
 			# following line if your swaks seems to be saying that it lost connection
 			# for no good reason.  Then email me about it.
 			return(undef()) if (!length($t));
-		} else {      
+		} else {
 			# if you're having problems with reads, swap the comments on the
 			# the following two lines
 			my $recv_r = recv($s, $t, 8192, 0);
 			#$t = <$s>;
 			return($t) if (!defined($t));
-			
+
 			# the above line should be good enough but it isn't returning
 			# undef for some reason.  I think heuristically it will be sufficient
 			# to just look for an empty packet (I hope.  gulp).  Comment out the
 			# following line if your swaks seems to be saying that it lost connection
 			# for no good reason.  Then email me about it.
 			return(undef()) if (!length($t));
-			
+
 			#print "\$t = $t (defined = ", defined($t) ? "yes" : "no",
 			#      "), \$recv_r = $recv_r (", defined($recv_r) ? "yes" : "no", ")\n";
 		}
 		$G::recv_buffer .= $t;
 		ptrans(33, hdump($t)) if ($G::show_raw_text);
 	}
-	
+
 	if ($c >= 1000) {
 		# If you saw this in the wild, I'd love to hear more about it
 		# at proj-swaks@jetmore.net
 		ptrans(12, "In recv_line, hit loop counter.  Continuing in unknown state");
 	}
-	
+
 	# using only bare newlines is bound to cause me problems in the future
 	# but it matches the expectation we've already been using.  All we can
 	# do is hone in on the proper behavior iteratively.
@@ -1155,7 +1155,7 @@ sub unencode_smtp {
 	if ($t[1] =~ /\s/) {
 		# very occasionally we can have a situation where a successful response will
 		# be b64 encoded, while an error will not be.  Try to tell the difference.
-		return($t);	
+		return($t);
 	} else {
 		return("$t[0] " . db64($t[1]));
 	}
@@ -1198,7 +1198,7 @@ sub interact {
 					$G::interact_method ||= "unix-readkey";
 					my @resp = ();
 					ReadMode('raw');
-					#local $SIG{INT} = 
+					#local $SIG{INT} =
 					# reevaluate this code - what happens if del is first char we press?
 					while ((my $kp = ReadKey(0)) ne "\n") {
 						my $kp_num = ord($kp);
@@ -1233,10 +1233,10 @@ sub interact {
 sub get_hostname {
 	# in some cases hostname returns value but gethostbyname doesn't.
 	return("") if (!avail("hostname"));
-	
+
 	my $h = hostname();
 	return("") if (!$h);
-	
+
 	my $l = (gethostbyname($h))[0];
 	return($l || $h);
 }
@@ -1324,7 +1324,7 @@ sub avail {
 		return $s->{$f}{avail} = 0;
 	} else {
 		if (scalar(@{$s->{$f}{opt_failed}})) {
-			$s->{$f}{errstr} = "$s->{$f}{name} supported, but missing optimizing " . 
+			$s->{$f}{errstr} = "$s->{$f}{name} supported, but missing optimizing " .
 			                   join(', ', @{$s->{$f}{opt_failed}});
 		} else {
 			$s->{$f}{errstr} = "$s->{$f}{name} supported";
@@ -1652,8 +1652,8 @@ sub load_args {
 	# @ARGV and call GetOptions multiple times.  We are essentially "layering"
 	# options.  First we load from a config file (if exists/specified), then
 	# from any environment variables, then the actual command line.
-	
-	# First, save a copy of the real @ARGV, because that's actually what 
+
+	# First, save a copy of the real @ARGV, because that's actually what
 	# gets processed last
 	my @real_ARGV = @ARGV;
 	my %ARGS      = ();
@@ -1662,11 +1662,11 @@ sub load_args {
 	# we load our options processing hash here.  We abstract it back from the
 	# native getopt-format because we need to be able to intercept "no-" options
 	my $option_list = get_option_struct();
-	
+
 	# we want to process config files first.  There's a default config file in
 	# ~/.swaksrc, but it is possible for the user to override this with the
 	# --config options.  So, find the one and only file we will use here.
-	# If we encounter --config in later processing it is a noop.  
+	# If we encounter --config in later processing it is a noop.
 	# first find the default file
 	my $config_file       = '';
 	my $config_is_default = 1;
@@ -1730,7 +1730,7 @@ sub load_args {
 		}
 	}
 	fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
-	
+
 	# and now, after all of that, process the actual cmdline args
 	@ARGV = @real_ARGV;
 	fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
@@ -1741,7 +1741,7 @@ sub load_args {
 sub fetch_args {
 	my $r = shift;
 	my $l = shift;
-	
+
 	my %to_delete = ();
 
 	# need to rewrite header-HEADER opts before std option parsing
@@ -1767,7 +1767,7 @@ sub fetch_args {
 				} elsif (grep /^$opt_name$/, @{$e->{opts}}) {
 					splice(@ARGV, $i, 1);
 					delete($r->{$e->{okey}});
-					$to_delete{$e->{okey}} = 1;          
+					$to_delete{$e->{okey}} = 1;
 					redo RUNOPTS; # since we're messing with the list, redo this element
 				}
 			}
@@ -1810,7 +1810,7 @@ sub fetch_args {
 
 	Getopt::Long::Configure("bundling_override");
 	GetOptions(%options) || exit(1);
-	
+
 	# now remove any options that might have been added by a --no option
 	# (we have to do this here since it's legal to mix multiple OPT and --no-OPT
 	# in the same context (config file, command line, env var)
@@ -1832,14 +1832,14 @@ sub shquote { my $s = shift; $s =~ s%'%'\\''%g; return "'$s'"; }
 sub reconstruct_options {
 	my $o = shift; # ref to raw option hash (as returned by load_args)
 	my @c = ();    # array to hold our reconstructed command line
-	
+
 	foreach my $opt (@G::raw_option_data) {
 		if (exists($o->{$opt->{okey}}) && defined($o->{$opt->{okey}})) {
 			# Ideally we could rely on the first opt name in the list being the "primary" option,
 			# but we can't right now and I don't want to alter the option list.  For now just grab
 			# the longest option available as the primary
 			my $lopt = (sort { length($b) <=> length($a) } (@{$opt->{opts}}))[0];
-			
+
 			if ($opt->{type} eq 'list') {
 				next if (ref($o->{$opt->{okey}}) ne 'ARRAY');
 				#next if (scalar(@{$o->{$opt->{okey}}}) == 0);
@@ -1901,7 +1901,7 @@ sub process_args {
 		$G::trans_fh_oh = \*OUTOFH;
 		$G::trans_fh_of = $o->{output_file_stdout};
 	}
-		
+
 
 	$G::dump_args          = 1 if ($o->{dump_args});
 	$G::suppress_data      = 1 if ($o->{suppress_data});
@@ -1926,7 +1926,7 @@ sub process_args {
 		exit(1);
 	}
 
-	my %protos = ( 
+	my %protos = (
 		smtp    => { proto => 'smtp',  auth => 0, tls => '0' },
 		ssmtp   => { proto => 'esmtp', auth => 0, tls => 'c' },
 		ssmtpa  => { proto => 'esmtp', auth => 1, tls => 'c' },
@@ -1945,7 +1945,7 @@ sub process_args {
 		ptrans(12, "Unknown protocol $G::protocol specified, exiting");
 		exit(1);
 	}
-	if ($protos{$G::protocol}{auth} && !$o->{auth_user}     && 
+	if ($protos{$G::protocol}{auth} && !$o->{auth_user}     &&
 	    !$o->{auth_pass}            && !$o->{auth_optional} &&
 	    !$o->{auth_optional_strict} && !$o->{auth})
 	{
@@ -2042,9 +2042,9 @@ sub process_args {
 	#	$G::link{server} = get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to}) if (!$G::link{server});
 	#	$G::link{type}   = "socket-inet";
 	#}
-	
+
 	# try to catch obvious -s/-li/-4/-6 errors as soon as possible.  We don't actually do any DNS
-	# lookups ourselves, so errors like -s being a domain with only A RRs and -li being a domain 
+	# lookups ourselves, so errors like -s being a domain with only A RRs and -li being a domain
 	# with only AAAA RRs, or -s being an ipv6 and -li being a domain with only A RRs, will
 	# get passed into the IO::Socket module to deal with and will just registed as a connection
 	# failure.
@@ -2057,9 +2057,9 @@ sub process_args {
 		} elsif ($o->{force_ipv4}) {
 			$G::link{force_ipv4} = 1;
 		}
-		
+
 		$G::link{server} ||= get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to});
-		
+
 		if ($o->{force_ipv4} && $G::link{server} =~ m|:|) {
 			ptrans(12, "Option -4 is set but server appears to be ipv6, cannot proceed");
 			exit 1;
@@ -2080,7 +2080,7 @@ sub process_args {
 			exit 1;
 		}
 	}
-	
+
 	# Verify we are able to handle the requested transport
 	if ($G::link{type} eq 'pipe') {
 		if (!avail("pipe")) {
@@ -2284,7 +2284,7 @@ sub process_args {
 				exit(1);
 			}
 		}
-		
+
 		# this is kind of a kludge.  There doesn't appear to be a specific openssl call to find supported
 		# protocols, but the OP_NO_protocol functions exist for supported protocols.  Loop through
 		# "known" protocols (which will unfortunately need to be added-to by hand when new protocols
@@ -2294,7 +2294,7 @@ sub process_args {
 			eval { no strict "refs"; &{"Net::SSLeay::OP_NO_$p"}(); };
 			push(@G::tls_supported_protocols, $p) if (!$@);
 		}
-		
+
 		if ($o->{tls_protocol}) {
 			@G::tls_protocols = ();
 			my @requested = split(/,\s*/, $o->{tls_protocol});
@@ -2318,7 +2318,7 @@ sub process_args {
 				exit(1);
 			}
 		}
-		
+
 		if ($o->{tls_get_peer_cert}) {
 			$G::tls_get_peer_cert = $o->{tls_get_peer_cert};
 		} elsif (defined($o->{tls_get_peer_cert})) {
@@ -2355,7 +2355,7 @@ sub process_args {
 	# local port
 	$G::link{lport}   = $o->{lport} || interact("Local Port: ", '^\w+$')
 		if (defined($o->{lport}));
-	
+
 	# XCLIENT
 	$G::xclient{try}  = 0;
 	$G::xclient{attr} = {};
@@ -2489,7 +2489,7 @@ sub process_args {
 			}
 		} # end avail("auth")
 	} # end auth parsing
-	
+
 	# the very last thing we do is swap out the body if --dump-as-body used
 	if ($o->{dump_as_body}) {
 		$n{data} =~ s|DUMP_AS_BODY_HAS_BEEN_SET|get_running_state(\%n)|e;
@@ -2506,7 +2506,7 @@ sub process_args {
 sub parse_server {
 	my $server = shift;
 	my $port   = shift;
-	
+
 	if ($server =~ m|^\[([^\]]+)\]:(.*)$|) {
 		# [1.2.3.4]:25
 		# [hostname]:25
@@ -2532,12 +2532,12 @@ sub parse_server {
 
 sub get_running_state {
 	my $opts = shift;
-	
+
 	if ($G::running_state) {
 		return($G::running_state);
 	}
 	my $s = '';
-	
+
 	$s .= "App Info:\n"
 	   .  "  X-Mailer = $p_name v$p_version jetmore.org/john/code/swaks/\n"
 	   .  "  Cmd Line = $0 $G::cmdline\n"
@@ -2623,14 +2623,14 @@ sub get_running_state {
 		elsif ($G::auth_optional == 1) { $s .= 'optional';        }
 		else                           { $s .= 'yes';             }
 		$s .= " type='" . join(',', @{$opts->{a_type}}) . "' user='$opts->{a_user}' pass='PROVIDED_BUT_REMOVED'\n";
-		
+
 		$s .= "  auth_extras = " . join(',', map { "$_=$G::auth_extras{$_}" } keys (%G::auth_extras)) . "\n";
 		$s .= "  auth_showpt = " . ($G::auth_showpt ? "TRUE" : "FALSE") . "\n";
 		$s .= "  auth map    = " . join("\n".' 'x16,
 		                           map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (keys %G::auth_map_t)) . "\n";
 	}
 	else { $s .= "no\n"; }
-	
+
 	return $G::running_state = $s;
 }
 

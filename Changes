@@ -76,9 +76,9 @@
            uses DNS for domain of last recip in list)
 * 20031008 add -to option to allow timeout to be specified in seconds
            on command line. (defaults to 30s)
-* 20031008 fixed bug where alarm was not reset after 
+* 20031008 fixed bug where alarm was not reset after
 * 20031008 allow TIMEOUT to be specified in -l file
-* 20031008 changed so you can specify in time format (hms).  This 
+* 20031008 changed so you can specify in time format (hms).  This
            allows you to use 0s to mean no timeout
 * 20031008 adjusted Getopt::Long to have case-sensitive single
            char options, but insensitive long opts.  It also turns
@@ -138,12 +138,12 @@
 * 20031021 Added aliases for SPA/MSN to NTLM
 * 20031024 started rearranging options.  Move from $O:: namespace
            to %O hash.  %O is for temporary vars, $G:: is for true
-           global vars.  moved most of the up-front processing to 
+           global vars.  moved most of the up-front processing to
            a subroutine and rearranged
 * 20031024 Added module checking for Authen::NTLM
-* 20031024 changed server for non-mx domain from localhost to domain's 
+* 20031024 changed server for non-mx domain from localhost to domain's
            A record
-* 20031024 changed "empty" placeholder from NULLNULL to <> for 
+* 20031024 changed "empty" placeholder from NULLNULL to <> for
            sender, a_user, a_pass
 * 20031027 added -stl option to show lapse between send/receive
 * 20031101 fixed bug in NTLM auth (worked with exim but not with
@@ -165,11 +165,11 @@
 * 20031201 changed name from vmail to swaks (SWiss Army Knife Smtp)
 * 20031201 changed copyright/license to GPL
 * 20031207 changed %D body token to be compliant for an RFC Date: header
-* 20031207 add 'Date: %D' header to default data string (probably 
+* 20031207 add 'Date: %D' header to default data string (probably
            should have been there all along but this was specifically
            added to address a change in the handling of messages
            without Date: headers by exim in 4.30)
-* 20031210 handle default routing correctly for domain literal 
+* 20031210 handle default routing correctly for domain literal
            to addresses (@[1.2.3.4]).  Had to specify server explicitly
            using -s before.
 * 20031210 moved "Trying..." above actual socket creation, which
@@ -197,7 +197,7 @@
            (for instance, on my laptop when my VPN is active).  In this
            situation, prompt for helo string and from address.
 * 20031218 reworked local hostname determination.  hostname() almost
-           never fails but gethostbyname can, use first results if 
+           never fails but gethostbyname can, use first results if
            second call fails.
 > 20031218 released 20031218.0
 * 20031226 hostname verification broke FROM and HELO options in -l
@@ -212,7 +212,7 @@
 * 20040128 added error checking for -q opt - error out if unknown val.
            (sugg. ametzler)
 * 20040128 added a few -q aliases (ehlo, first-ehlo, starttls, from, to)
-* 20040128 if -q opt is one which doesn't require a to address 
+* 20040128 if -q opt is one which doesn't require a to address
            (everything before rcpt) and server is otherwise specified,
            don't require a to address. (sugg. ametzler)
 * 20040128 reworked a split to quell a perl -w gripe
@@ -242,10 +242,10 @@
 * 20050625 saved many lines of code by adding do_smtp_quit
 * 20050625 moved all connection level into into %G::link very early
 * 20050625 20050517 added --pipe option to be able to conduct
-           smtp transaction with a child process.  See debian 
+           smtp transaction with a child process.  See debian
            bug ID 309462
 * 20050625 fixed a couple of bugs in --auth-optional (one caused it
-           not to work at all, the other caused it not to work if 
+           not to work at all, the other caused it not to work if
            either -a not also used or some arg not supplied)
 * 20050625 20050605 added --socket option to allow smtp over
            unix domain socket
@@ -285,7 +285,7 @@
            stderr not to be handled by swaks - user can redirect
            as desired.  Fixed bug noted by jh.plonk.de
 > 20060210 released 20060210.0-dev to jh.plonk.de
-* 20060218 swaks choked if server advertised STARTTLS over a 
+* 20060218 swaks choked if server advertised STARTTLS over a
            --tls-on-connect connection.  fixed.  (jpeacock.rowman.com)
 * 20060221 20051102 despite some error messages to the contrary,
            swaks did not handle the remote end closing its
@@ -338,11 +338,11 @@
            needed for speific invocation - previously preloaded
            every available module, regardless of need.
 * 20060804 moved all other modules to conditionally load, as needed.
-           This is IO::Socket, IPC::Open2, Time::Local, 
+           This is IO::Socket, IPC::Open2, Time::Local,
            Sys::Hostname, and Getopt::Long.  Time::Local and
            Sys::Hostname are optional (they are not always used,
            and can now be worked around if not available).  IO::Socket
-           is now only loaded is doing a socket connection and 
+           is now only loaded is doing a socket connection and
            IPC::Open2 only needed for a --pipe session.
 * 20060804 added test_support() call to --dump output for testing
 * 20060804 changed all base64 calls to use local functions if
@@ -357,7 +357,7 @@
            and behaviours.
 * 20060817 redid --support/avail() again to support concept of
            optional (optimizing) modules for full disclosure in output
-* 20060914 added --header option which, if header already exists, 
+* 20060914 added --header option which, if header already exists,
            overwrites it.  Otherwise adds to --add-header processing.
 * 20060914 added --header-HEADER option where --h-Text foo is
            a synonym for --header "Text: foo"
@@ -414,7 +414,7 @@
 > 20070920 released 20070920.0-dev to haraldme.gmail.com
 * 20070921 rearranged dependency processing for code readability
 * 20070921 20061221 added --config.  Added new config file and
-           environment variable processing to allow multiple, 
+           environment variable processing to allow multiple,
            ways to specifying options.  debian bug 403208
 > 20070921 released 20070921.0-dev to madduck.debian.org, db403208
 * 20071016 fixed --tlsos/-tlsos type in POD (haraldme.gmail.com)
@@ -443,7 +443,7 @@
            additive.  the additive form is now deprecated
 * 20071231 fixed long standing impemenation bug in the inter-op
            of the --dump and --silent option.
-* 20080103 updated copyrght to 2008. changed $p_cp formatting to 
+* 20080103 updated copyrght to 2008. changed $p_cp formatting to
            remove backslash from email
 * 20080103 added yet another layer of abstraction to option processing
 * 20080103 implemented recognition of "no-" prefix to erase previously
@@ -496,7 +496,7 @@
 * 20110309 misc typos/style
 * 20110309 added --protect-prompt option to make best effort not to
            echo user input on sensitive fields (*nix and Win32)
-* 20110321 fixed bug which prevented message data to be provided in a file 
+* 20110321 fixed bug which prevented message data to be provided in a file
            with a "n" or "\" in the filename.  Reported and fix suggested
            by dietrich.rebmann#freenet.de
 * 20110321 added --auth-hide-password option to replace recoverable passwords
@@ -532,7 +532,7 @@
            to evaluate the DIGEST-MD5 changes
 * 20111201 fixed TLS issue when SMTP response sent in multiple packets.
            This looks like a regression of the TLS fix from 20050709
-           (r94) that was made in the implementation of --pipeline in 
+           (r94) that was made in the implementation of --pipeline in
            20060309's r115.  Regression reported by Peter J. Holzer along
            with suggested fix.
 * 20111202 reimplemented reading of server responses in non-TLS, non-pipe
@@ -623,12 +623,12 @@
            Specifically fixed error where swaks would die silently during
            SSL protocol negotiation (could replicate by doing -tlsc
            against port 25)
-* 20120330 Change the TLS cipher info line from just the NAME to 
+* 20120330 Change the TLS cipher info line from just the NAME to
            VERSION:NAME:BITS
 * 20120402 xclient first pass.  Added -xclient* options to data struct
            made first pass at documenting feature and options
 * 20120402 xclient second pass.  option processing and --dump
-* 20120404 implemented the SMTP portion of XCLIENT, documented the 
+* 20120404 implemented the SMTP portion of XCLIENT, documented the
            --xclient-optional(-strict)? behavior.  Added and documented
            33,34 exit codes
 * 20120404 add and document new --quit-after option 'xclient'
@@ -686,3 +686,6 @@
 * 20130906 Fixed some POD formatting errors. Exit code formatting reported by
            both debian and redhat maintainers, caused by Pod::Simple change
            in perl-5.18.1.  Others found playing with podchecker.
+* 20140207 Updating copyright to 2014
+* 20140207 Updated faq.html with typo and phrasing fixes.  Added note that
+           Homebrew and MacPorts both package swaks (h/t Andrew Langhorn)
