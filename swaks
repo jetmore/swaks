@@ -593,7 +593,7 @@ sub do_smtp_xclient {
 			return(2);
 		}
 		# see xtext encoding in http://tools.ietf.org/html/rfc1891
-		push(@parts, "$attr=" . join('', map { ($_ == 0x2b || $_ == 0x3D || $_ <= 20 || $_ >= 127)
+		push(@parts, "$attr=" . join('', map { ($_ == 0x2b || $_ == 0x3d || $_ <= 0x20 || $_ >= 0xff)
 		                                        ? sprintf("+%02X", $_)
 		                                        : chr($_)
 		                                     } (unpack("C*", $G::xclient{attr}{$attr}))));

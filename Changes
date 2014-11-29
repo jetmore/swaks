@@ -690,3 +690,5 @@
 * 20140207 Updated faq.html with typo and phrasing fixes.  Added note that
            Homebrew and MacPorts both package swaks (h/t Andrew Langhorn)
 * 20141128 Fixed local_cert_subject logging bug, reported by Roman Rybalko
+* 20141128 Fix incorrect range on XCLIENT rfc1891/xtext encoding caused by
+           mixing hex and decimal. Reported by Thomas Szukala
