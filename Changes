@@ -689,3 +689,4 @@
 * 20140207 Updating copyright to 2014
 * 20140207 Updated faq.html with typo and phrasing fixes.  Added note that
            Homebrew and MacPorts both package swaks (h/t Andrew Langhorn)
+* 20141128 Fixed local_cert_subject logging bug, reported by Roman Rybalko

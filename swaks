@@ -326,7 +326,7 @@ sub sendmail {
 sub tls_post_start {
 	ptrans(11, "TLS started with cipher $G::link{tls}{cipher_string}");
 	if ($G::link{tls}{local_cert_subject}) {
-		ptrans(11, "TLS local DN=\"$G::link{tls}{cert_subject}\"");
+		ptrans(11, "TLS local DN=\"$G::link{tls}{local_cert_subject}\"");
 	} else {
 		ptrans(11, "TLS no local certificate set");
 	}
