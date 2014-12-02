@@ -194,7 +194,7 @@ Specify the outgoing port to originate the transaction from.  If this option is 
 
 =item --copy-routing [domain]
 
-The argument is interpreted as the domain part of an email address and it is used to find the target server using the same logic that would be used to look up the target server for an recipient email address.  See  --to option for more details on how the target is determined from the email domain.
+The argument is interpreted as the domain part of an email address and it is used to find the target server using the same logic that would be used to look up the target server for a recipient email address.  See  --to option for more details on how the target is determined from the email domain.
 
 =item -4, -6
 
@@ -392,7 +392,7 @@ The specification string is a comma-delimited list of protocols that can be used
 
 =item -tls-cipher CIPHER_STRING
 
-Th argument to this option is passed to the underlying OpenSSL library to set the list of acceptable ciphers to the be used for the connection.  The format of this string is opaque to swaks and is defined in http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT.  An brief example would be --tls-cipher '3DES:+RSA'.
+Th argument to this option is passed to the underlying OpenSSL library to set the list of acceptable ciphers to the be used for the connection.  The format of this string is opaque to swaks and is defined in http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT.  A brief example would be --tls-cipher '3DES:+RSA'.
 
 =item --tls-verify
 
