@@ -1,0 +1,12 @@
+../server/smtp-server.pl -p 8026 -d inet -f ./1.t
+
+swaks  -s 127.0.0.1 --port 8026 --auth-user foo --auth-password password \
+    -f john@jetmore.org -t jj33@pobox.com \
+    --header 'Subject: 20141212' \
+    --xclient "ADDR=25.25.25.25 NAME=g3.jetmore.net"
+
+
+swaks  -s 127.0.0.1 --port 8026 --auth-user foo --auth-password password \
+    -f john@jetmore.org -t jj33@pobox.com \
+    --header 'Subject: 20141212' \
+    --xclient-addr 25.25.25.25 --xclient-name g3.jetmore.net

@@ -693,3 +693,5 @@
 * 20141128 Fix incorrect range on XCLIENT rfc1891/xtext encoding caused by
            mixing hex and decimal. Reported by Thomas Szukala
 * 20141202 Fixing a couple of "an [CONSONANT]" doc typos
+* 20150128 Handle the case where a server advertises XCLIENT but does not
+           advertise any supported attributes.

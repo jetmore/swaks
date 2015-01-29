@@ -17,7 +17,7 @@ my($p_name)   = $0 =~ m|/?([^/]+)$|;
 my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010-2014 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2010-2015 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -840,7 +840,8 @@ sub do_smtp_helo {
 				$l =~ s/^....//;
 				if ($l =~ /^AUTH=?(.*)$/) {
 					map { $e->{AUTH}{uc($_)} = 1 } (split(' ', $1));
-				} elsif ($l =~ /^XCLIENT\s+(.*)$/) {
+				} elsif ($l =~ /^XCLIENT\s*(.*?)$/) {
+					$e->{XCLIENT} = {}; # prime the pump in case no attributes were advertised
 					map { $e->{XCLIENT}{uc($_)} = 1 } (split(' ', $1));
 				} elsif ($l =~ /^STARTTLS$/) {
 					$e->{STARTTLS} = 1;

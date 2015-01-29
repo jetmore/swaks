@@ -556,7 +556,9 @@ These options can all be mixed with each other, and can be mixed with the --xcli
 
 =item --xclient [XCLIENT_STRING]
 
-This is the "free form" XCLIENT option.  Whatever value is provided for XCLIENT_STRING will be sent verbatim as the argument to the XCLIENT smtp command.  For example, if "--xclient 'NAME= ADDR=192.168.1.1 FOO=bar'" is used, swaks will send the SMTP command "XCLIENT NAME= ADDR=192.168.1.1 FOO=bar".  The primary advantage to this over the more specific options above is that there is no XCLIENT syntax validation here.  This allows you to send invalid XCLIENT to the target server for testing.  If no XCLIENT_STRING is passed on command line, swaks will prompt and read the value on STDIN.
+This is the "free form" XCLIENT option.  Whatever value is provided for XCLIENT_STRING will be sent verbatim as the argument to the XCLIENT smtp command.  For example, if "--xclient 'NAME= ADDR=192.168.1.1 FOO=bar'" is used, swaks will send the SMTP command "XCLIENT NAME= ADDR=192.168.1.1 FOO=bar".  If no XCLIENT_STRING is passed on command line, swaks will prompt and read the value on STDIN.
+
+The primary advantage to this over the more specific options above is that there is no XCLIENT syntax validation here.  This allows you to send invalid XCLIENT to the target server for testing.  Additionally, at least one MTA (Message Systems' Momentum, formerly ecelerity) implements XCLIENT without advertising supported attributes.  The --xclient option allows you to skip the "supported attributes" check when communicating with this type of MTA.
 
 The --xclient option can be mixed freely with the --xclient-* options above.  If "--xclient-addr 192.168.0.1 --xclient 'FOO=bar NAME=wind'" is given to swaks, "XCLIENT ADDR=192.168.0.1 FOO=bar NAME=wind" will be sent to the target server.
 
