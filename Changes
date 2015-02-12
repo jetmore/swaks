@@ -695,3 +695,5 @@
 * 20141202 Fixing a couple of "an [CONSONANT]" doc typos
 * 20150128 Handle the case where a server advertises XCLIENT but does not
            advertise any supported attributes.
+* 20150212 Add %MESSAGEID% token and add Message-Id as a part of the default
+           DATA.

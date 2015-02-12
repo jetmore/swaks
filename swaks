@@ -1231,6 +1231,17 @@ sub interact {
 	return($response);
 }
 
+sub get_messageid {
+	if (!$G::message_id) {
+		my @time = localtime();
+		$G::message_id = sprintf("%04d%02d%02d%02d%02d%02d.%06d\@%s",
+		                         $time[5]+1900, $time[4]+1, $time[3], $time[2], $time[1], $time[0],
+		                         $$, get_hostname());
+	}
+
+	return($G::message_id);
+}
+
 sub get_hostname {
 	# in some cases hostname returns value but gethostbyname doesn't.
 	return("") if (!avail("hostname"));
@@ -2198,6 +2209,7 @@ sub process_args {
 		$n{data} = $o->{mail_data} || interact("Data: ", '^.*$');
 	}
 	$n{data} ||= 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
+	            "Message-Id: <%MESSAGEID%>\n" .
 	            "X-Mailer: swaks v$p_version jetmore.org/john/code/swaks/".'\n' .
 	            ($bound ? 'MIME-Version: 1.0\nContent-Type: multipart/mixed; boundary="'.$bound.'"\n' : '') .
 	            '%NEW_HEADERS%' . # newline will be added in replacement if it exists
@@ -2235,6 +2247,7 @@ sub process_args {
 		$n{data} =~ s/%FROM_ADDRESS%/$n{from}/g;
 		$n{data} =~ s/%F/$n{from}/g if ($O{use_old_data_tokens});
 		$n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
+		$n{data} =~ s/%MESSAGEID%/get_messageid()/ge;
 		$n{data} =~ s/%T/$n{to}/g   if ($O{use_old_data_tokens});
 		{  # braces are to limit scope of $date_string
 			my $date_string = get_date_string();
