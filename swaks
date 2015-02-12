@@ -2210,7 +2210,7 @@ sub process_args {
 	}
 	$n{data} ||= 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
 	            "Message-Id: <%MESSAGEID%>\n" .
-	            "X-Mailer: swaks v$p_version jetmore.org/john/code/swaks/".'\n' .
+	            "X-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/".'\n' .
 	            ($bound ? 'MIME-Version: 1.0\nContent-Type: multipart/mixed; boundary="'.$bound.'"\n' : '') .
 	            '%NEW_HEADERS%' . # newline will be added in replacement if it exists
 	            '\n' .
@@ -2248,6 +2248,7 @@ sub process_args {
 		$n{data} =~ s/%F/$n{from}/g if ($O{use_old_data_tokens});
 		$n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
 		$n{data} =~ s/%MESSAGEID%/get_messageid()/ge;
+		$n{data} =~ s/%SWAKS_VERSION%/$p_version/g;
 		$n{data} =~ s/%T/$n{to}/g   if ($O{use_old_data_tokens});
 		{  # braces are to limit scope of $date_string
 			my $date_string = get_date_string();

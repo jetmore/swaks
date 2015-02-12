@@ -697,3 +697,5 @@
            advertise any supported attributes.
 * 20150212 Add %MESSAGEID% token and add Message-Id as a part of the default
            DATA.
+* 20150212 Add %SWAKS_VERSION% token and use it by default in the X-Mailer
+           header.
