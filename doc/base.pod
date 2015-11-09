@@ -928,7 +928,7 @@ SWAK/SWAKs turns up occasionally on the internet with the meaning "with love".
 
 =item bad / poor / ill (Afrikaans)
 
-Seen it in the headline "SA se bes en swaks gekledes in 2011", which was translated as "best and worst dressed" by native speakers.  Google Translate doesn't like "swaks gekledes", but it will translate "swak" as "poor" and "swak geklede" as "ill-dressed".
+Seen in the headline "SA se bes en swaks gekledes in 2011", which was translated as "best and worst dressed" by native speakers.  Google Translate doesn't like "swaks gekledes", but it will translate "swak" as "poor" and "swak geklede" as "ill-dressed".
 
 =back
 

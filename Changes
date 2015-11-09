@@ -699,3 +699,4 @@
            DATA.
 * 20150212 Add %SWAKS_VERSION% token and use it by default in the X-Mailer
            header.  Suggested by Jan-Pieter Cornet.
+* 20151109 Fixed grammar issue in "About the Name" section
