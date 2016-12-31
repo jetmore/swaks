@@ -700,3 +700,7 @@
 * 20150212 Add %SWAKS_VERSION% token and use it by default in the X-Mailer
            header.  Suggested by Jan-Pieter Cornet.
 * 20151109 Fixed grammar issue in "About the Name" section
+* 20161230 Updating copyright to 2016
+* 20161230 Added tester to check for option and okey collisions in
+           @G::raw_option_data
+* 20161230 Added --drop-after and --drop-after-send options

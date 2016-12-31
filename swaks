@@ -17,7 +17,7 @@ my($p_name)   = $0 =~ m|/?([^/]+)$|;
 my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010-2015 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2010-2016 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -183,7 +183,7 @@ sub sendmail {
 	if ($G::tls_on_connect) {
 		if (start_tls()) {
 			tls_post_start();
-			# QUIT here if the user has asked us to do so
+			do_smtp_drop()     if ($G::drop_after eq 'tls');
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 		} else {
 			ptrans(12, "TLS startup failed ($G::link{tls}{res})");
@@ -193,14 +193,13 @@ sub sendmail {
 
 	# read the server's 220 banner
 	do_smtp_gen(undef, '220') || do_smtp_quit(1, 21);
-
-	# QUIT here if the user has asked us to do so
+	do_smtp_drop()     if ($G::drop_after eq 'connect');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'connect');
 
 	# Send a HELO string
+	$G::drop_before_read = 1 if ($G::drop_after_send eq 'first-helo');
 	do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 22);
-
-	# QUIT here if the user has asked us to do so
+	do_smtp_drop()     if ($G::drop_after eq 'first-helo');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'first-helo');
 
 	if ($G::xclient{try}) {
@@ -208,6 +207,7 @@ sub sendmail {
 		# 1 - xclient not advertised
 		# 2 - xclient advertised but not attempted, mismatch in requested attrs
 		# 3 - xclient attempted but did not succeed
+		$G::drop_before_read = 1 if ($G::drop_after_send eq 'xclient');
 		my $result = do_smtp_xclient($ehlo);
 		if ($result == 1) {
 			ptrans(12, "Host did not advertise XCLIENT");
@@ -219,10 +219,13 @@ sub sendmail {
 			ptrans(12, "XCLIENT attempted but failed.  Exiting");
 			do_smtp_quit(1, 33) if ($G::xclient{optional} != 1);
 		} else {
+			do_smtp_drop()     if ($G::drop_after eq 'xclient');
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient');
 
 			# re-helo if the XCLIENT command succeeded
+			$G::drop_before_read = 1 if ($G::drop_after_send eq 'helo');
 			do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 34);
+			do_smtp_drop()     if ($G::drop_after eq 'helo');
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
 		}
 	}
@@ -235,6 +238,7 @@ sub sendmail {
 		# note there's some duplicate logic here (with process_args) but I think
 		# it's best to do as thorough a job covering the options in both places
 		# so as to minimize chance of options falling through the cracks
+		$G::drop_before_read = 1 if ($G::drop_after_send eq 'tls');
 		my $result = do_smtp_tls($ehlo);
 		if ($result == 1) {
 			ptrans(12, "Host did not advertise STARTTLS");
@@ -247,18 +251,18 @@ sub sendmail {
 		ptrans(12, "TLS requested, advertised, and locally unavailable.  Exiting");
 		do_smtp_quit(1, 29);
 	}
-
-	# QUIT here if the user has asked us to do so
+	do_smtp_drop()     if ($G::drop_after eq 'tls');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 
 	#if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
 	if ($G::link{tls}{active} && !$G::tls_on_connect) {
 		# According to RFC3207, we need to forget state info and re-EHLO here
 		$ehlo = {};
+		$G::drop_before_read = 1 if ($G::drop_after_send eq 'helo');
 		do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 32);
 	}
-
-	# QUIT here if the user has asked us to do so
+	do_smtp_drop()     if ($G::drop_after_send eq 'helo'); # haaaack.  Need to use first-helo for this. Just quite here to prevent the mail from being delivered
+	do_smtp_drop()     if ($G::drop_after eq 'helo');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
 
 	# handle auth here if user has requested it
@@ -271,6 +275,7 @@ sub sendmail {
 		# note there's some duplicate logic here (with process_args) but I think
 		# it's best to do as thorough a job covering the options in both places
 		# so as to minimize chance of options falling through the cracks
+		$G::drop_before_read = 1 if ($G::drop_after_send eq 'auth');
 		my $result = do_smtp_auth($ehlo, $a_type, $a_user, $a_pass);
 		if ($result == 1) {
 			ptrans(12, "Host did not advertise authentication");
@@ -294,23 +299,22 @@ sub sendmail {
 		ptrans(12, "Auth requested, advertised, and locally unavailable.  Exiting");
 		do_smtp_quit(1, 28);
 	}
-
-	# QUIT here if the user has asked us to do so
+	do_smtp_drop()     if ($G::drop_after eq 'auth');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'auth');
 
 	# send MAIL
+	$G::drop_before_read = 1 if ($G::drop_after_send eq 'mail');
 	do_smtp_mail($from); # failures in this handled by smtp_mail_callback
-
-	# QUIT here if the user has asked us to do so
+	do_smtp_drop()     if ($G::drop_after eq 'mail');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'mail');
 
-	# send RCPT (sub handles multiple, comma-delimited recips
+	# send RCPT (sub handles multiple, comma-delimited recips)
+	$G::drop_before_read = 1 if ($G::drop_after_send eq 'rcpt');
 	do_smtp_rcpt($to); # failures in this handled by smtp_rcpt_callback
 	                   # note that smtp_rcpt_callback increments
 	                   # $G::smtp_rcpt_failures at every failure.  This and
 	                   # $G::smtp_rcpt_total are used after DATA for LMTP
-
-	# QUIT here if the user has asked us to do so
+	do_smtp_drop()     if ($G::drop_after eq 'rcpt');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'rcpt');
 
 	# send DATA
@@ -556,6 +560,11 @@ sub do_smtp_quit {
 	}
 
 	return($r);
+}
+
+sub do_smtp_drop {
+	ptrans(11, "Dropping connection");
+	exit(0);
 }
 
 sub do_smtp_tls {
@@ -1069,6 +1078,9 @@ sub transact {
 			push(@G::pending_recv, $i);
 		}
 		flush_send_buffer();
+
+		do_smtp_drop() if ($G::drop_before_read);
+
 		while (my $i = shift(@G::pending_recv)) {
 			my $buff = '';
 			eval {
@@ -1402,7 +1414,7 @@ sub load_dependencies {
 		auth            => { name => "Basic AUTH",               opt => ['MIME::Base64'],
 		                                                         req => []                    },
 		auth_cram_md5   => { name => "AUTH CRAM-MD5",            req => ['Digest::MD5']       },
-		auth_cram_sha1  => { name => "AUTH CRAM-SHA1",           req => ['Digest::SHA']      },
+		auth_cram_sha1  => { name => "AUTH CRAM-SHA1",           req => ['Digest::SHA']       },
 		auth_ntlm       => { name => "AUTH NTLM",                req => ['Authen::NTLM']      },
 		auth_digest_md5 => { name => "AUTH DIGEST-MD5",          req => ['Authen::SASL']      },
 		dns             => { name => "MX Routing",               req => ['Net::DNS']          },
@@ -1466,6 +1478,12 @@ sub get_option_struct {
 		# (q)uit after
 		{ opts => ['q', 'quit', 'quit-after'],        suffix => '=s',
 		  okey => 'quit_after',                       type => 'scalar', },
+		# drop after (don't quit, just drop)
+		{ opts => ['da', 'drop', 'drop-after'],       suffix => '=s',
+		  okey => 'drop_after',                       type => 'scalar', },
+		# drop after send (between send and read)
+		{ opts => ['das', 'drop-after-send'],         suffix => '=s',
+		  okey => 'drop_after_send',                  type => 'scalar', },
 		# do (n)ot print data portion
 		{ opts => ['n', 'suppress-data'],             suffix => '',
 		  okey => 'suppress_data',                    type => 'scalar', },
@@ -1975,27 +1993,30 @@ sub process_args {
 	}
 	$G::protocol = $protos{$G::protocol}{proto};
 
-	# set global option of -q option
-	if ($o->{quit_after}) {
-		$G::quit_after = lc($o->{quit_after});
-		if ($G::quit_after =~ /^[el]hlo$/)        { $G::quit_after = 'helo';       }
-		elsif ($G::quit_after =~ /first-[el]hlo/) { $G::quit_after = 'first-helo'; }
-		elsif ($G::quit_after eq 'starttls')      { $G::quit_after = 'tls';        }
-		elsif ($G::quit_after eq 'banner')        { $G::quit_after = 'connect';    }
-		elsif ($G::quit_after eq 'from')          { $G::quit_after = 'mail';       }
-		elsif ($G::quit_after eq 'to')            { $G::quit_after = 'rcpt';       }
-		elsif ($G::quit_after ne 'connect' && $G::quit_after ne 'first-helo' &&
-		       $G::quit_after ne 'tls'     && $G::quit_after ne 'helo'       &&
-		       $G::quit_after ne 'auth'    && $G::quit_after ne 'mail'       &&
-		       $G::quit_after ne 'rcpt'    && $G::quit_after ne 'xclient')
-		{
-			ptrans(12, "Unknown quit value $G::quit_after, exiting");
-			exit(1);
+	# set global options for --quit-after, --drop-after, and --drop-after-send
+	foreach my $opt ('quit_after', 'drop_after', 'drop_after_send') {
+		no strict "refs";
+		if ($o->{$opt}) {
+			${"G::$opt"} = lc($o->{$opt});
+			if (${"G::$opt"} =~ /^[el]hlo$/)        { ${"G::$opt"} = 'helo';       }
+			elsif (${"G::$opt"} =~ /first-[el]hlo/) { ${"G::$opt"} = 'first-helo'; }
+			elsif (${"G::$opt"} eq 'starttls')      { ${"G::$opt"} = 'tls';        }
+			elsif (${"G::$opt"} eq 'banner')        { ${"G::$opt"} = 'connect';    }
+			elsif (${"G::$opt"} eq 'from')          { ${"G::$opt"} = 'mail';       }
+			elsif (${"G::$opt"} eq 'to')            { ${"G::$opt"} = 'rcpt';       }
+			elsif (${"G::$opt"} ne 'connect' && ${"G::$opt"} ne 'first-helo' &&
+			       ${"G::$opt"} ne 'tls'     && ${"G::$opt"} ne 'helo'       &&
+			       ${"G::$opt"} ne 'auth'    && ${"G::$opt"} ne 'mail'       &&
+			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient')
+			{
+				ptrans(12, "Unknown $opt value " . ${"G::$opt"} . ", exiting");
+				exit(1);
+			}
+			# only rcpt _requires_ a to address
+			$G::server_only = 1 if (${"G::$opt"} ne 'rcpt');
+		} else {
+			${"G::$opt"} = '';
 		}
-		# only rcpt _requires_ a to address
-		$G::server_only = 1 if ($G::quit_after ne 'rcpt');
-	} else {
-		$G::quit_after = '';
 	}
 
 	# set global flag for -stl flag
@@ -2021,7 +2042,7 @@ sub process_args {
 	# SMTP mail from
 	$n{from}   = $o->{mail_from} || interact("From: ", '^.*$')
 		if (defined($o->{mail_from}));
-	$n{from} ||= ($hostname || ($G::server_only && $G::quit_after ne 'mail')
+	$n{from} ||= ($hostname || ($G::server_only && $G::quit_after ne 'mail' && $G::drop_after ne 'mail' && $G::drop_after_send ne 'mail')
 	              ? "$user\@$hostname"
 	              : interact("From: ", '^.*$'));
 	$n{from}   = '' if ($n{from} eq '<>');
@@ -2036,7 +2057,7 @@ sub process_args {
 	# SMTP helo/ehlo
 	$n{helo}   = $o->{mail_helo} || interact("Helo: ", '^.*$')
 		if (defined($o->{mail_helo}));
-	$n{helo} ||= ($hostname || ($G::quit_after eq 'connect')
+	$n{helo} ||= ($hostname || ($G::quit_after eq 'connect' || $G::drop_after eq 'connect' || $G::drop_after_send eq 'connect')
 	              ? $hostname
 	              : interact("Helo: ", '^.*$'));
 
@@ -2585,14 +2606,16 @@ sub get_running_state {
 	   .  "\n";
 
 	$s .= "Protocol Info:\n"
-	   .  "  protocol    = $G::protocol\n"
-	   .  "  helo        = $opts->{helo}\n"
-	   .  "  from        = $opts->{from}\n"
-	   .  "  to          = $opts->{to}\n"
-	   .  "  quit after  = $G::quit_after\n"
-	   .  "  server_only = " . ($G::server_only ? "TRUE" : "FALSE") . "\n"
-	   .  "  timeout     = $G::link{timeout}\n"
-	   .  "  pipeline    = " . ($G::pipeline    ? "TRUE" : "FALSE") . "\n"
+	   .  "  protocol        = $G::protocol\n"
+	   .  "  helo            = $opts->{helo}\n"
+	   .  "  from            = $opts->{from}\n"
+	   .  "  to              = $opts->{to}\n"
+	   .  "  quit after      = $G::quit_after\n"
+	   .  "  drop after      = $G::drop_after\n"
+	   .  "  drop after send = $G::drop_after_send\n"
+	   .  "  server_only     = " . ($G::server_only ? "TRUE" : "FALSE") . "\n"
+	   .  "  timeout         = $G::link{timeout}\n"
+	   .  "  pipeline        = " . ($G::pipeline    ? "TRUE" : "FALSE") . "\n"
 	   .  "\n";
 
 	$s .= "XCLIENT Info:\n"

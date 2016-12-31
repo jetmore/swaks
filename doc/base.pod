@@ -250,7 +250,7 @@ Use argument as envelope-sender for email, or prompt user if no argument specifi
 
 String to use as argument to HELO/EHLO/LHLO command, or prompt use if no argument is specified.  If this option is not used a best guess at the fully-qualified domain name of the local host is used.  If the Sys::Hostname module, which is part of the base distribution, is not available the user will be prompted for a HELO value.  Note that Sys::Hostname has been observed to not be able to find the local hostname in certain circumstances.  This has the same effect as if Sys::Hostname were unavailable.
 
-=item -q, --quit-after [stop-point]
+=item -q, --quit, --quit-after [stop-point]
 
 Point at which the transaction should be stopped.  When the requested stopping point is reached in the transaction, and provided that swaks has not errored out prior to reaching it,  swaks will send "QUIT" and attempt to close the connection cleanly.  These are the valid arguments and notes about their meaning.
 
@@ -289,6 +289,14 @@ Quit after MAIL FROM: is sent.
 Quit after RCPT TO: is sent.
 
 =back
+
+=item --da, --drop-after [stop-point]
+
+The option is similar to --quit-after, but instead of trying to cleanly shut down the session it simply terminates the session.  This option accepts the same stop-points as --quit-after.
+
+=item --das, --drop-after-send
+
+This option is similar to --drop-after, but instead of dropping the connection after reading a response to the stop-point, it drops the connection immediately after sending stop-point.
 
 =item --timeout [time]
 
