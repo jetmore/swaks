@@ -303,8 +303,14 @@ sub sendmail {
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'auth');
 
 	# send MAIL
+	# 0 = mail succeeded
+	# 1 = prdr required but not advertised
 	$G::drop_before_read = 1 if ($G::drop_after_send eq 'mail');
-	do_smtp_mail($from); # failures in this handled by smtp_mail_callback
+	my $result = do_smtp_mail($ehlo, $from); # failures in this handled by smtp_mail_callback
+	if ($result == 1) {
+		ptrans(12, "Host did not advertise PRDR support");
+		do_smtp_quit(1, 30);
+	}
 	do_smtp_drop()     if ($G::drop_after eq 'mail');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'mail');
 
@@ -857,6 +863,8 @@ sub do_smtp_helo {
 				} elsif ($l =~ /^PIPELINING$/) {
 					$e->{PIPELINING} = 1;
 					$G::pipeline_adv = 1;
+				} elsif ($l =~ /^PRDR$/) {
+					$e->{PRDR} = 1;
 				}
 			}
 			return(1);
@@ -870,11 +878,21 @@ sub do_smtp_helo {
 }
 
 sub do_smtp_mail {
-	my $m = shift;  # from address
+	my $e = shift;  # ehlo response
+	my $a = shift;  # from address
+	my $m = "MAIL FROM:<$a>";
 
-	transact(cxn_string => "MAIL FROM:<$m>", expect => '250', defer => 1, fail_callback => \&smtp_mail_callback);
+	if ($G::prdr) {
+		if (!$e->{PRDR}) {
+			return(1); # PRDR was required but was not advertised.  Return error and let caller handle it
+		} else {
+			$m .= " PRDR";
+		}
+	}
 
-	return(1); # the callback handles failures, so just return here
+	transact(cxn_string => $m, expect => '250', defer => 1, fail_callback => \&smtp_mail_callback);
+
+	return(0); # the callback handles failures, so just return here
 }
 
 # this only really needs to exist until I figure out a clever way of making
@@ -910,9 +928,10 @@ sub smtp_rcpt_callback {
 sub do_smtp_data {
 	my $m = shift; # string to send
 	my $b = shift; # be brief in the data we send
+	my $e = $G::prdr ? '(250|353)' : '250';
 
-	my $calls = $G::smtp_rcpt_total - $G::smtp_rcpt_failures;
-	my $ok    = transact(cxn_string => $m, expect => '250', summarize_output => $b);
+	my $calls     = $G::smtp_rcpt_total - $G::smtp_rcpt_failures;
+	my ($ok,$buf) = transact(cxn_string => $m, expect => $e, summarize_output => $b);
 
 	# now be a little messy - lmtp is not a lockstep after data - we need to
 	# listen for as many calls as we had accepted recipients
@@ -920,6 +939,11 @@ sub do_smtp_data {
 		foreach my $c (1..($calls-1)) { # -1 because we already got 1 above
 			$ok += transact(cxn_string => undef, expect => '250');
 		}
+	} elsif ($G::protocol eq 'esmtp' && $G::prdr && $buf =~ /^353 /) {
+		foreach my $c (1..$calls) {
+			transact(cxn_string => undef, expect => '250'); # read the status of each recipient off the wire
+		}
+		$ok = transact(cxn_string => undef, expect => '250'); # PRDR has an overall acceptance string, read it here and use it as th success indicator
 	}
 	return($ok)
 }
@@ -988,7 +1012,7 @@ sub recv_line {
 			# THIS CODE COPIED FROM THE ELSE BELOW.  Found I could trip this condition
 			# by having the server sever the connection but not have swaks realize the
 			# connection was gone.  For instance, send a PIPELINE mail that includes a
-			# "-q rcpt".  There wass a bug in swaks that made it try to send another quit
+			# "-q rcpt".  There was a bug in swaks that made it try to send another quit
 			# later, thus tripping this "1000 reads" error (but only in TLS).
 			# Short term: add line below to prevent these reads
 			# Short Term: fix the "double-quit" bug
@@ -1059,6 +1083,7 @@ sub recv_line {
 sub transact {
 	my %h        = @_; # this is an smtp transaction element
 	my $ret      = 1;  # this is our return value
+	my $buff     = ''; # the smtp response, including code.  Only return if requested
 	my @handlers = (); # will hold any fail_handlers we need to run
 	my $time     = ''; # used in time lapse calculations
 
@@ -1082,7 +1107,7 @@ sub transact {
 		do_smtp_drop() if ($G::drop_before_read);
 
 		while (my $i = shift(@G::pending_recv)) {
-			my $buff = '';
+			$buff = '';
 			eval {
 				local $SIG{'ALRM'} = sub {
 					$buff = "Timeout ($G::link{timeout} secs) waiting for server response";
@@ -1133,7 +1158,7 @@ sub transact {
 		}
 	}
 	foreach my $h (@handlers) { &{$h}(); }
-	return($ret);
+	return wantarray ? ($ret,$buff) : $ret;
 }
 
 # a quick-and-dirty hex dumper.  Currently used by --show-raw-text
@@ -1635,6 +1660,9 @@ sub get_option_struct {
 		# attempt PIPELINING
 		{ opts => ['pipeline'],                       suffix => '',
 		  okey => 'pipeline',                         type => 'scalar', },
+		# attempt PIPELINING
+		{ opts => ['prdr'],                           suffix => '',
+		  okey => 'prdr',                             type => 'scalar', },
 		# use getpwuid building -f
 		{ opts => ['force-getpwuid'],                 suffix => '',
 		  okey => 'force_getpwuid',                   type => 'scalar', },
@@ -1945,6 +1973,7 @@ sub process_args {
 	$G::show_raw_text      = 1 if ($o->{show_raw_text});
 	$G::protect_prompt     = 1 if ($o->{protect_prompt});
 	$G::pipeline           = 1 if ($o->{pipeline});
+	$G::prdr               = 1 if ($o->{prdr});
 	$G::silent             = $o->{silent} || 0;
 
 	# it is an error if >1 of --server, --socket, or --pipe is specified
@@ -2616,6 +2645,7 @@ sub get_running_state {
 	   .  "  server_only     = " . ($G::server_only ? "TRUE" : "FALSE") . "\n"
 	   .  "  timeout         = $G::link{timeout}\n"
 	   .  "  pipeline        = " . ($G::pipeline    ? "TRUE" : "FALSE") . "\n"
+	   .  "  prdr            = " . ($G::prdr        ? "TRUE" : "FALSE") . "\n"
 	   .  "\n";
 
 	$s .= "XCLIENT Info:\n"

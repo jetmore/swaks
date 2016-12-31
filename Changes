@@ -704,3 +704,5 @@
 * 20161230 Added tester to check for option and okey collisions in
            @G::raw_option_data
 * 20161230 Added --drop-after and --drop-after-send options
+* 20161231 Remove caveat from --pipeline documentation
+* 20161231 Add --prdr support

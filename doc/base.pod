@@ -360,7 +360,11 @@ LHLO, "-a -tls -p 24"
 
 =item --pipeline
 
-If the remote server supports it, attempt SMTP PIPELINING (RFC 2920).  This is a younger option, if you experience problems with it please notify the author.  Potential problem areas include servers accepting DATA even though there were no valid recipients (swaks should send empty body in that case, not QUIT) and deadlocks caused by sending packets outside the tcp window size.
+If the remote server supports it, attempt SMTP PIPELINING (RFC 2920).
+
+=item --prdr
+
+If the server supports it, attempt Per-Recipient Data Response (PRDR) (https://tools.ietf.org/html/draft-hall-prdr-00.txt).  PRDR is not yet standardized, but MTAs have begun implementing the proposal.
 
 =item --force-getpwuid
 
@@ -909,6 +913,10 @@ error in AUTH transaction
 =item Z<>29
 
 error in TLS transaction
+
+=item Z<>30
+
+PRDR requested/required but not advertised
 
 =item Z<>32
 
