@@ -17,7 +17,7 @@ my($p_name)   = $0 =~ m|/?([^/]+)$|;
 my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010-2016 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2010-2017 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -191,8 +191,8 @@ sub sendmail {
 		}
 	}
 
-	# read the server's 220 banner
-	do_smtp_gen(undef, '220') || do_smtp_quit(1, 21);
+	# read the server's 220 banner. Also handle PROXY if requested
+	do_smtp_connect() || do_smtp_quit(1, 21);
 	do_smtp_drop()     if ($G::drop_after eq 'connect');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'connect');
 
@@ -951,17 +951,114 @@ sub do_smtp_data {
 sub do_smtp_gen {
 	my $m = shift; # string to send
 	my $e = shift; # String we're expecting to get back
-	my $p = shift; # this is a scalar ref, assign the server return string to it
-	my $b = shift; # be brief in the data we send
+	my $p = shift; # if this is a scalar ref, assign the server return string to it
+	my $b = shift; # be brief in the data we print
 	my $x = shift; # if this is populated, print this instead of $m
-	my $c = shift; # if this is a code ref, call it on the return value b4 print
-	my $r = '';    # This'll be the return value from transact()
-	my $time;
+	my $c = shift; # if this is a code ref, call it on the return value before printing it
+	my $n = shift; # if true, when the data is sent over the wire, it will not have \r\n appended to it
 
 	return transact(cxn_string       => $m, expect      => $e, return_text => $p,
 	                summarize_output => $b, show_string => $x,
-	                print_callback   => $c
+	                print_callback   => $c, no_newline  => $n,
 	               );
+}
+
+sub do_smtp_connect {
+	my $send       = undef;
+	my $print      = undef;
+	my $no_newline = 0;
+
+	if ($G::proxy{try}) {
+		if ($G::proxy{version} == 2) {
+			$send = pack("W[12]", 0x0D, 0x0A,0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A);
+			if ($G::proxy{raw}) {
+				$send .= $G::proxy{raw};
+			} else {
+				# byte 13
+				#    4 bits = version (required to be 0x2)
+				#    4 bits = command (0x2 = LOCAL, 0x1 = PROXY)
+				$send .= pack("W", 0x20 + ($G::proxy{attr}{command} eq 'LOCAL' ? 0x02 : 0x01));
+				if ($G::proxy{attr}{command} eq 'LOCAL') {
+					# the protocol byte (14, including family and protocol) are ignored with local.  Set to zeros
+					$send .= pack("W", 0x00);
+					# and, additionally, if we're local, there isn't going to be any address size (bytes 15 and 16)
+					$send .= pack("W", 0x00);
+				} else {
+					# byte 14
+					#    4 bits = address family (0x0 = AF_UNSPEC, 0x1 = AF_INET, 0x2 = AF_INET6, 0x3 = AF_UNIX)
+					#    4 bits = transport protocol (0x0 = UNSPEC, 0x1 = STREAM, 0x2 = DGRAM)
+					my $byte = 0;
+					if ($G::proxy{attr}{family} eq 'AF_UNSPEC') {
+						$byte = 0x00;
+					} elsif ($G::proxy{attr}{family} eq 'AF_INET') {
+						$byte = 0x10;
+					} elsif ($G::proxy{attr}{family} eq 'AF_INET6') {
+						$byte = 0x20;
+					} elsif ($G::proxy{attr}{family} eq 'AF_UNIX') {
+						$byte = 0x30;
+					}
+					if ($G::proxy{attr}{protocol} eq 'UNSPEC') {
+						$byte += 0x0;
+					} elsif ($G::proxy{attr}{protocol} eq 'STREAM') {
+						$byte += 0x1;
+					} elsif ($G::proxy{attr}{protocol} eq 'DGRAM') {
+						$byte += 0x2;
+					}
+					$send .= pack("W", $byte);
+
+					# network portion (bytes 17+)
+					my $net = pack_ip($G::proxy{attr}{source})
+					        . pack_ip($G::proxy{attr}{dest})
+					        . pack("n", $G::proxy{attr}{source_port})
+					        . pack("n", $G::proxy{attr}{dest_port});
+					$send  .= pack("n", length($net)) . $net; # add bytes 15+16 (length of network portion) plus the network portion
+				}
+			}
+
+			# version 2 is binary, so uuencode it before printing.  Also, version 2 REQUIREs that you not send \r\n after it down the wire
+			$print      = eb64($send);
+			$no_newline = 1;
+		} else {
+			if ($G::proxy{raw}) {
+				$send = "PROXY $G::proxy{raw}";
+			} else {
+				$send = "PROXY $G::proxy{attr}{family} $G::proxy{attr}{source} $G::proxy{attr}{dest} $G::proxy{attr}{source_port} $G::proxy{attr}{dest_port}";
+			}
+		}
+	}
+
+	do_smtp_gen($send,       # to be send over the wire
+	            '220',       # response code indicating success
+	            undef,       # the return string from the server (don't need it)
+	            0,           # do not be brief when printing
+	            $print,      # if populated, print this instead of $send
+	            undef,       # don't want a post-processing callback
+	            $no_newline, # if true, don't add \r\n to the end of $send when sent over the wire
+	);
+}
+
+# no special attempt made at verifying, on purpose
+sub pack_ip {
+	my $ip = shift;
+
+	if ($ip =~ /:/) {
+		# this is the stupidest piece of code ever.  Please tell me all the fun ways it breaks
+		my @pieces = split(/:/, $ip);
+		my $p;
+		shift(@pieces) if ($pieces[0] eq '' && $pieces[1] eq ''); #
+		foreach my $word (@pieces) {
+			if ($word eq '') {
+				foreach my $i (0..(8-scalar(@pieces))) {
+					$p .= pack("n", 0);
+				}
+			} else {
+				$p .= pack("n", hex($word));
+			}
+		}
+		return($p);
+	} else {
+		return(pack("W*", split(/\./, $ip)));
+	}
 }
 
 # If we detect that the other side has gone away when we were expecting
@@ -992,8 +1089,9 @@ sub flush_send_buffer {
 }
 
 sub send_data {
-	my $d = shift; # data to write
-	$G::send_buffer .= "$d\r\n";
+	my $d   = shift;      # data to write
+	my $nnl = shift || 0; # if true, don't add a newline (needed for PROXY v2 support)
+	$G::send_buffer .= $d . ($nnl ? '' : "\r\n");
 }
 
 sub recv_line {
@@ -1098,7 +1196,7 @@ sub transact {
 		while (my $i = shift(@G::pending_send)) {
 			if (defined($i->{cxn_string})) {
 				ptrans(21, $i->{show_string} || $i->{cxn_string}, $i->{summarize_output});
-				send_data($i->{cxn_string});
+				send_data($i->{cxn_string}, $i->{no_newline});
 			}
 			push(@G::pending_recv, $i);
 		}
@@ -1699,6 +1797,33 @@ sub get_option_struct {
 		# XCLIENT REVERSE_NAME
 		{ opts => ['xclient-reverse-name'],           suffix => ':s',
 		  okey => 'xclient_reverse_name',             type => 'scalar', },
+		# argument is the raw PROXY string
+		{ opts => ['proxy'],                          suffix => ':s',
+		  okey => 'proxy_raw',                        type => 'scalar', },
+		# PROXY version (1 or 2)
+		{ opts => ['proxy-version'],                  suffix => ':s',
+		  okey => 'proxy_version',                    type => 'scalar', },
+		# PROXY protocol family (TCP4 or TCP6)
+		{ opts => ['proxy-family'],                   suffix => ':s',
+		  okey => 'proxy_family',                     type => 'scalar', },
+		# PROXY protocol command (LOCAL or PROXY)
+		{ opts => ['proxy-command'],                  suffix => ':s',
+		  okey => 'proxy_command',                    type => 'scalar', },
+		# PROXY transport protocol
+		{ opts => ['proxy-protocol'],                 suffix => ':s',
+		  okey => 'proxy_protocol',                   type => 'scalar', },
+		# PROXY source address (IPv4 or IPv6)
+		{ opts => ['proxy-source'],                   suffix => ':s',
+		  okey => 'proxy_source',                     type => 'scalar', },
+		# PROXY source port
+		{ opts => ['proxy-source-port'],              suffix => ':s',
+		  okey => 'proxy_source_port',                type => 'scalar', },
+		# PROXY destination address (IPv4 or IPv6)
+		{ opts => ['proxy-dest'],                     suffix => ':s',
+		  okey => 'proxy_dest',                       type => 'scalar', },
+		# PROXY destination port
+		{ opts => ['proxy-dest-port'],                suffix => ':s',
+		  okey => 'proxy_dest_port',                  type => 'scalar', },
 	);
 
 	return(\@G::raw_option_data);
@@ -2436,6 +2561,48 @@ sub process_args {
 	#	if (defined($o->{"xclient_after"}));
 	$G::xclient{try}      = 1 if ($G::xclient{raw} || scalar(keys(%{$G::xclient{attr}})));
 
+	# PROXY
+	$G::proxy{try}     = 0;
+	$G::proxy{attr}    = {};
+	$G::proxy{version} = $o->{"proxy_version"} || interact("PROXY version: ", '^[12]$')
+		if (defined($o->{"proxy_version"}));
+	$G::proxy{raw}     = $o->{"proxy_raw"} || interact("PROXY string: ", '^.+$')
+		if (defined($o->{"proxy_raw"}));
+	foreach my $attr ('family', 'source', 'source_port', 'dest', 'dest_port', 'protocol', 'command') {
+		if (defined($o->{"proxy_" . $attr})) {
+			if ($G::proxy{raw}) {
+				ptrans(12, "Can't mix --proxy option with other --proxy-* options");
+				exit(35);
+			}
+			$G::proxy{attr}{$attr} = $o->{"proxy_" . $attr} || interact("PROXY $attr: ", '^.+$');
+		}
+	}
+	$G::proxy{version} ||= 1;
+	$G::proxy{try}       = 1 if ($G::proxy{raw} || scalar(keys(%{$G::proxy{attr}})));
+	if ($G::proxy{try} && !$G::proxy{raw}) {
+		$G::proxy{attr}{protocol} ||= 'STREAM';
+		$G::proxy{attr}{command}  ||= 'PROXY';
+		foreach my $attr ('family', 'source', 'source_port', 'dest', 'dest_port', 'protocol', 'command') {
+			if (!$G::proxy{attr}{$attr}) {
+				ptrans(12, "Incomplete set of --proxy-* options");
+				exit(35);
+			}
+			$G::proxy{attr}{$attr} = uc($G::proxy{attr}{$attr});
+		}
+		if ($G::proxy{attr}{protocol} !~ /^(UNSPEC|STREAM|DGRAM)$/) {
+			ptrans(12, "unknown --proxy-protocol argument $G::proxy{attr}{protocol}");
+			exit(35);
+		}
+		if ($G::proxy{attr}{command} !~ /^(LOCAL|PROXY)$/) {
+			ptrans(12, "unknown --proxy-command argument $G::proxy{attr}{command}");
+			exit(35);
+		}
+		if ($G::proxy{version} == 2 && $G::proxy{attr}{family} !~ /^(AF_UNSPEC|AF_INET|AF_INET6|AF_UNIX)$/) {
+			ptrans(12, "unknown --proxy-family argument $G::proxy{attr}{family} for version 2");
+			exit(35);
+		}
+	}
+
 	# Handle AUTH options
 	# auth_optional => 0 - no.     Auth must be advertised and must succeed, else error.
 	#                  1 - yes.    Success if not advertised, advertised and fails _or_ succeeds.
@@ -2657,6 +2824,25 @@ sub get_running_state {
 		$s .= "  raw string  = " . ($G::xclient{raw} || 'no') . "\n";
 		$s .= "  attributes  = " . join("\n".' 'x16,
 		                           map { uc($_)."=".$G::xclient{attr}{$_} } (keys %{$G::xclient{attr}})) . "\n";
+	} else {
+		$s .= "no\n";
+	}
+	$s .= "\n";
+
+	$s .= "PROXY Info:\n"
+	   .  "  proxy       = ";
+	if ($G::proxy{try}) {
+		$s .= "yes\n";
+		$s .= "  version     = $G::proxy{version}\n";
+		if ($G::proxy{raw}) {
+			$s .= "  raw string  = $G::proxy{raw}\n";
+		} else {
+			$s .= "  family      = $G::proxy{attr}{family}\n"
+			   .  "  source      = $G::proxy{attr}{source}\n"
+			   .  "  source port = $G::proxy{attr}{source_port}\n"
+			   .  "  dest        = $G::proxy{attr}{dest}\n"
+			   .  "  dest port   = $G::proxy{attr}{dest_port}\n";
+		}
 	} else {
 		$s .= "no\n";
 	}

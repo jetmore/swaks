@@ -706,3 +706,6 @@
 * 20161230 Added --drop-after and --drop-after-send options
 * 20161231 Remove caveat from --pipeline documentation
 * 20161231 Add --prdr support
+* 20170101 Updating copyright date to 2017
+* 20170101 Add PROXY protocol support
+* 20170101 Removed some cruft from do_smtp_gen (noticed by accident)

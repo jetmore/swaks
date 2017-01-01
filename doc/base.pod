@@ -582,6 +582,60 @@ In normal operation, setting one of the --xclient* options will cause a successf
 
 =back
 
+=head1 PROXY OPTIONS
+
+Swaks implements the Proxy protocol as defined in http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt.  Proxy allows an application load balancer, such as HAProxy, to be used in front of an MTA while still allowing the MTA access to the originating host information.  Proxy support in swaks allows direct testing of an MTA configured to expect requests from a proxy, bypassing the proxy itself during testing.
+
+Swaks makes no effort to ensure that the Proxy options used are internally consistant.  For instance, --proxy-family (in version 1) is expected to be one of "TCP4" or "TCP6".  While it will likely not make sense to the target server, swaks makes no attempt to ensure that --proxy-source and --proxy-dest are in the same protocol family as --proxy-family or each other.
+
+The --proxy option is mutually exclusive with all other --proxy-* options except --proxy-version.
+
+When --proxy is not used, all of --proxy-family, --proxy-source, --proxy-source-port, --proxy-dest, and --proxy-dest-port are required.  Additionally, when --proxy-version is 2, --proxy-protocol and --proxy-command are optional.
+
+=over 4
+
+=item --proxy-version [ 1 | 2 ]
+
+Whether to use version 1 (human readable) or version 2 (binary) of the Proxy protocol.  Version 1 is the default.  Version 2 is only implemented through the "address block", and is roughly on par with the information provided in version 1.
+
+Note that at the time of release, version 2 has been implemented but not fully tested.  Postfix does not implement version 2 and Exim appears to have a bug in version 2 at the time of writing. It does mirror HAProxy's output though.
+
+=item --proxy [VALUE]
+
+If this option is used, its argument is passed unchanged after the "PROXY " portion (or the 12 byte protocol header for version 2) of the Proxy exchange.  This option allows sending incomplete or malformed Proxy strings to a target server for testing.  No attempt to translate or modify this string is made, so if used with "--proxy-version 2" the argument should be in the appropriate binary format.  This option is mutually exclusive with all other --proxy-* options which provide granular proxy information.
+
+=item --proxy-family [VALUE]
+
+For version 1, specifies both the address family and transport protocol.  The protocol defines TCP4 and TCP6.
+
+For version 2, specifies only the address family.  The protocol defines AF_UNSPEC, AF_INET, AF_INET6, and AF_UNIX.
+
+=item --proxy-protocol [VALUE]
+
+For version 2, specifies the transport protocol.  The protocol defines UNSPEC, STREAM, and DGRAM.  The default is STREAM.  This option is unused in version 1
+
+=item --proxy-command [VALUE]
+
+For version 2, specifies the transport protocol.  The protocol defines LOCAL and PROXY.  The default is PROXY.  This option is unused in version 1
+
+=item --proxy-source [VALUE]
+
+Specify the source address of the proxied connection.
+
+=item --proxy-source-port [VALUE]
+
+Specify the source port of the proxied connection.
+
+=item --proxy-dest [VALUE]
+
+Specify the destination address of the proxied connection.
+
+=item --proxy-dest-port [VALUE]
+
+Specify the destination port of the proxied connection.
+
+=back
+
 =head1 DATA OPTIONS
 
 These options pertain to the contents for the DATA portion of the SMTP transaction.
@@ -929,6 +983,14 @@ error in XCLIENT transaction
 =item Z<>34
 
 error in EHLO following XCLIENT
+
+=item Z<>35
+
+error in PROXY option processing
+
+=item Z<>36
+
+error sending PROXY banner
 
 =back
 
