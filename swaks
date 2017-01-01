@@ -928,10 +928,11 @@ sub smtp_rcpt_callback {
 sub do_smtp_data {
 	my $m = shift; # string to send
 	my $b = shift; # be brief in the data we send
+	my $r  = '';   # will store smtp response
 	my $e = $G::prdr ? '(250|353)' : '250';
 
-	my $calls     = $G::smtp_rcpt_total - $G::smtp_rcpt_failures;
-	my ($ok,$buf) = transact(cxn_string => $m, expect => $e, summarize_output => $b);
+	my $calls = $G::smtp_rcpt_total - $G::smtp_rcpt_failures;
+	my $ok    = transact(cxn_string => $m, expect => $e, summarize_output => $b, return_text => \$r);
 
 	# now be a little messy - lmtp is not a lockstep after data - we need to
 	# listen for as many calls as we had accepted recipients
@@ -939,7 +940,7 @@ sub do_smtp_data {
 		foreach my $c (1..($calls-1)) { # -1 because we already got 1 above
 			$ok += transact(cxn_string => undef, expect => '250');
 		}
-	} elsif ($G::protocol eq 'esmtp' && $G::prdr && $buf =~ /^353 /) {
+	} elsif ($G::protocol eq 'esmtp' && $G::prdr && $r =~ /^353 /) {
 		foreach my $c (1..$calls) {
 			transact(cxn_string => undef, expect => '250'); # read the status of each recipient off the wire
 		}
@@ -1181,7 +1182,6 @@ sub recv_line {
 sub transact {
 	my %h        = @_; # this is an smtp transaction element
 	my $ret      = 1;  # this is our return value
-	my $buff     = ''; # the smtp response, including code.  Only return if requested
 	my @handlers = (); # will hold any fail_handlers we need to run
 	my $time     = ''; # used in time lapse calculations
 
@@ -1205,7 +1205,7 @@ sub transact {
 		do_smtp_drop() if ($G::drop_before_read);
 
 		while (my $i = shift(@G::pending_recv)) {
-			$buff = '';
+			my $buff = '';
 			eval {
 				local $SIG{'ALRM'} = sub {
 					$buff = "Timeout ($G::link{timeout} secs) waiting for server response";
@@ -1256,7 +1256,7 @@ sub transact {
 		}
 	}
 	foreach my $h (@handlers) { &{$h}(); }
-	return wantarray ? ($ret,$buff) : $ret;
+	return($ret);
 }
 
 # a quick-and-dirty hex dumper.  Currently used by --show-raw-text
