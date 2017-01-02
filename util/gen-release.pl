@@ -87,9 +87,14 @@ SVN COMMIT to put /RELEASE/ into SVN
 
 TAG RELEASE:
   svn copy http://svn.jetmore.org/swaks/trunk/RELEASE http://svn.jetmore.org/swaks/tags/r-$release
-EXPORT AND PACKAGE RELEASE: 
+EXPORT AND PACKAGE RELEASE (fulton): 
+  cd ~/jetmore.org/john/code/swaks/files
+  release=20170101.0
   svn export http://svn.jetmore.org/swaks/tags/r-$release swaks-$release
   tar -cvf - swaks-$release | gzip > swaks-$release.tar.gz
+  cd /home/jetmore/jetmore.org/john/code/swaks/
+  svn export --force http://svn.jetmore.org/swaks/trunk/doc/index.html
+  svn export --force http://svn.jetmore.org/swaks/trunk/doc/version.html
 
 post to website - index.html
 google+
