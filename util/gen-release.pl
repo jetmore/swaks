@@ -94,11 +94,13 @@ EXPORT AND PACKAGE RELEASE (fulton):
   tar -cvf - swaks-$release | gzip > swaks-$release.tar.gz
   cd /home/jetmore/jetmore.org/john/code/swaks/
   svn export --force http://svn.jetmore.org/swaks/trunk/doc/index.html
-  svn export --force http://svn.jetmore.org/swaks/trunk/doc/version.html
+  svn export --force http://svn.jetmore.org/swaks/trunk/doc/versions.html
+  /bin/rm -f latest latest.tar.gz
+  ln -s files/swaks-$release ./latest
+  ln -s files/swaks-$release.tar.gz ./latest.tar.gz
 
-post to website - index.html
+blog
 google+
 twitter
-blog
 email list
 EOM
