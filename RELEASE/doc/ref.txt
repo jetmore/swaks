@@ -266,7 +266,7 @@ TRANSPORTS
         --copy-routing [domain]
             The argument is interpreted as the domain part of an email
             address and it is used to find the target server using the same
-            logic that would be used to look up the target server for an
+            logic that would be used to look up the target server for a
             recipient email address. See --to option for more details on how
             the target is determined from the email domain.
 
@@ -349,7 +349,7 @@ PROTOCOL OPTIONS
         hostname in certain circumstances. This has the same effect as if
         Sys::Hostname were unavailable.
 
-    -q, --quit-after [stop-point]
+    -q, --quit, --quit-after [stop-point]
         Point at which the transaction should be stopped. When the requested
         stopping point is reached in the transaction, and provided that
         swaks has not errored out prior to reaching it, swaks will send
@@ -388,6 +388,16 @@ PROTOCOL OPTIONS
 
         RCPT, TO
             Quit after RCPT TO: is sent.
+
+    --da, --drop-after [stop-point]
+        The option is similar to --quit-after, but instead of trying to
+        cleanly shut down the session it simply terminates the session. This
+        option accepts the same stop-points as --quit-after.
+
+    --das, --drop-after-send
+        This option is similar to --drop-after, but instead of dropping the
+        connection after reading a response to the stop-point, it drops the
+        connection immediately after sending stop-point.
 
     --timeout [time]
         Use argument as the SMTP transaction timeout, or prompt user if no
@@ -443,11 +453,12 @@ PROTOCOL OPTIONS
 
     --pipeline
         If the remote server supports it, attempt SMTP PIPELINING (RFC
-        2920). This is a younger option, if you experience problems with it
-        please notify the author. Potential problem areas include servers
-        accepting DATA even though there were no valid recipients (swaks
-        should send empty body in that case, not QUIT) and deadlocks caused
-        by sending packets outside the tcp window size.
+        2920).
+
+    --prdr
+        If the server supports it, attempt Per-Recipient Data Response
+        (PRDR) (https://tools.ietf.org/html/draft-hall-prdr-00.txt). PRDR is
+        not yet standardized, but MTAs have begun implementing the proposal.
 
     --force-getpwuid
         Tell swaks to use the getpwuid method of finding the default sender
@@ -520,7 +531,7 @@ TLS / ENCRYPTION
         library to set the list of acceptable ciphers to the be used for the
         connection. The format of this string is opaque to swaks and is
         defined in
-        http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT. An
+        http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT. A
         brief example would be --tls-cipher '3DES:+RSA'.
 
     --tls-verify
@@ -778,12 +789,17 @@ XCLIENT OPTIONS
         for XCLIENT_STRING will be sent verbatim as the argument to the
         XCLIENT smtp command. For example, if "--xclient 'NAME=
         ADDR=192.168.1.1 FOO=bar'" is used, swaks will send the SMTP command
-        "XCLIENT NAME= ADDR=192.168.1.1 FOO=bar". The primary advantage to
-        this over the more specific options above is that there is no
-        XCLIENT syntax validation here. This allows you to send invalid
-        XCLIENT to the target server for testing. If no XCLIENT_STRING is
+        "XCLIENT NAME= ADDR=192.168.1.1 FOO=bar". If no XCLIENT_STRING is
         passed on command line, swaks will prompt and read the value on
         STDIN.
+
+        The primary advantage to this over the more specific options above
+        is that there is no XCLIENT syntax validation here. This allows you
+        to send invalid XCLIENT to the target server for testing.
+        Additionally, at least one MTA (Message Systems' Momentum, formerly
+        ecelerity) implements XCLIENT without advertising supported
+        attributes. The --xclient option allows you to skip the "supported
+        attributes" check when communicating with this type of MTA.
 
         The --xclient option can be mixed freely with the --xclient-*
         options above. If "--xclient-addr 192.168.0.1 --xclient 'FOO=bar
@@ -804,6 +820,80 @@ XCLIENT OPTIONS
         XCLIENT was not advertised, but will fail if XCLIENT was attempted
         but did not succeed.
 
+PROXY OPTIONS
+    Swaks implements the Proxy protocol as defined in
+    http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt. Proxy allows
+    an application load balancer, such as HAProxy, to be used in front of an
+    MTA while still allowing the MTA access to the originating host
+    information. Proxy support in swaks allows direct testing of an MTA
+    configured to expect requests from a proxy, bypassing the proxy itself
+    during testing.
+
+    Swaks makes no effort to ensure that the Proxy options used are
+    internally consistant. For instance, --proxy-family (in version 1) is
+    expected to be one of "TCP4" or "TCP6". While it will likely not make
+    sense to the target server, swaks makes no attempt to ensure that
+    --proxy-source and --proxy-dest are in the same protocol family as
+    --proxy-family or each other.
+
+    The --proxy option is mutually exclusive with all other --proxy-*
+    options except --proxy-version.
+
+    When --proxy is not used, all of --proxy-family, --proxy-source,
+    --proxy-source-port, --proxy-dest, and --proxy-dest-port are required.
+    Additionally, when --proxy-version is 2, --proxy-protocol and
+    --proxy-command are optional.
+
+    --proxy-version [ 1 | 2 ]
+        Whether to use version 1 (human readable) or version 2 (binary) of
+        the Proxy protocol. Version 1 is the default. Version 2 is only
+        implemented through the "address block", and is roughly on par with
+        the information provided in version 1.
+
+        Note that at the time of release, version 2 has been implemented but
+        not fully tested. Postfix does not implement version 2 and Exim
+        appears to have a bug in version 2 at the time of writing. It does
+        mirror HAProxy's output though.
+
+    --proxy [VALUE]
+        If this option is used, its argument is passed unchanged after the
+        "PROXY " portion (or the 12 byte protocol header for version 2) of
+        the Proxy exchange. This option allows sending incomplete or
+        malformed Proxy strings to a target server for testing. No attempt
+        to translate or modify this string is made, so if used with
+        "--proxy-version 2" the argument should be in the appropriate binary
+        format. This option is mutually exclusive with all other --proxy-*
+        options which provide granular proxy information.
+
+    --proxy-family [VALUE]
+        For version 1, specifies both the address family and transport
+        protocol. The protocol defines TCP4 and TCP6.
+
+        For version 2, specifies only the address family. The protocol
+        defines AF_UNSPEC, AF_INET, AF_INET6, and AF_UNIX.
+
+    --proxy-protocol [VALUE]
+        For version 2, specifies the transport protocol. The protocol
+        defines UNSPEC, STREAM, and DGRAM. The default is STREAM. This
+        option is unused in version 1
+
+    --proxy-command [VALUE]
+        For version 2, specifies the transport protocol. The protocol
+        defines LOCAL and PROXY. The default is PROXY. This option is unused
+        in version 1
+
+    --proxy-source [VALUE]
+        Specify the source address of the proxied connection.
+
+    --proxy-source-port [VALUE]
+        Specify the source port of the proxied connection.
+
+    --proxy-dest [VALUE]
+        Specify the destination address of the proxied connection.
+
+    --proxy-dest-port [VALUE]
+        Specify the destination port of the proxied connection.
+
 DATA OPTIONS
     These options pertain to the contents for the DATA portion of the SMTP
     transaction.
@@ -819,7 +909,8 @@ DATA OPTIONS
         representing where line breaks should be placed. Leading dots will
         be quoted. Closing dot is not required but is allowed. The default
         value for this option is "Date: %DATE%\nTo: %TO_ADDRESS%\nFrom:
-        %FROM_ADDRESS%\nSubject: test %DATE%\nX-Mailer: swaks v$p_version
+        %FROM_ADDRESS%\nSubject: test %DATE%\nMessage-Id:
+        <%MESSAGEID%>\nX-Mailer: swaks v%SWAKS_VERSION
         jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n".
 
         Very basic token parsing is performed on the DATA portion. See
@@ -841,6 +932,15 @@ DATA OPTIONS
             standard module Time::Local for timezone calculations. If this
             module is unavailable the date string will be in GMT. Replaces
             the deprecated %D token.
+
+        %MESSAGEID%
+            Replaced with the a message ID string suitable for use in a
+            Message-Id header. The value for this token will remain
+            consistent for the life of the process.
+
+        %SWAKS_VERSION%
+            Replaced with the version of the currently-running Swaks
+            process.
 
         %NEW_HEADERS%
             Replaced with the contents of the --add-header option. If
@@ -970,35 +1070,47 @@ OUTPUT OPTIONS
     indicate a line of data actually sent or received in a transaction. This
     table indicates the hints and their meanings:
 
-    === Indicates an informational line generated by swaks
+    "==="
+        Indicates an informational line generated by swaks
 
-    *** Indicates an error generated within swaks
+    "***"
+        Indicates an error generated within swaks
 
-    ->  Indicates an expected line sent by swaks to target server
+    " ->"
+        Indicates an expected line sent by swaks to target server
 
-    ~>  Indicates a TLS-encrypted, expected line sent by swaks to target
+    " ~>"
+        Indicates a TLS-encrypted, expected line sent by swaks to target
         server
 
-    **> Indicates an unexpected line sent by swaks to the target server
+    "**>"
+        Indicates an unexpected line sent by swaks to the target server
 
-    *~> Indicates a TLS-encrypted, unexpected line sent by swaks to target
+    "*~>"
+        Indicates a TLS-encrypted, unexpected line sent by swaks to target
         server
 
-    >   Indicates a raw chunk of test sent by swaks to a target server (see
+    "  >"
+        Indicates a raw chunk of text sent by swaks to a target server (see
         --show-raw-text). There is no concept of "expected" or "unexpected"
         at this level.
 
-    <-  Indicates an expected line sent by target server to swaks
+    "<- "
+        Indicates an expected line sent by target server to swaks
 
-    <~  Indicates a TLS-encrypted, expected line sent by target server to
+    "<~ "
+        Indicates a TLS-encrypted, expected line sent by target server to
         swaks
 
-    <** Indicates an unexpected line sent by target server to swaks
+    "<**"
+        Indicates an unexpected line sent by target server to swaks
 
-    <~* Indicates a TLS-encrypted, unexpected line sent by target server to
+    "<~*"
+        Indicates a TLS-encrypted, unexpected line sent by target server to
         swaks
 
-    <   Indicates a raw chunk of text received by swaks from a target server
+    "<  "
+        Indicates a raw chunk of text received by swaks from a target server
         (see --show-raw-text). There is no concept of "expected" or
         "unexpected" at this level.
 
@@ -1175,11 +1287,17 @@ EXIT CODES
 
     29  error in TLS transaction
 
+    30  PRDR requested/required but not advertised
+
     32  error in EHLO following TLS negotiation
 
     33  error in XCLIENT transaction
 
     34  error in EHLO following XCLIENT
+
+    35  error in PROXY option processing
+
+    36  error sending PROXY banner
 
 ABOUT THE NAME
     The name "swaks" is a (sort-of) acronym for "SWiss Army Knife Smtp". It
@@ -1193,7 +1311,7 @@ ABOUT THE NAME
         "with love".
 
     bad / poor / ill (Afrikaans)
-        Seen it in the headline "SA se bes en swaks gekledes in 2011", which
+        Seen in the headline "SA se bes en swaks gekledes in 2011", which
         was translated as "best and worst dressed" by native speakers.
         Google Translate doesn't like "swaks gekledes", but it will
         translate "swak" as "poor" and "swak geklede" as "ill-dressed".

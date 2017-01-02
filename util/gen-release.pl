@@ -3,7 +3,7 @@
 use Pod::Text;
 use Pod::Html;
 
-my $home = '/home/jetmore/dev/swaks';
+my $home = '/home/jetmore/Documents/svn/swaks-trunk';
 my $release_d = "$home/RELEASE";
 my $release = shift || die "Need release\n";
 
@@ -79,11 +79,21 @@ close(I);
 
 print <<EOM;
 
-UPDATE README
+******  Update Changes to include release, if not already there (rerun script if you had to add it)
+******  UPDATE RELEASE/README
+******  UPDATE doc/index.html, doc/version.html
+
 SVN COMMIT to put /RELEASE/ into SVN
+
 TAG RELEASE:
   svn copy http://svn.jetmore.org/swaks/trunk/RELEASE http://svn.jetmore.org/swaks/tags/r-$release
 EXPORT AND PACKAGE RELEASE: 
   svn export http://svn.jetmore.org/swaks/tags/r-$release swaks-$release
   tar -cvf - swaks-$release | gzip > swaks-$release.tar.gz
+
+post to website - index.html
+google+
+twitter
+blog
+email list
 EOM

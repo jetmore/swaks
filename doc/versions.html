@@ -42,6 +42,61 @@ This page lists every official release of Swaks, from newest to oldest.  All rel
 
 <table cellpadding=3 border=0 width=600>
 <tr>
+<td valign=top><font size=-1><b>v20170101.0</b></font></td>
+<td><font size=-1>
+<B>Links:</b> <a href=files/swaks-20170101.0.tar.gz>Distribution</a>, <a href=files/swaks-20170101.0/swaks>script only</a>, <a href=files/swaks-20170101.0/doc/ref.txt>version docs</a>
+<P>
+<B>Change Summary:</B><BR>
+<pre>
+New Features:
+  * Added Per-Recipient Data Response (PRDR) support
+    (see https://tools.ietf.org/html/draft-hall-prdr-00).
+  * Added PROXY protocol support
+    (see http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt).
+  * Added --drop-after and --drop-after-send options.
+  * Added %MESSAGEID% expansion token.
+  * Added %SWAKS_VERSION% expansion token.
+Notable Changes:
+  * Default DATA template now includes a Message-Id: header.
+Notable Bugs Fixed:
+  * Fixed incorrect range on XCLIENT rfc1891/xtext encoding.
+</pre>
+<B>Changelog:</B><BR>
+<pre>
+* 20130422 Fixed typo in man page ("test" -> "text"), reported by
+           Graeme Hewson.
+* 20130906 Fixed some POD formatting errors. Exit code formatting reported by
+           both debian and redhat maintainers, caused by Pod::Simple change
+           in perl-5.18.1.  Others found playing with podchecker.
+* 20140207 Updating copyright to 2014
+* 20140207 Updated faq.html with typo and phrasing fixes.  Added note that
+           Homebrew and MacPorts both package swaks (h/t Andrew Langhorn)
+* 20141128 Fixed local_cert_subject logging bug, reported by Roman Rybalko
+* 20141128 Fix incorrect range on XCLIENT rfc1891/xtext encoding caused by
+           mixing hex and decimal. Reported by Thomas Szukala
+* 20141202 Fixing a couple of "an [CONSONANT]" doc typos
+* 20150128 Handle the case where a server advertises XCLIENT but does not
+           advertise any supported attributes.
+* 20150212 Add %MESSAGEID% token and add Message-Id as a part of the default
+           DATA.
+* 20150212 Add %SWAKS_VERSION% token and use it by default in the X-Mailer
+           header.  Suggested by Jan-Pieter Cornet.
+* 20151109 Fixed grammar issue in "About the Name" section
+* 20161230 Updating copyright to 2016
+* 20161230 Added tester to check for option and okey collisions in
+           @G::raw_option_data
+* 20161230 Added --drop-after and --drop-after-send options
+* 20161231 Remove caveat from --pipeline documentation
+* 20161231 Add --prdr support
+* 20170101 Updating copyright date to 2017
+* 20170101 Add PROXY protocol support
+* 20170101 Removed some cruft from do_smtp_gen (noticed by accident)
+* 20170101 Removed unneeded extra functionality added to transact() for
+           PRDR implementation (functionality already existed)
+</pre>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
 <td valign=top><font size=-1><b>v20130209.0</b></font></td>
 <td><font size=-1>
 <B>Links:</b> <a href=files/swaks-20130209.0.tar.gz>Distribution</a>, <a href=files/swaks-20130209.0/swaks>script only</a>, <a href=files/swaks-20130209.0/doc/ref.txt>version docs</a>

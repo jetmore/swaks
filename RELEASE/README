@@ -56,39 +56,16 @@ Ways to stay up to date on new releases:
 ------------------------------
 Change Summary
 ------------------------------
-v20130209.0
+v20170101.0
   New Features:
-    * Support for the XCLIENT SMTP extension
-      (see http://www.postfix.org/XCLIENT_README.html)
-    * Added --no-send-hints, --no-receive-hints, and --no-info-hints
-      output control options
-    * The TLS subsystem got a major facelift, including
-      * Added --tls-cert and --tls-key options to specify the certificate
-        Swaks will use when negotiationg TLS (debian bug 497654)
-      * Added more error checking and logging around protocol negotiation
-      * Added tlsv1_1 and tlsv1_2 as "known" protocol versions
-      * Added --tls-protocol option
-      * Added --tls-cipher option
-      * Added --tls-verify option
-      * Added --tls-ca-path option
-  Notable Changes
-    * The TLS information lines have changed some:
-      * Changed "w/" to "with" and "peer subject DN" to "peer DN"
-      * Changed the TLS cipher line from just NAME to VERSION:NAME:BITS
-      * Added new line stating the DN of local cert or that none is being used
-      * If the negotiated protocol version is unknown, print raw version number
-    * Changes to --dump output
-      * Added --tls-get-peer-cert setting
-      * Added locally-available TLS/SSL protocol versions
-    * Swaks no longer attempts to send QUIT down a connection when TLS
-      negotiation fails.  This may cause issues with the use of --tls-optional
-  Notable Bugs Fixed
-    * Previous release did not properly "cancel" SASL session when server
-      did not behave properly (reported by Erwan Legrand)
-    * Swaks would send QUIT twice in specific cases involving mail rejections,
-      the --quit-after option, and --pipeline
-    * Swaks would die silently during errors in the SSL protocol negotiation
-      (-tlsc -p 25 would cause it)
-    * Swaks could fail to handle the end of a TLS session over a pipe transport
-      when the server has closed the connection but Swaks is expecting to read
-      more data
+    * Added Per-Recipient Data Response (PRDR) support
+      (see https://tools.ietf.org/html/draft-hall-prdr-00).
+    * Added PROXY protocol support
+      (see http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt).
+    * Added --drop-after and --drop-after-send options.
+    * Added %MESSAGEID% expansion token.
+    * Added %SWAKS_VERSION% expansion token.
+  Notable Changes:
+    * Default DATA template now includes a Message-Id: header.
+  Notable Bugs Fixed:
+    * Fixed incorrect range on XCLIENT rfc1891/xtext encoding.

@@ -711,3 +711,4 @@
 * 20170101 Removed some cruft from do_smtp_gen (noticed by accident)
 * 20170101 Removed unneeded extra functionality added to transact() for
            PRDR implementation (functionality already existed)
+> 20170101 released 20170101.0

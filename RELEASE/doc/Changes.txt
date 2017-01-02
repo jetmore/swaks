@@ -1,3 +1,34 @@
+> 20170101 released 20170101.0
+* 20170101 Removed unneeded extra functionality added to transact() for
+           PRDR implementation (functionality already existed)
+* 20170101 Removed some cruft from do_smtp_gen (noticed by accident)
+* 20170101 Add PROXY protocol support
+* 20170101 Updating copyright date to 2017
+* 20161231 Add --prdr support
+* 20161231 Remove caveat from --pipeline documentation
+* 20161230 Added --drop-after and --drop-after-send options
+* 20161230 Added tester to check for option and okey collisions in
+           @G::raw_option_data
+* 20161230 Updating copyright to 2016
+* 20151109 Fixed grammar issue in "About the Name" section
+* 20150212 Add %SWAKS_VERSION% token and use it by default in the X-Mailer
+           header.  Suggested by Jan-Pieter Cornet.
+* 20150212 Add %MESSAGEID% token and add Message-Id as a part of the default
+           DATA.
+* 20150128 Handle the case where a server advertises XCLIENT but does not
+           advertise any supported attributes.
+* 20141202 Fixing a couple of "an [CONSONANT]" doc typos
+* 20141128 Fix incorrect range on XCLIENT rfc1891/xtext encoding caused by
+           mixing hex and decimal. Reported by Thomas Szukala
+* 20141128 Fixed local_cert_subject logging bug, reported by Roman Rybalko
+* 20140207 Updated faq.html with typo and phrasing fixes.  Added note that
+           Homebrew and MacPorts both package swaks (h/t Andrew Langhorn)
+* 20140207 Updating copyright to 2014
+* 20130906 Fixed some POD formatting errors. Exit code formatting reported by
+           both debian and redhat maintainers, caused by Pod::Simple change
+           in perl-5.18.1.  Others found playing with podchecker.
+* 20130422 Fixed typo in man page ("test" -> "text"), reported by
+           Graeme Hewson.
 > 20130209 released 20130209.0
 * 20121014 Fixed to send proper "cancel" of SASL transaction (bare '*') when
            the server returns an improper rspauth.  swaks would understand
@@ -48,13 +79,13 @@
            (submitters of independent XCLIENT patches) for comment
 * 20120404 added xtext encoding for the xclient options
 * 20120404 add and document new --quit-after option 'xclient'
-* 20120404 implemented the SMTP portion of XCLIENT, documented the 
+* 20120404 implemented the SMTP portion of XCLIENT, documented the
            --xclient-optional(-strict)? behavior.  Added and documented
            33,34 exit codes
 * 20120402 xclient second pass.  option processing and --dump
 * 20120402 xclient first pass.  Added -xclient* options to data struct
            made first pass at documenting feature and options
-* 20120330 Change the TLS cipher info line from just the NAME to 
+* 20120330 Change the TLS cipher info line from just the NAME to
            VERSION:NAME:BITS
 * 20120330 A bit more TLS error checking.  Some added on general principle.
            Specifically fixed error where swaks would die silently during
@@ -146,7 +177,7 @@
            a more in-depth view of what's being sent on the wire.
 * 20111201 fixed TLS issue when SMTP response sent in multiple packets.
            This looks like a regression of the TLS fix from 20050709
-           (r94) that was made in the implementation of --pipeline in 
+           (r94) that was made in the implementation of --pipeline in
            20060309's r115.  Regression reported by Peter J. Holzer along
            with suggested fix.
 > 20111130 released r256 to Erwan Legrand (erwan@lightbringer.org)
@@ -180,7 +211,7 @@
            Samuelson in debian bug 646084.
 * 20110321 added --auth-hide-password option to replace recoverable passwords
            in SMTP transactions with a dummy string
-* 20110321 fixed bug which prevented message data to be provided in a file 
+* 20110321 fixed bug which prevented message data to be provided in a file
            with a "n" or "\" in the filename.  Reported and fix suggested
            by dietrich.rebmann#freenet.de
 * 20110309 added --protect-prompt option to make best effort not to
@@ -234,7 +265,7 @@
 * 20080103 implemented recognition of "no-" prefix to erase previously
            set options
 * 20080103 added yet another layer of abstraction to option processing
-* 20080103 updated copyrght to 2008. changed $p_cp formatting to 
+* 20080103 updated copyrght to 2008. changed $p_cp formatting to
            remove backslash from email
 * 20071231 fixed long standing impemenation bug in the inter-op
            of the --dump and --silent option.
@@ -264,7 +295,7 @@
 * 20071016 fixed --tlsos/-tlsos type in POD (haraldme.gmail.com)
 > 20070921 released 20070921.0-dev to madduck.debian.org, db403208
 * 20070921 20061221 added --config.  Added new config file and
-           environment variable processing to allow multiple, 
+           environment variable processing to allow multiple,
            ways to specifying options.  debian bug 403208
 * 20070921 rearranged dependency processing for code readability
 > 20070920 released 20070920.0-dev to haraldme.gmail.com
@@ -320,7 +351,7 @@
 * 20060914 removed some extraneous /e opts from body-processing regexps
 * 20060914 added --header-HEADER option where --h-Text foo is
            a synonym for --header "Text: foo"
-* 20060914 added --header option which, if header already exists, 
+* 20060914 added --header option which, if header already exists,
            overwrites it.  Otherwise adds to --add-header processing.
 * 20060817 redid --support/avail() again to support concept of
            optional (optimizing) modules for full disclosure in output
@@ -336,11 +367,11 @@
            auth requirements.
 * 20060804 added test_support() call to --dump output for testing
 * 20060804 moved all other modules to conditionally load, as needed.
-           This is IO::Socket, IPC::Open2, Time::Local, 
+           This is IO::Socket, IPC::Open2, Time::Local,
            Sys::Hostname, and Getopt::Long.  Time::Local and
            Sys::Hostname are optional (they are not always used,
            and can now be worked around if not available).  IO::Socket
-           is now only loaded is doing a socket connection and 
+           is now only loaded is doing a socket connection and
            IPC::Open2 only needed for a --pipe session.
 * 20060804 20060201 rewrote module support.  Capabilities are checked
            by labels, not with literal modules.  Allows checking
@@ -392,7 +423,7 @@
            swaks did not handle the remote end closing its
            connection unexpectedly.  Fixed transaction routines
            to detect and handle properly.
-* 20060218 swaks choked if server advertised STARTTLS over a 
+* 20060218 swaks choked if server advertised STARTTLS over a
            --tls-on-connect connection.  fixed.  (jpeacock.rowman.com)
 > 20060210 released 20060210.0-dev to jh.plonk.de
 * 20060210 20060131 change --pipe to use open2().  This causes child
@@ -433,10 +464,10 @@
 * 20050625 20050605 added --socket option to allow smtp over
            unix domain socket
 * 20050625 fixed a couple of bugs in --auth-optional (one caused it
-           not to work at all, the other caused it not to work if 
+           not to work at all, the other caused it not to work if
            either -a not also used or some arg not supplied)
 * 20050625 20050517 added --pipe option to be able to conduct
-           smtp transaction with a child process.  See debian 
+           smtp transaction with a child process.  See debian
            bug ID 309462
 * 20050625 moved all connection level into into %G::link very early
 * 20050625 saved many lines of code by adding do_smtp_quit
@@ -464,7 +495,7 @@
            value to be passed in
 > 20040128 released 20040128.1
 * 20040128 reworked a split to quell a perl -w gripe
-* 20040128 if -q opt is one which doesn't require a to address 
+* 20040128 if -q opt is one which doesn't require a to address
            (everything before rcpt) and server is otherwise specified,
            don't require a to address. (sugg. ametzler)
 * 20040128 added a few -q aliases (ehlo, first-ehlo, starttls, from, to)
@@ -481,7 +512,7 @@
            file.  fixed.
 > 20031218 released 20031218.0
 * 20031218 reworked local hostname determination.  hostname() almost
-           never fails but gethostbyname can, use first results if 
+           never fails but gethostbyname can, use first results if
            second call fails.
 * 20031212 in some situations a hostname may not be found automatically
            (for instance, on my laptop when my VPN is active).  In this
@@ -507,10 +538,10 @@
            literals (user@#16909060).
 * 20031210 moved "Trying..." above actual socket creation, which
            makes much more sense in a timeout situation
-* 20031210 handle default routing correctly for domain literal 
+* 20031210 handle default routing correctly for domain literal
            to addresses (@[1.2.3.4]).  Had to specify server explicitly
            using -s before.
-* 20031207 add 'Date: %D' header to default data string (probably 
+* 20031207 add 'Date: %D' header to default data string (probably
            should have been there all along but this was specifically
            added to address a change in the handling of messages
            without Date: headers by exim in 4.30)
@@ -534,14 +565,14 @@
 * 20031101 fixed bug in NTLM auth (worked with exim but not with
            communigate
 * 20031027 added -stl option to show lapse between send/receive
-* 20031024 changed "empty" placeholder from NULLNULL to <> for 
+* 20031024 changed "empty" placeholder from NULLNULL to <> for
            sender, a_user, a_pass
-* 20031024 changed server for non-mx domain from localhost to domain's 
+* 20031024 changed server for non-mx domain from localhost to domain's
            A record
 * 20031024 Added module checking for Authen::NTLM
 * 20031024 started rearranging options.  Move from $O:: namespace
            to %O hash.  %O is for temporary vars, $G:: is for true
-           global vars.  moved most of the up-front processing to 
+           global vars.  moved most of the up-front processing to
            a subroutine and rearranged
 * 20031021 Added aliases for SPA/MSN to NTLM
 * 20031021 added ability to specify %DOMAIN to -ap for NTLM
@@ -599,10 +630,10 @@
            char options, but insensitive long opts.  It also turns
            off single-char option bundling, but I don't see this
            as an issue
-* 20031008 changed so you can specify in time format (hms).  This 
+* 20031008 changed so you can specify in time format (hms).  This
            allows you to use 0s to mean no timeout
 * 20031008 allow TIMEOUT to be specified in -l file
-* 20031008 fixed bug where alarm was not reset after 
+* 20031008 fixed bug where alarm was not reset after
 * 20031008 add -to option to allow timeout to be specified in seconds
            on command line. (defaults to 30s)
 * 20030826 allow mult recips in form to,to,to (if server is undef,
