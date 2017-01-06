@@ -586,7 +586,7 @@ In normal operation, setting one of the --xclient* options will cause a successf
 
 Swaks implements the Proxy protocol as defined in http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt.  Proxy allows an application load balancer, such as HAProxy, to be used in front of an MTA while still allowing the MTA access to the originating host information.  Proxy support in swaks allows direct testing of an MTA configured to expect requests from a proxy, bypassing the proxy itself during testing.
 
-Swaks makes no effort to ensure that the Proxy options used are internally consistant.  For instance, --proxy-family (in version 1) is expected to be one of "TCP4" or "TCP6".  While it will likely not make sense to the target server, swaks makes no attempt to ensure that --proxy-source and --proxy-dest are in the same protocol family as --proxy-family or each other.
+Swaks makes no effort to ensure that the Proxy options used are internally consistent.  For instance, --proxy-family (in version 1) is expected to be one of "TCP4" or "TCP6".  While it will likely not make sense to the target server, swaks makes no attempt to ensure that --proxy-source and --proxy-dest are in the same protocol family as --proxy-family or each other.
 
 The --proxy option is mutually exclusive with all other --proxy-* options except --proxy-version.
 
@@ -804,7 +804,7 @@ The following options control what and how output is displayed to the caller.
 
 =item -n, --suppress-data
 
-Summarizes the DATA portion of the SMTP transaction instead of printing every line.  This option is very helpful, bordering on required, when using swaks to send certain test emails.  Emails with attachments, for instance, will quickly overwhelm a terminal if the DATA is not supressed.
+Summarizes the DATA portion of the SMTP transaction instead of printing every line.  This option is very helpful, bordering on required, when using swaks to send certain test emails.  Emails with attachments, for instance, will quickly overwhelm a terminal if the DATA is not suppressed.
 
 =item -stl, --show-time-lapse [i]
 
@@ -820,7 +820,7 @@ Don't display the transaction hint for informational transactions.  This is most
 
 =item -nth, --no-hints
 
---no-send-hints and --no-receive-hints supress the transaction prefix from send and receive lines, respectively.  This is often useful when copying some portion of the transaction for use elsewhere (for instance, "--no-send-hints --hide-receive --hide-informational" is a useful way to get only the client-side commands for a given transaction).  --no-hints is identical to specifying both --no-send-hints and --no-receive-hints.
+--no-send-hints and --no-receive-hints suppress the transaction prefix from send and receive lines, respectively.  This is often useful when copying some portion of the transaction for use elsewhere (for instance, "--no-send-hints --hide-receive --hide-informational" is a useful way to get only the client-side commands for a given transaction).  --no-hints is identical to specifying both --no-send-hints and --no-receive-hints.
 
 Don't show transaction hints (useful in conjunction with -hr to create copy/paste-able transactions).
 
@@ -834,7 +834,7 @@ This option will print a hex dump of raw data sent and received by swaks.  Each 
 
 =item --output-file-stderr E<lt>/path/to/fileE<gt>
 
-These options allow the user to send output to files instead of stdout/stderr.  The first option sends both to the same file.  The arguments of &STDOUT and &STDERR are treated specially, refering to the "normal" file handles, so "--output-file-stderr '&STDOUT'" would redirect STDERR to STDOUT.
+These options allow the user to send output to files instead of stdout/stderr.  The first option sends both to the same file.  The arguments of &STDOUT and &STDERR are treated specially, referring to the "normal" file handles, so "--output-file-stderr '&STDOUT'" would redirect STDERR to STDOUT.
 
 =item -pp, --protect-prompt
 

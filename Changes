@@ -712,3 +712,4 @@
 * 20170101 Removed unneeded extra functionality added to transact() for
            PRDR implementation (functionality already existed)
 > 20170101 released 20170101.0
+* 20170106 Fix typos in base.pod (reported by Andreas Metzler/Debian)
