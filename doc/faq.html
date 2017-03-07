@@ -75,7 +75,7 @@ swaks --config .swaksrc
 </pre>
 The argument to the --to option is passed deep into the heart of Swaks with no real validation checking.  This is done intentionally - because Swaks is meant to be a test tool, oddball values should be allowed.  One side effect of this is that including a space after the comma will result in an email address that starts with a comma, which is probably not what you want.
 <P>
-There is one additional consideration here.  Since Swaks is oriented around a single smtp-session per invocation, it will only ever connect to a single server, even if multiple recipients are specified.  In the example above, both emails will be delivered to the MX server for example.com (since, as documented, the mail routing for the last domain in the list is used).  This may or may not work, depending on the configuration of email server you are testing.
+There is one additional consideration here.  Since Swaks is oriented around a single SMTP-session per invocation, it will only ever connect to a single server, even if multiple recipients are specified.  In the example above, both emails will be delivered to the MX server for example.com (since, as documented, the mail routing for the last domain in the list is used).  This may or may not work, depending on the configuration of email server you are testing.
 </font>
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>
@@ -107,7 +107,7 @@ Copy and paste or right-click, save-as works great for me.  If you prefer a pack
 <td><font size=-1>
 <B>How do I install on Windows?</b>
 <P>
-Swaks has been tested much less on Windows than Mac OS X or Linux (or even Solaris, Swaks' birth-OS), but it has worked when I tested it.  I installed ActiveState Perl, saved the latest version of Swaks as swaks.pl, and used ppm to install perl modules.  It worked fine for me, but if you are having specific issues let me know.
+Swaks has been tested much less on Windows than Mac OS X or Linux (or even Solaris, Swaks' birth-OS), but it has worked when I tested it.  I installed ActiveState Perl, saved the latest version of Swaks as swaks.pl, and used ppm to install Perl modules.  It worked fine for me, but if you are having specific issues let me know.
 </font>
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>
@@ -116,11 +116,11 @@ Swaks has been tested much less on Windows than Mac OS X or Linux (or even Solar
 <td><font size=-1>
 <B>How do I send HTML email?</b>
 <P>
-This really depends on what you want to do.  At its base, Swaks is agnostic about what it sends in its DATA section, so you can craft whatever email you want and use it as the DATA of the message using the --data option.  This is the best route for testing, where you usually have a fixed set of test cases to run, or you want to run the same command many times.  If you don't know what a raw email looks like, send yourself an email to a gmail account and select "Show Original".  The entire text file is the format that the --data option expects (though it will probably be more complicated and have more headers than you need)
+This really depends on what you want to do.  At its base, Swaks is agnostic about what it sends in its DATA section, so you can craft whatever email you want and use it as the DATA of the message using the --data option.  This is the best route for testing, where you usually have a fixed set of test cases to run, or you want to run the same command many times.  If you don't know what a raw email looks like, send yourself an email to a Gmail account and select "Show Original".  The entire text file is the format that the --data option expects (though it will probably be more complicated and have more headers than you need)
 <P>
 On the other hand, if you're trying to do something like use Swaks to send an email copy of a nightly HTML file, and you want the file to show up correctly in your MUA, Swaks does have a couple of helper options.
 <P>
-First, if you want the HTML file to be an attachment that can be openable or saveable from your MUA, you want the --attach option.  For instance, the following command will attach the file report.html.  --attach-type is optional, but setting it will help your MUA know what to do with the attachment:
+First, if you want the HTML file to be an attachment that can be openable or savable from your MUA, you want the --attach option.  For instance, the following command will attach the file report.html.  --attach-type is optional, but setting it will help your MUA know what to do with the attachment:
 <P>
 <pre>
 swaks --attach-type text/html --attach report.html

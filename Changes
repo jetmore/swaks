@@ -713,3 +713,5 @@
            PRDR implementation (functionality already existed)
 > 20170101 released 20170101.0
 * 20170106 Fix typos in base.pod (reported by Andreas Metzler/Debian)
+* 20170307 Fix spelling, grammar, and phrasing issues in base.pod, faq.html,
+           and index.html
