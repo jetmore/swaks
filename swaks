@@ -2399,7 +2399,6 @@ sub process_args {
 	}
 	if (!$o->{no_data_fixup}) {
 		$n{data} =~ s/%BODY%/$body/g;
-		$n{data} =~ s/%B/$body/g if ($O{use_old_data_tokens});
 		if (defined($o->{header}) && ref($o->{header}) eq 'ARRAY' && scalar(@{$o->{header}})) {
 			foreach my $l (map { split(/\\n/) } @{$o->{header}}) {
 				if (my($h) = $l =~ /^([^:]+):/) {
@@ -2412,23 +2411,19 @@ sub process_args {
 			}
 		}
 		$n{add_header} = join('\n', @{$o->{add_header}}) . "\n" if (@{$o->{add_header}});
-		if ($n{data} =~ /%NEW_HEADERS%/ || ($O{use_old_data_tokens} && $n{data} =~ /%H/)) {
+		if ($n{data} =~ /%NEW_HEADERS%/) {
 			$n{data} =~ s/%NEW_HEADERS%/$n{add_header}/g;
-			$n{data} =~ s/%H/$n{add_header}/g if ($O{use_old_data_tokens});
 		} else {
 			$n{data} =~ s/(\n|\\n)(\r?\n|\\n)/$1$n{add_header}$2/;
 		}
 		$n{data} =~ s/\\n/\r\n/g;
 		$n{data} =~ s/%FROM_ADDRESS%/$n{from}/g;
-		$n{data} =~ s/%F/$n{from}/g if ($O{use_old_data_tokens});
 		$n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
 		$n{data} =~ s/%MESSAGEID%/get_messageid()/ge;
 		$n{data} =~ s/%SWAKS_VERSION%/$p_version/g;
-		$n{data} =~ s/%T/$n{to}/g   if ($O{use_old_data_tokens});
-		{  # braces are to limit scope of $date_string
-			my $date_string = get_date_string();
+		if ($n{data} =~ /%DATE%/) {
+			my $date_string = get_date_string(); # May be multiple replacements, but we only want to generate the string once
 			$n{data} =~ s/%DATE%/$date_string/g;
-			$n{data} =~ s/%D/$date_string/g if ($O{use_old_data_tokens});
 		}
 		$n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
 		$n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
