@@ -48,6 +48,7 @@ If you are trying to figure out something using Swaks, drop me a line at <a href
 <li><a href="#install_macosx">How do I install on Mac OS X?</a>
 <li><a href="#install_windows">How do I install on Windows?</a>
 <li><a href="#send_html_email">How do I send HTML email?</a>
+<li><a href="#bcc">How do I send a BCC email?</a>
 <li><a href="#support_ipv6">Does Swaks support IPv6?</a>
 </ol>
 </font>
@@ -122,9 +123,9 @@ On the other hand, if you're trying to do something like use Swaks to send an em
 <P>
 First, if you want the HTML file to be an attachment that can be openable or savable from your MUA, you want the --attach option.  For instance, the following command will attach the file report.html.  --attach-type is optional, but setting it will help your MUA know what to do with the attachment:
 <P>
-<pre>
+<code>
 swaks --attach-type text/html --attach report.html
-</pre>
+</code>
 <P>
 Another interpretation of this question is "How do I send email which has an HTML-encoded body".  This means sending an email that your MUA will display as HTML.  Swaks always treats the "body" portion of a MIME email as text/plain, so you have to "cheat" and add the MIME headers yourself.  The following should work:
 <P>
@@ -133,6 +134,30 @@ swaks --body report.html --add-header "MIME-Version: 1.0" --add-header "Content-
 </code>
 <P>
 One potential issue with this path is that the contents of report.html won't be encoded as they would if it was processed using --attach.  Whether this will be an issue or not depends on the contents of the file, the mail server(s) used to handle the mail, and the MUA used to view the mail
+</font>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
+<td valign=top><font size=-1><b><a name="bcc">BCC</a></b></font></td>
+<td><font size=-1>
+<B>How do I send a BCC email?</b>
+<P>
+Swaks does not have the --bcc option so many people seem to be asking for lately.  It may never get it, as it's not really true to Swaks' core functionality as a transaction tester, versus an MUA.  That said, for those who really need this functionality, here's how to do it.
+<P>
+First, the reason you don't need a special option to do this:
+<P>
+<ol>
+<li>The envelope-recipients of an email and the contents of the To: and Cc: headers in an email are only related by convention.</li>
+<li>By default, Swaks places the envelope-recipients (specified by --to) into the To: header.</li>
+<li>However, as the user of Swaks, you have complete freedom to set the --to option and the To: header independently.</li>
+<li>Therefore, to "BCC" someone is the same as specifying them in the --to recipients, but specifying a To: header that does not include them.</li>
+</ol>
+<P>
+So, to send a message to aa@example.com and bb@example.com, but only include aa@example.com in the To: header (or, put another way, to BCC bb@example.com), the following would work:
+<P>
+<code>
+swaks --to aa@example.com,bb@example.com --header "To: aa@example.com"
+</code>
 </font>
 </td></tr>
 <tr><td align=center colspan=2><hr width=25%></td></tr>
