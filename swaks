@@ -66,6 +66,12 @@ if ($G::dump_args) {
 	   .  "  data = <<.\n$opts->{data}\n";
 	exit(0);
 }
+elsif ($G::dump_mail) {
+	# if the user just wanted to generate an email body, dump it now and exit
+	$opts->{data} =~ s/\n\.\Z//;
+	print $opts->{data};
+	exit(0);
+}
 
 # we're going to abstract away the actual connection layer from the mail
 # process, so move the act of connecting into its own sub.  The sub will
@@ -1755,6 +1761,9 @@ sub get_option_struct {
 		# build options and dump
 		{ opts => ['dump'],                           suffix => '',
 		  okey => 'dump_args',                        type => 'scalar', },
+		# build options and dump the generate message body (EML)
+		{ opts => ['dump-mail'],                      suffix => '',
+		  okey => 'dump_mail',                        type => 'scalar', },
 		# attempt PIPELINING
 		{ opts => ['pipeline'],                       suffix => '',
 		  okey => 'pipeline',                         type => 'scalar', },
@@ -2085,8 +2094,8 @@ sub process_args {
 		$G::trans_fh_of = $o->{output_file_stdout};
 	}
 
-
 	$G::dump_args          = 1 if ($o->{dump_args});
+	$G::dump_mail          = 1 if ($o->{dump_mail});
 	$G::suppress_data      = 1 if ($o->{suppress_data});
 	$G::no_hints_send      = 1 if ($o->{no_hints_send} || $o->{no_hints});
 	$G::no_hints_recv      = 1 if ($o->{no_hints_recv} || $o->{no_hints});

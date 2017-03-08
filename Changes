@@ -717,3 +717,4 @@
            and index.html
 * 20170307 Remove deprecated single-character data tokens and
            --use-old-data-tokens option
+* 20170308 Implement --dump-mail option

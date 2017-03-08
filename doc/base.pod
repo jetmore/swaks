@@ -860,6 +860,10 @@ Cause Swaks to be silent.  If no argument is given or if an argument of "1" is g
 
 Print capabilities and exit.  Certain features require non-standard Perl modules.  This option evaluates whether these modules are present and displays which functionality is available and which isn't, and which modules would need to be added to gain the missing functionality.
 
+=item --dump-mail
+
+Cause Swaks to process all options to generate the message it would send, then print that message to STDOUT instead of sending it.  This output is identical to the "data" section of --dump, except without the trailing dot.
+
 =item --dump
 
 This option causes Swaks to print the results of option processing, immediately before mail would have been sent.  No mail will be sent when --dump is used.  Note that --dump is a pure self-diagnosis tool and no effort is made or will ever be made to mask passwords in the --dump output.
