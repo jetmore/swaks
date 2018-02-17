@@ -17,7 +17,7 @@ my($p_name)   = $0 =~ m|/?([^/]+)$|;
 my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010-2017 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2010-2018 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -185,6 +185,8 @@ sub sendmail {
 	my $a_type  = shift; # what kind of auth (this must be set to to attempt)
 	my $ehlo    = {};    # If server is esmtp, save advertised features here
 
+	do_smtp_proxy() if ($G::proxy{try});
+
 	# start up tls if -tlsc specified
 	if ($G::tls_on_connect) {
 		if (start_tls()) {
@@ -197,8 +199,8 @@ sub sendmail {
 		}
 	}
 
-	# read the server's 220 banner. Also handle PROXY if requested
-	do_smtp_connect() || do_smtp_quit(1, 21);
+	# read the server's 220 banner.
+	do_smtp_gen(undef, '220') || do_smtp_quit(1, 21);
 	do_smtp_drop()     if ($G::drop_after eq 'connect');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'connect');
 
@@ -267,7 +269,7 @@ sub sendmail {
 		$G::drop_before_read = 1 if ($G::drop_after_send eq 'helo');
 		do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 32);
 	}
-	do_smtp_drop()     if ($G::drop_after_send eq 'helo'); # haaaack.  Need to use first-helo for this. Just quite here to prevent the mail from being delivered
+	do_smtp_drop()     if ($G::drop_after_send eq 'helo'); # haaaack.  Need to use first-helo for this. Just quit here to prevent the mail from being delivered
 	do_smtp_drop()     if ($G::drop_after eq 'helo');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
 
@@ -956,81 +958,80 @@ sub do_smtp_data {
 }
 
 sub do_smtp_gen {
-	my $m = shift; # string to send
+	my $m = shift; # string to send (if empty, we won't send anything, only read)
 	my $e = shift; # String we're expecting to get back
 	my $p = shift; # if this is a scalar ref, assign the server return string to it
 	my $b = shift; # be brief in the data we print
 	my $x = shift; # if this is populated, print this instead of $m
 	my $c = shift; # if this is a code ref, call it on the return value before printing it
 	my $n = shift; # if true, when the data is sent over the wire, it will not have \r\n appended to it
+	my $r = shift; # if true, we won't try to ready a response from the server
 
-	return transact(cxn_string       => $m, expect      => $e, return_text => $p,
-	                summarize_output => $b, show_string => $x,
-	                print_callback   => $c, no_newline  => $n,
+	return transact(cxn_string       => $m, expect           => $e, return_text    => $p,
+	                summarize_output => $b, show_string      => $x, print_callback => $c,
+	                no_newline       => $n, no_read_response => $r,
 	               );
 }
 
-sub do_smtp_connect {
+sub do_smtp_proxy {
 	my $send       = undef;
 	my $print      = undef;
 	my $no_newline = 0;
 
-	if ($G::proxy{try}) {
-		if ($G::proxy{version} == 2) {
-			$send = pack("W[12]", 0x0D, 0x0A,0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A);
-			if ($G::proxy{raw}) {
-				$send .= $G::proxy{raw};
-			} else {
-				# byte 13
-				#    4 bits = version (required to be 0x2)
-				#    4 bits = command (0x2 = LOCAL, 0x1 = PROXY)
-				$send .= pack("W", 0x20 + ($G::proxy{attr}{command} eq 'LOCAL' ? 0x02 : 0x01));
-				if ($G::proxy{attr}{command} eq 'LOCAL') {
-					# the protocol byte (14, including family and protocol) are ignored with local.  Set to zeros
-					$send .= pack("W", 0x00);
-					# and, additionally, if we're local, there isn't going to be any address size (bytes 15 and 16)
-					$send .= pack("W", 0x00);
-				} else {
-					# byte 14
-					#    4 bits = address family (0x0 = AF_UNSPEC, 0x1 = AF_INET, 0x2 = AF_INET6, 0x3 = AF_UNIX)
-					#    4 bits = transport protocol (0x0 = UNSPEC, 0x1 = STREAM, 0x2 = DGRAM)
-					my $byte = 0;
-					if ($G::proxy{attr}{family} eq 'AF_UNSPEC') {
-						$byte = 0x00;
-					} elsif ($G::proxy{attr}{family} eq 'AF_INET') {
-						$byte = 0x10;
-					} elsif ($G::proxy{attr}{family} eq 'AF_INET6') {
-						$byte = 0x20;
-					} elsif ($G::proxy{attr}{family} eq 'AF_UNIX') {
-						$byte = 0x30;
-					}
-					if ($G::proxy{attr}{protocol} eq 'UNSPEC') {
-						$byte += 0x0;
-					} elsif ($G::proxy{attr}{protocol} eq 'STREAM') {
-						$byte += 0x1;
-					} elsif ($G::proxy{attr}{protocol} eq 'DGRAM') {
-						$byte += 0x2;
-					}
-					$send .= pack("W", $byte);
-
-					# network portion (bytes 17+)
-					my $net = pack_ip($G::proxy{attr}{source})
-					        . pack_ip($G::proxy{attr}{dest})
-					        . pack("n", $G::proxy{attr}{source_port})
-					        . pack("n", $G::proxy{attr}{dest_port});
-					$send  .= pack("n", length($net)) . $net; # add bytes 15+16 (length of network portion) plus the network portion
-				}
-			}
-
-			# version 2 is binary, so uuencode it before printing.  Also, version 2 REQUIREs that you not send \r\n after it down the wire
-			$print      = eb64($send);
-			$no_newline = 1;
+	if ($G::proxy{version} == 2) {
+		$send = pack("W[12]", 0x0D, 0x0A,0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A);
+		if ($G::proxy{raw}) {
+			$send .= $G::proxy{raw};
 		} else {
-			if ($G::proxy{raw}) {
-				$send = "PROXY $G::proxy{raw}";
+			# byte 13
+			#    4 bits = version (required to be 0x2)
+			#    4 bits = command (0x2 = LOCAL, 0x1 = PROXY)
+			$send .= pack("W", 0x20 + ($G::proxy{attr}{command} eq 'LOCAL' ? 0x02 : 0x01));
+			if ($G::proxy{attr}{command} eq 'LOCAL') {
+				# the protocol byte (14, including family and protocol) are ignored with local.  Set to zeros
+				$send .= pack("W", 0x00);
+				# and, additionally, if we're local, there isn't going to be any address size (bytes 15 and 16)
+				$send .= pack("W", 0x00);
 			} else {
-				$send = "PROXY $G::proxy{attr}{family} $G::proxy{attr}{source} $G::proxy{attr}{dest} $G::proxy{attr}{source_port} $G::proxy{attr}{dest_port}";
+				# byte 14
+				#    4 bits = address family (0x0 = AF_UNSPEC, 0x1 = AF_INET, 0x2 = AF_INET6, 0x3 = AF_UNIX)
+				#    4 bits = transport protocol (0x0 = UNSPEC, 0x1 = STREAM, 0x2 = DGRAM)
+				my $byte = 0;
+				if ($G::proxy{attr}{family} eq 'AF_UNSPEC') {
+					$byte = 0x00;
+				} elsif ($G::proxy{attr}{family} eq 'AF_INET') {
+					$byte = 0x10;
+				} elsif ($G::proxy{attr}{family} eq 'AF_INET6') {
+					$byte = 0x20;
+				} elsif ($G::proxy{attr}{family} eq 'AF_UNIX') {
+					$byte = 0x30;
+				}
+				if ($G::proxy{attr}{protocol} eq 'UNSPEC') {
+					$byte += 0x0;
+				} elsif ($G::proxy{attr}{protocol} eq 'STREAM') {
+					$byte += 0x1;
+				} elsif ($G::proxy{attr}{protocol} eq 'DGRAM') {
+					$byte += 0x2;
+				}
+				$send .= pack("W", $byte);
+
+				# network portion (bytes 17+)
+				my $net = pack_ip($G::proxy{attr}{source})
+				        . pack_ip($G::proxy{attr}{dest})
+				        . pack("n", $G::proxy{attr}{source_port})
+				        . pack("n", $G::proxy{attr}{dest_port});
+				$send  .= pack("n", length($net)) . $net; # add bytes 15+16 (length of network portion) plus the network portion
 			}
+		}
+
+		# version 2 is binary, so uuencode it before printing.  Also, version 2 REQUIREs that you not send \r\n after it down the wire
+		$print      = eb64($send);
+		$no_newline = 1;
+	} else {
+		if ($G::proxy{raw}) {
+			$send = "PROXY $G::proxy{raw}";
+		} else {
+			$send = "PROXY $G::proxy{attr}{family} $G::proxy{attr}{source} $G::proxy{attr}{dest} $G::proxy{attr}{source_port} $G::proxy{attr}{dest_port}";
 		}
 	}
 
@@ -1041,6 +1042,7 @@ sub do_smtp_connect {
 	            $print,      # if populated, print this instead of $send
 	            undef,       # don't want a post-processing callback
 	            $no_newline, # if true, don't add \r\n to the end of $send when sent over the wire
+	            1,           # don't read a response - we only want to send the value
 	);
 }
 
@@ -1185,6 +1187,14 @@ sub recv_line {
 # any non-immediate request will handle results through fail_callback().
 # therefore, only return the state of the last transaction attempted,
 # which will always be immediate
+# defer            - if true, does not require immediate flush when pipelining
+# cxn_string       - What we will be sending the server. If undefined, we won't send, only read
+# no_read_response - if true, we won't read a response from the server, we'll just send
+# summarize_output - if true, don't print to terminal everything we send to server
+# no_newline       - if true, do not append \r\n to the data we send to server
+# return_text      - should be scalar ref.  will be assigned reference to what was returned from server
+# print_callback   - if present and a code reference, will be called with server return data for printing to terminal
+# fail_callback    - if present and a code reference, will be called on failure
 sub transact {
 	my %h        = @_; # this is an smtp transaction element
 	my $ret      = 1;  # this is our return value
@@ -1204,7 +1214,7 @@ sub transact {
 				ptrans(21, $i->{show_string} || $i->{cxn_string}, $i->{summarize_output});
 				send_data($i->{cxn_string}, $i->{no_newline});
 			}
-			push(@G::pending_recv, $i);
+			push(@G::pending_recv, $i) if (!$i->{no_read_response});
 		}
 		flush_send_buffer();
 

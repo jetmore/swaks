@@ -598,8 +598,6 @@ When --proxy is not used, all of --proxy-family, --proxy-source, --proxy-source-
 
 Whether to use version 1 (human readable) or version 2 (binary) of the Proxy protocol.  Version 1 is the default.  Version 2 is only implemented through the "address block", and is roughly on par with the information provided in version 1.
 
-Note that at the time of release, version 2 has been implemented but not fully tested.  Postfix does not implement version 2 and Exim appears to have a bug in version 2 at the time of writing. It does mirror HAProxy's output though.
-
 =item --proxy [VALUE]
 
 If this option is used, its argument is passed unchanged after the "PROXY " portion (or the 12-byte protocol header for version 2) of the Proxy exchange.  This option allows sending incomplete or malformed Proxy strings to a target server for testing.  No attempt to translate or modify this string is made, so if used with "--proxy-version 2" the argument should be in the appropriate binary format.  This option is mutually exclusive with all other --proxy-* options which provide granular proxy information.

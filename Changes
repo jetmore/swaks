@@ -719,3 +719,8 @@
            --use-old-data-tokens option
 * 20170308 Implement --dump-mail option
 * 20170308 Add BCC section to faq.html
+* 20170819 Enable https access for website
+* 20180217 Updating copyright date to 2018
+* 20180217 Fix bug preventing Proxy from working with --tls-on-connect
+* 20180217 Remove note in documentation that Proxy v2 support is theoretical.
+           Exim fixed v2 bug in 4.89 and swaks has now been tested with it
