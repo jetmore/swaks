@@ -210,32 +210,8 @@ sub sendmail {
 	do_smtp_drop()     if ($G::drop_after eq 'first-helo');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'first-helo');
 
-	if ($G::xclient{try}) {
-		# 0 - xclient succeeded normally
-		# 1 - xclient not advertised
-		# 2 - xclient advertised but not attempted, mismatch in requested attrs
-		# 3 - xclient attempted but did not succeed
-		$G::drop_before_read = 1 if ($G::drop_after_send eq 'xclient');
-		my $result = do_smtp_xclient($ehlo);
-		if ($result == 1) {
-			ptrans(12, "Host did not advertise XCLIENT");
-			do_smtp_quit(1, 33) if (!$G::xclient{optional});
-		} elsif ($result == 2) {
-			ptrans(12, "Host did not advertise requested XCLIENT attributes");
-			do_smtp_quit(1, 33) if (!$G::xclient{optional});
-		} elsif ($result == 3) {
-			ptrans(12, "XCLIENT attempted but failed.  Exiting");
-			do_smtp_quit(1, 33) if ($G::xclient{optional} != 1);
-		} else {
-			do_smtp_drop()     if ($G::drop_after eq 'xclient');
-			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient');
-
-			# re-helo if the XCLIENT command succeeded
-			$G::drop_before_read = 1 if ($G::drop_after_send eq 'helo');
-			do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 34);
-			do_smtp_drop()     if ($G::drop_after eq 'helo');
-			do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
-		}
+	if ($G::xclient{before_tls}) {
+		xclient_try($helo, $ehlo);
 	}
 
 	# handle TLS here if user has requested it
@@ -261,6 +237,10 @@ sub sendmail {
 	}
 	do_smtp_drop()     if ($G::drop_after eq 'tls');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
+
+	if (!$G::xclient{before_tls}) {
+		xclient_try($helo, $ehlo);
+	}
 
 	#if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
 	if ($G::link{tls}{active} && !$G::tls_on_connect) {
@@ -339,6 +319,39 @@ sub sendmail {
 
 	# send QUIT
 	do_smtp_quit(0) || do_smtp_quit(1, 27);
+}
+
+sub xclient_try {
+	my $helo = shift;
+	my $ehlo = shift;
+
+	if ($G::xclient{try}) {
+		# 0 - xclient succeeded normally
+		# 1 - xclient not advertised
+		# 2 - xclient advertised but not attempted, mismatch in requested attrs
+		# 3 - xclient attempted but did not succeed
+		$G::drop_before_read = 1 if ($G::drop_after_send eq 'xclient');
+		my $result = do_smtp_xclient($ehlo);
+		if ($result == 1) {
+			ptrans(12, "Host did not advertise XCLIENT");
+			do_smtp_quit(1, 33) if (!$G::xclient{optional});
+		} elsif ($result == 2) {
+			ptrans(12, "Host did not advertise requested XCLIENT attributes");
+			do_smtp_quit(1, 33) if (!$G::xclient{optional});
+		} elsif ($result == 3) {
+			ptrans(12, "XCLIENT attempted but failed.  Exiting");
+			do_smtp_quit(1, 33) if ($G::xclient{optional} != 1);
+		} else {
+			do_smtp_drop()     if ($G::drop_after eq 'xclient');
+			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient');
+
+			# re-helo if the XCLIENT command succeeded
+			$G::drop_before_read = 1 if ($G::drop_after_send eq 'helo');
+			do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 34);
+			do_smtp_drop()     if ($G::drop_after eq 'helo');
+			do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
+		}
+	}
 }
 
 sub tls_post_start {
@@ -1792,6 +1805,9 @@ sub get_option_struct {
 		# proceed if xclient not offered, but fail if offered and not accepted
 		{ opts => ['xclient-optional-strict'],        suffix => '',
 		  okey => 'xclient_optional_strict',          type => 'scalar', },
+		# we send xclient after starttls by default.  if --xclient-before-starttls will send before tls
+		{ opts => ['xclient-before-starttls'],        suffix => '',
+		  okey => 'xclient_before_starttls',          type => 'scalar', },
 		## xclient send by default after first helo, but can be sent almost anywhere (cf quit-after)
 		#{ opts => ['xclient-after'],                  suffix => ':s',
 		#  okey => 'xclient_after',                    type => 'scalar', },
@@ -2567,13 +2583,14 @@ sub process_args {
 		$G::xclient{attr}{uc($attr)} = $o->{"xclient_" . $attr} || interact("XCLIENT $attr: ", '^.+$')
 			if (defined($o->{"xclient_" . $attr}));
 	}
-	$G::xclient{optional} = 1 if (defined($o->{xclient_optional}));
-	$G::xclient{optional} = 2 if (defined($o->{xclient_optional_strict}));
-	$G::xclient{raw}      = $o->{"xclient_raw"} || interact("XCLIENT string: ", '^.+$')
+	$G::xclient{optional}   = 1 if (defined($o->{xclient_optional}));
+	$G::xclient{optional}   = 2 if (defined($o->{xclient_optional_strict}));
+	$G::xclient{raw}        = $o->{"xclient_raw"} || interact("XCLIENT string: ", '^.+$')
 		if (defined($o->{"xclient_raw"}));
-	#$G::xclient{after}    = $o->{"xclient_after"} || interact("XCLIENT quit after: ", '^.+$')
+	#$G::xclient{after}      = $o->{"xclient_after"} || interact("XCLIENT quit after: ", '^.+$')
 	#	if (defined($o->{"xclient_after"}));
-	$G::xclient{try}      = 1 if ($G::xclient{raw} || scalar(keys(%{$G::xclient{attr}})));
+	$G::xclient{try}        = 1 if ($G::xclient{raw} || scalar(keys(%{$G::xclient{attr}})));
+	$G::xclient{before_tls} = 1 if (defined($o->{xclient_before_starttls}));
 
 	# PROXY
 	$G::proxy{try}     = 0;

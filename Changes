@@ -728,3 +728,4 @@
            report and Postfix mailing list confirmation).
 * 20180225 Add --xclient-before-starttls option to allow Swaks to attempt
            XCLIENT first and then STARTTLS.
+* 20180225 Added license and authorship info to README, base.pod, index.html

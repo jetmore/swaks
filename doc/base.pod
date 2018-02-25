@@ -574,6 +574,10 @@ The primary advantage to this over the more specific options above is that there
 
 The --xclient option can be mixed freely with the --xclient-* options above.  If "--xclient-addr 192.168.0.1 --xclient 'FOO=bar NAME=wind'" is given to Swaks, "XCLIENT ADDR=192.168.0.1 FOO=bar NAME=wind" will be sent to the target server.
 
+=item --xclient-before-starttls
+
+If Swaks is configured to attempt both XCLIENT and STARTTLS, it will do STARTTLS first.  If this option is specified it will attempt XCLIENT first.
+
 =item --xclient-optional
 
 =item --xclient-optional-strict
@@ -1008,6 +1012,26 @@ Seen in the headline "SA se bes en swaks gekledes in 2011", which was translated
 
 =back
 
+=head1 LICENSE
+
+=over 4
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+
+=back
+
 =head1 CONTACT
 
 =over 4
@@ -1023,6 +1047,8 @@ If you would like to be put on a list to receive notifications when a new versio
 =item http://www.jetmore.org/john/code/swaks/
 
 Change logs, this help, and the latest version is found at this link.
+
+=item Swaks is crafted with love by John Jetmore from the cornfields of Indiana, United States of America.
 
 =back
 

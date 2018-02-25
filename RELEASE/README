@@ -5,11 +5,11 @@ Swaks is designed to be a self contained script.  It should run on any system
 that has Perl installed, although its capabilites may be limited by which
 modules are installed.
 
-To get a view of what swaks can and cannot do on a given system, run:
+To get a view of what Swaks can and cannot do on a given system, run:
 
     swaks --support
 
-swaks will evaluate the installed perl modules and inform you of any
+Swaks will evaluate the installed perl modules and inform you of any
 missing functionality, and how to get that functionality.  Example output:
 
     === AUTH CRAM-MD5 supported
@@ -33,7 +33,7 @@ Check the following files
         This file.  Contains install notes, references to other
         files, and major changes for this release
     doc/Changes.txt
-        All changes to swaks
+        All changes to Swaks
     doc/ref.txt
         The text version of the --help output
     doc/recipes.txt
@@ -42,7 +42,7 @@ Check the following files
 ------------------------------
 Communication
 ------------------------------
-The main swaks website is currently http://jetmore.org/john/code/swaks/
+The main Swaks website is currently http://jetmore.org/john/code/swaks/
 
 Ways to stay up to date on new releases:
       Homepage: http://jetmore.org/john/code/swaks/
@@ -52,6 +52,31 @@ Ways to stay up to date on new releases:
    Project RSS: http://jetmore.org/john/blog/c/swaks/feed/
        Google+: https://plus.google.com/u/0/110270727761256449657
        Twitter: http://www.twitter.com/SwaksSMTP
+
+------------------------------
+Authorship
+------------------------------
+Swaks is crafted with love by John Jetmore from the cornfields of
+Indiana, United States of America.
+
+------------------------------
+License
+------------------------------
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+
+A full copy of this license should be available in the LICENSE file.
 
 ------------------------------
 Change Summary
