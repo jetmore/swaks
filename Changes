@@ -724,3 +724,7 @@
 * 20180217 Fix bug preventing Proxy from working with --tls-on-connect
 * 20180217 Remove note in documentation that Proxy v2 support is theoretical.
            Exim fixed v2 bug in 4.89 and swaks has now been tested with it
+* 20180225 Change Swaks to send XCLIENT after STARTTLS (per user bug
+           report and Postfix mailing list confirmation).
+* 20180225 Add --xclient-before-starttls option to allow Swaks to attempt
+           XCLIENT first and then STARTTLS.
