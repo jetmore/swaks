@@ -626,18 +626,25 @@ sub do_smtp_xclient {
 	my @parts = ();
 	foreach my $attr (keys %{$G::xclient{attr}}) {
 		if (!$e->{XCLIENT}{$attr}) {
-			return(2);
+			return(2) if (!$G::xclient{no_verify});
 		}
-		# see xtext encoding in http://tools.ietf.org/html/rfc1891
-		push(@parts, "$attr=" . join('', map { ($_ == 0x2b || $_ == 0x3d || $_ <= 0x20 || $_ >= 0xff)
-		                                        ? sprintf("+%02X", $_)
-		                                        : chr($_)
-		                                     } (unpack("C*", $G::xclient{attr}{$attr}))));
 	}
-	push(@parts, $G::xclient{raw}) if ($G::xclient{raw});
-	my $str = "XCLIENT " . join(' ', @parts);
-	do_smtp_gen($str, '220') || return(3);
+
+	foreach my $string (@{$G::xclient{strings}}) {
+		my $str = "XCLIENT " . $string;
+		do_smtp_gen($str, '220') || return(3);
+	}
 	return(0);
+}
+
+# see xtext encoding in http://tools.ietf.org/html/rfc1891
+sub to_xtext {
+	my $string = shift;
+
+	return join('', map { ($_ == 0x2b || $_ == 0x3d || $_ <= 0x20 || $_ >= 0xff)
+		                   ? sprintf("+%02X", $_)
+		                   : chr($_)
+		                } (unpack("C*", $string)));
 }
 
 sub do_smtp_auth {
@@ -1790,15 +1797,59 @@ sub get_option_struct {
 		# attempt PIPELINING
 		{ opts => ['pipeline'],                       suffix => '',
 		  okey => 'pipeline',                         type => 'scalar', },
-		# attempt PIPELINING
+		# attempt PRDR
 		{ opts => ['prdr'],                           suffix => '',
 		  okey => 'prdr',                             type => 'scalar', },
 		# use getpwuid building -f
 		{ opts => ['force-getpwuid'],                 suffix => '',
 		  okey => 'force_getpwuid',                   type => 'scalar', },
+
+		# XCLIENT
+		# These xclient_attrs options all get pushed onto an array so that we can determine their order later
 		# argument is a raw XCLIENT string
 		{ opts => ['xclient'],                        suffix => ':s',
-		  okey => 'xclient_raw',                      type => 'scalar', },
+		  okey => 'xclient_attrs',                    type => 'sub',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		# XCLIENT NAME
+		{ opts => ['xclient-name'],                   suffix => ':s',
+		  okey => 'xclient_attrs',                    type => 'sub',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		# XCLIENT ADDR
+		{ opts => ['xclient-addr'],                   suffix => ':s',
+		  okey => 'xclient_attrs',                    type => 'sub',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		# XCLIENT PORT
+		{ opts => ['xclient-port'],                   suffix => ':s',
+		  okey => 'xclient_attrs',                    type => 'sub',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		# XCLIENT PROTO
+		{ opts => ['xclient-proto'],                  suffix => ':s',
+		  okey => 'xclient_attrs',                    type => 'sub',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		# XCLIENT DESTADDR
+		{ opts => ['xclient-destaddr'],               suffix => ':s',
+		  okey => 'xclient_attrs',                    type => 'sub',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		# XCLIENT DESTPORT
+		{ opts => ['xclient-destport'],               suffix => ':s',
+		  okey => 'xclient_attrs',                    type => 'sub',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		# XCLIENT HELO
+		{ opts => ['xclient-helo'],                   suffix => ':s',
+		  okey => 'xclient_attrs',                    type => 'sub',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		# XCLIENT LOGIN
+		{ opts => ['xclient-login'],                  suffix => ':s',
+		  okey => 'xclient_attrs',                    type => 'sub',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		# XCLIENT REVERSE_NAME
+		{ opts => ['xclient-reverse-name'],           suffix => ':s',
+		  okey => 'xclient_attrs',                    type => 'sub',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		# XCLIENT delimiter.  Used to indicate that user wants to start a new xclient attr grouping
+		{ opts => ['xclient-delim'],                  suffix => '',
+		  okey => 'xclient_attrs',                    type => 'sub',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
 		# if set, XCLIENT will proceed even if XCLIENT not advertised
 		{ opts => ['xclient-optional'],               suffix => '',
 		  okey => 'xclient_optional',                 type => 'scalar', },
@@ -1808,30 +1859,14 @@ sub get_option_struct {
 		# we send xclient after starttls by default.  if --xclient-before-starttls will send before tls
 		{ opts => ['xclient-before-starttls'],        suffix => '',
 		  okey => 'xclient_before_starttls',          type => 'scalar', },
+		# Don't require that the --xclient-ATTR attributes be advertised by server
+		{ opts => ['xclient-no-verify'],              suffix => '',
+		  okey => 'xclient_no_verify',                type => 'scalar', },
 		## xclient send by default after first helo, but can be sent almost anywhere (cf quit-after)
 		#{ opts => ['xclient-after'],                  suffix => ':s',
 		#  okey => 'xclient_after',                    type => 'scalar', },
-		# XCLIENT NAME
-		{ opts => ['xclient-name'],                   suffix => ':s',
-		  okey => 'xclient_name',                     type => 'scalar', },
-		# XCLIENT ADDR
-		{ opts => ['xclient-addr'],                   suffix => ':s',
-		  okey => 'xclient_addr',                     type => 'scalar', },
-		# XCLIENT PORT
-		{ opts => ['xclient-port'],                   suffix => ':s',
-		  okey => 'xclient_port',                     type => 'scalar', },
-		# XCLIENT PROTO
-		{ opts => ['xclient-proto'],                  suffix => ':s',
-		  okey => 'xclient_proto',                    type => 'scalar', },
-		# XCLIENT HELO
-		{ opts => ['xclient-helo'],                   suffix => ':s',
-		  okey => 'xclient_helo',                     type => 'scalar', },
-		# XCLIENT LOGIN
-		{ opts => ['xclient-login'],                  suffix => ':s',
-		  okey => 'xclient_login',                    type => 'scalar', },
-		# XCLIENT REVERSE_NAME
-		{ opts => ['xclient-reverse-name'],           suffix => ':s',
-		  okey => 'xclient_reverse_name',             type => 'scalar', },
+
+		# PROXY
 		# argument is the raw PROXY string
 		{ opts => ['proxy'],                          suffix => ':s',
 		  okey => 'proxy_raw',                        type => 'scalar', },
@@ -2018,6 +2053,11 @@ sub fetch_args {
 			$options{$k} = \@{$r->{$e->{okey}}};
 		} elsif ($e->{type} eq 'sub') {
 			eval("\$options{\$k} = $e->{literal};");
+			if ($@) {
+				chomp($@);
+				ptrans(12, "Unable to load callback for $k option processing: $@");
+				exit(1);
+			}
 		}
 	}
 
@@ -2043,15 +2083,34 @@ sub fetch_args {
 	}
 }
 
+# this callback is used to save options into a list.  Getopt::Long can do this
+# for us, but using this method allows us to save _different_ options into the
+# list so we can get the order later.  eg XCLIENT uses multiple options to build
+# the XCLIENT strings to send to the server, and the order in which they're
+# specified is meaningful
+sub option_callback {
+	my $opt_struct = shift;
+	my $opt_key    = shift;
+	my $opt_name   = shift;
+	my $opt_value  = shift;
+
+	$opt_struct->{$opt_key} ||= [];
+
+	# we force-stringify $opt_name because otherwise it returns an object
+	push(@{$opt_struct->{$opt_key}}, { name => "$opt_name", value => $opt_value });
+}
+
 # take a string and quote it such that it could be used in the shell
 # O'Reilley -> 'O'\''Reilley'
 sub shquote { my $s = shift; $s =~ s%'%'\\''%g; return "'$s'"; }
 
 sub reconstruct_options {
-	my $o = shift; # ref to raw option hash (as returned by load_args)
-	my @c = ();    # array to hold our reconstructed command line
+	my $o            = shift; # ref to raw option hash (as returned by load_args)
+	my @c            = ();    # array to hold our reconstructed command line
+	my %already_seen = ();    # for okeys like xclient_attrs, they only need to be processed once
 
 	foreach my $opt (@G::raw_option_data) {
+		next if ($already_seen{$opt->{okey}});
 		if (exists($o->{$opt->{okey}}) && defined($o->{$opt->{okey}})) {
 			# Ideally we could rely on the first opt name in the list being the "primary" option,
 			# but we can't right now and I don't want to alter the option list.  For now just grab
@@ -2064,6 +2123,11 @@ sub reconstruct_options {
 				foreach my $sopt (@{$o->{$opt->{okey}}}) {
 					push(@c, "--$lopt", shquote($sopt));
 				}
+			} elsif ($opt->{type} eq 'sub' && ref($o->{$opt->{okey}}) eq 'ARRAY') {
+				foreach my $sopt (@{$o->{$opt->{okey}}}) {
+					push(@c, "--$sopt->{name}", shquote($sopt->{value}));
+				}
+				$already_seen{$opt->{okey}}++;
 			} else {
 				push(@c, "--$lopt");
 				if (length($o->{$opt->{okey}}) > 0) {
@@ -2577,20 +2641,40 @@ sub process_args {
 		if (defined($o->{lport}));
 
 	# XCLIENT
-	$G::xclient{try}  = 0;
-	$G::xclient{attr} = {};
-	foreach my $attr ('name', 'addr', 'port', 'proto', 'helo', 'login', 'reverse_name') {
-		$G::xclient{attr}{uc($attr)} = $o->{"xclient_" . $attr} || interact("XCLIENT $attr: ", '^.+$')
-			if (defined($o->{"xclient_" . $attr}));
+	{ # Create a block for local variables
+		$G::xclient{try}     = 0;
+		$G::xclient{attr}    = {};
+		$G::xclient{strings} = [];
+		my @pieces           = ();
+		foreach my $attr (@{$o->{xclient_attrs}}) {
+			if ($attr->{name} eq 'xclient-delim' || $attr->{name} eq 'xclient') {
+				if (scalar(@pieces)) {
+					push(@{$G::xclient{strings}}, join(' ', @pieces));
+					@pieces = ();
+				}
+
+				if ($attr->{name} eq 'xclient') {
+					my $value = $attr->{value} || interact("XCLIENT string: ", '^.+$') if (defined($attr->{value}));
+					push(@{$G::xclient{strings}}, $value);
+				}
+			} else {
+				$attr->{name} =~ /^xclient-(.*)$/;
+				my $name = $1;
+				$name =~ s/-/_/; # reverse-name -> reverse_name
+				$G::xclient{attr}{uc($name)} = 1; # used later to verify that we haven't asked for an un-advertised attr
+				my $value = $attr->{value} || interact("XCLIENT $name: ", '^.+$') if (defined($attr->{value}));
+				push(@pieces, uc($name) . '=' . to_xtext($value));
+			}
+		}
+		push(@{$G::xclient{strings}}, join(' ', @pieces)) if (scalar(@pieces));
+		$G::xclient{no_verify}  = 1 if (defined($o->{xclient_no_verify}));
+		$G::xclient{optional}   = 1 if (defined($o->{xclient_optional}));
+		$G::xclient{optional}   = 2 if (defined($o->{xclient_optional_strict}));
+		#$G::xclient{after}      = $o->{"xclient_after"} || interact("XCLIENT quit after: ", '^.+$')
+		#	if (defined($o->{"xclient_after"}));
+		$G::xclient{try}        = 1 if (scalar(@G::xclient{strings}));
+		$G::xclient{before_tls} = 1 if (defined($o->{xclient_before_starttls}));
 	}
-	$G::xclient{optional}   = 1 if (defined($o->{xclient_optional}));
-	$G::xclient{optional}   = 2 if (defined($o->{xclient_optional_strict}));
-	$G::xclient{raw}        = $o->{"xclient_raw"} || interact("XCLIENT string: ", '^.+$')
-		if (defined($o->{"xclient_raw"}));
-	#$G::xclient{after}      = $o->{"xclient_after"} || interact("XCLIENT quit after: ", '^.+$')
-	#	if (defined($o->{"xclient_after"}));
-	$G::xclient{try}        = 1 if ($G::xclient{raw} || scalar(keys(%{$G::xclient{attr}})));
-	$G::xclient{before_tls} = 1 if (defined($o->{xclient_before_starttls}));
 
 	# PROXY
 	$G::proxy{try}     = 0;
@@ -2851,10 +2935,9 @@ sub get_running_state {
 	if ($G::xclient{try}) {
 		if ($G::xclient{optional} == 2)    { $s .= "optional-strict\n"; }
 		elsif ($G::xclient{optional} == 1) { $s .= "optional\n";        }
-		else                               { $s .= "yes\n";        }
-		$s .= "  raw string  = " . ($G::xclient{raw} || 'no') . "\n";
-		$s .= "  attributes  = " . join("\n".' 'x16,
-		                           map { uc($_)."=".$G::xclient{attr}{$_} } (keys %{$G::xclient{attr}})) . "\n";
+		else                               { $s .= "yes\n";             }
+		$s .= "  strings     = " . join("\n".' 'x16,
+		                           map { "XCLIENT " . $_; } (@{$G::xclient{strings}})) . "\n";
 	} else {
 		$s .= "no\n";
 	}

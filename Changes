@@ -729,3 +729,16 @@
 * 20180225 Add --xclient-before-starttls option to allow Swaks to attempt
            XCLIENT first and then STARTTLS.
 * 20180225 Added license and authorship info to README, base.pod, index.html
+* 20180609 Moved xtext encoding out of do_smtp_xclient and into to_xtext
+           in preparation for implementing xforward, which will also need it
+* 20180609 Add --xclient-delim option to allow --xclient-ATTR options to be
+           grouped into individual XCLIENT calls
+* 20180609 Now that we support multiple XCLIENT calls, --xclient-ATTR options
+           are no longer merged with --xclient into a single XCLIENT call.
+           This breaks previously documented behavior.
+* 20180609 Add --xclient-no-verify added to turn ff requirement that
+           XCLIENT attributes must have been advertised by server for Swaks
+           to send them
+* 20180609 If an option-processing callback fails to load, print error and
+           exit (mostly helpful for development)
+* 20180609 Add --xclient-destaddr and --xclient-destport options
