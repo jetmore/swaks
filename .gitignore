@@ -1,0 +1,25 @@
+# Exclude "new" files from showing as "Untracked files" during commit (or git status).
+# For supported pattern formats and other documentation see https://git-scm.com/docs/gitignore.
+#
+# Notes:
+# 1. This does *not* affect files that have already been added to the repository and are currently being tracked in git.
+# 2. In order to ignore files or directories that are only relevant to your local setup:
+#   - add an entry to .git/info/exclude (this file will not be shared to others)
+#   - for directories, add a .gitignore file to that directory with a single asterisk (ignore all)
+# 3. In order to include a more specific file/directory that was excluded by a previous rule/pattern, use the `!` character
+# 3. Note that any sub-directory in the hierarchy may define additional .gitignore files. This feature should be used
+#    sparsely if at all. Please list all additional .gitignore file locations below
+# 4. In order to "debug" ignore rules, use `git check-ignore -v /path/to/afile`
+
+# OS stuff
+.DS_Store
+Thumbs.db
+
+# general temporary files
+*.tmp
+*.log
+*.lock
+
+# sublime project files
+*.sublime-project
+*.sublime-workspace
