@@ -742,3 +742,4 @@
 * 20180609 If an option-processing callback fails to load, print error and
            exit (mostly helpful for development)
 * 20180609 Add --xclient-destaddr and --xclient-destport options
+* 20181030 Support TLSv1.3 and DTLSv1.2 in debug strings
