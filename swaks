@@ -457,6 +457,7 @@ sub start_tls {
 	}
 
 	# egrep 'define.*VERSION\b' *.h
+	# when adding new types here, see also the code that pushes supported values onto tls_supported_protocols
 	$t{version} = Net::SSLeay::version($t{ssl});
 	if ($t{version} == 0x0002) {
 		$t{version} = "SSLv2";    # openssl/ssl2.h
@@ -2573,9 +2574,10 @@ sub process_args {
 		# this is kind of a kludge.  There doesn't appear to be a specific openssl call to find supported
 		# protocols, but the OP_NO_protocol functions exist for supported protocols.  Loop through
 		# "known" protocols (which will unfortunately need to be added-to by hand when new protocols
-		# become available) to find out which of them are available
+		# become available) to find out which of them are available (when adding new types here, see
+		# also the code that calls Net::SSLeay::version() and translates to a readable value
 		@G::tls_supported_protocols = ();
-		foreach my $p (qw(SSLv2 SSLv3 TLSv1 TLSv1_1 TLSv1_2)) {
+		foreach my $p (qw(SSLv2 SSLv3 TLSv1 TLSv1_1 TLSv1_2 TLSv1_3)) {
 			eval { no strict "refs"; &{"Net::SSLeay::OP_NO_$p"}(); };
 			push(@G::tls_supported_protocols, $p) if (!$@);
 		}

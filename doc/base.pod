@@ -398,7 +398,7 @@ Initiate a TLS connection immediately on connection.  Following common conventio
 
 =item -tlsp, --tls-protocol SPECIFICATION
 
-Specify which protocols to use (or not use) when negotiating TLS.  At the time of this writing, the available protocols are sslv2, sslv3, tlsv1, tlsv1_1, and tlsv1_2.  The availability of these protocols is dependent on your underlying OpenSSL library, so not all of these may be available.  The list of available protocols is shown in the output of --dump (assuming TLS is available at all).
+Specify which protocols to use (or not use) when negotiating TLS.  At the time of this writing, the available protocols are sslv2, sslv3, tlsv1, tlsv1_1, tlsv1_2, and tlsv1_3.  The availability of these protocols is dependent on your underlying OpenSSL library, so not all of these may be available.  The list of available protocols is shown in the output of --dump (assuming TLS is available at all).
 
 The specification string is a comma-delimited list of protocols that can be used or not used.  For instance 'tlsv1,tlsv1_1' will only succeed if one of those two protocols is available on both the client and the server.  Conversely, 'no_sslv2,no_sslv3' will attempt to negotiate any protocol except sslv2 and sslv3.  The two forms of specification cannot be mixed.
 
