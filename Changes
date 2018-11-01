@@ -744,3 +744,5 @@
 * 20180609 Add --xclient-destaddr and --xclient-destport options
 * 20181030 Support TLSv1.3 and DTLSv1.2 in debug strings
 * 20181101 Don't allow empty recipient if we're prompting for one
+* 20181101 --dump and --dump-as-body now take optional arguments which can
+           limit what is printed, making targetted debugging easier.
