@@ -2323,16 +2323,12 @@ sub process_args {
 	$G::link{server}   = $o->{mail_server} || interact("Server: ", '^.*$')
 		if (defined($o->{mail_server}));
 	($G::link{server},$o->{mail_port}) = parse_server($G::link{server}, $o->{mail_port});
-	$n{to}             = $o->{mail_to} || interact("To: ", '^.*$')
+	$n{to}             = $o->{mail_to} || interact("To: ", '^.+$')
 		if (defined($o->{mail_to}));
-	$n{to}             = interact("To: ", '^.*$')
+	$n{to}             = interact("To: ", '^.+$')
 		if (!$n{to} && !($G::server_only &&
 		   ($G::link{server} || $G::link{type} eq 'socket-unix' || $G::link{type} eq 'pipe')));
 	$G::link{type} ||= 'socket-inet';
-	#if (!$G::link{type}) {
-	#	$G::link{server} = get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to}) if (!$G::link{server});
-	#	$G::link{type}   = "socket-inet";
-	#}
 
 	# try to catch obvious -s/-li/-4/-6 errors as soon as possible.  We don't actually do any DNS
 	# lookups ourselves, so errors like -s being a domain with only A RRs and -li being a domain
