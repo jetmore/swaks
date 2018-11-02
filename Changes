@@ -746,3 +746,5 @@
 * 20181101 Don't allow empty recipient if we're prompting for one
 * 20181101 --dump and --dump-as-body now take optional arguments which can
            limit what is printed, making targetted debugging easier.
+* 20181101 --dump now prints all output to the default output filehandle
+           instead of STDOUT.

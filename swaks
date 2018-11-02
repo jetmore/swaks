@@ -82,19 +82,19 @@ sub show_state {
 	my $opts = shift;
 	if ($G::dump_args{'SUPPORT'} || $G::dump_args{'ALL'}) {
 		test_support();
-		print "\n";
+		print $G::trans_fh_oh "\n";
 	}
 
 	if (my $running_state = get_running_state($opts, \%G::dump_args)) {
 		# --dump is intended as a debug tool for swaks internally.  Always,
 		# unconditionally, show the user's auth password if one is given
 		$running_state =~ s%'PROVIDED_BUT_REMOVED'%shquote($opts->{a_pass})%ge;
-		print $running_state, "\n";
+		print $G::trans_fh_oh $running_state, "\n";
 	}
 
 	if ($G::dump_args{'DATA'} || $G::dump_args{'ALL'}) {
-		print "DATA Info:\n"
-		   .  "  data = <<.\n$opts->{data}\n";
+		print $G::trans_fh_oh "DATA Info:\n"
+		                    . "  data = <<.\n$opts->{data}\n";
 	}
 	exit(0);
 }
