@@ -1,0 +1,5 @@
+title: header replacement SINGLE-LINE, SINGLE-HEADER LAST
+id: 0021
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
+test action: CMD %SWAKS% --dump data --to user@example.com --data %TESTDIR%/%TESTID%.eml --output-file %OUTDIR%/%TESTID%.out --h-Header6 "TEST PASSED 6"
+test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

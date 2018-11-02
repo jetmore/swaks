@@ -2489,12 +2489,6 @@ sub process_args {
 		$body .= "--$bound--\n";
 	}
 
-	# add-header option.  In a strict technical sense this is only a text
-	# string that will replace %NEW_HEADERS% in the DATA.  Because of where
-	# %NEW_HEADERS% is placed in the default DATA, in practice this is used
-	# to add headers to the stock DATA w/o having to craft a custom DATA portion
-	@{$o->{add_header}} = map { split(/\\n/) } @{$o->{add_header}};
-
 	# SMTP DATA
 	# a '-' arg to -d is the same as setting -g
 	if ($o->{mail_data} eq '-') {
@@ -2520,23 +2514,74 @@ sub process_args {
 	}
 	if (!$o->{no_data_fixup}) {
 		$n{data} =~ s/%BODY%/$body/g;
-		if (defined($o->{header}) && ref($o->{header}) eq 'ARRAY' && scalar(@{$o->{header}})) {
-			foreach my $l (map { split(/\\n/) } @{$o->{header}}) {
-				if (my($h) = $l =~ /^([^:]+):/) {
-					if ($n{data} !~ s/(^|\\n|\n)$h:.*?($|\\n|\n)/$1$l$2/) {
-						push(@{$o->{add_header}}, $l);
+		$n{data} =~ s/\\n/\r\n/g;
+		@{$o->{add_header}} = map { split(/\\n/) } @{$o->{add_header}};
+
+		# split the headers off into their own struct temporarily to make it much easier to manipulate them
+		my $header;
+		my @headers = ();
+		my %headers = ();
+
+		# cut the headers off of the data
+		if ($n{data} =~ s/\A(.*?)\r?\n\r?\n//s) {
+			$header = $1;
+		}
+		else {
+			$header  = $n{data};
+			$n{data} = '';
+		}
+
+		# build the header string into an object.  Each header is an array, each index is a line (to handle header continuation lines)
+		foreach my $headerLine (split(/\r?\n/, $header)) {
+			if ($headerLine =~ /^(\S[^:]+):/) {
+				push(@headers, [ $headerLine ]);
+				$headers{$1} = $headers[-1];
+			}
+			else {
+				# continuation line (a header line that starts with a space continues the previous header)
+				push(@{$headers[-1]}, $headerLine);
+			}
+		}
+
+		# If the user specified headers and the header exists, replace it.  If not, push it onto add_header to be added as new
+		if (defined($o->{header}) && ref($o->{header}) eq 'ARRAY') {
+			foreach my $headerLine (map { split(/\\n/) } @{$o->{header}}) {
+				if (my($headerName) = $headerLine =~ /^([^:]+):/) {
+					if ($headers{$headerName}) {
+						$headers{$headerName}[0] = $headerLine;
+						splice(@{$headers{$headerName}}, 1); # remove from index 1 onward, if they existed (possible continuations)
 					}
-				} else {
-					push(@{$o->{add_header}}, $l);
+					else {
+						push(@{$o->{add_header}}, $headerLine);
+					}
+				}
+				else {
+					push(@{$o->{add_header}}, $headerLine);
 				}
 			}
 		}
-		$n{add_header} = join('\n', @{$o->{add_header}}) . "\n" if (@{$o->{add_header}});
-		if ($n{data} =~ /%NEW_HEADERS%/) {
-			$n{data} =~ s/%NEW_HEADERS%/$n{add_header}/g;
-		} else {
-			$n{data} =~ s/(\n|\\n)(\r?\n|\\n)/$1$n{add_header}$2/;
+
+		# rebuild the header using our (possibly replaced) headers
+		my $newHeader = '';
+		foreach my $headerObj (@headers) {
+			foreach my $line (@$headerObj) {
+				$newHeader .= $line . "\r\n";
+			}
 		}
+
+		# if there are new headers, add them as appropriate
+		if ($newHeader =~ /%NEW_HEADERS%/) {
+			$n{add_header} = join("\r\n", @{$o->{add_header}}) . "\r\n" if (@{$o->{add_header}});
+			$newHeader     =~ s/%NEW_HEADERS%/$n{add_header}/g;
+		} elsif (scalar(@{$o->{add_header}})) {
+			foreach my $line (@{$o->{add_header}}) {
+				$newHeader .= $line . "\r\n";
+			}
+		}
+
+		# Now re-assemble our data by adding the headers back on to the front
+		$n{data} = $newHeader . "\r\n" . $n{data};
+
 		$n{data} =~ s/\\n/\r\n/g;
 		$n{data} =~ s/%FROM_ADDRESS%/$n{from}/g;
 		$n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
@@ -2549,9 +2594,8 @@ sub process_args {
 		$n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
 		$n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
 		$n{data} =~ s/\n\./\n../g;         # quote any other leading dots
-		# translate line endings - run twice to get consecutive \n correctly
 		$n{data} =~ s/([^\r])\n/$1\r\n/gs;
-		$n{data} =~ s/([^\r])\n/$1\r\n/gs; # this identical call is not a bug
+		$n{data} =~ s/([^\r])\n/$1\r\n/gs; # this identical call is not a bug, called twice to get consecutive \n correctly
 		$n{data} .= "\r\n.";               # add a trailing dot
 	}
 
