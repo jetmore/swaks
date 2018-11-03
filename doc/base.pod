@@ -188,7 +188,7 @@ Specify which TCP port on the target is to be used, or prompt if no argument is 
 
 Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose the local interface.  See --server for additional comments on :port format.
 
-=item -lp, --local-port [port]
+=item -lp, --local-port, --lport [port]
 
 Specify the outgoing port to originate the transaction from.  If this option is not specified the system will pick an ephemeral port.  Note that regular users cannot specify some ports.
 

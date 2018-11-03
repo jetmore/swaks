@@ -1698,7 +1698,7 @@ sub get_option_struct {
 		{ opts => ['li', 'local-interface'],          suffix => ':s',
 		  okey => 'lint',                             type => 'scalar', },
 		# local port
-		{ opts => ['lp', 'lport'],                    suffix => ':s',
+		{ opts => ['lp', 'local-port', 'lport'],      suffix => ':s',
 		  okey => 'lport',                            type => 'scalar', },
 		# use TLS
 		{ opts => ['tls'],                            suffix => '',

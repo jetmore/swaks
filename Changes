@@ -750,3 +750,5 @@
            instead of STDOUT.
 * 20181101 Using --header now handles replacing a multi-line header properly
 * 20181103 Prevent --dump from always listing XCLIENT as active
+* 20181103 -lp/--local-port was documented but -lp/-lport was implemented.
+           Now all three are documented and implemented.
