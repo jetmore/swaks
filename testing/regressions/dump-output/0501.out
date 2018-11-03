@@ -1,0 +1,14 @@
+=== AUTH CRAM-MD5 supported
+=== AUTH CRAM-SHA1 supported
+=== AUTH DIGEST-MD5 supported
+*** AUTH NTLM not available: requires Authen::NTLM
+=== Basic AUTH supported
+=== Date Manipulation supported
+=== High Resolution Timing supported
+=== IPv6 supported
+=== Local Hostname Detection supported
+=== MX Routing supported
+=== Pipe Transport supported
+=== Socket Transport supported
+=== TLS supported
+

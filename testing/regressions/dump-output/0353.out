@@ -1,0 +1,12 @@
+Authentication Info:
+  auth        = yes type='LOGIN,PLAIN' user='AUTHUSER' pass='AUTHPASS'
+  auth_extras = DMD5-HOST=dmd5.example.com,REALM=realm.example.org
+  auth_showpt = TRUE
+  auth map    = TESTTYPE2 = TESTTYPE2
+                DIGEST-MD5 = DIGEST-MD5
+                CRAM-SHA1 = CRAM-SHA1
+                PLAIN = PLAIN
+                NTLM = NTLM, SPA, MSN
+                CRAM-MD5 = AUTHTYPE, CRAM-MD5
+                LOGIN = AUTHTYPE, LOGIN
+

@@ -1,0 +1,16 @@
+Output Info:
+  show_time_lapse    = TRUE
+  show_time_hires    = TRUE
+  suppress_data      = TRUE
+  no_hints_send      = TRUE
+  no_hints_recv      = TRUE
+  no_hints_info      = TRUE
+  silent             = 1
+  hide_send          = TRUE
+  hide_receive       = TRUE
+  hide_informational = TRUE
+  hide_all           = TRUE
+  trans_fh_of        = dump-output/out/0052.out (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+  trans_fh_ef        = dump-output/out/0052.out (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+
+

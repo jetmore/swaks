@@ -1,0 +1,6 @@
+PROXY Info:
+  proxy       = yes
+  version     = 2
+  raw string  = TEST PROXY STRING
+
+

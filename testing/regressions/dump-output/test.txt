@@ -1,0 +1,60 @@
+000X - testing "all"
+ 0 no options
+ 1 'all' produces same output as no option
+ 2 support,output,transport,protocol,xclient,proxy,tls,auth,data produce same output as all (canary for new sections being added)
+ 3 unknown option produces no output
+ 4 no options, but flip at least one option in each section
+005X - OUTPUT
+ 0 limiting to OUTPUT works
+ 1 limiting to output works
+ 2 flex all options
+ 3 --show-time-lapse i
+ 4 --silent different args
+010X - TRANSPORT
+ 0 limiting to TRANSPORT works
+ 1 limiting to transport works
+ 2 flex all options (socket-inet)
+ 3 flex all options (socket-unix)
+ 4 flex all options (pipe)
+015X - PROTOCOL
+ 0 limiting to PROTOCOL works
+ 1 limiting to protocol works
+ 2 flex all options
+ 3 --protocol lmtp
+020X - XCLIENT
+ 0 limiting to XCLIENT works
+ 1 limiting to xclient works
+ 2 flex all options
+ 3 --xclient-optional
+ 4 --xclient-optional-strict
+025X - PROXY
+ 0 limiting to PROXY works
+ 1 limiting to proxy works
+ 2 flex all options (version 1, --proxy-*)
+ 3 flex all options (version 2, --proxy-*)
+ 4 --proxy
+030X - TLS
+ 0 limiting to TLS works
+ 1 limiting to tls works
+ 2 flex all options
+ 3 test the other options for --tls-verify and --tls-get-peer-cert
+ 4 --tls-optional
+ 5 --tls-optional-strict
+ 6 --tls-on-connect
+035X - AUTH
+ 0 limiting to TLS works
+ 1 limiting to tls works
+ 2 flex all options
+ 3 --auth-plaintext, --auth-map, --auth-extra --auth(set specific protocols)
+ 4 --auth-optional
+ 5 --auth-optional-strict
+040X - DATA
+ 0 limiting to DATA works
+ 1 limiting to data works
+    ###WCSXXXFIXME it's unclear if I would check all the data options here.  I don't think so though.  Iwhat I'm checking here is if the logic for --dump is being handled consistenly, and there's no logic around DATA.  The actual "are the options working" tests would be elsewhere, just as they would be for other option categories
+045X - APP
+ 0 limiting to APP works
+ 1 limiting to app works
+050X - SUPPORT
+ 0 limiting to SUPPORT works
+ 2 limiting to support works

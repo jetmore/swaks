@@ -1,0 +1,10 @@
+Transport Info:
+  type            = socket-inet
+  server          = TESTSERVER
+  port            = 9999
+  local interface = 9.9.9.9
+  local port      = 8888
+  sockfile        = 
+  process         = 
+
+

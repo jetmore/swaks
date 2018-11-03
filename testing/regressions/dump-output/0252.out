@@ -1,0 +1,10 @@
+PROXY Info:
+  proxy       = yes
+  version     = 1
+  family      = TCP4
+  source      = 9.9.9.9
+  source port = 99
+  dest        = 8.8.8.8
+  dest port   = 88
+
+

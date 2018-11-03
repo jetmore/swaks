@@ -1,0 +1,14 @@
+Protocol Info:
+  protocol        = esmtp
+  helo            = host.example.com
+  from            = from@example.com
+  to              = user@example.com
+  quit after      = 
+  drop after      = 
+  drop after send = 
+  server_only     = FALSE
+  timeout         = 30
+  pipeline        = FALSE
+  prdr            = FALSE
+
+

@@ -1,0 +1,14 @@
+Protocol Info:
+  protocol        = smtp
+  helo            = HELO
+  from            = FROM
+  to              = ADDR1,ADDR2
+  quit after      = mail
+  drop after      = rcpt
+  drop after send = helo
+  server_only     = TRUE
+  timeout         = 99
+  pipeline        = TRUE
+  prdr            = TRUE
+
+

@@ -1,9 +1,12 @@
 #!/usr/bin/perl
 
+use strict;
 use Text::ParseWords;
 
-my $testDir = shift || die "Please provide the path to the test directory\n";
-my $outDir  = "$testDir/out";
+my $testDir =  shift || die "Please provide the path to the test directory\n";
+$testDir    =~ s|/+$||;
+my $testRe  =  shift || '.'; # pattern to match test IDs against. Allows to run subset of tests by specifying, eg, '005.'
+my $outDir  =  "$testDir/out";
 
 my $tokens = {
 	'global' => {
@@ -35,6 +38,8 @@ foreach my $testFile (sort @testDefs) {
 		die "saw test id $testObj->{id} more than once\n";
 	}
 	$testIDs->{$testObj->{id}} = 1;
+
+	next if ($testObj->{id} !~ /$testRe/);
 
 	runTest($testDir, $outDir, $testObj);
 }
@@ -73,10 +78,10 @@ sub runTest {
 		foreach my $result (@{$obj->{'test result'}}) {
 			my $failed = runResult($allTokens, $result);
 			if ($failed) {
-				print "$obj->{id}: FAIL ($failed)\n";
+				print "$testDir/$obj->{id}: FAIL ($failed)\n";
 			}
 			else {
-				print "$obj->{id}: PASS\n";
+				print "$testDir/$obj->{id}: PASS\n";
 			}
 		}
 	}
@@ -89,19 +94,24 @@ sub runResult {
 	my($verb, @args) = shellwords(replaceTokens($tokens, $test));
 
 	if ($verb eq 'COMPARE_FILE') {
-		open(P, "diff -u $args[0] $args[1] |") || die "Can't run diff: $!\n";
-		my $diff = join('', <P>);
-		close(P);
+		if (-f $args[0] && -f $args[1]) {
+			open(P, "diff -u $args[0] $args[1] |") || die "Can't run diff: $!\n";
+			my $diff = join('', <P>);
+			close(P);
 
-		if ($diff) {
-			my $diffFile = $tokens->{'%OUTDIR%'} . '/' . $tokens->{'%TESTID%'} . '.diff';
-			open(O, ">$diffFile") || die "Can't write to $diffFile: $!\n";
-			print O $diff;
-			close(O);
-			return($diffFile);
+			if ($diff) {
+				my $diffFile = $tokens->{'%OUTDIR%'} . '/' . $tokens->{'%TESTID%'} . '.diff';
+				open(O, ">$diffFile") || die "Can't write to $diffFile: $!\n";
+				print O $diff;
+				close(O);
+				return($diffFile);
+			}
+			else {
+				return(0);
+			}
 		}
 		else {
-			return(0);
+			return("Can't COMPARE_FILE($args[0], $args[1]), one or both files don't exist");
 		}
 	}
 	else {
@@ -120,6 +130,35 @@ sub runAction {
 	}
 	elsif ($verb eq 'CMD') {
 		system(@args);
+	}
+	elsif ($verb eq 'MUNGE') {
+		if ($args[0] =~ /^file:(.*)$/) {
+			my $file  = $1;
+			shift(@args);
+
+			my @lines = ();
+			open(I, "<$file") || die "Can't open munge file $file\n";
+			@lines = <I>;
+			close(I);
+
+			foreach my $munge (@args) {
+				my($function,@fArgs) = split(',', $munge);
+				unshift(@fArgs, '\@lines');
+				my $functionCall = "$function(" . join(', ', @fArgs) . ");";
+				eval $functionCall;
+				if ($@) {
+					die "Couldn't run $munge: $@\n";
+				}
+			}
+			munge_general(\@lines, '.?', $tokens->{'%SWAKS%'}, '%SWAKS_COMMAND%');
+
+			open(O, ">$file") || die "Couldn't write to $file\n";
+			print O join('', @lines);
+			close(O);
+		}
+		else {
+			die "MUNGE verb seen but no associated file\n";
+		}
 	}
 	else {
 		die "Unknown action verb $verb\n";
@@ -157,13 +196,59 @@ sub readTestFile {
 				die "Unknown test key in $file: $testKey\n";
 			}
 		}
-		else {
+		elsif ($line !~ /^\s*$/ && $line !~ /^\s*#/) {
 			die "Unknown line format in $file: $line\n";
 		}
 	}
 	if (!$obj->{id}) {
-		die "Couldn't find test id in $file\n";
+		if ($file =~ m%([^/]+)\.[^/]+$%) {
+			$obj->{id} = $1;
+		}
+		else {
+			die "Couldn't find test id in $file\n";
+		}
 	}
 
 	return($obj);
+}
+
+sub munge_general {
+	my $lines    = shift;
+	my $consider = shift;
+	my $find     = shift;
+	my $replace  = shift;
+
+	foreach my $line (@$lines) {
+		if ($line =~ /$consider/) {
+			$line =~ s/$find/$replace/g;
+		}
+	}
+}
+
+sub munge_globs {
+	my $lines    = shift;
+	my $consider = shift || '.?';
+
+	munge_general($lines, $consider, 'GLOB\(0x[^\)]+\)', 'GLOB(0xdeadbeef)');
+}
+
+sub munge_dates {
+	my $lines    = shift;
+	my $consider = shift || '.?';
+
+	my $find = '(Sun|Mon|Tue|Wed|Thu|Fri|Sat), '
+	         . '\d\d '
+	         . '(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) '
+	         . '\d\d\d\d '
+	         . '\d\d:\d\d:\d\d '
+	         . '[+-]\d\d\d\d';
+
+	munge_general($lines, $consider, $find, 'Wed, 03 Nov 1999 11:24:29 -0500');
+}
+
+sub munge_message_ids {
+	my $lines    = shift;
+	my $consider = shift || '.?';
+
+	munge_general($lines, $consider, '<\S+@\S+>', '<19991103112429.047942@localhost>');
 }

@@ -1,0 +1,6 @@
+title: tests against the TLS section
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
+test action: CMD %SWAKS% --dump tls --to user@example.com --helo host.example.com --from from@example.com --output-file %OUTDIR%/%TESTID%.out --tls --tls-protocol TLSv1_1 --tls-cipher TEST_CIPHER --tls-verify --tls-ca-path %TESTDIR%/%TESTID%.test --tls-cert /LOCAL/CERT --tls-key /LOCAL/KEY --tls-get-peer-cert /PEER/CERT
+test action: MUNGE file:%OUTDIR%/%TESTID%.out "munge_globs" "munge_dates,'^(Subject|Date):'" "munge_message_ids,'^Message-Id:'"
+test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out
+

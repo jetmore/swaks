@@ -1,0 +1,10 @@
+Transport Info:
+  type            = socket-unix
+  server          = 
+  port            = 25
+  local interface = 
+  local port      = 
+  sockfile        = /TEST/SOCKET
+  process         = 
+
+

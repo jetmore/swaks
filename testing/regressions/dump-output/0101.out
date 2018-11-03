@@ -1,0 +1,10 @@
+Transport Info:
+  type            = socket-inet
+  server          = example.com
+  port            = 25
+  local interface = 
+  local port      = 
+  sockfile        = 
+  process         = 
+
+

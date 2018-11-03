@@ -1,0 +1,5 @@
+App Info:
+  X-Mailer = swaks-pre vDEVRELEASE jetmore.org/john/code/swaks/
+  Cmd Line = %SWAKS_COMMAND% --from 'from@example.com' --to 'user@example.com' --helo 'host.example.com' --output-file 'dump-output/out/0451.out' --dump 'app'
+
+
