@@ -2739,7 +2739,7 @@ sub process_args {
 		$G::xclient{optional}   = 2 if (defined($o->{xclient_optional_strict}));
 		#$G::xclient{after}      = $o->{"xclient_after"} || interact("XCLIENT quit after: ", '^.+$')
 		#	if (defined($o->{"xclient_after"}));
-		$G::xclient{try}        = 1 if (scalar(@G::xclient{strings}));
+		$G::xclient{try}        = 1 if (scalar(@{$G::xclient{strings}}));
 		$G::xclient{before_tls} = 1 if (defined($o->{xclient_before_starttls}));
 	}
 

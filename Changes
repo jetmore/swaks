@@ -749,3 +749,4 @@
 * 20181101 --dump now prints all output to the default output filehandle
            instead of STDOUT.
 * 20181101 Using --header now handles replacing a multi-line header properly
+* 20181103 Prevent --dump from always listing XCLIENT as active
