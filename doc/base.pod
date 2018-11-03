@@ -294,7 +294,7 @@ Quit after RCPT TO: is sent.
 
 The option is similar to --quit-after, but instead of trying to cleanly shut down the session it simply terminates the session.  This option accepts the same stop-points as --quit-after.
 
-=item --das, --drop-after-send
+=item --das, --drop-after-send [stop-point]
 
 This option is similar to --drop-after, but instead of dropping the connection after reading a response to the stop-point, it drops the connection immediately after sending stop-point.
 

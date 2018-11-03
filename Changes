@@ -752,3 +752,4 @@
 * 20181103 Prevent --dump from always listing XCLIENT as active
 * 20181103 -lp/--local-port was documented but -lp/-lport was implemented.
            Now all three are documented and implemented.
+* 20181103 Properly document that --drop-after-send takes an argument.
