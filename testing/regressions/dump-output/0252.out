@@ -6,5 +6,3 @@ PROXY Info:
   source port = 99
   dest        = 8.8.8.8
   dest port   = 88
-
-

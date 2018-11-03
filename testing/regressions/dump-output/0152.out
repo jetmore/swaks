@@ -10,5 +10,3 @@ Protocol Info:
   timeout         = 99
   pipeline        = TRUE
   prdr            = TRUE
-
-

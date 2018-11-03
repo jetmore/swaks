@@ -54,7 +54,12 @@ $G::cmdline = reconstruct_options(\%O);
 my $opts = process_args(\%O);
 
 if (scalar(keys(%G::dump_args))) {
-	show_state($opts);
+	if (my $running_state = get_running_state($opts, \%G::dump_args)) {
+		# --dump is intended as a debug tool for swaks internally.  Always,
+		# unconditionally, show the user's auth password if one is given
+		$running_state =~ s%'PROVIDED_BUT_REMOVED'%shquote($opts->{a_pass})%ge;
+		print $G::trans_fh_oh $running_state;
+	}
 	exit(0);
 }
 elsif ($G::dump_mail) {
@@ -77,27 +82,6 @@ sendmail($opts->{from}, $opts->{to}, $opts->{helo}, $opts->{data},
 teardown_link();
 
 exit(0);
-
-sub show_state {
-	my $opts = shift;
-	if ($G::dump_args{'SUPPORT'} || $G::dump_args{'ALL'}) {
-		test_support();
-		print $G::trans_fh_oh "\n";
-	}
-
-	if (my $running_state = get_running_state($opts, \%G::dump_args)) {
-		# --dump is intended as a debug tool for swaks internally.  Always,
-		# unconditionally, show the user's auth password if one is given
-		$running_state =~ s%'PROVIDED_BUT_REMOVED'%shquote($opts->{a_pass})%ge;
-		print $G::trans_fh_oh $running_state, "\n";
-	}
-
-	if ($G::dump_args{'DATA'} || $G::dump_args{'ALL'}) {
-		print $G::trans_fh_oh "DATA Info:\n"
-		                    . "  data = <<.\n$opts->{data}\n";
-	}
-	exit(0);
-}
 
 sub teardown_link {
 	if ($G::link{type} eq 'socket-inet' || $G::link{type} eq 'socket-unix') {
@@ -522,6 +506,7 @@ sub ptrans {
 	my $c = shift;  # transaction flag
 	my $m = shift;  # message to print
 	my $b = shift;  # be brief in what we print
+	my $a = shift;  # return the message in an array ref instead of printing
 	my $o = $G::trans_fh_oh || \*STDOUT;
 	my $f = '';
 
@@ -580,7 +565,14 @@ sub ptrans {
 		my @t = split(/\n/ms, $m); $m = scalar(@t) . " lines sent";
 	}
 	$m =~ s/\n/\n$f/msg;
-	print $o "$f$m\n";
+
+	if ($a) {
+		$m = "$f$m";
+		return([ split(/\n/, $m) ]);
+	}
+	else {
+		print $o "$f$m\n";
+	}
 }
 
 sub do_smtp_quit {
@@ -1561,10 +1553,21 @@ sub get_digest {
 }
 
 sub test_support {
-	my $s = \%G::dependencies;
+	my $return = shift;
+	my $lines  = [];
+	my $s      = \%G::dependencies;
 
 	foreach my $act (sort { $s->{$a}{name} cmp $s->{$b}{name} } keys %$s) {
-		ptrans(avail($act) ? 11 : 12, avail_str($act));
+		if ($return) {
+			push(@$lines, @{ptrans(avail($act) ? 11 : 12, avail_str($act), undef, 1)});
+		}
+		else {
+			ptrans(avail($act) ? 11 : 12, avail_str($act));
+		}
+	}
+
+	if ($return) {
+		return($lines);
 	}
 }
 
@@ -2915,7 +2918,7 @@ sub process_args {
 			$G::dump_as_body{'ALL'} = 1;
 		}
 
-		$n{data} =~ s|DUMP_AS_BODY_HAS_BEEN_SET|get_running_state(\%n, \%G::dump_as_body)|e;
+		$n{data} =~ s|DUMP_AS_BODY_HAS_BEEN_SET|get_running_state(\%n, \%G::dump_as_body, {SUPPORT => 1, DATA => 1})|e;
 		if ($o->{dab_sp}) {
 			$n{data} =~ s%PROVIDED_BUT_REMOVED%$n{a_pass}%g;
 		} elsif ($G::auth_hidepw) {
@@ -2956,139 +2959,163 @@ sub parse_server {
 sub get_running_state {
 	my $opts      = shift;
 	my $dump_args = shift;
-	my $s         = '';
+	my $skip      = shift;
+	my @parts     = ();
+
+	if (($dump_args->{'SUPPORT'} || $dump_args->{'ALL'}) && !$skip->{'SUPPORT'}) {
+		push(@parts, test_support(1));
+	}
 
 	if ($dump_args->{'APP'} || $dump_args->{'ALL'}) {
-		$s .= "App Info:\n"
-		   .  "  X-Mailer = $p_name v$p_version jetmore.org/john/code/swaks/\n"
-		   .  "  Cmd Line = $0 $G::cmdline\n"
-		   .  "\n";
+		push(@parts, [
+			'App Info:',
+			"  X-Mailer = $p_name v$p_version jetmore.org/john/code/swaks/",
+			"  Cmd Line = $0 $G::cmdline",
+		]);
 	}
 
 	if ($dump_args->{'OUTPUT'} || $dump_args->{'ALL'}) {
-		$s .= "Output Info:\n"
-		   .  "  show_time_lapse    = " . ($G::show_time_lapse    ? "TRUE" : "FALSE") . "\n"
-		   .  "  show_time_hires    = " . ($G::show_time_hires    ? "TRUE" : "FALSE") . "\n"
-		   .  "  suppress_data      = " . ($G::suppress_data      ? "TRUE" : "FALSE") . "\n"
-		   .  "  no_hints_send      = " . ($G::no_hints_send      ? "TRUE" : "FALSE") . "\n"
-		   .  "  no_hints_recv      = " . ($G::no_hints_recv      ? "TRUE" : "FALSE") . "\n"
-		   .  "  no_hints_info      = " . ($G::no_hints_info      ? "TRUE" : "FALSE") . "\n"
-		   .  "  silent             = $G::silent\n"
-		   .  "  hide_send          = " . ($G::hide_send          ? "TRUE" : "FALSE") . "\n"
-		   .  "  hide_receive       = " . ($G::hide_receive       ? "TRUE" : "FALSE") . "\n"
-		   .  "  hide_informational = " . ($G::hide_informational ? "TRUE" : "FALSE") ."\n"
-		   .  "  hide_all           = " . ($G::hide_all           ? "TRUE" : "FALSE") . "\n"
-		   .  "  trans_fh_of        = $G::trans_fh_of ($G::trans_fh_oh," . \*STDOUT . ")\n"
-		   .  "  trans_fh_ef        = $G::trans_fh_ef ($G::trans_fh_eh," . \*STDERR . ")\n"
-		   .  "\n";
+		push(@parts, [
+			'Output Info:',
+			'  show_time_lapse    = ' . ($G::show_time_lapse    ? 'TRUE' : 'FALSE'),
+			'  show_time_hires    = ' . ($G::show_time_hires    ? 'TRUE' : 'FALSE'),
+			'  suppress_data      = ' . ($G::suppress_data      ? 'TRUE' : 'FALSE'),
+			'  no_hints_send      = ' . ($G::no_hints_send      ? 'TRUE' : 'FALSE'),
+			'  no_hints_recv      = ' . ($G::no_hints_recv      ? 'TRUE' : 'FALSE'),
+			'  no_hints_info      = ' . ($G::no_hints_info      ? 'TRUE' : 'FALSE'),
+			"  silent             = $G::silent",
+			'  hide_send          = ' . ($G::hide_send          ? 'TRUE' : 'FALSE'),
+			'  hide_receive       = ' . ($G::hide_receive       ? 'TRUE' : 'FALSE'),
+			'  hide_informational = ' . ($G::hide_informational ? 'TRUE' : 'FALSE'),
+			'  hide_all           = ' . ($G::hide_all           ? 'TRUE' : 'FALSE'),
+			"  trans_fh_of        = $G::trans_fh_of ($G::trans_fh_oh," . \*STDOUT . ')',
+			"  trans_fh_ef        = $G::trans_fh_ef ($G::trans_fh_eh," . \*STDERR . ')',
+		]);
 	}
 
 	if ($dump_args->{'TRANSPORT'} || $dump_args->{'ALL'}) {
-		$s .= "Transport Info:\n"
-		   .  "  type            = $G::link{type}\n"
-		   .  "  server          = $G::link{server}\n"
-		   .  "  port            = $G::link{port}\n"
-		   .  "  local interface = $G::link{lint}\n"
-		   .  "  local port      = $G::link{lport}\n"
-		   .  "  sockfile        = $G::link{sockfile}\n"
-		   .  "  process         = $G::link{process}\n"
-		   .  "\n";
+		push(@parts, [
+			'Transport Info:',
+			"  type            = $G::link{type}",
+			"  server          = $G::link{server}",
+			"  port            = $G::link{port}",
+			"  local interface = $G::link{lint}",
+			"  local port      = $G::link{lport}",
+			"  sockfile        = $G::link{sockfile}",
+			"  process         = $G::link{process}",
+		]);
 	}
 
 	if ($dump_args->{'PROTOCOL'} || $dump_args->{'ALL'}) {
-		$s .= "Protocol Info:\n"
-		   .  "  protocol        = $G::protocol\n"
-		   .  "  helo            = $opts->{helo}\n"
-		   .  "  from            = $opts->{from}\n"
-		   .  "  to              = $opts->{to}\n"
-		   .  "  quit after      = $G::quit_after\n"
-		   .  "  drop after      = $G::drop_after\n"
-		   .  "  drop after send = $G::drop_after_send\n"
-		   .  "  server_only     = " . ($G::server_only ? "TRUE" : "FALSE") . "\n"
-		   .  "  timeout         = $G::link{timeout}\n"
-		   .  "  pipeline        = " . ($G::pipeline    ? "TRUE" : "FALSE") . "\n"
-		   .  "  prdr            = " . ($G::prdr        ? "TRUE" : "FALSE") . "\n"
-		   .  "\n";
+		push(@parts, [
+			'Protocol Info:',
+			"  protocol        = $G::protocol",
+			"  helo            = $opts->{helo}",
+			"  from            = $opts->{from}",
+			"  to              = $opts->{to}",
+			"  quit after      = $G::quit_after",
+			"  drop after      = $G::drop_after",
+			"  drop after send = $G::drop_after_send",
+			'  server_only     = ' . ($G::server_only ? 'TRUE' : 'FALSE'),
+			"  timeout         = $G::link{timeout}",
+			'  pipeline        = ' . ($G::pipeline    ? 'TRUE' : 'FALSE'),
+			'  prdr            = ' . ($G::prdr        ? 'TRUE' : 'FALSE'),
+		]);
 	}
 
 	if ($dump_args->{'XCLIENT'} || $dump_args->{'ALL'}) {
-		$s .= "XCLIENT Info:\n"
-		   .  "  xclient     = ";
+		push(@parts, ['XCLIENT Info:']);
 		if ($G::xclient{try}) {
-			if ($G::xclient{optional} == 2)    { $s .= "optional-strict\n"; }
-			elsif ($G::xclient{optional} == 1) { $s .= "optional\n";        }
-			else                               { $s .= "yes\n";             }
-			$s .= "  strings     = " . join("\n".' 'x16,
-			                           map { "XCLIENT " . $_; } (@{$G::xclient{strings}})) . "\n";
+			if ($G::xclient{optional} == 2)    { push(@{$parts[-1]}, '  xclient     = optional-strict'); }
+			elsif ($G::xclient{optional} == 1) { push(@{$parts[-1]}, '  xclient     = optional');        }
+			else                               { push(@{$parts[-1]}, '  xclient     = yes');             }
+			for (my $i = 0; $i < scalar(@{$G::xclient{strings}}); $i++) {
+				my $prefix = $i ? '               ' : '  strings     =';
+				push(@{$parts[-1]}, "$prefix XCLIENT $G::xclient{strings}[$i]");
+			}
 		} else {
-			$s .= "no\n";
+			push(@{$parts[-1]}, '  xclient     = no');
 		}
-		$s .= "\n";
 	}
 
 	if ($dump_args->{'PROXY'} || $dump_args->{'ALL'}) {
-		$s .= "PROXY Info:\n"
-		   .  "  proxy       = ";
+		push(@parts, ['PROXY Info:']);
 		if ($G::proxy{try}) {
-			$s .= "yes\n";
-			$s .= "  version     = $G::proxy{version}\n";
+			push(@{$parts[-1]}, '  proxy       = yes');
+			push(@{$parts[-1]}, "  version     = $G::proxy{version}");
 			if ($G::proxy{raw}) {
-				$s .= "  raw string  = $G::proxy{raw}\n";
+				push(@{$parts[-1]}, "  raw string  = $G::proxy{raw}");
 			} else {
-				$s .= "  family      = $G::proxy{attr}{family}\n"
-				   .  "  source      = $G::proxy{attr}{source}\n"
-				   .  "  source port = $G::proxy{attr}{source_port}\n"
-				   .  "  dest        = $G::proxy{attr}{dest}\n"
-				   .  "  dest port   = $G::proxy{attr}{dest_port}\n";
+				push(@{$parts[-1]},
+					"  family      = $G::proxy{attr}{family}",
+					"  source      = $G::proxy{attr}{source}",
+					"  source port = $G::proxy{attr}{source_port}",
+					"  dest        = $G::proxy{attr}{dest}",
+					"  dest port   = $G::proxy{attr}{dest_port}",
+				);
 			}
 		} else {
-			$s .= "no\n";
+			push(@{$parts[-1]}, '  proxy       = no');
 		}
-		$s .= "\n";
 	}
 
 	if ($dump_args->{'TLS'} || $dump_args->{'ALL'}) {
-		$s .= "TLS / Encryption Info:\n"
-		   .  "  tls                 = ";
+		push(@parts, ['TLS / Encryption Info:']);
 		if ($G::tls || $G::tls_optional) {
 			if ($G::tls) {
-				$s .= 'starttls (';
-				if ($G::tls_optional == 2)    { $s .= "optional-strict)\n"; }
-				elsif ($G::tls_optional == 1) { $s .= "optional)\n";        }
-				else                          { $s .= "required)\n";        }
+				if ($G::tls_optional == 2)    { push(@{$parts[-1]}, '  tls                 = starttls (optional-strict)'); }
+				elsif ($G::tls_optional == 1) { push(@{$parts[-1]}, '  tls                 = starttls (optional)');        }
+				else                          { push(@{$parts[-1]}, '  tls                 = starttls (required)');        }
 			}
-			elsif ($G::tls_on_connect)      { $s .= "on connect (required)\n"; }
-			$s .= "  peer cert           = $G::tls_get_peer_cert\n"
-			   .  "  local cert          = $G::tls_cert\n"
-			   .  "  local key           = $G::tls_key\n"
-			   .  "  local cipher list   = $G::tls_cipher\n"
-			   .  "  ca path             = $G::tls_ca_path\n"
-			   .  "  verify server cert  = " . ($G::tls_verify ? "TRUE" : "FALSE") . "\n"
-			   .  "  available protocols = " . join(', ', @G::tls_supported_protocols) . "\n"
-			   .  "  requested protocols = " . join(', ', @G::tls_protocols) . "\n";
+			elsif ($G::tls_on_connect)        { push(@{$parts[-1]}, '  tls                 = starttls on connect (required)'); }
+			push(@{$parts[-1]},
+				"  peer cert           = $G::tls_get_peer_cert",
+				"  local cert          = $G::tls_cert",
+				"  local key           = $G::tls_key",
+				"  local cipher list   = $G::tls_cipher",
+				"  ca path             = $G::tls_ca_path",
+				'  verify server cert  = ' . ($G::tls_verify ? 'TRUE' : 'FALSE'),
+				'  available protocols = ' . join(', ', @G::tls_supported_protocols),
+				'  requested protocols = ' . join(', ', @G::tls_protocols),
+			);
 		}
-		else                            { $s .= "no\n";                    }
-		$s .= "\n";
+		else {
+			push(@{$parts[-1]}, '  tls                 = no');
+		}
 	}
 
 	if ($dump_args->{'AUTH'} || $dump_args->{'ALL'}) {
-		$s .= "Authentication Info:\n"
-		   .  "  auth        = ";
+		push(@parts, ['Authentication Info:']);
 		if ($opts->{a_type}) {
-			if ($G::auth_optional == 2)    { $s .= 'optional-strict'; }
-			elsif ($G::auth_optional == 1) { $s .= 'optional';        }
-			else                           { $s .= 'yes';             }
-			$s .= " type='" . join(',', @{$opts->{a_type}}) . "' user='$opts->{a_user}' pass='PROVIDED_BUT_REMOVED'\n";
-
-			$s .= "  auth_extras = " . join(',', map { "$_=$G::auth_extras{$_}" } keys (%G::auth_extras)) . "\n";
-			$s .= "  auth_showpt = " . ($G::auth_showpt ? "TRUE" : "FALSE") . "\n";
-			$s .= "  auth map    = " . join("\n".' 'x16,
-			                           map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (keys %G::auth_map_t)) . "\n";
+			if ($G::auth_optional == 2)    { push(@{$parts[-1]}, '  auth        = optional-strict'); }
+			elsif ($G::auth_optional == 1) { push(@{$parts[-1]}, '  auth        = optional');        }
+			else                           { push(@{$parts[-1]}, '  auth        = yes');             }
+			$parts[-1][-1] .= " type='" . join(',', @{$opts->{a_type}}) . "' user='$opts->{a_user}' pass='PROVIDED_BUT_REMOVED'";
+			push(@{$parts[-1]},
+				'  auth_extras = ' . join(',', map { "$_=$G::auth_extras{$_}" } (sort(keys((%G::auth_extras))))),
+				'  auth_showpt = ' . ($G::auth_showpt ? 'TRUE' : 'FALSE'),
+				'  auth map    = ' . join("\n".' 'x16, map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (sort(keys(%G::auth_map_t)))),
+			);
 		}
-		else { $s .= "no\n"; }
+		else {
+			push(@{$parts[-1]}, "  auth        = no");
+		}
 	}
 
-	return $s;
+	if (($dump_args->{'DATA'} || $dump_args->{'ALL'}) && !$skip->{'DATA'}) {
+		push(@parts, [
+			'DATA Info:',
+			'  data = <<.',
+			$opts->{data}
+		]);
+	}
+
+	# rejoin the parts into a string now
+	# this whole exercise was to avoid extra newlines when only dumping certain parts
+	foreach my $part (@parts) {
+		$part = join("\n", @$part) . "\n";
+	}
+	return(join("\n", @parts));
 }
 
 sub get_username {

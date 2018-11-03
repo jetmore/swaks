@@ -753,3 +753,6 @@
 * 20181103 -lp/--local-port was documented but -lp/-lport was implemented.
            Now all three are documented and implemented.
 * 20181103 Properly document that --drop-after-send takes an argument.
+* 20181103 Rework --dump to produce more consistent and thorough output
+             - ensure no leading/trailing space when only dumping sections
+             - alphabetize lists for reproducible output

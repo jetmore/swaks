@@ -2,6 +2,10 @@
 
 use strict;
 use Text::ParseWords;
+use Getopt::Long;
+
+my $opts = {};
+GetOptions($opts, 'headless|h!', 'bogusopt=s') || die "Couldn't understand options\n";
 
 my $testDir =  shift || die "Please provide the path to the test directory\n";
 $testDir    =~ s|/+$||;
@@ -104,6 +108,32 @@ sub runResult {
 				open(O, ">$diffFile") || die "Can't write to $diffFile: $!\n";
 				print O $diff;
 				close(O);
+
+				if ($opts->{'headless'}) {
+					return($diffFile);
+				}
+				else {
+					while (1) {
+						print "Test $tokens->{'%TESTDIR%'}/$tokens->{'%TESTID%'} is about to fail.\n(i)gnore, review (d)iff, (a)ccept new results, (q)uit: ";
+						chomp(my $input = <STDIN>);
+
+						if ($input eq 'i') {
+							return($diffFile);
+						}
+						elsif ($input eq 'd') {
+							system($ENV{'PAGER'}, $diffFile);
+							next
+						}
+						elsif ($input eq 'a') {
+							system("/bin/cp", $args[1], $args[0]);
+							return(0);
+						}
+						elsif ($input eq 'q') {
+							exit;
+						}
+					}
+				}
+
 				return($diffFile);
 			}
 			else {

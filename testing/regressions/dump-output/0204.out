@@ -1,5 +1,3 @@
 XCLIENT Info:
   xclient     = optional-strict
   strings     = XCLIENT FOO=bar
-
-

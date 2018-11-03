@@ -12,5 +12,3 @@ Output Info:
   hide_all           = TRUE
   trans_fh_of        = dump-output/out/0052.out (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
   trans_fh_ef        = dump-output/out/0052.out (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
-
-

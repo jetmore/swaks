@@ -3,9 +3,8 @@ Authentication Info:
   auth_extras = 
   auth_showpt = FALSE
   auth map    = CRAM-MD5 = CRAM-MD5
+                CRAM-SHA1 = CRAM-SHA1
+                DIGEST-MD5 = DIGEST-MD5
+                LOGIN = LOGIN
                 NTLM = NTLM, SPA, MSN
                 PLAIN = PLAIN
-                LOGIN = LOGIN
-                DIGEST-MD5 = DIGEST-MD5
-                CRAM-SHA1 = CRAM-SHA1
-

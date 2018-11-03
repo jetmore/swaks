@@ -8,5 +8,3 @@ TLS / Encryption Info:
   verify server cert  = TRUE
   available protocols = SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2
   requested protocols = TLSv1_1
-
-
