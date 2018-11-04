@@ -756,3 +756,9 @@
 * 20181103 Rework --dump to produce more consistent and thorough output
              - ensure no leading/trailing space when only dumping sections
              - alphabetize lists for reproducible output
+* 20181104 More --dump improvements
+             - General layout improvements
+             - Auth: add output for --auth-hide-password
+* 20181104 Fix bugs causing the interactions between --dump,
+           --auth-hide-password, --dump-as-body, and
+           --dump-as-body-shows-password to not always work as documented

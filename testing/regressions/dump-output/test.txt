@@ -45,7 +45,7 @@
  0 limiting to TLS works
  1 limiting to tls works
  2 flex all options
- 3 --auth-plaintext, --auth-map, --auth-extra --auth(set specific protocols)
+ 3 --auth-plaintext, --auth-map, --auth-extra --auth(set specific protocols) --auth-hide-password)with argument)
  4 --auth-optional
  5 --auth-optional-strict
 040X - DATA
@@ -55,6 +55,17 @@
 045X - APP
  0 limiting to APP works
  1 limiting to app works
+ 2 turn on auth, no --auth-hide-password
+ 3 turn on auth, --auth-hide-password
+ 4 turn on auth, --auth-hide-password(custom)
 050X - SUPPORT
  0 limiting to SUPPORT works
- 2 limiting to support works
+ 1 limiting to support works
+055X --dump-as-body
+ # this should probably be moved to a dedicated --dump-as-body section, but I want to fix a bug and I need some reference
+ # this is not a complete test.  For a complete test I'd be doing something like this entire test, but with --dump-as-body (also test that support,data don't print anything
+ 0 --dump data,app --dump-as-body works at all
+ 1 Narrow to --dump data,auth,app --dump-as-body app,auth TURN AUTH ON: --auth-user TEST_USER --auth-password TEST_PASS
+ 2 the above, but with --auth-hide-password on
+ 3 the above, but with an argument to --auth-hide-password
+ 4 --dump-as-body-shows-password

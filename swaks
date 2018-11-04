@@ -57,7 +57,7 @@ if (scalar(keys(%G::dump_args))) {
 	if (my $running_state = get_running_state($opts, \%G::dump_args)) {
 		# --dump is intended as a debug tool for swaks internally.  Always,
 		# unconditionally, show the user's auth password if one is given
-		$running_state =~ s%'PROVIDED_BUT_REMOVED'%shquote($opts->{a_pass})%ge;
+		$running_state =~ s/'%RAW_PASSWORD_STRING%'/shquote($opts->{a_pass})/ge;
 		print $G::trans_fh_oh $running_state;
 	}
 	exit(0);
@@ -2154,7 +2154,7 @@ sub reconstruct_options {
 				if (length($o->{$opt->{okey}}) > 0) {
 					# offer rudimenary protection against sending pw in email
 					if ($opt->{okey} eq 'auth_pass') {
-						push(@c, shquote('PROVIDED_BUT_REMOVED'));
+						push(@c, shquote('%RAW_PASSWORD_STRING%'));
 					} else {
 						push(@c, shquote($o->{$opt->{okey}}));
 					}
@@ -2415,7 +2415,7 @@ sub process_args {
 	$G::link{timeout} ||= '30s';
 	$G::link{timeout}   = time_to_seconds($G::link{timeout});
 
-	$o->{dump_as_body} = '' if ($o->{dab_sp});
+	$o->{dump_as_body} = '' if ($o->{dab_sp} && !defined($o->{dump_as_body}));
 	my $body  = 'This is a test mailing'; # default message body
 	$body = 'DUMP_AS_BODY_HAS_BEEN_SET' if (defined($o->{dump_as_body}));
 	my $bound = "";
@@ -2901,7 +2901,7 @@ sub process_args {
 				if (length($o->{auth_hidepw})) {
 					$G::auth_hidepw = $o->{auth_hidepw};
 				} elsif (defined($o->{auth_hidepw})) {
-					$G::auth_hidepw = "PROVIDED_BUT_REMOVED";
+					$G::auth_hidepw = 'PROVIDED_BUT_REMOVED';
 				}
 			}
 		} # end avail("auth")
@@ -2920,9 +2920,11 @@ sub process_args {
 
 		$n{data} =~ s|DUMP_AS_BODY_HAS_BEEN_SET|get_running_state(\%n, \%G::dump_as_body, {SUPPORT => 1, DATA => 1})|e;
 		if ($o->{dab_sp}) {
-			$n{data} =~ s%PROVIDED_BUT_REMOVED%$n{a_pass}%g;
+			$n{data} =~ s|'%RAW_PASSWORD_STRING%'|shquote($n{a_pass})|eg;
 		} elsif ($G::auth_hidepw) {
-			$n{data} =~ s%PROVIDED_BUT_REMOVED%$G::auth_hidepw%g;
+			$n{data} =~ s|'%RAW_PASSWORD_STRING%'|shquote($G::auth_hidepw)|eg;
+		} else {
+			$n{data} =~ s|'%RAW_PASSWORD_STRING%'|shquote('PROVIDED_BUT_REMOVED')|eg;
 		}
 	}
 
@@ -3028,13 +3030,13 @@ sub get_running_state {
 		if ($G::xclient{try}) {
 			if ($G::xclient{optional} == 2)    { push(@{$parts[-1]}, '  xclient     = optional-strict'); }
 			elsif ($G::xclient{optional} == 1) { push(@{$parts[-1]}, '  xclient     = optional');        }
-			else                               { push(@{$parts[-1]}, '  xclient     = yes');             }
+			else                               { push(@{$parts[-1]}, '  xclient     = required');        }
 			for (my $i = 0; $i < scalar(@{$G::xclient{strings}}); $i++) {
 				my $prefix = $i ? '               ' : '  strings     =';
 				push(@{$parts[-1]}, "$prefix XCLIENT $G::xclient{strings}[$i]");
 			}
 		} else {
-			push(@{$parts[-1]}, '  xclient     = no');
+			push(@{$parts[-1]}, '  xclient = no');
 		}
 	}
 
@@ -3055,7 +3057,7 @@ sub get_running_state {
 				);
 			}
 		} else {
-			push(@{$parts[-1]}, '  proxy       = no');
+			push(@{$parts[-1]}, '  proxy = no');
 		}
 	}
 
@@ -3080,25 +3082,28 @@ sub get_running_state {
 			);
 		}
 		else {
-			push(@{$parts[-1]}, '  tls                 = no');
+			push(@{$parts[-1]}, '  tls = no');
 		}
 	}
 
 	if ($dump_args->{'AUTH'} || $dump_args->{'ALL'}) {
 		push(@parts, ['Authentication Info:']);
 		if ($opts->{a_type}) {
-			if ($G::auth_optional == 2)    { push(@{$parts[-1]}, '  auth        = optional-strict'); }
-			elsif ($G::auth_optional == 1) { push(@{$parts[-1]}, '  auth        = optional');        }
-			else                           { push(@{$parts[-1]}, '  auth        = yes');             }
-			$parts[-1][-1] .= " type='" . join(',', @{$opts->{a_type}}) . "' user='$opts->{a_user}' pass='PROVIDED_BUT_REMOVED'";
+			if ($G::auth_optional == 2)    { push(@{$parts[-1]}, '  auth           = optional-strict'); }
+			elsif ($G::auth_optional == 1) { push(@{$parts[-1]}, '  auth           = optional');        }
+			else                           { push(@{$parts[-1]}, '  auth           = required');        }
 			push(@{$parts[-1]},
-				'  auth_extras = ' . join(',', map { "$_=$G::auth_extras{$_}" } (sort(keys((%G::auth_extras))))),
-				'  auth_showpt = ' . ($G::auth_showpt ? 'TRUE' : 'FALSE'),
-				'  auth map    = ' . join("\n".' 'x16, map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (sort(keys(%G::auth_map_t)))),
+				"  username       = '$opts->{a_user}'",
+				"  password       = '%RAW_PASSWORD_STRING%'",
+				'  show plaintext = ' . ($G::auth_showpt ? 'TRUE' : 'FALSE'),
+				'  hide password  = ' . ($G::auth_hidepw ? $G::auth_hidepw : 'FALSE'),
+				'  allowed types  = ' . join(', ', @{$opts->{a_type}}),
+				'  extras         = ' . join(', ', map { "$_=$G::auth_extras{$_}" } (sort(keys((%G::auth_extras))))),
+				'  type map       = ' . join("\n".' 'x19, map { "$_ = ". join(', ', @{$G::auth_map_t{$_}}) } (sort(keys(%G::auth_map_t)))),
 			);
 		}
 		else {
-			push(@{$parts[-1]}, "  auth        = no");
+			push(@{$parts[-1]}, "  auth = no");
 		}
 	}
 

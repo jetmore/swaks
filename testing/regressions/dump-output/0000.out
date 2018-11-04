@@ -54,16 +54,16 @@ Protocol Info:
   prdr            = FALSE
 
 XCLIENT Info:
-  xclient     = no
+  xclient = no
 
 PROXY Info:
-  proxy       = no
+  proxy = no
 
 TLS / Encryption Info:
-  tls                 = no
+  tls = no
 
 Authentication Info:
-  auth        = no
+  auth = no
 
 DATA Info:
   data = <<.

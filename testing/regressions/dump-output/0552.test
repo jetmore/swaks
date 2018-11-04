@@ -1,0 +1,5 @@
+title: set of tests narrowing in on --auth-hide-password functionality
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
+test action: CMD %SWAKS% --dump app,auth,data --to user@example.com --helo host.example.com --from from@example.com --output-file %OUTDIR%/%TESTID%.out --dump-as-body app,auth --auth-user TEST_USER --auth-password TEST_PASS --auth-hide-password
+test action: MUNGE file:%OUTDIR%/%TESTID%.out "munge_globs" "munge_dates,'^(Subject|Date):'" "munge_message_ids,'^Message-Id:'"
+test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

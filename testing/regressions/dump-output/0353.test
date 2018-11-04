@@ -1,5 +1,5 @@
 title: tests against the AUTH section
 pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
-test action: CMD %SWAKS% --dump auth --to user@example.com --helo host.example.com --from from@example.com --output-file %OUTDIR%/%TESTID%.out --auth LOGIN,PLAIN --auth-user AUTHUSER --auth-password AUTHPASS --auth-hide-password --auth-plaintext --auth-map AUTHTYPE=CRAM-MD5,TESTTYPE2=TESTTYPE2,AUTHTYPE=LOGIN --auth-extra dmd5-host=dmd5.example.com,realm=realm.example.org
+test action: CMD %SWAKS% --dump auth --to user@example.com --helo host.example.com --from from@example.com --output-file %OUTDIR%/%TESTID%.out --auth LOGIN,PLAIN --auth-user AUTHUSER --auth-password AUTHPASS --auth-hide-password CUSTOM_HIDE_STRING --auth-plaintext --auth-map AUTHTYPE=CRAM-MD5,TESTTYPE2=TESTTYPE2,AUTHTYPE=LOGIN --auth-extra dmd5-host=dmd5.example.com,realm=realm.example.org
 test action: MUNGE file:%OUTDIR%/%TESTID%.out "munge_globs" "munge_dates,'^(Subject|Date):'" "munge_message_ids,'^Message-Id:'"
 test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

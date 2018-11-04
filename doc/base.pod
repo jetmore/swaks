@@ -532,7 +532,7 @@ Instead of showing AUTH strings base64 encoded as they are transmitted, translat
 
 =item -ahp, --auth-hide-password [replacement string]
 
-If this option is specified, any time a readable password would be printed to the terminal (specifically AUTH PLAIN and AUTH LOGIN) the password is replaced with a dummy string (or the contents of "replacement string" if provided).  The dummy string will be base64 encoded or not contingent on the --auth-plaintext option.
+If this option is specified, any time a readable password would be printed to the terminal (specifically AUTH PLAIN and AUTH LOGIN) the password is replaced with the string 'PROVIDED_BUT_REMOVED' (or the contents of "replacement string" if provided).  The dummy string may or may not be base64 encoded, contingent on the --auth-plaintext option.
 
 Note that --auth-hide-password is similar, but not identical, to the --protect-prompt option.  The former protects passwords from being displayed in the SMTP transaction regardless of how they are entered.  The latter protects sensitive strings when the user types them at the terminal, regardless of how the string would be used.
 

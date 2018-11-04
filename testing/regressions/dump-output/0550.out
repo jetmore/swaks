@@ -1,20 +1,22 @@
-=== AUTH CRAM-MD5 supported
-=== AUTH CRAM-SHA1 supported
-=== AUTH DIGEST-MD5 supported
-*** AUTH NTLM not available: requires Authen::NTLM
-=== Basic AUTH supported
-=== Date Manipulation supported
-=== High Resolution Timing supported
-=== IPv6 supported
-=== Local Hostname Detection supported
-=== MX Routing supported
-=== Pipe Transport supported
-=== Socket Transport supported
-=== TLS supported
+App Info:
+  X-Mailer = swaks vDEVRELEASE jetmore.org/john/code/swaks/
+  Cmd Line = %SWAKS_COMMAND% --from 'from@example.com' --to 'user@example.com' --helo 'host.example.com' --dump-as-body --output-file 'dump-output/out/0550.out' --dump 'app,auth,data'
+
+Authentication Info:
+  auth = no
+
+DATA Info:
+  data = <<.
+Date: Wed, 03 Nov 1999 11:24:29 -0500
+To: user@example.com
+From: from@example.com
+Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+Message-Id: <19991103112429.047942@localhost>
+X-Mailer: swaks vDEVRELEASE jetmore.org/john/code/swaks/
 
 App Info:
   X-Mailer = swaks vDEVRELEASE jetmore.org/john/code/swaks/
-  Cmd Line = %SWAKS_COMMAND% --from 'from@example.com' --to 'user@example.com' --helo 'host.example.com' --output-file 'dump-output/out/0002.out' DUMP_OPT_REMOVED
+  Cmd Line = %SWAKS_COMMAND% --from 'from@example.com' --to 'user@example.com' --helo 'host.example.com' --dump-as-body --output-file 'dump-output/out/0550.out' --dump 'app,auth,data'
 
 Output Info:
   show_time_lapse    = FALSE
@@ -28,8 +30,8 @@ Output Info:
   hide_receive       = FALSE
   hide_informational = FALSE
   hide_all           = FALSE
-  trans_fh_of        = dump-output/out/0002.out (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
-  trans_fh_ef        = dump-output/out/0002.out (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+  trans_fh_of        = dump-output/out/0550.out (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+  trans_fh_ef        = dump-output/out/0550.out (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
 
 Transport Info:
   type            = socket-inet
@@ -65,16 +67,6 @@ TLS / Encryption Info:
 Authentication Info:
   auth = no
 
-DATA Info:
-  data = <<.
-Date: Wed, 03 Nov 1999 11:24:29 -0500
-To: user@example.com
-From: from@example.com
-Subject: test Wed, 03 Nov 1999 11:24:29 -0500
-Message-Id: <19991103112429.047942@localhost>
-X-Mailer: swaks vDEVRELEASE jetmore.org/john/code/swaks/
-
-This is a test mailing
 
 
 .
