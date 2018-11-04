@@ -1,0 +1,4 @@
+I'm not convinced this is how I want these tests laid out, but it's better to have testing I might want to change later than no testing at all
+
+
+0050 - confirm that --dump-mail generates expected output

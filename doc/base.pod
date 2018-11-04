@@ -840,13 +840,13 @@ Don't show transaction hints (useful in conjunction with -hr to create copy/past
 
 This option will print a hex dump of raw data sent and received by Swaks.  Each hex dump is the contents of a single read or write on the network.  This should be identical to what is already being displayed (with the exception of the \r characters being removed).  This option is useful in seeing details when servers are sending lots of data in single packets, or breaking up individual lines into multiple packets.  If you really need to go in depth in that area you're probably better with a packet sniffer, but this option is a good first step to seeing odd connection issues.
 
-=item --output-file E<lt>/path/to/fileE<gt>
+=item --output, --output-file E<lt>/path/to/fileE<gt>
 
 =item --output-file-stdout E<lt>/path/to/fileE<gt>
 
 =item --output-file-stderr E<lt>/path/to/fileE<gt>
 
-These options allow the user to send output to files instead of STDOUT/STDERR.  The first option sends both to the same file.  The arguments of &STDOUT and &STDERR are treated specially, referring to the "normal" file handles, so "--output-file-stderr '&STDOUT'" would redirect STDERR to STDOUT.
+These options allow the user to send output to files instead of STDOUT/STDERR.  The first option sends both to the same file.  The arguments of &STDOUT and &STDERR are treated specially, referring to the "normal" file handles, so "--output-file-stderr '&STDOUT'" would redirect STDERR to STDOUT.  These options are honored for all output except --help and --version.
 
 =item -pp, --protect-prompt
 
@@ -870,7 +870,7 @@ Do not display any content to the terminal.
 
 =item -S, --silent [level]
 
-Cause Swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.
+Cause Swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.  --silent affects most output but not all.  For instance, --help, --version, --dump, and --dump-mail are not affected.
 
 =item --support
 

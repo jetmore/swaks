@@ -65,7 +65,7 @@ if (scalar(keys(%G::dump_args))) {
 elsif ($G::dump_mail) {
 	# if the user just wanted to generate an email body, dump it now and exit
 	$opts->{data} =~ s/\n\.\Z//;
-	print $opts->{data};
+	print $G::trans_fh_oh $opts->{data};
 	exit(0);
 }
 
@@ -1783,7 +1783,7 @@ sub get_option_struct {
 		{ opts => ['raw', 'show-raw-text'],           suffix => '',
 		  okey => 'show_raw_text',                    type => 'scalar', },
 		# specify file to write to
-		{ opts => ['output-file'],                    suffix => '=s',
+		{ opts => ['output-file', 'output'],          suffix => '=s',
 		  okey => 'output_file',                      type => 'scalar', },
 		# specify file to write to
 		{ opts => ['output-file-stdout'],             suffix => '=s',
