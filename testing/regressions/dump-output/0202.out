@@ -1,4 +1,8 @@
 XCLIENT Info:
-  xclient     = required
-  strings     = XCLIENT ADDR=9.9.9.9 NAME=xclient.example.com PORT=99 PROTO=SMTP HELO=XCLIENT+20HELO LOGIN=XCLIENTUSER REVERSE_NAME=reversename.example.com
-                XCLIENT FOO=bar
+  xclient         = required
+  no_verify       = TRUE
+  before starttls = TRUE
+  strings         = XCLIENT ADDR=9.9.9.9
+                    XCLIENT NAME=xclient.example.com PORT=99
+                    XCLIENT PROTO=SMTP HELO=XCLIENT+20HELO LOGIN=XCLIENTUSER REVERSE_NAME=reversename.example.com DESTADDR=8.8.8.8 DESTPORT=88
+                    XCLIENT FOO=bar

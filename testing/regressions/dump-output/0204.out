@@ -1,3 +1,5 @@
 XCLIENT Info:
-  xclient     = optional-strict
-  strings     = XCLIENT FOO=bar
+  xclient         = optional-strict
+  no_verify       = FALSE
+  before starttls = FALSE
+  strings         = XCLIENT FOO=bar

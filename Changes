@@ -770,5 +770,7 @@
              - Transport: add output for -4 and -6
              - Output: add output for --protect-prompt and --show-raw-text
              - Protocol: add output for --force-getpwuid
+             - XCLIENT: add output for --xclient-before-starttls and
+               --xclient-no-verify
 * 20181104 --dump-mail should write to the default output filehandle
 * 20181104 Add --output as a synonym for --output-file

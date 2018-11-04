@@ -3046,11 +3046,15 @@ sub get_running_state {
 	if ($dump_args->{'XCLIENT'} || $dump_args->{'ALL'}) {
 		push(@parts, ['XCLIENT Info:']);
 		if ($G::xclient{try}) {
-			if ($G::xclient{optional} == 2)    { push(@{$parts[-1]}, '  xclient     = optional-strict'); }
-			elsif ($G::xclient{optional} == 1) { push(@{$parts[-1]}, '  xclient     = optional');        }
-			else                               { push(@{$parts[-1]}, '  xclient     = required');        }
+			if ($G::xclient{optional} == 2)    { push(@{$parts[-1]}, '  xclient         = optional-strict'); }
+			elsif ($G::xclient{optional} == 1) { push(@{$parts[-1]}, '  xclient         = optional');        }
+			else                               { push(@{$parts[-1]}, '  xclient         = required');        }
+			push(@{$parts[-1]},
+				'  no_verify       = ' . ($G::xclient{no_verify}  ? 'TRUE' : 'FALSE'),
+				'  before starttls = ' . ($G::xclient{before_tls} ? 'TRUE' : 'FALSE'),
+			);
 			for (my $i = 0; $i < scalar(@{$G::xclient{strings}}); $i++) {
-				my $prefix = $i ? '               ' : '  strings     =';
+				my $prefix = $i ? '                   ' : '  strings         =';
 				push(@{$parts[-1]}, "$prefix XCLIENT $G::xclient{strings}[$i]");
 			}
 		} else {
