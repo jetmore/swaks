@@ -1028,8 +1028,6 @@ Seen in the headline "SA se bes en swaks gekledes in 2011", which was translated
 
 =head1 LICENSE
 
-=over 4
-
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -1044,25 +1042,35 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
-=back
+=head1 CONTACT INFORMATION
 
-=head1 CONTACT
+General contact, questions, patches, requests, etc to proj-swaks@jetmore.net.
+
+Change logs, this help, and the latest version are found at http://www.jetmore.org/john/code/swaks/.
+
+Swaks is crafted with love by John Jetmore from the cornfields of Indiana, United States of America.
+
+=head1 NOTIFICATIONS
 
 =over 4
 
-=item proj-swaks@jetmore.net
+=item Email
 
-Please use this address for general contact, questions, patches, requests, etc.
+updates-swaks@jetmore.net
 
-=item updates-swaks@jetmore.net
+If you would like to be put on a list to receive notifications when a new version of Swaks is released, please send an email to this address.  There will not be a response to your email.
 
-If you would like to be put on a list to receive notifications when a new version of Swaks is released, please send an email to this address.
+=item Website
 
-=item http://www.jetmore.org/john/code/swaks/
+http://www.jetmore.org/john/blog/c/swaks/
 
-Change logs, this help, and the latest version is found at this link.
+=item RSS Feed
 
-=item Swaks is crafted with love by John Jetmore from the cornfields of Indiana, United States of America.
+http://www.jetmore.org/john/blog/c/swaks/feed/
+
+=item Twitter
+
+http://twitter.com/SwaksSMTP
 
 =back
 

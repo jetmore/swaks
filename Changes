@@ -736,7 +736,7 @@
 * 20180609 Now that we support multiple XCLIENT calls, --xclient-ATTR options
            are no longer merged with --xclient into a single XCLIENT call.
            This breaks previously documented behavior.
-* 20180609 Add --xclient-no-verify added to turn ff requirement that
+* 20180609 Add --xclient-no-verify added to turn off requirement that
            XCLIENT attributes must have been advertised by server for Swaks
            to send them
 * 20180609 If an option-processing callback fails to load, print error and
@@ -774,3 +774,5 @@
                --xclient-no-verify
 * 20181104 --dump-mail should write to the default output filehandle
 * 20181104 Add --output as a synonym for --output-file
+* 20181104 Clean up contact/notifications - remove Google+ everywhere, add
+           RSS and Twitter to base.pod
