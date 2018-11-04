@@ -1,8 +1,3 @@
 Transport Info:
   type            = pipe
-  server          = 
-  port            = 25
-  local interface = 
-  local port      = 
-  sockfile        = 
   process         = /TEST/PIPE

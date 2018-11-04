@@ -1,7 +1,9 @@
 Output Info:
   show_time_lapse    = TRUE
   show_time_hires    = TRUE
+  show_raw_text      = TRUE
   suppress_data      = TRUE
+  protect_prompt     = TRUE
   no_hints_send      = TRUE
   no_hints_recv      = TRUE
   no_hints_info      = TRUE

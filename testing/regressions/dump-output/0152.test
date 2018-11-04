@@ -1,5 +1,5 @@
 title: tests against the PROTOCOL section
 pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
-test action: CMD %SWAKS% --dump protocol --output-file %OUTDIR%/%TESTID%.out --to ADDR1,ADDR2 --from FROM --helo HELO --quit mail --drop-after rcpt --drop-after-send helo --timeout 99 --protocol smtp --pipeline --prdr
+test action: CMD %SWAKS% --dump protocol --output-file %OUTDIR%/%TESTID%.out --to ADDR1,ADDR2 --from FROM --helo HELO --quit mail --drop-after rcpt --drop-after-send helo --timeout 99 --protocol smtp --pipeline --prdr --force-getpwuid
 test action: MUNGE file:%OUTDIR%/%TESTID%.out "munge_globs" "munge_dates,'^(Subject|Date):'" "munge_message_ids,'^Message-Id:'"
 test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

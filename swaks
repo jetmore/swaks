@@ -2318,8 +2318,9 @@ sub process_args {
 	if ($G::link{sockfile}) { $G::link{type} = 'socket-unix'; }
 	else                    { delete($G::link{sockfile});     }
 
-	my $user     = get_username($o->{force_getpwuid});
-	my $hostname = get_hostname();
+	$n{force_getpwuid} = $o->{force_getpwuid}; # make available for --dump
+	my $user           = get_username($o->{force_getpwuid});
+	my $hostname       = get_hostname();
 
 	# SMTP mail from
 	$n{from}   = $o->{mail_from} || interact("From: ", '^.*$')
@@ -2369,6 +2370,7 @@ sub process_args {
 			$G::link{force_ipv4} = 1;
 		}
 
+		$n{copy_routing}   = $o->{copy_routing}; # only used in --dump output
 		$G::link{server} ||= get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to});
 
 		if ($o->{force_ipv4} && $G::link{server} =~ m|:|) {
@@ -2981,7 +2983,9 @@ sub get_running_state {
 			'Output Info:',
 			'  show_time_lapse    = ' . ($G::show_time_lapse    ? 'TRUE' : 'FALSE'),
 			'  show_time_hires    = ' . ($G::show_time_hires    ? 'TRUE' : 'FALSE'),
+			'  show_raw_text      = ' . ($G::show_raw_text      ? 'TRUE' : 'FALSE'),
 			'  suppress_data      = ' . ($G::suppress_data      ? 'TRUE' : 'FALSE'),
+			'  protect_prompt     = ' . ($G::protect_prompt     ? 'TRUE' : 'FALSE'),
 			'  no_hints_send      = ' . ($G::no_hints_send      ? 'TRUE' : 'FALSE'),
 			'  no_hints_recv      = ' . ($G::no_hints_recv      ? 'TRUE' : 'FALSE'),
 			'  no_hints_info      = ' . ($G::no_hints_info      ? 'TRUE' : 'FALSE'),
@@ -2998,14 +3002,27 @@ sub get_running_state {
 	if ($dump_args->{'TRANSPORT'} || $dump_args->{'ALL'}) {
 		push(@parts, [
 			'Transport Info:',
-			"  type            = $G::link{type}",
-			"  server          = $G::link{server}",
-			"  port            = $G::link{port}",
-			"  local interface = $G::link{lint}",
-			"  local port      = $G::link{lport}",
-			"  sockfile        = $G::link{sockfile}",
-			"  process         = $G::link{process}",
+			"  type            = $G::link{type}"
 		]);
+		if ($G::link{type} eq 'socket-inet') {
+			push(@{$parts[-1]},
+				'  inet protocol   = ' . ($G::link{force_ipv4} ? '4' : ($G::link{force_ipv6} ? '6' : 'any')),
+				"  server          = $G::link{server}",
+				"  port            = $G::link{port}",
+				"  local interface = $G::link{lint}",
+				"  local port      = $G::link{lport}",
+				'  copy routing    = ' . ($opts->{copy_routing} ?  $opts->{copy_routing} : 'FALSE'),
+			);
+		}
+		elsif ($G::link{type} eq 'socket-unix') {
+			push(@{$parts[-1]}, "  sockfile        = $G::link{sockfile}");
+		}
+		elsif ($G::link{type} eq 'pipe') {
+			push(@{$parts[-1]}, "  process         = $G::link{process}");
+		}
+		else {
+			push(@{$parts[-1]}, "  UNKNOWN TRANSPORT TYPE");
+		}
 	}
 
 	if ($dump_args->{'PROTOCOL'} || $dump_args->{'ALL'}) {
@@ -3015,6 +3032,7 @@ sub get_running_state {
 			"  helo            = $opts->{helo}",
 			"  from            = $opts->{from}",
 			"  to              = $opts->{to}",
+			'  force getpwuid  = ' . ($opts->{force_getpwuid} ? 'TRUE' : 'FALSE'),
 			"  quit after      = $G::quit_after",
 			"  drop after      = $G::drop_after",
 			"  drop after send = $G::drop_after_send",
@@ -3054,6 +3072,8 @@ sub get_running_state {
 					"  source port = $G::proxy{attr}{source_port}",
 					"  dest        = $G::proxy{attr}{dest}",
 					"  dest port   = $G::proxy{attr}{dest_port}",
+					"  protocol    = $G::proxy{attr}{protocol}",
+					"  command     = $G::proxy{attr}{command}",
 				);
 			}
 		} else {
@@ -3063,7 +3083,7 @@ sub get_running_state {
 
 	if ($dump_args->{'TLS'} || $dump_args->{'ALL'}) {
 		push(@parts, ['TLS / Encryption Info:']);
-		if ($G::tls || $G::tls_optional) {
+		if ($G::tls || $G::tls_on_connect) {
 			if ($G::tls) {
 				if ($G::tls_optional == 2)    { push(@{$parts[-1]}, '  tls                 = starttls (optional-strict)'); }
 				elsif ($G::tls_optional == 1) { push(@{$parts[-1]}, '  tls                 = starttls (optional)');        }

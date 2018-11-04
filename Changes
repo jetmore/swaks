@@ -756,9 +756,17 @@
 * 20181103 Rework --dump to produce more consistent and thorough output
              - ensure no leading/trailing space when only dumping sections
              - alphabetize lists for reproducible output
-* 20181104 More --dump improvements
-             - General layout improvements
-             - Auth: add output for --auth-hide-password
 * 20181104 Fix bugs causing the interactions between --dump,
            --auth-hide-password, --dump-as-body, and
            --dump-as-body-shows-password to not always work as documented
+* 20181104 More --dump improvements and bug fixes
+             - General layout improvements
+             - Auth: add output for --auth-hide-password
+             - Transport: only show the output options revelant to the type
+             - TLS: Fix bug preventing display of TLS info when
+               --tls-on-connect used
+             - Proxy: Add output for --proxy-command and --proxy-protocol
+             - Transport: add output for --copy-routing
+             - Transport: add output for -4 and -6
+             - Output: add output for --protect-prompt and --show-raw-text
+             - Protocol: add output for --force-getpwuid

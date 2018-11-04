@@ -8,14 +8,15 @@
  0 limiting to OUTPUT works
  1 limiting to output works
  2 flex all options
- 3 --show-time-lapse i
+ 3 --show-time-lapse i ???????????
  4 --silent different args
 010X - TRANSPORT
  0 limiting to TRANSPORT works
  1 limiting to transport works
- 2 flex all options (socket-inet)
+ 2 flex all options, -4 (socket-inet)
  3 flex all options (socket-unix)
  4 flex all options (pipe)
+ 5 flex all options, -4 (socket-inet)
 015X - PROTOCOL
  0 limiting to PROTOCOL works
  1 limiting to protocol works

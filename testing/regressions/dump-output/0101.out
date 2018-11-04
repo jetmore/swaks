@@ -1,8 +1,8 @@
 Transport Info:
   type            = socket-inet
+  inet protocol   = any
   server          = example.com
   port            = 25
   local interface = 
   local port      = 
-  sockfile        = 
-  process         = 
+  copy routing    = FALSE

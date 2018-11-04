@@ -1,7 +1,7 @@
 Transport Info:
   type            = socket-inet
-  inet protocol   = any
-  server          = example.com
+  inet protocol   = 6
+  server          = TESTSERVER
   port            = 25
   local interface = 
   local port      = 

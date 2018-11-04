@@ -3,6 +3,7 @@ Protocol Info:
   helo            = host.example.com
   from            = from@example.com
   to              = user@example.com
+  force getpwuid  = FALSE
   quit after      = 
   drop after      = 
   drop after send = 

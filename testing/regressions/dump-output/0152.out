@@ -3,6 +3,7 @@ Protocol Info:
   helo            = HELO
   from            = FROM
   to              = ADDR1,ADDR2
+  force getpwuid  = TRUE
   quit after      = mail
   drop after      = rcpt
   drop after send = helo
