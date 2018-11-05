@@ -1,0 +1,8 @@
+# Generated Wed Jul 10 23:00:55 2019 by ./gen-tests.pl '-n' '450' '-o' 'xclient' '-v' 'REVERSE_NAME=testname PORT=25' '-i' '' '-p' 'XCLIENT string:' '-d' '.' '-r'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: xclient, env var, no-option
+
+pre action: SET_ENV SWAKS_OPT_xclient REVERSE_NAME=testname PORT=25
+test action: CMD_CAPTURE %SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --no-xclient

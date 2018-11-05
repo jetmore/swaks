@@ -1,0 +1,8 @@
+# Generated Wed Jul 10 23:15:49 2019 by ./gen-tests.pl '-n' '550' '-o' 'xclient-before-starttls' '-v' '' '-i' 'foo' '-d' '.' '-r' '-s' '%SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --xclient-port 26'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: xclient-before-starttls, env var, no arg
+
+pre action: SET_ENV SWAKS_OPT_xclient_before_starttls
+test action: CMD_CAPTURE %SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --xclient-port 26

@@ -1,0 +1,6 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+# this is an awkward test - --protocol should force auth, but auth will require username/pass.  We can't provide user/pass on command
+# line though, because that also would trigger auth.  The only clean way to do it is to allow --protocol to force auth, then
+# use expect to provide user/pass at command line
+auto: INTERACT '%SWAKS% --dump AUTH,TLS,TRANSPORT,PROTOCOL --to recip@example.com --from sender@example.net --helo hstring --server ser.ver --protocol ssmtpa' 'Username:' 'test-username' 'Password:' 'test-password'

@@ -1,0 +1,11 @@
+From foo@example.com date string
+From: %FROM_ADDRESS%
+Subject: this is the test subject
+
+This is the test data
+This inline \n should not be expanded
+This %NEWLINE% should not be expanded
+
+. This leading dot should not be quoted
+
+There should not be a trailing dot on this message

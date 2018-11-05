@@ -1,0 +1,5 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+pre action: SET_ENV SWAKS_OPT_local_port 9999
+pre action: SET_ENV SWAKS_OPT_no_local_port
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --server ser.ver

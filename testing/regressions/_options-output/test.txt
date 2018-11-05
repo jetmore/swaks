@@ -1,0 +1,562 @@
+thoroughly flex all of the OUTPUT options.  The options-* tests are designed to test everything right up through --dump (so, options- tests that -f and --from are the same, and that -f with no option prompts for user input, etc.  exec-* tests that the correct sender actually gets used in the email transaction)
+
+
+
+
+00000 --suppress-data
+  # 1 suppress-data, command line, valid arg
+  # 11 suppress-data, config, valid arg
+  # 21 suppress-data, env var, valid arg
+  30 suppress-data command line, no arg (-option)
+  # 31 suppress-data, command line, valid arg (-option=)
+  # 32 suppress-data, command line, valid arg (--option=)
+00050 --n
+  50 n, command line, no arg
+  # 51 n, command line, valid arg
+  52 n, command line, invalid arg
+  53 n, command line, no-option
+  60 n, config, no arg
+  # 61 n, config, valid arg
+  62 n, config, invalid arg
+  63 n, config, no-option
+  70 n, env var, no arg
+  # 71 n, env var, valid arg
+  72 n, env var, invalid arg
+  73 n, env var, no-option
+  80 n command line, no arg (-option)
+  # 81 n, command line, valid arg (-option=)
+  # 82 n, command line, valid arg (--option=)
+00100 --show-time-lapse
+  ### TODO Consider adding tests for "integer", "Integer".  It's defined as "i", but it's really "starts with 'i'"
+  100 show-time-lapse, command line, no arg
+  101 show-time-lapse, command line, valid arg
+  102 show-time-lapse, command line, invalid arg
+  103 show-time-lapse, command line, no-option
+  110 show-time-lapse, config, no arg
+  111 show-time-lapse, config, valid arg
+  112 show-time-lapse, config, invalid arg
+  113 show-time-lapse, config, no-option
+  120 show-time-lapse, env var, no arg
+  121 show-time-lapse, env var, valid arg
+  122 show-time-lapse, env var, invalid arg
+  123 show-time-lapse, env var, no-option
+  130 show-time-lapse command line, no arg (-option)
+  131 show-time-lapse, command line, valid arg (-option=)
+  132 show-time-lapse, command line, valid arg (--option=)
+00150 --stl
+  ### TODO Consider adding tests for "integer", "Integer".  It's defined as "i", but it's really "starts with 'i'"
+  150 stl, command line, no arg
+  151 stl, command line, valid arg
+  152 stl, command line, invalid arg
+  153 stl, command line, no-option
+  160 stl, config, no arg
+  161 stl, config, valid arg
+  162 stl, config, invalid arg
+  163 stl, config, no-option
+  170 stl, env var, no arg
+  171 stl, env var, valid arg
+  172 stl, env var, invalid arg
+  173 stl, env var, no-option
+  180 stl command line, no arg (-option)
+  181 stl, command line, valid arg (-option=)
+  182 stl, command line, valid arg (--option=)
+00200 --no-info-hints
+  200 no-info-hints, command line, no arg
+  # 201 no-info-hints, command line, valid arg
+  202 no-info-hints, command line, invalid arg
+  203 no-info-hints, command line, no-option
+  210 no-info-hints, config, no arg
+  # 211 no-info-hints, config, valid arg
+  212 no-info-hints, config, invalid arg
+  213 no-info-hints, config, no-option
+  220 no-info-hints, env var, no arg
+  # 221 no-info-hints, env var, valid arg
+  222 no-info-hints, env var, invalid arg
+  223 no-info-hints, env var, no-option
+  230 no-info-hints command line, no arg (-option)
+  # 231 no-info-hints, command line, valid arg (-option=)
+  # 232 no-info-hints, command line, valid arg (--option=)
+00250 --nih
+  250 nih, command line, no arg
+  # 251 nih, command line, valid arg
+  252 nih, command line, invalid arg
+  253 nih, command line, no-option
+  260 nih, config, no arg
+  # 261 nih, config, valid arg
+  262 nih, config, invalid arg
+  263 nih, config, no-option
+  270 nih, env var, no arg
+  # 271 nih, env var, valid arg
+  272 nih, env var, invalid arg
+  273 nih, env var, no-option
+  280 nih command line, no arg (-option)
+  # 281 nih, command line, valid arg (-option=)
+  # 282 nih, command line, valid arg (--option=)
+00300 --no-send-hints
+  300 no-send-hints, command line, no arg
+  # 301 no-send-hints, command line, valid arg
+  302 no-send-hints, command line, invalid arg
+  303 no-send-hints, command line, no-option
+  310 no-send-hints, config, no arg
+  # 311 no-send-hints, config, valid arg
+  312 no-send-hints, config, invalid arg
+  313 no-send-hints, config, no-option
+  320 no-send-hints, env var, no arg
+  # 321 no-send-hints, env var, valid arg
+  322 no-send-hints, env var, invalid arg
+  323 no-send-hints, env var, no-option
+  330 no-send-hints command line, no arg (-option)
+  # 331 no-send-hints, command line, valid arg (-option=)
+  # 332 no-send-hints, command line, valid arg (--option=)
+00350 --nsh
+  350 nsh, command line, no arg
+  # 351 nsh, command line, valid arg
+  352 nsh, command line, invalid arg
+  353 nsh, command line, no-option
+  360 nsh, config, no arg
+  # 361 nsh, config, valid arg
+  362 nsh, config, invalid arg
+  363 nsh, config, no-option
+  370 nsh, env var, no arg
+  # 371 nsh, env var, valid arg
+  372 nsh, env var, invalid arg
+  373 nsh, env var, no-option
+  380 nsh command line, no arg (-option)
+  # 381 nsh, command line, valid arg (-option=)
+  # 382 nsh, command line, valid arg (--option=)
+00400 --no-receive-hints
+  400 no-receive-hints, command line, no arg
+  # 401 no-receive-hints, command line, valid arg
+  402 no-receive-hints, command line, invalid arg
+  403 no-receive-hints, command line, no-option
+  410 no-receive-hints, config, no arg
+  # 411 no-receive-hints, config, valid arg
+  412 no-receive-hints, config, invalid arg
+  413 no-receive-hints, config, no-option
+  420 no-receive-hints, env var, no arg
+  # 421 no-receive-hints, env var, valid arg
+  422 no-receive-hints, env var, invalid arg
+  423 no-receive-hints, env var, no-option
+  430 no-receive-hints command line, no arg (-option)
+  # 431 no-receive-hints, command line, valid arg (-option=)
+  # 432 no-receive-hints, command line, valid arg (--option=)
+00450 --nrh
+  450 nrh, command line, no arg
+  # 451 nrh, command line, valid arg
+  452 nrh, command line, invalid arg
+  453 nrh, command line, no-option
+  460 nrh, config, no arg
+  # 461 nrh, config, valid arg
+  462 nrh, config, invalid arg
+  463 nrh, config, no-option
+  470 nrh, env var, no arg
+  # 471 nrh, env var, valid arg
+  472 nrh, env var, invalid arg
+  473 nrh, env var, no-option
+  480 nrh command line, no arg (-option)
+  # 481 nrh, command line, valid arg (-option=)
+  # 482 nrh, command line, valid arg (--option=)
+00500 --no-hints
+  500 no-hints, command line, no arg
+  # 501 no-hints, command line, valid arg
+  502 no-hints, command line, invalid arg
+  503 no-hints, command line, no-option
+  510 no-hints, config, no arg
+  # 511 no-hints, config, valid arg
+  512 no-hints, config, invalid arg
+  513 no-hints, config, no-option
+  520 no-hints, env var, no arg
+  # 521 no-hints, env var, valid arg
+  522 no-hints, env var, invalid arg
+  523 no-hints, env var, no-option
+  530 no-hints command line, no arg (-option)
+  # 531 no-hints, command line, valid arg (-option=)
+  # 532 no-hints, command line, valid arg (--option=)
+00550 --nth
+  550 nth, command line, no arg
+  # 551 nth, command line, valid arg
+  552 nth, command line, invalid arg
+  553 nth, command line, no-option
+  560 nth, config, no arg
+  # 561 nth, config, valid arg
+  562 nth, config, invalid arg
+  563 nth, config, no-option
+  570 nth, env var, no arg
+  # 571 nth, env var, valid arg
+  572 nth, env var, invalid arg
+  573 nth, env var, no-option
+  580 nth command line, no arg (-option)
+  # 581 nth, command line, valid arg (-option=)
+  # 582 nth, command line, valid arg (--option=)
+00600 --protect-prompt
+  600 protect-prompt, command line, no arg
+  # 601 protect-prompt, command line, valid arg
+  602 protect-prompt, command line, invalid arg
+  603 protect-prompt, command line, no-option
+  610 protect-prompt, config, no arg
+  # 611 protect-prompt, config, valid arg
+  612 protect-prompt, config, invalid arg
+  613 protect-prompt, config, no-option
+  620 protect-prompt, env var, no arg
+  # 621 protect-prompt, env var, valid arg
+  622 protect-prompt, env var, invalid arg
+  623 protect-prompt, env var, no-option
+  630 protect-prompt command line, no arg (-option)
+  # 631 protect-prompt, command line, valid arg (-option=)
+  # 632 protect-prompt, command line, valid arg (--option=)
+00650 --pp
+  650 pp, command line, no arg
+  # 651 pp, command line, valid arg
+  652 pp, command line, invalid arg
+  653 pp, command line, no-option
+  660 pp, config, no arg
+  # 661 pp, config, valid arg
+  662 pp, config, invalid arg
+  663 pp, config, no-option
+  670 pp, env var, no arg
+  # 671 pp, env var, valid arg
+  672 pp, env var, invalid arg
+  673 pp, env var, no-option
+  680 pp command line, no arg (-option)
+  # 681 pp, command line, valid arg (-option=)
+  # 682 pp, command line, valid arg (--option=)
+00700 --hide-receive
+  700 hide-receive, command line, no arg
+  # 701 hide-receive, command line, valid arg
+  702 hide-receive, command line, invalid arg
+  703 hide-receive, command line, no-option
+  710 hide-receive, config, no arg
+  # 711 hide-receive, config, valid arg
+  712 hide-receive, config, invalid arg
+  713 hide-receive, config, no-option
+  720 hide-receive, env var, no arg
+  # 721 hide-receive, env var, valid arg
+  722 hide-receive, env var, invalid arg
+  723 hide-receive, env var, no-option
+  730 hide-receive command line, no arg (-option)
+  # 731 hide-receive, command line, valid arg (-option=)
+  # 732 hide-receive, command line, valid arg (--option=)
+00750 --hr
+  750 hr, command line, no arg
+  # 751 hr, command line, valid arg
+  752 hr, command line, invalid arg
+  753 hr, command line, no-option
+  760 hr, config, no arg
+  # 761 hr, config, valid arg
+  762 hr, config, invalid arg
+  763 hr, config, no-option
+  770 hr, env var, no arg
+  # 771 hr, env var, valid arg
+  772 hr, env var, invalid arg
+  773 hr, env var, no-option
+  780 hr command line, no arg (-option)
+  # 781 hr, command line, valid arg (-option=)
+  # 782 hr, command line, valid arg (--option=)
+00800 --hide-send
+  800 hide-send, command line, no arg
+  # 801 hide-send, command line, valid arg
+  802 hide-send, command line, invalid arg
+  803 hide-send, command line, no-option
+  810 hide-send, config, no arg
+  # 811 hide-send, config, valid arg
+  812 hide-send, config, invalid arg
+  813 hide-send, config, no-option
+  820 hide-send, env var, no arg
+  # 821 hide-send, env var, valid arg
+  822 hide-send, env var, invalid arg
+  823 hide-send, env var, no-option
+  830 hide-send command line, no arg (-option)
+  # 831 hide-send, command line, valid arg (-option=)
+  # 832 hide-send, command line, valid arg (--option=)
+00850 --hs
+  850 hs, command line, no arg
+  # 851 hs, command line, valid arg
+  852 hs, command line, invalid arg
+  853 hs, command line, no-option
+  860 hs, config, no arg
+  # 861 hs, config, valid arg
+  862 hs, config, invalid arg
+  863 hs, config, no-option
+  870 hs, env var, no arg
+  # 871 hs, env var, valid arg
+  872 hs, env var, invalid arg
+  873 hs, env var, no-option
+  880 hs command line, no arg (-option)
+  # 881 hs, command line, valid arg (-option=)
+  # 882 hs, command line, valid arg (--option=)
+00900 --hide-informational
+  900 hide-informational, command line, no arg
+  # 901 hide-informational, command line, valid arg
+  902 hide-informational, command line, invalid arg
+  903 hide-informational, command line, no-option
+  910 hide-informational, config, no arg
+  # 911 hide-informational, config, valid arg
+  912 hide-informational, config, invalid arg
+  913 hide-informational, config, no-option
+  920 hide-informational, env var, no arg
+  # 921 hide-informational, env var, valid arg
+  922 hide-informational, env var, invalid arg
+  923 hide-informational, env var, no-option
+  930 hide-informational command line, no arg (-option)
+  # 931 hide-informational, command line, valid arg (-option=)
+  # 932 hide-informational, command line, valid arg (--option=)
+00950 --hi
+  950 hi, command line, no arg
+  # 951 hi, command line, valid arg
+  952 hi, command line, invalid arg
+  953 hi, command line, no-option
+  960 hi, config, no arg
+  # 961 hi, config, valid arg
+  962 hi, config, invalid arg
+  963 hi, config, no-option
+  970 hi, env var, no arg
+  # 971 hi, env var, valid arg
+  972 hi, env var, invalid arg
+  973 hi, env var, no-option
+  980 hi command line, no arg (-option)
+  # 981 hi, command line, valid arg (-option=)
+  # 982 hi, command line, valid arg (--option=)
+01000 --hide-all
+  1000 hide-all, command line, no arg
+  # 1001 hide-all, command line, valid arg
+  1002 hide-all, command line, invalid arg
+  1003 hide-all, command line, no-option
+  1010 hide-all, config, no arg
+  # 1011 hide-all, config, valid arg
+  1012 hide-all, config, invalid arg
+  1013 hide-all, config, no-option
+  1020 hide-all, env var, no arg
+  # 1021 hide-all, env var, valid arg
+  1022 hide-all, env var, invalid arg
+  1023 hide-all, env var, no-option
+  1030 hide-all command line, no arg (-option)
+  # 1031 hide-all, command line, valid arg (-option=)
+  # 1032 hide-all, command line, valid arg (--option=)
+01050 --ha
+  1050 ha, command line, no arg
+  # 1051 ha, command line, valid arg
+  1052 ha, command line, invalid arg
+  1053 ha, command line, no-option
+  1060 ha, config, no arg
+  # 1061 ha, config, valid arg
+  1062 ha, config, invalid arg
+  1063 ha, config, no-option
+  1070 ha, env var, no arg
+  # 1071 ha, env var, valid arg
+  1072 ha, env var, invalid arg
+  1073 ha, env var, no-option
+  1080 ha command line, no arg (-option)
+  # 1081 ha, command line, valid arg (-option=)
+  # 1082 ha, command line, valid arg (--option=)
+01100 --silent
+  1100 silent, command line, no arg
+  1101 silent, command line, valid arg
+  1102 silent, command line, invalid arg
+  1103 silent, command line, no-option
+  1110 silent, config, no arg
+  1111 silent, config, valid arg
+  1112 silent, config, invalid arg
+  1113 silent, config, no-option
+  1120 silent, env var, no arg
+  1121 silent, env var, valid arg
+  1122 silent, env var, invalid arg
+  1123 silent, env var, no-option
+  1130 silent command line, no arg (-option)
+  1131 silent, command line, valid arg (-option=)
+  1132 silent, command line, valid arg (--option=)
+01150 --S
+  1150 S, command line, no arg
+  1151 S, command line, valid arg
+  1152 S, command line, invalid arg
+  1153 S, command line, no-option
+  1160 S, config, no arg
+  1161 S, config, valid arg
+  1162 S, config, invalid arg
+  1163 S, config, no-option
+  1170 S, env var, no arg
+  1171 S, env var, valid arg
+  1172 S, env var, invalid arg
+  1173 S, env var, no-option
+  1180 S command line, no arg (-option)
+  1181 S, command line, valid arg (-option=)
+  1182 S, command line, valid arg (--option=)
+01200 --support
+  1200 support, command line, no arg
+  # 1201 support, command line, valid arg
+  1202 support, command line, invalid arg
+  1203 support, command line, no-option
+  1210 support, config, no arg
+  # 1211 support, config, valid arg
+  1212 support, config, invalid arg
+  1213 support, config, no-option
+  1220 support, env var, no arg
+  # 1221 support, env var, valid arg
+  1222 support, env var, invalid arg
+  1223 support, env var, no-option
+  1230 support command line, no arg (-option)
+  # 1231 support, command line, valid arg (-option=)
+  # 1232 support, command line, valid arg (--option=)
+01250 --help
+  1250 help, command line, no arg
+  # 1251 help, command line, valid arg
+  1252 help, command line, invalid arg
+  1253 help, command line, no-option
+  1260 help, config, no arg
+  # 1261 help, config, valid arg
+  1262 help, config, invalid arg
+  1263 help, config, no-option
+  1270 help, env var, no arg
+  # 1271 help, env var, valid arg
+  1272 help, env var, invalid arg
+  1273 help, env var, no-option
+  1280 help command line, no arg (-option)
+  # 1281 help, command line, valid arg (-option=)
+  # 1282 help, command line, valid arg (--option=)
+01300 --version
+  1300 version, command line, no arg
+  # 1301 version, command line, valid arg
+  1302 version, command line, invalid arg
+  1303 version, command line, no-option
+  1310 version, config, no arg
+  # 1311 version, config, valid arg
+  1312 version, config, invalid arg
+  1313 version, config, no-option
+  1320 version, env var, no arg
+  # 1321 version, env var, valid arg
+  1322 version, env var, invalid arg
+  1323 version, env var, no-option
+  1330 version command line, no arg (-option)
+  # 1331 version, command line, valid arg (-option=)
+  # 1332 version, command line, valid arg (--option=)
+01350 --dump
+  1350 dump, command line, no arg
+  1351 dump, command line, valid arg
+  1352 dump, command line, invalid arg
+  1353 dump, command line, no-option
+  1360 dump, config, no arg
+  1361 dump, config, valid arg
+  1362 dump, config, invalid arg
+  1363 dump, config, no-option
+  1370 dump, env var, no arg
+  1371 dump, env var, valid arg
+  1372 dump, env var, invalid arg
+  1373 dump, env var, no-option
+  1380 dump command line, no arg (-option)
+  1381 dump, command line, valid arg (-option=)
+  1382 dump, command line, valid arg (--option=)
+01400 --dump-mail
+  1400 dump-mail, command line, no arg
+  # 1401 dump-mail, command line, valid arg
+  1402 dump-mail, command line, invalid arg
+  1403 dump-mail, command line, no-option
+  1410 dump-mail, config, no arg
+  # 1411 dump-mail, config, valid arg
+  1412 dump-mail, config, invalid arg
+  1413 dump-mail, config, no-option
+  1420 dump-mail, env var, no arg
+  # 1421 dump-mail, env var, valid arg
+  1422 dump-mail, env var, invalid arg
+  1423 dump-mail, env var, no-option
+  1430 dump-mail command line, no arg (-option)
+  # 1431 dump-mail, command line, valid arg (-option=)
+  # 1432 dump-mail, command line, valid arg (--option=)
+#### 01450 - skip for now
+01500 --output
+  1500 output, command line, no arg
+  1501 output, command line, valid arg
+  1502 output, command line, invalid arg
+  1503 output, command line, no-option
+  1510 output, config, no arg
+  1511 output, config, valid arg
+  1512 output, config, invalid arg
+  1513 output, config, no-option
+  1520 output, env var, no arg         SKIPPED - should fail but it doesn't, unsure why
+  1521 output, env var, valid arg
+  1522 output, env var, invalid arg
+  1523 output, env var, no-option
+  1530 output command line, no arg (-option)
+  1531 output, command line, valid arg (-option=)
+  1532 output, command line, valid arg (--option=)
+01550 --output-file
+  1550 output-file, command line, no arg
+  1551 output-file, command line, valid arg
+  1552 output-file, command line, invalid arg
+  1553 output-file, command line, no-option
+  1560 output-file, config, no arg
+  1561 output-file, config, valid arg
+  1562 output-file, config, invalid arg
+  1563 output-file, config, no-option
+  1570 output-file, env var, no arg         SKIPPED - should fail but it doesn't, unsure why
+  1571 output-file, env var, valid arg
+  1572 output-file, env var, invalid arg
+  1573 output-file, env var, no-option
+  1580 output-file command line, no arg (-option)
+  1581 output-file, command line, valid arg (-option=)
+  1582 output-file, command line, valid arg (--option=)
+01600 --output-file-stdout
+  1600 output-file-stdout, command line, no arg
+  1601 output-file-stdout, command line, valid arg
+  1602 output-file-stdout, command line, invalid arg
+  1603 output-file-stdout, command line, no-option
+  1610 output-file-stdout, config, no arg
+  1611 output-file-stdout, config, valid arg
+  1612 output-file-stdout, config, invalid arg
+  1613 output-file-stdout, config, no-option
+  1620 output-file-stdout, env var, no arg
+  1621 output-file-stdout, env var, valid arg
+  1622 output-file-stdout, env var, invalid arg
+  1623 output-file-stdout, env var, no-option
+  1630 output-file-stdout command line, no arg (-option)
+  1631 output-file-stdout, command line, valid arg (-option=)
+  1632 output-file-stdout, command line, valid arg (--option=)
+01650 --output-file-stderr
+  1650 output-file-stderr, command line, no arg
+  1651 output-file-stderr, command line, valid arg
+  1652 output-file-stderr, command line, invalid arg
+  1653 output-file-stderr, command line, no-option
+  1660 output-file-stderr, config, no arg
+  1661 output-file-stderr, config, valid arg
+  1662 output-file-stderr, config, invalid arg
+  1663 output-file-stderr, config, no-option
+  1670 output-file-stderr, env var, no arg
+  1671 output-file-stderr, env var, valid arg
+  1672 output-file-stderr, env var, invalid arg
+  1673 output-file-stderr, env var, no-option
+  1680 output-file-stderr command line, no arg (-option)
+  1681 output-file-stderr, command line, valid arg (-option=)
+  1682 output-file-stderr, command line, valid arg (--option=)
+
+
+
+
+
+
+
+
+
+# get a list of commands run (so that they can be rerun)
+grep -h Generated *.test | sort | uniq
+
+
+
+
+
+0000 option, no arg
+0001 option, valid arg
+0002 option, invalid arg
+0003 no-option
+0010 config, no arg
+0011 config, valid arg
+0012 config, invalid arg
+0013 config, no-option
+0020 var, no arg
+0021 var, valid arg
+0022 var, invalid arg
+0023 var, no option (no with command line since var is unreliable)
+0030 option, no arg (-option)
+0031 option, valid arg (--option=)
+0032 option, valid arg (-option=)
+
+That leaves the 4->9 slot for an expansion of the standard tests
+and leaves 30-49 for weird tests
+

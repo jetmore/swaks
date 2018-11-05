@@ -1,0 +1,9 @@
+# Generated Mon Dec 10 12:22:47 2018 by ./gen-tests.pl '.' '400' 'no-receive-hints' '' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: no-receive-hints, config, no-option
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'no-receive-hints \nno-no-receive-hints'
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

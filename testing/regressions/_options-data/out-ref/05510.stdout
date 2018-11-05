@@ -1,0 +1,27 @@
+DATA Info:
+  data = <<.
+Date: Wed, 03 Nov 1999 11:24:29 -0500
+To: user@example.com
+From: from@example.com
+Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+Message-Id: <19991103112429.047942@localhost>
+X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="----=_MIME_BOUNDARY_000_99999"
+
+------=_MIME_BOUNDARY_000_99999
+Content-Type: text/plain
+
+This is the plain text argument to --body
+------=_MIME_BOUNDARY_000_99999
+Content-Type: text/plain; name="file.txt"
+Content-Description: file.txt
+Content-Disposition: attachment; filename="file.txt"
+Content-Transfer-Encoding: BASE64
+
+ZnJvbSBjb21tYW5kIGxpbmU=
+
+------=_MIME_BOUNDARY_000_99999--
+
+
+.

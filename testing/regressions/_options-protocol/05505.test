@@ -1,0 +1,4 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+test action: CMD_CAPTURE %SWAKS% --dump PROTOCOL --to recip@example.com --from sender@example.net --helo hstring --server ser.ver \
+    --timeout 2h

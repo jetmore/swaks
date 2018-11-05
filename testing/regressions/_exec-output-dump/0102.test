@@ -1,0 +1,3 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+test action: CMD_CAPTURE %SWAKS% --dump transport --to user@example.com --helo host.example.com --from from@example.com --server TESTSERVER --port 9999 --local-interface 9.9.9.9 --lport 8888 --copy-routing copy-routing-host.example.com -4

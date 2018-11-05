@@ -1,0 +1,5 @@
+spawn %SWAKS_COMMAND% --dump TRANSPORT --to user@example.com --from recip@example.com --socket
+Socket File: /path/to/file
+Transport Info:
+  type            = socket-unix
+  sockfile        = /path/to/file

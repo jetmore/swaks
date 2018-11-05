@@ -1,0 +1,8 @@
+# Generated Sat Jul 13 10:52:34 2019 by ./gen-tests.pl '-n' '300' '-o' 'body' '-v' 'CUSTOM BODY' '-i' '/path/to/file.txt' '-p' 'Body:' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver"'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: body, env var, invalid arg
+
+pre action: SET_ENV SWAKS_OPT_body '/path/to/file.txt'
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver"

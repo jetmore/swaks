@@ -1,0 +1,5 @@
+XCLIENT Info:
+  xclient         = required
+  no_verify       = FALSE
+  before starttls = FALSE
+  strings         = XCLIENT LOGIN=LOGINSTR

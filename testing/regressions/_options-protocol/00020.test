@@ -1,0 +1,8 @@
+# Generated Sat Jan  5 13:05:17 2019 by ./gen-tests.pl '-n' '0' '-o' 'to' '-v' 'foo@bar.com' '-i' '' '-p' 'To:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --from recip@example.com --server ser.ver'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: to, env var, no arg
+
+pre action: SET_ENV SWAKS_OPT_to
+auto: INTERACT '%SWAKS% --dump PROTOCOL --from recip@example.com --server ser.ver' 'To:' 'foo@bar.com'

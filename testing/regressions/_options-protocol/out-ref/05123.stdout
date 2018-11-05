@@ -1,0 +1,13 @@
+Protocol Info:
+  protocol        = esmtp
+  helo            = hstring
+  from            = sender@example.net
+  to              = 
+  force getpwuid  = FALSE
+  quit after      = tls
+  drop after      = 
+  drop after send = 
+  server_only     = TRUE
+  timeout         = 30
+  pipeline        = FALSE
+  prdr            = FALSE

@@ -1,0 +1,8 @@
+# Generated Mon Dec 10 21:26:34 2018 by ./gen-tests.pl '.' '1350' 'dump' 'OUTPUT' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: dump, command line, invalid arg
+
+test action: CMD_CAPTURE %SWAKS% --to user@example.com --from recip@example.com --pipe /foo/bar \
+    --dump asdf

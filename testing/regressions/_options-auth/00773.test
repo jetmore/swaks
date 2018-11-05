@@ -1,0 +1,8 @@
+# Generated Fri Jul 12 16:58:43 2019 by ./gen-tests.pl '-n' '750' '-o' 'auth-plaintext' '-v' '' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au USER --ap PASS'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: auth-plaintext, env var, no-option
+
+pre action: SET_ENV SWAKS_OPT_auth_plaintext 
+test action: CMD_CAPTURE %SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au USER --ap PASS --no-auth-plaintext

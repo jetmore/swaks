@@ -1,0 +1,6 @@
+DATA Info:
+  data = <<.
+Single: header
+
+This is the body
+.

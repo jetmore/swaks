@@ -1,0 +1,7 @@
+spawn %SWAKS_COMMAND% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server ser.ver -xclient-login
+XCLIENT login: LOGINSTR
+XCLIENT Info:
+  xclient         = required
+  no_verify       = FALSE
+  before starttls = FALSE
+  strings         = XCLIENT LOGIN=LOGINSTR

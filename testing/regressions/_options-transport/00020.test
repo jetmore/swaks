@@ -1,0 +1,8 @@
+# Generated Tue Dec 25 18:19:04 2018 by ./gen-tests.pl '-n' '0' '-o' 'server' '-v' 'TESTSERVER' '-i' '' '-p' 'Server:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: server, env var, no arg
+
+pre action: SET_ENV SWAKS_OPT_server
+auto: INTERACT '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com' 'Server:' 'TESTSERVER'

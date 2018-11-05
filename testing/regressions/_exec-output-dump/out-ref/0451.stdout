@@ -1,0 +1,3 @@
+App Info:
+  X-Mailer = swaks v99999999.9 jetmore.org/john/code/swaks/
+  Cmd Line = %SWAKS_COMMAND% --from 'from@example.com' --to 'user@example.com' --helo 'host.example.com' --server 'ser.ver' --dump 'app'

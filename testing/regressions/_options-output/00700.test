@@ -1,0 +1,8 @@
+# Generated Mon Dec 10 12:36:24 2018 by ./gen-tests.pl '.' '700' 'hide-receive' '' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: hide-receive, command line, no arg
+
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver" \
+    --hide-receive

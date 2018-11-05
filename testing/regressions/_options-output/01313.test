@@ -1,0 +1,9 @@
+# Generated Mon Dec 10 21:23:27 2018 by ./gen-tests.pl '.' '1300' 'version' '' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: version, config, no-option
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'version \nno-version'
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

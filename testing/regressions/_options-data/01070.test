@@ -1,0 +1,8 @@
+# Generated Sat Jul 13 12:27:38 2019 by ./gen-tests.pl '-n' '1050' '-o' 'h-From:' '-v' 'added-by--header' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" %TESTING%'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: h-From:, env var, no arg
+
+pre action: SET_ENV SWAKS_OPT_h_From:
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" 

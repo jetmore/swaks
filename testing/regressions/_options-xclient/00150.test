@@ -1,0 +1,7 @@
+# Generated Wed Jul 10 22:52:20 2019 by ./gen-tests.pl '-n' '150' '-o' 'xclient-proto' '-v' 'ESMTP' '-i' '' '-p' 'XCLIENT proto:' '-d' '.' '-r'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: xclient-proto, command line, no arg
+
+auto: INTERACT '%SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --xclient-proto' 'XCLIENT proto:' 'ESMTP'

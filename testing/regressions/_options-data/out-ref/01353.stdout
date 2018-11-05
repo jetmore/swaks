@@ -1,0 +1,9 @@
+DATA Info:
+  data = <<.
+From: Foo
+Subject: Bar
+
+test body
+
+
+.

@@ -1,0 +1,7 @@
+XCLIENT Info:
+  xclient         = required
+  no_verify       = FALSE
+  before starttls = FALSE
+  strings         = XCLIENT ADDR=1.1.1.1 PORT=26
+                    XCLIENT LOGIN=foo ADDR=1.1.1.1 PORT=26
+                    XCLIENT ADDR=1.1.1.1

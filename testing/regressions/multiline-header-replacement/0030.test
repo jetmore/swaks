@@ -1,5 +1,0 @@
-title: header replacement MULTI-LINE, MULTIPLE-HEADER-CONSECUTIVE MIDDLE
-id: 0030
-pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
-test action: CMD %SWAKS% --dump data --to user@example.com --data %TESTDIR%/%TESTID%.eml --output-file %OUTDIR%/%TESTID%.out --h-Header3 "TEST PASSED 3" --h-Header4 "TEST PASSED 4"
-test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

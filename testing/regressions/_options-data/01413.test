@@ -1,0 +1,7 @@
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: g, config, no-option
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'g \nno-g'
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --config %OUTDIR%/swaksrc-%TESTID% STDIN:%TESTDIR%/g-stdin.txt

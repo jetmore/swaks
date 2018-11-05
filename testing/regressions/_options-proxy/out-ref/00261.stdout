@@ -1,0 +1,10 @@
+PROXY Info:
+  proxy       = yes
+  version     = 1
+  family      = TCP4
+  source      = 9.9.9.9
+  source port = 9999
+  dest        = 2.2.2.2
+  dest port   = 8888
+  protocol    = STREAM
+  command     = PROXY

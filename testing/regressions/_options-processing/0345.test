@@ -1,0 +1,6 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'local-port 9999'
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --server ser.ver \
+  --no-local-port \
+  --config %OUTDIR%/swaksrc-%TESTID%

@@ -1,0 +1,8 @@
+# Generated Mon Dec 10 12:36:46 2018 by ./gen-tests.pl '.' '800' 'hide-send' '' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: hide-send, env var, invalid arg
+
+pre action: SET_ENV SWAKS_OPT_hide_send asdf
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver"

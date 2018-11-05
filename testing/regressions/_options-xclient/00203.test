@@ -1,0 +1,8 @@
+# Generated Wed Jul 10 22:53:15 2019 by ./gen-tests.pl '-n' '200' '-o' 'xclient-destaddr' '-v' '2.2.2.2' '-i' '' '-p' 'XCLIENT destaddr:' '-d' '.' '-r'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: xclient-destaddr, command line, no-option
+
+test action: CMD_CAPTURE %SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" \
+    --xclient-destaddr 2.2.2.2 --no-xclient-destaddr

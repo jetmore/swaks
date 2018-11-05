@@ -1,0 +1,6 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+pre action: SET_ENV SWAKS_OPT_no_6
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'6'
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --server ser.ver \
+  --6

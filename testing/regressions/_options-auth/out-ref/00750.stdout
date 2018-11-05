@@ -1,0 +1,14 @@
+Authentication Info:
+  auth           = required
+  username       = 'USER'
+  password       = 'PASS'
+  show plaintext = TRUE
+  hide password  = FALSE
+  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, PLAIN
+  extras         = 
+  type map       = CRAM-MD5 = CRAM-MD5
+                   CRAM-SHA1 = CRAM-SHA1
+                   DIGEST-MD5 = DIGEST-MD5
+                   LOGIN = LOGIN
+                   NTLM = NTLM, SPA, MSN
+                   PLAIN = PLAIN

@@ -1,0 +1,8 @@
+DATA Info:
+  data = <<.
+No colon in this header
+To: foo
+Subject: test
+
+this is the body
+.

@@ -1,0 +1,8 @@
+# Generated Sat Jan  5 13:32:25 2019 by ./gen-tests.pl '-n' '400' '-o' 'quit-after' '-v' 'connect' '-i' 'invalidstring' '-p' '' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --to recip@example.com --from sender@example.net --helo helo-string --server ser.ver'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: quit-after, env var, invalid arg
+
+pre action: SET_ENV SWAKS_OPT_quit_after invalidstring
+test action: CMD_CAPTURE %SWAKS% --dump PROTOCOL --to recip@example.com --from sender@example.net --helo helo-string --server ser.ver

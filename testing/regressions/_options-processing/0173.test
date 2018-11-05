@@ -1,0 +1,9 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+# this is documented in test.txt too, but to document as close to the issue as possible, this doesn't actually work.
+# Because "no_" sorts before "show_", this is equivilant to '--no-show-time-lapse --show-time-lapse'.  Since
+# "no-" has to be after what it's unsetting, it doesn't work.  I've documented this in base.pod. Just leaving this
+# test around in case the behavior ever changes
+pre action: SET_ENV SWAKS_OPT_show_time_lapse i
+pre action: SET_ENV SWAKS_OPT_no_show_time_lapse
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --server ser.ver

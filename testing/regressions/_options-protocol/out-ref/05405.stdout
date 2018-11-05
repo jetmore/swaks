@@ -1,0 +1,43 @@
+spawn %SWAKS_COMMAND% --dump AUTH,TLS,TRANSPORT,PROTOCOL --to recip@example.com --from sender@example.net --helo hstring --server ser.ver --protocol esmtpa
+Username: test-username
+Password: test-password
+Transport Info:
+  type            = socket-inet
+  inet protocol   = any
+  server          = ser.ver
+  port            = 25
+  local interface = 
+  local port      = 
+  copy routing    = FALSE
+
+Protocol Info:
+  protocol        = esmtp
+  helo            = hstring
+  from            = sender@example.net
+  to              = recip@example.com
+  force getpwuid  = FALSE
+  quit after      = 
+  drop after      = 
+  drop after send = 
+  server_only     = FALSE
+  timeout         = 30
+  pipeline        = FALSE
+  prdr            = FALSE
+
+TLS / Encryption Info:
+  tls = no
+
+Authentication Info:
+  auth           = required
+  username       = 'test-username'
+  password       = 'test-password'
+  show plaintext = FALSE
+  hide password  = FALSE
+  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, PLAIN
+  extras         = 
+  type map       = CRAM-MD5 = CRAM-MD5
+                   CRAM-SHA1 = CRAM-SHA1
+                   DIGEST-MD5 = DIGEST-MD5
+                   LOGIN = LOGIN
+                   NTLM = NTLM, SPA, MSN
+                   PLAIN = PLAIN

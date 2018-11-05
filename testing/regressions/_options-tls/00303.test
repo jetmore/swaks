@@ -1,0 +1,8 @@
+# Generated Tue Dec 11 18:56:14 2018 by ./gen-tests.pl '.' '300' 'tls-on-connect' '' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tls-on-connect, command line, no-option
+
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --server "ser ver" \
+    --tls-on-connect  --no-tls-on-connect

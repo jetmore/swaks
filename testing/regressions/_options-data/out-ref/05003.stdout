@@ -1,0 +1,5 @@
+DATA Info:
+  data = <<.
+
+This is the body
+.

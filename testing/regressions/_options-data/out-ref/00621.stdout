@@ -1,0 +1,26 @@
+DATA Info:
+  data = <<.
+Date: Wed, 03 Nov 1999 11:24:29 -0500
+To: user@example.com
+From: recip@example.com
+Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+Message-Id: <19991103112429.047942@localhost>
+X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="----=_MIME_BOUNDARY_000_99999"
+
+------=_MIME_BOUNDARY_000_99999
+Content-Type: text/plain
+
+This is a test mailing
+------=_MIME_BOUNDARY_000_99999
+Content-Type: custom/mimetype
+Content-Disposition: attachment
+Content-Transfer-Encoding: BASE64
+
+Q1VTVE9NIEFUVEFDSA==
+
+------=_MIME_BOUNDARY_000_99999--
+
+
+.

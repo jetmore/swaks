@@ -1,0 +1,14 @@
+DATA Info:
+  data = <<.
+From: foo
+To: bar
+Subject: subject
+
+This is
+.. the body
+
+with
+..
+dots
+inline
+.

@@ -51,6 +51,7 @@ ssh ftp.jetmore.org /bin/ln -s files/swaks-$RELEASE.tar.gz /home/jetmore/jetmore
 
 scp doc/index.html ftp.jetmore.org:jetmore.org/john/code/swaks/index.html
 scp doc/versions.html ftp.jetmore.org:jetmore.org/john/code/swaks/versions.html
+scp doc/faq.html ftp.jetmore.org:jetmore.org/john/code/swaks/faq.html
 
 Write blog post
 send twitter notification

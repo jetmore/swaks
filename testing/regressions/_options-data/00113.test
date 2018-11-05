@@ -1,0 +1,9 @@
+# Generated Sat Jul 13 10:28:54 2019 by ./gen-tests.pl '-n' '100' '-o' 'dab' '-v' 'AUTH' '-i' 'SUPPORT' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au auth_user --ap auth_pass'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: dab, config, no-option
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'dab AUTH\nno-dab'
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au auth_user --ap auth_pass \
+    --config %OUTDIR%/swaksrc-%TESTID%

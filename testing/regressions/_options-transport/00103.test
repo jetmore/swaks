@@ -1,0 +1,8 @@
+# Generated Tue Dec 25 18:40:40 2018 by ./gen-tests.pl '-n' '100' '-o' 'port' '-v' '9999' '-i' 'badportname' '-p' 'Port:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver"'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: port, command line, no-option
+
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver" \
+    --port 9999 --no-port
