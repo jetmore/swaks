@@ -2,8 +2,10 @@
 
 use Pod::Text;
 use Pod::Html;
+use FindBin qw($Bin);
 
-my $home = '/home/jetmore/Documents/svn/swaks-trunk';
+
+my $home = "$Bin/..";
 my $release_d = "$home/RELEASE";
 my $release = shift || die "Need release\n";
 
@@ -80,14 +82,14 @@ close(I);
 print <<EOM;
 
 ******  Update Changes to include release, if not already there (rerun script if you had to add it)
-******  UPDATE RELEASE/README
+******  UPDATE RELEASE/README.txt
 ******  UPDATE doc/index.html, doc/version.html
 
 SVN COMMIT to put /RELEASE/ into SVN
 
 TAG RELEASE:
   svn copy http://svn.jetmore.org/swaks/trunk/RELEASE http://svn.jetmore.org/swaks/tags/r-$release
-EXPORT AND PACKAGE RELEASE (fulton): 
+EXPORT AND PACKAGE RELEASE (fulton):
   cd ~/jetmore.org/john/code/swaks/files
   release=20170101.0
   svn export http://svn.jetmore.org/swaks/tags/r-$release swaks-$release
@@ -100,7 +102,6 @@ EXPORT AND PACKAGE RELEASE (fulton):
   ln -s files/swaks-$release.tar.gz ./latest.tar.gz
 
 blog
-google+
 twitter
 email list
 EOM

@@ -777,3 +777,5 @@
 * 20181104 Clean up contact/notifications - remove Google+ everywhere, add
            RSS and Twitter to base.pod
 * 20181104 Spelling fixes
+* 20181104 Rename LICENSE and README to have .txt extension
+* 20181104 Update release tooling after development environment changes

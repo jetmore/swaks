@@ -1,11 +1,81 @@
 This file is used to document the formal release process.  Populate
 the next time I do a real release.  Needed because I apparently forgot
-to manually update the "Change Summary" section of RELEASE/README.
-
-# Do these commands on g3.(could be done from mb, but paths are set up for g3):
+to manually update the "Change Summary" section of RELEASE/README.txt.
 
 # Choose a release
-export RELEASE=20180225.0
+export RELEASE=20181104.0
+export SWAKSDIR=/Users/jetmore/Documents/git/swaks
 
-# run the actual script:
-/home/jetmore/Documents/svn/swaks-trunk/util/gen-release.pl $RELEASE
+# run the actual script (this preps some stuff, but this won't be the final release):
+$SWAKSDIR/util/gen-release.pl $RELEASE
+
+# Update Changes, add a release entry
+
+# review RELEASE/README.txt and update with detailed changes and high-level overview of release
+
+# Run the spell checker
+# Really would like to get custom dictionary working here that I could store in git
+# https://alexwlchan.net/2016/09/please-use-aspell/
+# alias aspell=~/Documents/dev/bin/aspell
+
+# Can save changes directly:
+aspell check Changes
+aspell --mode perl check swaks
+aspell --mode html check doc/faq.html
+aspell --mode html check doc/index.html
+aspell check RELEASE/README.txt
+
+# any errors found here need to be fixed in base.pod
+aspell check RELEASE/doc/recipes.txt
+aspell check RELEASE/doc/ref.txt
+
+# update doc/index.html
+
+# update doc/version.html
+
+# open doc/version.html and doc/index.html in a browser and make sure everything looks ok
+
+# commit outstanding stuff in git - this will be the release commit
+git tag -a r-$RELEASE -m "Tagging the $RELEASE release"
+
+mv RELEASE swaks-$RELEASE
+COPYFILE_DISABLE=1 tar -cvzf swaks-$RELEASE.tar.gz --exclude '._*' swaks-$RELEASE
+mv swaks-$RELEASE RELEASE
+scp swaks-$RELEASE.tar.gz ftp.jetmore.org:jetmore.org/john/code/swaks/files
+rm swaks-$RELEASE.tar.gz
+
+ssh ftp.jetmore.org /bin/tar -xzvf jetmore.org/john/code/swaks/files/swaks-$RELEASE.tar.gz -C jetmore.org/john/code/swaks/files
+ssh ftp.jetmore.org /bin/rm jetmore.org/john/code/swaks/latest jetmore.org/john/code/swaks/latest.tar.gz
+ssh ftp.jetmore.org /bin/ln -s files/swaks-$RELEASE /home/jetmore/jetmore.org/john/code/swaks/latest
+ssh ftp.jetmore.org /bin/ln -s files/swaks-$RELEASE.tar.gz /home/jetmore/jetmore.org/john/code/swaks/latest.tar.gz
+
+scp doc/index.html ftp.jetmore.org:jetmore.org/john/code/swaks/index.html
+scp doc/versions.html ftp.jetmore.org:jetmore.org/john/code/swaks/versions.html
+
+Write blog post
+send twitter notification
+send email to those who have requested it
+
+######
+Subject: Swaks 20181104.0 released
+
+A new version of swaks is available for download.  Please visit
+https://www.jetmore.org/john/blog/2018/11/swaks-release-20181104-0-available/
+for links and details.
+
+--John
+
+--
+You are receiving this email because at one point you signed up to
+receive announcements about swaks.  If you no longer wish to receive
+these updates please respond to this email and ask to be removed.
+##########
+
+
+
+
+
+
+
+
+
