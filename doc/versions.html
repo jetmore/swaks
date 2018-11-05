@@ -42,6 +42,110 @@ This page lists every official release of Swaks, from newest to oldest.  All rel
 
 <table cellpadding=3 border=0 width=600>
 <tr>
+<td valign=top><font size=-1><b>v20181104.0</b></font></td>
+<td><font size=-1>
+<B>Links:</b> <a href=files/swaks-20181104.0.tar.gz>Distribution</a>, <a href=files/swaks-20181104.0/swaks>script only</a>, <a href=files/swaks-20181104.0/doc/ref.txt>version docs</a>
+<P>
+<B>Change Summary:</B><BR>
+<pre>
+New Features:
+  * Added --dump-mail option.
+  * Added --xclient-delim, --xclient-destaddr, --xclient-destport,
+    --xclient-no-verify, and --xclient-before-starttls options.
+Notable Changes:
+  * XCLIENT can now send multiple XCLIENT requests.  Because of this,
+    --xclient and --xclient-ATTR values are no longer merged into one
+    string.  This breaks previously documented behavior.
+  * Numerous improvements to the output of --dump and --dump-as-body,
+    including the ability to limit output by section, layout improvements,
+    adding missing options to output, and fixing bugs.
+Notable Bugs Fixed:
+  * Fixed bug preventing Proxy from working with --tls-on-connect.
+  * XCLIENT is now sent after STARTTLS to match with Postfix's expectations.
+  * Fixed bug which could allow mail sending to proceed without a valid
+    recipient.
+  * Replacing a multi-line header via --header or --h-HEADER now replaces
+    the entire header, not just the first line.
+  * The option for specifying the local port was documented as --local-port
+    but implemented as --lport.  Both are now documented and implemented.
+  * Fixed two bugs which prevented interactions between --dump,
+    --auth-hide-password, --dump-as-body, and --dump-as-body-shows-password
+    from producing consistent output.
+</pre>
+<B>Changelog:</B><BR>
+<pre>
+* 20170106 Fix typos in base.pod (reported by Andreas Metzler/Debian)
+* 20170307 Fix spelling, grammar, and phrasing issues in base.pod, faq.html,
+           and index.html
+* 20170307 Remove deprecated single-character data tokens and
+           --use-old-data-tokens option
+* 20170308 Implement --dump-mail option
+* 20170308 Add BCC section to faq.html
+* 20170819 Enable https access for website
+* 20180217 Updating copyright date to 2018
+* 20180217 Fix bug preventing Proxy from working with --tls-on-connect
+* 20180217 Remove note in documentation that Proxy v2 support is theoretical.
+           Exim fixed v2 bug in 4.89 and swaks has now been tested with it
+* 20180225 Change Swaks to send XCLIENT after STARTTLS (per user bug
+           report and Postfix mailing list confirmation).
+* 20180225 Add --xclient-before-starttls option to allow Swaks to attempt
+           XCLIENT first and then STARTTLS.
+* 20180225 Added license and authorship info to README, base.pod, index.html
+* 20180609 Moved xtext encoding out of do_smtp_xclient and into to_xtext
+           in preparation for implementing xforward, which will also need it
+* 20180609 Add --xclient-delim option to allow --xclient-ATTR options to be
+           grouped into individual XCLIENT calls
+* 20180609 Now that we support multiple XCLIENT calls, --xclient-ATTR options
+           are no longer merged with --xclient into a single XCLIENT call.
+           This breaks previously documented behavior.
+* 20180609 Add --xclient-no-verify added to turn off requirement that
+           XCLIENT attributes must have been advertised by server for Swaks
+           to send them
+* 20180609 If an option-processing callback fails to load, print error and
+           exit (mostly helpful for development)
+* 20180609 Add --xclient-destaddr and --xclient-destport options
+* 20181030 Support TLSv1.3 and DTLSv1.2 in debug strings
+* 20181101 Don't allow empty recipient if we're prompting for one
+* 20181101 --dump and --dump-as-body now take optional arguments which can
+           limit what is printed, making targeted debugging easier.
+* 20181101 --dump now prints all output to the default output filehandle
+           instead of STDOUT.
+* 20181101 Using --header now handles replacing a multi-line header properly
+* 20181103 Prevent --dump from always listing XCLIENT as active
+* 20181103 -lp/--local-port was documented but -lp/-lport was implemented.
+           Now all three are documented and implemented.
+* 20181103 Properly document that --drop-after-send takes an argument.
+* 20181103 Rework --dump to produce more consistent and thorough output
+             - ensure no leading/trailing space when only dumping sections
+             - alphabetize lists for reproducible output
+* 20181104 Fix bugs causing the interactions between --dump,
+           --auth-hide-password, --dump-as-body, and
+           --dump-as-body-shows-password to not always work as documented
+* 20181104 More --dump improvements and bug fixes
+             - General layout improvements
+             - Auth: add output for --auth-hide-password
+             - Transport: only show the output options relevant to the type
+             - TLS: Fix bug preventing display of TLS info when
+               --tls-on-connect used
+             - Proxy: Add output for --proxy-command and --proxy-protocol
+             - Transport: add output for --copy-routing
+             - Transport: add output for -4 and -6
+             - Output: add output for --protect-prompt and --show-raw-text
+             - Protocol: add output for --force-getpwuid
+             - XCLIENT: add output for --xclient-before-starttls and
+               --xclient-no-verify
+* 20181104 --dump-mail should write to the default output filehandle
+* 20181104 Add --output as a synonym for --output-file
+* 20181104 Clean up contact/notifications - remove Google+ everywhere, add
+           RSS and Twitter to base.pod
+* 20181104 Spelling fixes
+* 20181104 Rename LICENSE and README to have .txt extension
+* 20181104 Update release tooling after development environment changes
+> 20181104 released 20181104.0
+</pre>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
 <td valign=top><font size=-1><b>v20170101.0</b></font></td>
 <td><font size=-1>
 <B>Links:</b> <a href=files/swaks-20170101.0.tar.gz>Distribution</a>, <a href=files/swaks-20170101.0/swaks>script only</a>, <a href=files/swaks-20170101.0/doc/ref.txt>version docs</a>
@@ -154,12 +258,12 @@ Notable Bugs Fixed
            Specifically fixed error where swaks would die silently during
            SSL protocol negotiation (could replicate by doing -tlsc
            against port 25)
-* 20120330 Change the TLS cipher info line from just the NAME to 
+* 20120330 Change the TLS cipher info line from just the NAME to
            VERSION:NAME:BITS
 * 20120402 xclient first pass.  Added -xclient* options to data struct
            made first pass at documenting feature and options
 * 20120402 xclient second pass.  option processing and --dump
-* 20120404 implemented the SMTP portion of XCLIENT, documented the 
+* 20120404 implemented the SMTP portion of XCLIENT, documented the
            --xclient-optional(-strict)? behavior.  Added and documented
            33,34 exit codes
 * 20120404 add and document new --quit-after option 'xclient'
@@ -351,7 +455,7 @@ Notable Bugs Fixed
 * 20110309 misc typos/style
 * 20110309 added --protect-password option to make best effort not to
            echo user input on sensitive fields (*nix and Win32)
-* 20110321 fixed bug which prevented message data to be provided in a file 
+* 20110321 fixed bug which prevented message data to be provided in a file
            with a "n" or "\" in the filename.  Reported and fix suggested
            by dietrich.rebmann#freenet.de
 * 20110321 added --auth-hide-password option to replace recoverable passwords
@@ -387,7 +491,7 @@ Notable Bugs Fixed
            to evaluate the DIGEST-MD5 changes
 * 20111201 fixed TLS issue when SMTP response sent in multiple packets.
            This looks like a regression of the TLS fix from 20050709
-           (r94) that was made in the implementation of --pipeline in 
+           (r94) that was made in the implementation of --pipeline in
            20060309's r115.  Regression reported by Peter J. Holzer along
            with suggested fix.
 * 20111202 reimplemented reading of server responses in non-TLS, non-pipe
@@ -477,7 +581,7 @@ Notable Bugs Fixed
 > 20070920 released 20070920.0-dev to haraldme.gmail.com
 * 20070921 rearranged dependency processing for code readability
 * 20070921 20061221 added --config.  Added new config file and
-           environment variable processing to allow multiple, 
+           environment variable processing to allow multiple,
            ways to specifying options.  debian bug 403208
 > 20070921 released 20070921.0-dev to madduck.debian.org, db403208
 * 20071016 fixed --tlsos/-tlsos type in POD (haraldme.gmail.com)
@@ -506,7 +610,7 @@ Notable Bugs Fixed
            additive.  the additive form is now deprecated
 * 20071231 fixed long standing impemenation bug in the inter-op
            of the --dump and --silent option.
-* 20080103 updated copyrght to 2008. changed $p_cp formatting to 
+* 20080103 updated copyrght to 2008. changed $p_cp formatting to
            remove backslash from email
 * 20080103 added yet another layer of abstraction to option processing
 * 20080103 implemented recognition of "no-" prefix to erase previously
@@ -614,13 +718,13 @@ Notable Bugs Fixed
 * 20061011 20061010 --port can now be a service name as well as
            a port number.  Internally, now tries resolve 'smtp' and
            'smtps' services as default ports reverting to old 25/465
-           behaviour if those aren't found  
+           behaviour if those aren't found
 * 20061018 set default port for LMTP to 'lmtp'/24 and documented
 * 20061018 implemented groundwork for overloading --protocol with
            broad protocol types.  implemented overload->simple
            protocol mapping, still missing TLS and AUTH mapping
 * 20061023 finished implementing protocol overloading (tls and auth)
-* 20061115 documented rfc3848 --protocol options and behaviours 
+* 20061115 documented rfc3848 --protocol options and behaviours
 * 20061115 20060806 fixed bug where From: was prompted for on some -q
            types that don't require it, too (Helo: too)
 </pre>
@@ -715,10 +819,10 @@ Notable Bugs Fixed
 * 20050625 saved many lines of code by adding do_smtp_quit
 * 20050625 moved all connection level into into %G::link very early
 * 20050625 20050517 added --pipe option to be able to conduct
-           smtp transaction with a child process.  See debian 
+           smtp transaction with a child process.  See debian
            bug ID 309462
 * 20050625 fixed a couple of bugs in --auth-optional (one caused it
-           not to work at all, the other caused it not to work if 
+           not to work at all, the other caused it not to work if
            either -a not also used or some arg not supplied)
 * 20050625 20050605 added --socket option to allow smtp over
            unix domain socket
@@ -734,7 +838,7 @@ Notable Bugs Fixed
            Win32, spent some time evaluating capabilities (reported
            alexander.hass#e-domizil.de)
 * 20050605 added portability section to documentation
-* 20060605 20040909 the line ending translation was very slow for 
+* 20060605 20040909 the line ending translation was very slow for
            large files.  fixed.
 </pre>
 </td></tr>
@@ -767,7 +871,7 @@ Notable Bugs Fixed
 * 20040128 added error checking for -q opt - error out if unknown val.
            (sugg. ametzler)
 * 20040128 added a few -q aliases (ehlo, first-ehlo, starttls, from, to)
-* 20040128 if -q opt is one which doesn't require a to address 
+* 20040128 if -q opt is one which doesn't require a to address
            (everything before rcpt) and server is otherwise specified,
            don't require a to address. (sugg. ametzler)
 * 20040128 reworked a split to quell a perl -w gripe
@@ -789,7 +893,7 @@ Notable Bugs Fixed
            (for instance, on my laptop when my VPN is active).  In this
            situation, prompt for helo string and from address.
 * 20031218 reworked local hostname determination.  hostname() almost
-           never fails but gethostbyname can, use first results if 
+           never fails but gethostbyname can, use first results if
            second call fails.
 </pre>
 </td></tr>
@@ -802,9 +906,9 @@ Notable Bugs Fixed
            to compile on older perls
 * 20031211 removed -U and -F options from the perldoc call for --help.
            (unknown by older perls
-* 20031211 since perldoc didn't want to run as root anyway I caught 
+* 20031211 since perldoc didn't want to run as root anyway I caught
            that case and printed a more informative message
-* 20031211 duh.  if --help run as root, just change to uid 1 before 
+* 20031211 duh.  if --help run as root, just change to uid 1 before
            running perldoc.  no fuss no muss
 </pre>
 </td></tr>
@@ -816,11 +920,11 @@ Notable Bugs Fixed
 * 20031201 changed name from vmail to swaks (SWiss Army Knife Smtp)
 * 20031201 changed copyright/license to GPL
 * 20031207 changed %D body token to be compliant for an RFC Date: header
-* 20031207 add 'Date: %D' header to default data string (probably 
+* 20031207 add 'Date: %D' header to default data string (probably
            should have been there all along but this was specifically
            added to address a change in the handling of messages
            without Date: headers by exim in 4.30)
-* 20031210 handle default routing correctly for domain literal 
+* 20031210 handle default routing correctly for domain literal
            to addresses (@[1.2.3.4]).  Had to specify server explicitly
            using -s before.
 * 20031210 moved "Trying..." above actual socket creation, which
@@ -912,9 +1016,9 @@ Notable Bugs Fixed
            uses DNS for domain of last recip in list)
 * 20031008 add -to option to allow timeout to be specified in seconds
            on command line. (defaults to 30s)
-* 20031008 fixed bug where alarm was not reset after 
+* 20031008 fixed bug where alarm was not reset after
 * 20031008 allow TIMEOUT to be specified in -l file
-* 20031008 changed so you can specify in time format (hms).  This 
+* 20031008 changed so you can specify in time format (hms).  This
            allows you to use 0s to mean no timeout
 * 20031008 adjusted Getopt::Long to have case-sensitive single
            char options, but insensitive long opts.  It also turns
@@ -974,12 +1078,12 @@ Notable Bugs Fixed
 * 20031021 Added aliases for SPA/MSN to NTLM
 * 20031024 started rearranging options.  Move from $O:: namespace
            to %O hash.  %O is for temporary vars, $G:: is for true
-           global vars.  moved most of the up-front processing to 
+           global vars.  moved most of the up-front processing to
            a subroutine and rearranged
 * 20031024 Added module checking for Authen::NTLM
-* 20031024 changed server for non-mx domain from localhost to domain's 
+* 20031024 changed server for non-mx domain from localhost to domain's
            A record
-* 20031024 changed "empty" placeholder from NULLNULL to &lt;&gt; for 
+* 20031024 changed "empty" placeholder from NULLNULL to &lt;&gt; for
            sender, a_user, a_pass
 * 20031027 added -stl option to show lapse between send/receive
 * 20031101 fixed bug in NTLM auth (worked with exim but not with

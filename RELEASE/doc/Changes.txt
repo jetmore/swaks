@@ -1,3 +1,70 @@
+> 20181104 released 20181104.0
+* 20181104 Update release tooling after development environment changes
+* 20181104 Spelling fixes
+* 20181104 Clean up contact/notifications - remove Google+ everywhere, add
+           RSS and Twitter to base.pod
+* 20181104 Add --output as a synonym for --output-file
+* 20181104 --dump-mail should write to the default output filehandle
+* 20181104 More --dump improvements and bug fixes
+             - General layout improvements
+             - Auth: add output for --auth-hide-password
+             - Transport: only show the output options relevant to the type
+             - TLS: Fix bug preventing display of TLS info when
+               --tls-on-connect used
+             - Proxy: Add output for --proxy-command and --proxy-protocol
+             - Transport: add output for --copy-routing
+             - Transport: add output for -4 and -6
+             - Output: add output for --protect-prompt and --show-raw-text
+             - Protocol: add output for --force-getpwuid
+             - XCLIENT: add output for --xclient-before-starttls and
+               --xclient-no-verify
+* 20181104 Fix bugs causing the interactions between --dump,
+           --auth-hide-password, --dump-as-body, and
+           --dump-as-body-shows-password to not always work as documented
+* 20181103 Rework --dump to produce more consistent and thorough output
+             - ensure no leading/trailing space when only dumping sections
+             - alphabetize lists for reproducible output
+* 20181103 Properly document that --drop-after-send takes an argument.
+* 20181103 -lp/--local-port was documented but -lp/-lport was implemented.
+           Now all three are documented and implemented.
+* 20181103 Prevent --dump from always listing XCLIENT as active
+* 20181101 Using --header now handles replacing a multi-line header properly
+* 20181101 --dump now prints all output to the default output filehandle
+           instead of STDOUT.
+* 20181101 --dump and --dump-as-body now take optional arguments which can
+           limit what is printed, making targeted debugging easier.
+* 20181101 Don't allow empty recipient if we're prompting for one
+* 20181030 Support TLSv1.3 and DTLSv1.2 in debug strings
+* 20180609 Add --xclient-destaddr and --xclient-destport options
+* 20180609 If an option-processing callback fails to load, print error and
+           exit (mostly helpful for development)
+* 20180609 Add --xclient-no-verify added to turn off requirement that
+           XCLIENT attributes must have been advertised by server for Swaks
+           to send them
+* 20180609 Now that we support multiple XCLIENT calls, --xclient-ATTR options
+           are no longer merged with --xclient into a single XCLIENT call.
+           This breaks previously documented behavior.
+* 20180609 Add --xclient-delim option to allow --xclient-ATTR options to be
+           grouped into individual XCLIENT calls
+* 20180609 Moved xtext encoding out of do_smtp_xclient and into to_xtext
+           in preparation for implementing xforward, which will also need it
+* 20180225 Added license and authorship info to README, base.pod, index.html
+* 20180225 Add --xclient-before-starttls option to allow Swaks to attempt
+           XCLIENT first and then STARTTLS.
+* 20180225 Change Swaks to send XCLIENT after STARTTLS (per user bug
+           report and Postfix mailing list confirmation).
+* 20180217 Remove note in documentation that Proxy v2 support is theoretical.
+           Exim fixed v2 bug in 4.89 and swaks has now been tested with it
+* 20180217 Fix bug preventing Proxy from working with --tls-on-connect
+* 20180217 Updating copyright date to 2018
+* 20170819 Enable https access for website
+* 20170308 Add BCC section to faq.html
+* 20170308 Implement --dump-mail option
+* 20170307 Remove deprecated single-character data tokens and
+           --use-old-data-tokens option
+* 20170307 Fix spelling, grammar, and phrasing issues in base.pod, faq.html,
+           and index.html
+* 20170106 Fix typos in base.pod (reported by Andreas Metzler/Debian)
 > 20170101 released 20170101.0
 * 20170101 Removed unneeded extra functionality added to transact() for
            PRDR implementation (functionality already existed)
@@ -25,7 +92,7 @@
            Homebrew and MacPorts both package swaks (h/t Andrew Langhorn)
 * 20140207 Updating copyright to 2014
 * 20130906 Fixed some POD formatting errors. Exit code formatting reported by
-           both debian and redhat maintainers, caused by Pod::Simple change
+           both Debian and redhat maintainers, caused by Pod::Simple change
            in perl-5.18.1.  Others found playing with podchecker.
 * 20130422 Fixed typo in man page ("test" -> "text"), reported by
            Graeme Hewson.
@@ -54,7 +121,7 @@
            verification
 * 20120624 If TLS is attempted but failed, just exit, don't attempt to
            send quit because we don't know what state the cxn is in.  This
-           will likey cause problems with tls-optional connections,
+           will likely cause problems with tls-optional connections,
            documenting the concern there.
 * 20120601 Added --tls-verify option
 * 20120531 Added --tls-cipher option to set preferred ciphers list
@@ -70,7 +137,7 @@
            the raw version number in the post-tls-negotiation info lines
 * 20120530 Fix the botched TLS checks in the last commit
 * 20120529 Added some more error checking in TLS code, breadcrumbs to the
-           existing errors (spurred by debian bug 675009, though the
+           existing errors (spurred by Debian bug 675009, though the
            specific issue in that bug was fixed by commit 311).
 * 20120410 typo fixes and clarifications for XCLIENT docs
 * 20120407 fix bug w/ xclient impl, using just --xclient didn't cause
@@ -96,7 +163,7 @@
 * 20120330 cleaned up TLS info lines.  Changed "w/" to "with", changed
            "peer subject DN" to "peer DN".
 * 20120330 add --tls-cert and --tls-key options to allow swaks to use
-           certs for its half of the session.  debian bug 497654,
+           certs for its half of the session.  Debian bug 497654,
            Luis E. Muñoz provided a patch that was the basis for the
            eventual implementation.
 * 20120330 add --tls-get-peer-cert to --dump output
@@ -108,14 +175,14 @@
 * 20120320 add --dump-as-body and --dump-as-body-shows-password.
 * 20120320 added reconstruct_options() to generate an effective command line.
            Added to --dump output
-* 20120319 There are some interactions (DIGEST-MD5 specificallY) which can
-           result in b64-encoded response if successful, plaintest response
+* 20120319 There are some interactions (DIGEST-MD5 specifically) which can
+           result in b64-encoded response if successful, plaintext response
            if an error.  --auth-plaintext didn't play well with the
            plaintext error.
 * 20120319 fixed a couple of exit codes to be more specific
 * 20120319 change all references for Digest::SHA1 to Digest::SHA, included
            in perl core since at least 5.9. Suggested by Andreas Metzler
-* 20120319 still more removal of code supporing the -l option (r253 removed
+* 20120319 still more removal of code supporting the -l option (r253 removed
            the function parsing the file, but we still checked the now-
            never-populated $fconf in lots of option processing)
 * 20120319 Rearrange --dump output, group settings closer to how options
@@ -171,7 +238,7 @@
 > 20111203 released 20111202.0-dev to announce list for review
 * 20111202 implemented the -raw/--show-raw-text option to print a hex dump
            of the raw bytes as received on the wire.
-* 20111202 reimplemented reading of server responses in non-TLS, non-pipe
+* 20111202 re-implemented reading of server responses in non-TLS, non-pipe
            sessions in terms of recv rather than as a standard filehandle
            operation (<>) to make it closer to the TLS's read and to allow
            a more in-depth view of what's being sent on the wire.
@@ -182,7 +249,7 @@
            with suggested fix.
 > 20111130 released r256 to Erwan Legrand (erwan@lightbringer.org)
            to evaluate the DIGEST-MD5 changes
-* 20111130 Changed the DIGEST-MD5 backend from Authen::DigestMD5 to
+* 20111130 Changed the DIGEST-MD5 back end from Authen::DigestMD5 to
            Authen::SASL.  Authen::DigestMD5 had some blatant protocol
            bugs and swaks did a poor job of supporting DIGEST-MD5
            (as pointed out by Erwan Legrand).  Current version
@@ -193,7 +260,7 @@
            config option or env variable, but would not erase --timeout
            given earlier on the same command line.
 * 20111128 Removed the additive nature of the --silent/-S option.  Left
-           a mention of it in doc as breadcumb.  Remove all mention in next
+           a mention of it in doc as breadcrumb.  Remove all mention in next
            release
 * 20111128 removed the --input-file/-l option from the code.  Left one final
            mention on if in the docs as a breadcrumb to anyone who still needs
@@ -208,7 +275,7 @@
            first reported by Peter Baranyi)
 * 20111021 Fixed the date string TZ offset to work correctly for TZs that
            are not fixed on an hour boundary.  Report and patch by Peter
-           Samuelson in debian bug 646084.
+           Samuelson in Debian bug 646084.
 * 20110321 added --auth-hide-password option to replace recoverable passwords
            in SMTP transactions with a dummy string
 * 20110321 fixed bug which prevented message data to be provided in a file
@@ -233,9 +300,9 @@
            Cliff Clasen.
 * 20100204 set a name for attachments based off of filename
 * 20100204 removed requirement for OPTIONS markers in config files
-* 20100204 fixed TZ bug which could occassionally generate TZs offsets
+* 20100204 fixed TZ bug which could occasionally generate TZs offsets
            like +0099 (instead of +0100) for GMT+X TZs (not GMT-X).
-           fixed debian bug 566013)
+           fixed Debian bug 566013)
 * 20100203 declaring docs good enough, finished rewrite
 * 20100203 updated copyright date to 2010
 > 20080618 released 20080618.0-dev to martin#antibodymx.net
@@ -265,16 +332,16 @@
 * 20080103 implemented recognition of "no-" prefix to erase previously
            set options
 * 20080103 added yet another layer of abstraction to option processing
-* 20080103 updated copyrght to 2008. changed $p_cp formatting to
+* 20080103 updated copyright to 2008. changed $p_cp formatting to
            remove backslash from email
-* 20071231 fixed long standing impemenation bug in the inter-op
+* 20071231 fixed long standing implementation bug in the inter-op
            of the --dump and --silent option.
 * 20071231 changed --silent to accept an arg in addition to being
            additive.  the additive form is now deprecated
 * 20071227 implemented --hide-all and --hide-informational
 * 20071221 made --server/--pipe/--socket mutually exclusive
 * 20071220 Added banner as synonym for CONNECT
-           CONNECT behaviour that closes the connection without
+           CONNECT behavior that closes the connection without
            sending quit immediately after opening it.  Made -q TLS
            work after tls-on-connect.
 * 20071220 changed the env var namespace from SWAKS_ARG_ to
@@ -296,7 +363,7 @@
 > 20070921 released 20070921.0-dev to madduck.debian.org, db403208
 * 20070921 20061221 added --config.  Added new config file and
            environment variable processing to allow multiple,
-           ways to specifying options.  debian bug 403208
+           ways to specifying options.  Debian bug 403208
 * 20070921 rearranged dependency processing for code readability
 > 20070920 released 20070920.0-dev to haraldme.gmail.com
 * 20070920 implemented --tls-option-strict
@@ -309,7 +376,7 @@
            undef and "" differently was lost.  Never noticed because
            only DIGEST-MD5 sends a blank line as part of the protocol.)
 * 20070115 20061229 added and documented --copy-routing option
-           to allow routing information fo a domain that is unrelated
+           to allow routing information of a domain that is unrelated
            to the --to address (saves the step of having to look
            up and specify MX records manually using --server).  Arg
            can be domain, @domain, or lp@domain, where domain can be
@@ -332,7 +399,7 @@
 > 20061116 released 20061116.0
 * 20061115 20060806 fixed bug where From: was prompted for on some -q
            types that don't require it, too (Helo: too)
-* 20061115 documented rfc3848 --protocol options and behaviours
+* 20061115 documented rfc3848 --protocol options and behaviors
 * 20061023 finished implementing protocol overloading (tls and auth)
 * 20061018 implemented groundwork for overloading --protocol with
            broad protocol types.  implemented overload->simple
@@ -341,13 +408,13 @@
 * 20061011 20061010 --port can now be a service name as well as
            a port number.  Internally, now tries resolve 'smtp' and
            'smtps' services as default ports reverting to old 25/465
-           behaviour if those aren't found
+           behavior if those aren't found
 * 20061010 20060914 documented --header and --h-Header options
            (though badly.  I really need to redo the docs)
 * 20061010 fixed bug time bomb with handling legacy AUTH= ESMTP
            lines noticed while addressing the above.
 * 20061010 made AUTH auth_types case insensitive as required in
-           rfc2554.  debian bug 392182
+           rfc2554.  Debian bug 392182
 * 20060914 removed some extraneous /e opts from body-processing regexps
 * 20060914 added --header-HEADER option where --h-Text foo is
            a synonym for --header "Text: foo"
@@ -356,13 +423,13 @@
 * 20060817 redid --support/avail() again to support concept of
            optional (optimizing) modules for full disclosure in output
 * 20060804 redid the REQ docs to reflect current requirements
-           and behaviours.
+           and behaviors.
 * 20060804 fixed get_date_string() to return a true GMT string, not
            the local time w/ a GMT stamp if date_manip unavailable
 * 20060804 didn't realize eb64 needed to support line endings because
            of use in encoding mime bodies.  Add in feature.
 * 20060804 changed all base64 calls to use local functions if
-           MIME::Base64 isn't available.  Module is still prefered
+           MIME::Base64 isn't available.  Module is still preferred
            due to "many eyes" and speed.  Removed MIME::Base64 from
            auth requirements.
 * 20060804 added test_support() call to --dump output for testing
@@ -379,7 +446,7 @@
            implementations change.  added avail() and avail_err(),
            test_support(), removed load_modules(), try_load().  Also
            some speed gains because program now only loads modules
-           needed for speific invocation - previously preloaded
+           needed for specific invocation - previously preloaded
            every available module, regardless of need.
 * 20060803 added and tested load(), but haven't hooked in yet
            (part of requirement rewrite)
@@ -394,14 +461,14 @@
            based ones.
 * 20060718 20050605 added 'lmtp' as a valid protocol
 * 20060718 20050625 added --protocol option.  'esmtp' is default with
-           legacy behaviour.  'smtp' only sends HELO, not EHLO.
+           legacy behavior.  'smtp' only sends HELO, not EHLO.
 * 20060623 added url to CONTACT section of docs
 * 20060622 Updated FSF address in GPL notice
 > 20060621 released 20060621.0
 * 20060621 added note at top and in docs about update email address
 * 20060621 added comments to top of code about viewing docs
-* 20060526 added and document --add-header option (debian bug 366317)
-* 20060526 removed old (pre-pipeling) transaction code
+* 20060526 added and document --add-header option (Debian bug 366317)
+* 20060526 removed old (pre-pipelining) transaction code
 > 20060309 released 20060309.0-dev to exim-users.exim.org
 * 20060309 20050406 added --pipeline option
 * 20060308 --attach/--body tweaks (add closing boundary in mime,
@@ -409,11 +476,11 @@
            allowed --body and --attach to coexist, added docs
            for the three options)
 * 20060307 20050510 added simple implementation of --body, --attach,
-           and --attach-type options (debian bug 354084)
+           and --attach-type options (Debian bug 354084)
 * 20060222 swaks died on SIGPIPE on unexpected disconnect over
            --socket.  fixed.
 > 20060221 released 20060221.4-dev to jh.plonk.de
-* 20060221 20060130 if quiting before rcpt and link type is --socket
+* 20060221 20060130 if quitting before rcpt and link type is --socket
            or --pipe, do not prompt for recipient.
 * 20060221 misc code tidying
 * 20060221 with io handling on broken connections working better,
@@ -467,7 +534,7 @@
            not to work at all, the other caused it not to work if
            either -a not also used or some arg not supplied)
 * 20050625 20050517 added --pipe option to be able to conduct
-           smtp transaction with a child process.  See debian
+           smtp transaction with a child process.  See Debian
            bug ID 309462
 * 20050625 moved all connection level into into %G::link very early
 * 20050625 saved many lines of code by adding do_smtp_quit
@@ -580,7 +647,7 @@
 * 20031020 switched to alternate Authen::NTLM module to fix username
            issue (seems to work so far but might be safer to switch to
            native implementation)
-* 20031020 NTLM basicaly works.  Fixed first problem by changing
+* 20031020 NTLM basically works.  Fixed first problem by changing
            expected return value from 334 to 235 in getting final auth
            verdict.  Still issue w/ username (but pass works fine)
 * 20031019 started adding NTLM support (doesn't work totally yet)
@@ -588,12 +655,12 @@
 * 20031019 added -hr and -hs options to mute parts of transaction
 * 20031019 Added -nth option to turn off transaction hints
 * 20031016 arg of '-' to -d sets -g (reads from STDIN)
-* 20031016 moved TLS code into sub (mimic AUTh architecture)
+* 20031016 moved TLS code into sub (mimic AUTH architecture)
 * 20031016 documented long options in POD
 * 20031016 typo - changed --supress-data to --suppress-data
 * 20031014 added longer alternatives to most options (that is, -ao
            can also be specified as --auth-optional
-* 20031014 changed timout CLA from -to to -timeout to avoid confusion
+* 20031014 changed timeout CLA from -to to -timeout to avoid confusion
 * 20031010 added framework for release (--help, --version), initial
            population of help framework
 * 20031010 fix dots once and for all - honor a trailing dot if it
@@ -680,10 +747,10 @@
 * 20030306 changed option processing from ::Std to ::Long to allow
            for future expansion
 * 20030306 added ability to specify multiple recipients
-* 20030306 closes the conection politely if something unexoected happens
+* 20030306 closes the connection politely if something unexpected happens
 * 20030306 use '***' to flag unexpected SMTP responses
 * 20030306 added code to allow multiline SMTP responses
-* 20030306 exit status changes on unexpected occurrances now
+* 20030306 exit status changes on unexpected occurrences now
 * 20030306 reworked transaction architecture so more features can be
            added in the future
 * 20030204 added -n option to summarize DATA send instead of sending

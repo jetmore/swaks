@@ -2,7 +2,7 @@
 INSTALL
 ------------------------------
 Swaks is designed to be a self contained script.  It should run on any system
-that has Perl installed, although its capabilites may be limited by which
+that has Perl installed, although its capabilities may be limited by which
 modules are installed.
 
 To get a view of what Swaks can and cannot do on a given system, run:
@@ -29,7 +29,7 @@ missing functionality, and how to get that functionality.  Example output:
 Documentation
 ------------------------------
 Check the following files
-    README
+    README.txt
         This file.  Contains install notes, references to other
         files, and major changes for this release
     doc/Changes.txt
@@ -51,6 +51,7 @@ Ways to stay up to date on new releases:
  Announce List: send mail to updates-swaks@jetmore.net
    Project RSS: http://jetmore.org/john/blog/c/swaks/feed/
        Twitter: http://www.twitter.com/SwaksSMTP
+          Help: send questions to proj-swaks@jetmore.net
 
 ------------------------------
 Authorship
@@ -75,21 +76,32 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
-A full copy of this license should be available in the LICENSE file.
+A full copy of this license should be available in the LICENSE.txt file.
 
 ------------------------------
 Change Summary
 ------------------------------
-v20170101.0
+v20181104.0
   New Features:
-    * Added Per-Recipient Data Response (PRDR) support
-      (see https://tools.ietf.org/html/draft-hall-prdr-00).
-    * Added PROXY protocol support
-      (see http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt).
-    * Added --drop-after and --drop-after-send options.
-    * Added %MESSAGEID% expansion token.
-    * Added %SWAKS_VERSION% expansion token.
+    * Added --dump-mail option.
+    * Added --xclient-delim, --xclient-destaddr, --xclient-destport,
+      --xclient-no-verify, and --xclient-before-starttls options.
   Notable Changes:
-    * Default DATA template now includes a Message-Id: header.
+    * XCLIENT can now send multiple XCLIENT requests.  Because of this,
+      --xclient and --xclient-ATTR values are no longer merged into one
+      string.  This breaks previously documented behavior.
+    * Numerous improvements to the output of --dump and --dump-as-body,
+      including the ability to limit output by section, layout improvements,
+      adding missing options to output, and fixing bugs.
   Notable Bugs Fixed:
-    * Fixed incorrect range on XCLIENT rfc1891/xtext encoding.
+    * Fixed bug preventing Proxy from working with --tls-on-connect.
+    * XCLIENT is now sent after STARTTLS to match with Postfix's expectations.
+    * Fixed bug which could allow mail sending to proceed without a valid
+      recipient.
+    * Replacing a multi-line header via --header or --h-HEADER now replaces
+      the entire header, not just the first line.
+    * The option for specifying the local port was documented as --local-port
+      but implemented as --lport.  Both are now documented and implemented.
+    * Fixed two bugs which prevented interactions between --dump,
+      --auth-hide-password, --dump-as-body, and --dump-as-body-shows-password
+      from producing consistent output.

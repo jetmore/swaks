@@ -5,7 +5,7 @@ swaks - Recipes for use
     me. I hate for these interesting ideas go to waste, so I am including
     them in this file.
 
-Simple address verifier
+Simple address verification
     I have had the following in my kshrc for years:
 
          alias vrfy='swaks -q rcpt -t'
@@ -40,8 +40,8 @@ Simple address verifier
     silent:
 
          g3 0 /home/jj33 > alias vrfy='swaks -q rcpt --silent 3 -t'
-         g3 0 /home/jj33 > vrfy proj-foobar@jetmore.org            
-         g3 24 /home/jj33 > vrfy proj-swaks@jetmore.org  
+         g3 0 /home/jj33 > vrfy proj-foobar@jetmore.org
+         g3 24 /home/jj33 > vrfy proj-swaks@jetmore.org
          g3 0 /home/jj33 >
 
     As you can see by the $? output, proj-foobar is not a valid address and
@@ -58,7 +58,7 @@ Simple address verifier
          g3 /home/jj33 > alias vrfy='swaks -q rcpt --silent 2 -t'
          g3 /home/jj33 > vrfy proj-foobar@jetmore.org
          <** 550 <proj-foobar@jetmore.org>: Recipient address rejected: User unknown in virtual alias table
-         g3 /home/jj33 > vrfy proj-swaks@jetmore.org  
+         g3 /home/jj33 > vrfy proj-swaks@jetmore.org
          g3 /home/jj33 >
 
 Stress-testing an SMTP server
