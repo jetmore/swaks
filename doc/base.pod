@@ -742,7 +742,7 @@ This option sets the filename that will be included in the MIME part created for
 
 =item -ah, --add-header [header]
 
-This option allows headers to be added to the DATA.  If %H is present in the DATA it is replaced with the argument to this option.  If %H is not present, the argument is inserted between the first two consecutive newlines in the DATA (that is, it is inserted at the end of the existing headers).
+This option allows headers to be added to the DATA.  If %NEW_HEADERS% is present in the DATA it is replaced with the argument to this option.  If %NEW_HEADERS% is not present, the argument is inserted between the first two consecutive newlines in the DATA (that is, it is inserted at the end of the existing headers).
 
 The option can either be specified multiple times or a single time with multiple headers separated by a literal '\n' string.  So, "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header 'Foo: bar\nBaz: foo'" end up adding the same two headers.
 
