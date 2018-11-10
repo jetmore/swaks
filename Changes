@@ -785,3 +785,4 @@
 * 20190618 Typo in documentation for --ehlo, reported by Konstantin Stephan
 * 20181110 --add-header documentation was still referencing a single-char,
            no longer valid, replacement token. Replace with the correct token.
+* 20181110 Doc fix for default body - %SWAKS_VERSION% missing trailing char.
