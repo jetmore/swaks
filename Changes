@@ -791,3 +791,10 @@
 * 20181110 Fix --attach* option processing to remove possibly ambiguity
 * 20181110 Implement --body-attach option to allow more granularity in
            setting body information (different mime types, alternatives, etc).
+* 20181201 Config file fixes around searching default $SWAKS_HOME, $HOME,
+           and $LOGDIR locations:
+             - Searching default locations for the first existing
+               PATH/.swaksrc did not actually work as documented.
+             - If none of the default search environment variables was set,
+               Swaks would not process the "portable" defaults optionally
+               stored in the actual swaks script.

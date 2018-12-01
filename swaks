@@ -1946,36 +1946,45 @@ sub load_args {
 	# If we encounter --config in later processing it is a noop.
 	# first find the default file
 	my $config_file       = '';
+	my $skip_config       = 0;
 	my $config_is_default = 1;
 	foreach my $v (qw(SWAKS_HOME HOME LOGDIR)) {
-		if ($ENV{$v}) { $config_file = "$ENV{$v}/.swaksrc"; last; }
+		if (exists($ENV{$v}) && length($ENV{$v}) && -f "$ENV{$v}/.swaksrc") {
+			$config_file = "$ENV{$v}/.swaksrc";
+			last;
+		}
 	}
 	# then look through the ENV args to see if another file set there
 	if (exists($ENV{SWAKS_OPT_config})) {
 		if (!$ENV{SWAKS_OPT_config}) {
 			# if exist but not set, it just means "don't use default file"
-			$config_file = "";
+			$skip_config = 1;
 		} else {
 			$config_file = $ENV{SWAKS_OPT_config};
 			$config_is_default = 0;
 		}
 	}
-	# lastly go through original command line looking for config file
-	for (my $i = 0; $i < scalar(@real_ARGV); $i++) {
+	# lastly go (backwards) through original command line looking for config file,
+	# choosing the first one found
+	for (my $i = scalar(@real_ARGV) - 1; $i >= 0; $i--) {
 		if ($real_ARGV[$i] =~ /^-?-config$/) {
-			if ($real_ARGV[$i+1] =~ /^-/) {
-				$config_file = "";
+			if ($i == scalar(@real_ARGV) - 1 || $real_ARGV[$i+1] =~ /^-/) {
+				$skip_config = 1;
 			} else {
 				$config_file       = $real_ARGV[$i+1];
 				$config_is_default = 0;
+				$skip_config       = 0;
 			}
+			last;
 		}
 	}
 
 	# All of the above will result in $config_file either being empty or
-	# containing the one and only config file we will use.
-	if ($config_file) {
-		foreach my $configf ('&DATA', $config_file) {
+	# containing the one and only config file we will use (though merged with DATA)
+	if (!$skip_config) {
+		my @configs = ('&DATA');
+		push(@configs, $config_file) if ($config_file);
+		foreach my $configf (@configs) {
 			if (open(C, "<$configf")) {
 				# "#" in col 0 is a comment
 				while (defined(my $m = <C>)) {
