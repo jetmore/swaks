@@ -2009,7 +2009,7 @@ sub load_args {
 	# OK, %ARGS contains all the settings from the config file.  No do it again
 	# with SWAKS_OPT_* environment variables
 	@ARGV = ();
-	foreach my $v (keys %ENV) {
+	foreach my $v (sort keys %ENV) {
 		if ($v =~ m|^SWAKS_OPT_(.*)$|) {
 			my $tv = $1; $tv =~ s|_|-|g;
 			push(@ARGV, "-$tv", $ENV{$v});

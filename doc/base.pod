@@ -115,6 +115,8 @@ Options can be given to Swaks in three ways.  They can be specified in a configu
 
 When Swaks evaluates its options, it first looks for a configuration file (either in a default location or specified with --config).  Then it evaluates any options in environment variables.  Finally, it evaluates command line options.  At each round of processing, any options set earlier will be overridden.  Additionally, any option can be prefixed with "no-" to cause Swaks to forget that the variable had previously been set.  This capability is necessary because many options treat defined-but-no-argument differently than not-defined.
 
+As a general rule, if the same option is given multiple time, the last time it is given is the one that will be used.  This applies to both intra-method (if "--from user1@example.com --from user2@example.com" is given, user2@example.com will be used) and inter-method (if "from user1@example.com" is given in a config file and "--from user2@example.com" is given on the command line, user2@example.com will be used)
+
 The exact mechanism and format for using each of the types is listed below.
 
 =over 4
@@ -123,7 +125,7 @@ The exact mechanism and format for using each of the types is listed below.
 
 A configuration file can be used to set commonly-used or abnormally verbose options.  By default, Swaks looks in order for $SWAKS_HOME/.swaksrc, $HOME/.swaksrc, and $LOGDIR/.swaksrc.  If one of those is found to exist (and --config has not been used) that file is used as the configuration file.
 
-Additionally, a configuration file in a non-default location can be specified using --config.  If this is set and not given an argument Swaks will not use any configuration file, including any default file.  If --config points to a readable file, it is used as the configuration file, overriding any default that may exist.  If it points to a non-readable file and error will be shown and Swaks will exit.
+Additionally, a configuration file in a non-default location can be specified using --config.  If this is set and not given an argument Swaks will not use any configuration file, including any default file.  If --config points to a readable file, it is used as the configuration file, overriding any default that may exist.  If it points to a non-readable file an error will be shown and Swaks will exit.
 
 A set of "portable" defaults can also be created by adding options to the end of the Swaks program file.  As distributed, the last line of Swaks should be "__END__".  Any lines added after __END__ will be treated as the contents of a configuration file.  This allows a set of user preferences to be automatically copied from server to server in a single file.
 
@@ -147,6 +149,8 @@ Options can be supplied via environment variables.  The variables are in the for
     $ SWAKS_OPT_h_From='"Fred Example" <fred@example.com>'
 
 Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting SWAKS_OPT_server="" would cause Swaks to prompt the use for the server to which to connect at each invocation.
+
+Because there is no inherent order in options provided by setting environment variables, the options are sorted before being processed.  This is not a great solution, but it at least defines the behavior, which would be otherwise undefined.  As an example, if both SWAKS_OPT_from and SWAKS_OPT_f were set, the value from SWAKS_OPT_from would be used, because it sorts after SWAKS_OPT_f.  Also as a result of not having an inherent order in environment processing, unsetting options with the "no-" prefix is unreliable.  It works if the option being turned off sorts before "no-", but fails if it sorts after. Because "no-" is primary meant to operate between config types (for instance, unsetting from the command line an option that was set in a config file), this is not likely to be a problem.
 
 In addition to setting the equivalent of command line options, SWAKS_HOME can be set to a directory containing the default .swaksrc to be used.
 

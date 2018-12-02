@@ -798,3 +798,9 @@
              - If none of the default search environment variables was set,
                Swaks would not process the "portable" defaults optionally
                stored in the actual swaks script.
+* 20181202 Since there is no inherent order to options provided in environment
+           variables, sort them before processing to define an order.
+* 20181202 Document the general rule that when processing duplicate options,
+           the last option specified wins, both inter- and intra-method.
+* 20181202 Document the unreliability of using environment variables to unset
+           other environment variable options with the "no-" prefix.
