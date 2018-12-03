@@ -1965,7 +1965,7 @@ sub load_args {
 		}
 	}
 	# lastly go (backwards) through original command line looking for config file,
-	# choosing the first one found
+	# choosing the first one found (meaning last one specified)
 	for (my $i = scalar(@real_ARGV) - 1; $i >= 0; $i--) {
 		if ($real_ARGV[$i] =~ /^-?-config$/) {
 			if ($i == scalar(@real_ARGV) - 1 || $real_ARGV[$i+1] =~ /^-/) {
@@ -2111,10 +2111,8 @@ sub fetch_args {
 	# in the same context (config file, command line, env var)
 	if (scalar keys %to_delete) {
 		foreach my $e (@$l) {
-			foreach my $opt_name (@{$e->{opts}}) {
-				if ($to_delete{$opt_name}) {
-					delete($r->{$e->{okey}});
-				}
+			if ($to_delete{$e->{okey}}) {
+				delete($r->{$e->{okey}});
 			}
 		}
 	}

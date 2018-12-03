@@ -804,3 +804,4 @@
            the last option specified wins, both inter- and intra-method.
 * 20181202 Document the unreliability of using environment variables to unset
            other environment variable options with the "no-" prefix.
+* 20181203 Fix bug causing in "no-" option processing to work unreliably.
