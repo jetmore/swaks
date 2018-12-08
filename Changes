@@ -807,3 +807,7 @@
 * 20181203 Fix bug causing in "no-" option processing to work unreliably.
 * 20181204 Tidying and clarifying the OPTION PROCESSING section of the docs.
 * 20181204 Adding an ENVIRONEMT VARIABLES section to the doc.
+* 20181208 When processing config file options with no leading '-' and any
+           environment variable config, prefix the option with '--' for
+           processing, not '-'. Bandaid for very minor difference between
+           '-' and '--' option processing which I hope to fix soon.

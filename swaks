@@ -1990,7 +1990,7 @@ sub load_args {
 				while (defined(my $m = <C>)) {
 					next if ($m =~ m|^#|);
 					chomp($m);
-					$m = '-' . $m if ($m !~ /^-/);
+					$m = '--' . $m if ($m !~ /^-/);
 					push(@ARGV, split(/\s/, $m, 2));
 				}
 				close(C);
@@ -2012,7 +2012,7 @@ sub load_args {
 	foreach my $v (sort keys %ENV) {
 		if ($v =~ m|^SWAKS_OPT_(.*)$|) {
 			my $tv = $1; $tv =~ s|_|-|g;
-			push(@ARGV, "-$tv", $ENV{$v});
+			push(@ARGV, "--$tv", $ENV{$v});
 		}
 	}
 	fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
