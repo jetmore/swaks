@@ -916,11 +916,11 @@ This option causes Swaks to print the results of option processing, immediately 
 
 =item --help
 
-Display this help information.
+Display this help information and exit.
 
 =item --version
 
-Display version information.
+Display version information and exit.
 
 =back
 

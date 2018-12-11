@@ -33,11 +33,11 @@ my $p_cp      = <<'EOM';
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 EOM
 
-# before we do anything else, check for --help
-ext_usage();
-
 # Get all input provided to our program, via file, env, command line, etc
 my %O = %{ load_args() };
+
+# before we do anything else, check for --help and --version
+ext_usage();
 
 # Get our functional dependencies and then print and exit early if requested
 load_dependencies();
@@ -1779,6 +1779,12 @@ sub get_option_struct {
 		# print lapse for send/recv
 		{ opts => ['stl', 'show-time-lapse'],         suffix => ':s',
 		  okey => 'show_time_lapse',                  type => 'scalar', },
+		# print version and exit
+		{ opts => ['version'],                        suffix => '',
+		  okey => 'version',                          type => 'scalar', },
+		# print help and exit
+		{ opts => ['help'],                           suffix => '',
+		  okey => 'help',                             type => 'scalar', },
 		# don't touch the data
 		{ opts => ['ndf', 'no-data-fixup'],           suffix => '',
 		  okey => 'no_data_fixup',                    type => 'scalar', },
@@ -3344,7 +3350,7 @@ sub build_version {
 }
 
 sub ext_usage {
-	if ($ARGV[0] =~ /^--help$/i) {
+	if ($O{help}) {
 		require Config;
 		$ENV{PATH} .= ":" unless $ENV{PATH} eq "";
 		$ENV{PATH}  = "$ENV{PATH}$Config::Config{'installscript'}";
@@ -3352,7 +3358,7 @@ sub ext_usage {
 		exec("perldoc", $0) || exit(1);
 		# make parser happy
 		%Config::Config = ();
-	} elsif ($ARGV[0] =~ /^--version$/i) {
+	} elsif ($O{version}) {
 		print "$p_name version $p_version\n\n$p_cp\n";
 	} else {
 		return;

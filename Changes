@@ -811,3 +811,5 @@
            environment variable config, prefix the option with '--' for
            processing, not '-'. Bandaid for very minor difference between
            '-' and '--' option processing which I hope to fix soon.
+* 20181210 --version and --help should work even if they aren't the very
+           first option.
