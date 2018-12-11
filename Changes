@@ -813,3 +813,4 @@
            '-' and '--' option processing which I hope to fix soon.
 * 20181210 --version and --help should work even if they aren't the very
            first option.
+* 20181210 Add a flag for --dump-mail in the OUTPUT section of --dump

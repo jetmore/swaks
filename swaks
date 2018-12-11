@@ -3102,6 +3102,7 @@ sub get_running_state {
 			'  no_hints_recv      = ' . ($G::no_hints_recv      ? 'TRUE' : 'FALSE'),
 			'  no_hints_info      = ' . ($G::no_hints_info      ? 'TRUE' : 'FALSE'),
 			"  silent             = $G::silent",
+			'  dump_mail          = ' . ($G::dump_mail          ? 'TRUE' : 'FALSE'),
 			'  hide_send          = ' . ($G::hide_send          ? 'TRUE' : 'FALSE'),
 			'  hide_receive       = ' . ($G::hide_receive       ? 'TRUE' : 'FALSE'),
 			'  hide_informational = ' . ($G::hide_informational ? 'TRUE' : 'FALSE'),
