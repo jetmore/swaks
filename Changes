@@ -816,3 +816,6 @@
 * 20181210 Add a flag for --dump-mail in the OUTPUT section of --dump
 * 20181210 Turn on case-sensitivity for configuration options.  Needed to
            make -S distinct from -s, as documented.
+* 20181210 Turn off option bundling. No practical use and it could cause
+           real confusion (with bundling turned on, -foobar was "-f oobar"
+           instead of an unknown option.

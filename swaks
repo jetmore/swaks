@@ -2109,7 +2109,7 @@ sub fetch_args {
 		exit(1);
 	}
 
-	Getopt::Long::Configure("bundling_override", "no_ignore_case");
+	Getopt::Long::Configure("no_ignore_case");
 	GetOptions(%options) || exit(1);
 
 	# now remove any options that might have been added by a --no option
