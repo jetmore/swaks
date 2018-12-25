@@ -2846,7 +2846,15 @@ sub process_args {
 			$G::proxy{attr}{$attr} = $o->{"proxy_" . $attr} || interact("PROXY $attr: ", '^.+$');
 		}
 	}
-	$G::proxy{version} ||= 1;
+	if ($G::proxy{version}) {
+		if ($G::proxy{version} != 1 && $G::proxy{version} != 2) {
+			ptrans(12, "Invalid argument to --proxy: $G::proxy{version} is not a legal proxy version");
+			exit(35);
+		}
+	}
+	else {
+		$G::proxy{version} = 1;
+	}
 	$G::proxy{try}       = 1 if ($G::proxy{raw} || scalar(keys(%{$G::proxy{attr}})));
 	if ($G::proxy{try} && !$G::proxy{raw}) {
 		$G::proxy{attr}{protocol} ||= 'STREAM';
@@ -2868,6 +2876,10 @@ sub process_args {
 		}
 		if ($G::proxy{version} == 2 && $G::proxy{attr}{family} !~ /^(AF_UNSPEC|AF_INET|AF_INET6|AF_UNIX)$/) {
 			ptrans(12, "unknown --proxy-family argument $G::proxy{attr}{family} for version 2");
+			exit(35);
+		}
+		if ($G::proxy{version} == 1 && $G::proxy{attr}{family} !~ /^(TCP4|TCP6)$/) {
+			ptrans(12, "unknown --proxy-family argument $G::proxy{attr}{family} for version 1");
 			exit(35);
 		}
 	}

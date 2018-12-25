@@ -806,7 +806,7 @@
            other environment variable options with the "no-" prefix.
 * 20181203 Fix bug causing in "no-" option processing to work unreliably.
 * 20181204 Tidying and clarifying the OPTION PROCESSING section of the docs.
-* 20181204 Adding an ENVIRONEMT VARIABLES section to the doc.
+* 20181204 Adding an ENVIRONMENT VARIABLES section to the doc.
 * 20181208 When processing config file options with no leading '-' and any
            environment variable config, prefix the option with '--' for
            processing, not '-'. Bandaid for very minor difference between
@@ -819,3 +819,5 @@
 * 20181210 Turn off option bundling. No practical use and it could cause
            real confusion (with bundling turned on, -foobar was "-f oobar"
            instead of an unknown option.
+* 20181225 Add validation to --proxy-family (when proxy-version=1) and
+           --proxy-version options.
