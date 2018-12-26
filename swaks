@@ -2397,8 +2397,19 @@ sub process_args {
 			$G::link{force_ipv4} = 1;
 		}
 
-		$n{copy_routing}   = $o->{copy_routing}; # only used in --dump output
-		$G::link{server} ||= get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to});
+		if (defined($o->{copy_routing})) {
+			if ($o->{copy_routing}) {
+				$n{copy_routing}   = $o->{copy_routing}; # only used in --dump output
+				$G::link{server} ||= get_server($o->{copy_routing});
+			}
+			else {
+				ptrans(12, "Option --copy-routing requires an argument");
+				exit 1;
+			}
+		}
+		else {
+			$G::link{server} ||= get_server($n{to});
+		}
 
 		if ($o->{force_ipv4} && $G::link{server} =~ m|:|) {
 			ptrans(12, "Option -4 is set but server appears to be ipv6, cannot proceed");

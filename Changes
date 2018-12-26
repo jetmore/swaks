@@ -821,3 +821,4 @@
            instead of an unknown option.
 * 20181225 Add validation to --proxy-family (when proxy-version=1) and
            --proxy-version options.
+* 20181225 --copy-routing should error when no argument given.
