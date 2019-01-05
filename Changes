@@ -822,3 +822,5 @@
 * 20181225 Add validation to --proxy-family (when proxy-version=1) and
            --proxy-version options.
 * 20181225 --copy-routing should error when no argument given.
+* 20190105 Update copyright year to 2019
+* 20190105 Add documentation for missing --quit-after synonym STARTTLS

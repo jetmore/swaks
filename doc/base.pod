@@ -282,7 +282,7 @@ In a STARTTLS (but not tls-on-connect) session, terminate the transaction after 
 
 Quit after XCLIENT is sent.
 
-=item TLS
+=item STARTTLS, TLS
 
 Quit the transaction immediately following TLS negotiation.  Note that this happens in different places depending on whether STARTTLS or tls-on-connect are used.  This always quits after the point where TLS would have been negotiated, regardless of whether it was attempted.
 
