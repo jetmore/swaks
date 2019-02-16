@@ -266,7 +266,7 @@ In a STARTTLS (but not tls-on-connect) session, terminate the transaction after 
 
 =item XCLIENT
 
-Quit after XCLIENT is sent
+Quit after XCLIENT is sent.
 
 =item TLS
 
@@ -292,11 +292,23 @@ Quit after RCPT TO: is sent.
 
 =item --da, --drop-after [stop-point]
 
-The option is similar to --quit-after, but instead of trying to cleanly shut down the session it simply terminates the session.  This option accepts the same stop-points as --quit-after.
+The option is similar to --quit-after, but instead of trying to cleanly shut down the session it simply terminates the session.  This option accepts the same stop-points as --quit-after and additionally accepts DATA and DOT, detailed below.
+
+=over 4
+
+=item DATA
+
+Quit after DATA is sent.
+
+=item DOT
+
+Quit after the final '.' of the message is sent.
+
+=back
 
 =item --das, --drop-after-send [stop-point]
 
-This option is similar to --drop-after, but instead of dropping the connection after reading a response to the stop-point, it drops the connection immediately after sending stop-point.
+This option is similar to --drop-after, but instead of dropping the connection after reading a response to the stop-point, it drops the connection immediately after sending stop-point.  It accepts the same stop-points as --drop-after.
 
 =item --timeout [time]
 

@@ -780,3 +780,5 @@
 * 20181104 Rename LICENSE and README to have .txt extension
 * 20181104 Update release tooling after development environment changes
 > 20181104 released 20181104.0
+* 20190216 Adding data and dot as valid --drop-after-send and --drop-after
+           arguments
