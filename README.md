@@ -12,6 +12,23 @@ The latest version of Swaks is **20170101.0**, which can be downloaded as a [pac
 
 There is also a [versions page] which lists every released version of Swaks, complete with changelogs and download links.
 
+## Homebrew
+
+```bash
+$ brew info swaks
+swaks: stable 20170101.0
+SMTP command-line test tool
+https://www.jetmore.org/john/code/swaks/
+/usr/local/Cellar/swaks/20170101.0 (5 files, 182.7KB) *
+  Built from source on 2019-03-21 at 18:19:53
+From: https://github.com/Homebrew/homebrew-core/blob/master/Formula/swaks.rb
+==> Analytics
+install: 230 (30 days), 577 (90 days), 1,938 (365 days)
+install_on_request: 230 (30 days), 567 (90 days), 1,866 (365 days)
+build_error: 0 (30 days)
+$ brew install swaks
+```
+
 # Communications
 
 * [Send a mail] to receive email when new versions are released
