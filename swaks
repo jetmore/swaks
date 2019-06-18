@@ -13,7 +13,7 @@ use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = build_version("DEVRELEASE", '$Id$');
+my $p_version = build_version("20181104.0-patched-1", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
         Copyright (c) 2003-2008,2010-2018 John Jetmore <jj33@pobox.com>
@@ -307,10 +307,14 @@ sub sendmail {
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'rcpt');
 
 	# send DATA
+	$G::drop_before_read = 1 if ($G::drop_after_send eq 'data');
 	do_smtp_gen('DATA', '354') || do_smtp_quit(1, 25);
+	do_smtp_drop() if ($G::drop_after eq 'data');
 
 	# send the actual data
+	$G::drop_before_read = 1 if ($G::drop_after_send eq 'dot');
 	do_smtp_data($data, $G::suppress_data) || do_smtp_quit(1, 26);
+	do_smtp_drop() if ($G::drop_after eq 'dot');
 
 	# send QUIT
 	do_smtp_quit(0) || do_smtp_quit(1, 27);
@@ -2288,13 +2292,20 @@ sub process_args {
 			elsif (${"G::$opt"} ne 'connect' && ${"G::$opt"} ne 'first-helo' &&
 			       ${"G::$opt"} ne 'tls'     && ${"G::$opt"} ne 'helo'       &&
 			       ${"G::$opt"} ne 'auth'    && ${"G::$opt"} ne 'mail'       &&
-			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient')
+			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient'    &&
+			       ${"G::$opt"} ne 'data'    && ${"G::$opt"} ne 'dot')
 			{
 				ptrans(12, "Unknown $opt value " . ${"G::$opt"} . ", exiting");
 				exit(1);
 			}
-			# only rcpt _requires_ a to address
-			$G::server_only = 1 if (${"G::$opt"} ne 'rcpt');
+			# only rcpt, data, and dot _require_ a to address
+			$G::server_only = 1 if (${"G::$opt"} !~ /^(rcpt|data|dot)$/);
+
+			# data and dot aren't legal for quit_after
+			if ($opt eq 'quit_after' && (${"G::$opt"} eq 'data' || ${"G::$opt"} eq 'dot')) {
+				ptrans(12, "Unknown $opt value " . ${"G::$opt"} . ", exiting");
+				exit(1);
+			}
 		} else {
 			${"G::$opt"} = '';
 		}
