@@ -780,9 +780,6 @@
 * 20181104 Rename LICENSE and README to have .txt extension
 * 20181104 Update release tooling after development environment changes
 > 20181104 released 20181104.0
-* 20190216 Adding data and dot as valid --drop-after-send and --drop-after
-           arguments
-* 20190618 Typo in documentation for --ehlo, reported by Konstantin Stephan
 * 20181110 --add-header documentation was still referencing a single-char,
            no longer valid, replacement token. Replace with the correct token.
 * 20181110 Doc fix for default body - %SWAKS_VERSION% missing trailing char.
@@ -824,3 +821,6 @@
 * 20181225 --copy-routing should error when no argument given.
 * 20190105 Update copyright year to 2019
 * 20190105 Add documentation for missing --quit-after synonym STARTTLS
+* 20190216 Adding data and dot as valid --drop-after-send and --drop-after
+           arguments
+* 20190618 Typo in documentation for --ehlo, reported by Konstantin Stephan
