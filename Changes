@@ -782,3 +782,4 @@
 > 20181104 released 20181104.0
 * 20190216 Adding data and dot as valid --drop-after-send and --drop-after
            arguments
+* 20190618 Typo in documentation for --ehlo, reported by Konstantin Stephan
