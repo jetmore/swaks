@@ -248,7 +248,7 @@ Use argument as envelope-sender for email, or prompt user if no argument specifi
 
 =item --ehlo, --lhlo, -h, --helo [helo-string]
 
-String to use as argument to HELO/EHLO/LHLO command, or prompt use if no argument is specified.  If this option is not used a best guess at the fully-qualified domain name of the local host is used.  If the Sys::Hostname module, which is part of the base distribution, is not available the user will be prompted for a HELO value.  Note that Sys::Hostname has been observed to not be able to find the local hostname in certain circumstances.  This has the same effect as if Sys::Hostname were unavailable.
+String to use as argument to HELO/EHLO/LHLO command, or prompt user if no argument is specified.  If this option is not used a best guess at the fully-qualified domain name of the local host is used.  If the Sys::Hostname module, which is part of the base distribution, is not available the user will be prompted for a HELO value.  Note that Sys::Hostname has been observed to not be able to find the local hostname in certain circumstances.  This has the same effect as if Sys::Hostname were unavailable.
 
 =item -q, --quit, --quit-after [stop-point]
 
