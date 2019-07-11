@@ -608,7 +608,7 @@ This is the "free form" XCLIENT option.  Whatever value is provided for XCLIENT_
 
 The primary advantage to this over the more specific options above is that there is no XCLIENT syntax validation here.  This allows you to send invalid XCLIENT to the target server for testing.  Additionally, at least one MTA (Message Systems' Momentum, formerly ecelerity) implements XCLIENT without advertising supported attributes.  The --xclient option allows you to skip the "supported attributes" check when communicating with this type of MTA (though see also --xclient-no-verify).
 
-The --xclient option can be mixed freely with the --xclient-* options above.  If "--xclient-addr 192.168.0.1 --xclient 'FOO=bar NAME=wind'" is given to Swaks, "XCLIENT ADDR=192.168.0.1 FOO=bar NAME=wind" will be sent to the target server.
+The --xclient option can be mixed freely with the --xclient-* options above.  The argument to --xclient will be sent in its own command group.  For instance, if "--xclient-addr 192.168.0.1 --xclient-port 26 --xclient 'FOO=bar NAME=wind'" is given to Swaks, "XCLIENT ADDR=192.168.0.1 PORT=26" and "XCLIENT FOO=bar NAME=wind" will both be sent to the target server.
 
 =item --xclient-no-verify
 

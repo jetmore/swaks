@@ -824,3 +824,4 @@
 * 20190216 Adding data and dot as valid --drop-after-send and --drop-after
            arguments
 * 20190618 Typo in documentation for --ehlo, reported by Konstantin Stephan
+* 20190710 Clarify how XCLIENT arguments are grouped in --xclient doc
