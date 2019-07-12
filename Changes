@@ -825,3 +825,5 @@
            arguments
 * 20190618 Typo in documentation for --ehlo, reported by Konstantin Stephan
 * 20190710 Clarify how XCLIENT arguments are grouped in --xclient doc
+* 20190712 Enforce key=value format for arguments to --auth-extra and
+           --auth-map

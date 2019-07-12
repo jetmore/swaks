@@ -2928,18 +2928,24 @@ sub process_args {
 		                          "CRAM-MD5=CRAM-MD5","DIGEST-MD5=DIGEST-MD5",
 		                          "CRAM-SHA1=CRAM-SHA1","NTLM=NTLM","SPA=NTLM","MSN=NTLM")
 		{
-			my($alias,$type)        = split(/=/, uc($_), 2);
-			# this gives us a list of all aliases and what the alias
-			$G::auth_map_f{$alias}  = $type;
-			# this gives a list of all base types and any aliases for it.
-			$G::auth_map_t{$type} ||= [];
-			push(@{$G::auth_map_t{$type}}, $alias);
+			if (/^([^=]+)=(.+)$/) {
+				my($alias,$type)        = ($1,$2);
+				$G::auth_map_f{$alias}  = $type; # this gives us a list of all aliases pointing to types
+				$G::auth_map_t{$type} ||= [];    # this gives a list of all base types and any aliases for it.
+				push(@{$G::auth_map_t{$type}}, $alias);
+			} else {
+				ptrans(12, "Unknown auth-map format '$_'");
+				exit(1);
+			}
 		}
 		# Now handle the --auth-extra options
 		foreach (split(/\s*,\s*/, $o->{auth_extra})) {
-			my($keyword,$value)       = split(/=/, $_, 2);
-			$keyword                  = uc($keyword);
-			$G::auth_extras{$keyword} = $value;
+			if (/^([^=]+)=(.+)$/) {
+				$G::auth_extras{uc($1)} = $2;
+			} else {
+				ptrans(12, "Unknown auth-extra format '$_'");
+				exit(1);
+			}
 		}
 		# handle the realm/domain synonyms
 		if ($G::auth_extras{DOMAIN}) {
