@@ -722,6 +722,10 @@ Replaced with the contents of the --add-header option.  If --add-header is not s
 
 Replaced with the value specified by the --body option.  See --body for default.
 
+=item %NEWLINE%
+
+Replaced with carriage return, newline (0x0d, 0x0a).  This is identical to using '\n' (0x5c, 0x6e), but doesn't have the escaping concerns that the backslash can cause on the newline.
+
 =back
 
 =item -dab, --dump-as-body [section[,section]]

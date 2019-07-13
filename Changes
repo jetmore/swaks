@@ -828,3 +828,4 @@
 * 20190712 Enforce key=value format for arguments to --auth-extra and
            --auth-map
 * 20190713 Small code tidy around %DATE% token replacement
+* 20190713 Add %NEWLINE% as a new --data token
