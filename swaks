@@ -2504,7 +2504,8 @@ sub process_args {
 					$next_name             = undef();
 				}
 			} else {
-				die "Error processing attach args, unknown type when processing $t\n";
+				ptrans(12, "Error processing attach args, unknown type when processing $t");
+				exit(1);
 			}
 		}
 
