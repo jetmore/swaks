@@ -2685,10 +2685,7 @@ sub process_args {
 		$n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
 		$n{data} =~ s/%MESSAGEID%/get_messageid()/ge;
 		$n{data} =~ s/%SWAKS_VERSION%/$p_version/g;
-		if ($n{data} =~ /%DATE%/) {
-			my $date_string = get_date_string(); # May be multiple replacements, but we only want to generate the string once
-			$n{data} =~ s/%DATE%/$date_string/g;
-		}
+		$n{data} =~ s/%DATE%/get_date_string()/ge;
 		$n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
 		$n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
 		$n{data} =~ s/\n\./\n../g;         # quote any other leading dots

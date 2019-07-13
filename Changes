@@ -827,3 +827,4 @@
 * 20190710 Clarify how XCLIENT arguments are grouped in --xclient doc
 * 20190712 Enforce key=value format for arguments to --auth-extra and
            --auth-map
+* 20190713 Small code tidy around %DATE% token replacement
