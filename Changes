@@ -829,3 +829,6 @@
            --auth-map
 * 20190713 Small code tidy around %DATE% token replacement
 * 20190713 Add %NEWLINE% as a new --data token
+* 20190723 If the arg to --data looks like a file but is not openable,
+           error and exit instead of using it the file name as the raw
+           data value

@@ -686,7 +686,15 @@ These options pertain to the contents for the DATA portion of the SMTP transacti
 
 =item -d, --data [data-portion]
 
-Use argument as the entire contents of DATA, or prompt user if no argument specified.  If the argument '-' is provided the data will be read from STDIN.  If any other argument is provided and it represents the name of an open-able file, the contents of the file will be used.  Any other argument will be itself for the DATA contents.
+Use argument as the entire contents of DATA.
+
+If no argument is provided, user will be prompted to supply value.
+
+If the argument '-' is provided the data will be read from STDIN with no prompt (same as -g).
+
+If the argument does not contain any literal (0x0a) or representative (0x5c, 0x6e or %NEWLINE%) newline characters, it will be treated as a filename.  If the file is open-able, the contents of the file will be used as the data portion.  If the file cannot be opened, Swaks will error and exit.
+
+Any other argument will be used as the DATA contents.
 
 The value can be on one single line, with \n (ASCII 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is "Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\nMessage-Id: <%MESSAGEID%>\nX-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n".
 

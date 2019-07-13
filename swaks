@@ -2594,7 +2594,12 @@ sub process_args {
 	# The -g option trumps all other methods of getting the data
 	if ($o->{data_on_stdin}) {
 		$n{data} = join('', <STDIN>);
-	} elsif ($n{data} !~ m/(\\n|\n|%NEWLINE%)/ && open(F, "<$n{data}")) {
+	} elsif ($n{data} !~ m/\\n|\n|%NEWLINE%/) {
+		# if it doesn't have any newlines assume it's a file. Fail if we can't open.
+		if (!open(F, "<$n{data}")) {
+			ptrans(12, "data option appears to be a file but is not openable: $n{data} ($!)");
+			exit(1);
+		}
 		$n{data} = join('', <F>);
 		close(F);
 	}
