@@ -1,0 +1,8 @@
+# Generated Tue Dec 11 19:01:20 2018 by ./gen-tests.pl '.' '500' 'tls-cipher' '3DES:+RSA' ''
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tls-cipher, env var, no arg
+
+pre action: SET_ENV SWAKS_OPT_tls_cipher
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --tls --server "ser ver"

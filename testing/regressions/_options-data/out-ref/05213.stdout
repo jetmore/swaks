@@ -1,0 +1,10 @@
+DATA Info:
+  data = <<.
+From: foo
+To: bar
+Subject: baz
+Foo: bar
+NewHeader: bar
+
+This is the body
+.

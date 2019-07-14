@@ -1,0 +1,9 @@
+# Generated Wed Jul 10 22:56:30 2019 by ./gen-tests.pl '-n' '350' '-o' 'xclient-login' '-v' 'LOGINSTR' '-i' '' '-p' 'XCLIENT login:' '-d' '.' '-r'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: xclient-login, config, no-option
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'xclient-login LOGINSTR\nno-xclient-login'
+test action: CMD_CAPTURE %SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

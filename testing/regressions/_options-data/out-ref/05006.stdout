@@ -1,0 +1,8 @@
+DATA Info:
+  data = <<.
+From: foo
+To: bar
+Subject: This message does not have a body
+
+
+.

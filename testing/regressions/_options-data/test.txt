@@ -1,0 +1,503 @@
+00000 --d
+  0 d, command line, no arg
+  1 d, command line, valid arg
+  2 d, command line, invalid arg
+  3 d, command line, no-option
+  10 d, config, no arg
+  11 d, config, valid arg
+  12 d, config, invalid arg
+  13 d, config, no-option
+  20 d, env var, no arg
+  21 d, env var, valid arg
+  22 d, env var, invalid arg
+  23 d, env var, no-option
+  30 d command line, no arg (-option)
+  31 d, command line, valid arg (-option=)
+  32 d, command line, valid arg (--option=)
+00050 --data
+  50 data, command line, no arg
+  51 data, command line, valid arg
+  52 data, command line, invalid arg
+  53 data, command line, no-option
+  60 data, config, no arg
+  61 data, config, valid arg
+  62 data, config, invalid arg
+  63 data, config, no-option
+  70 data, env var, no arg
+  71 data, env var, valid arg
+  72 data, env var, invalid arg
+  73 data, env var, no-option
+  80 data command line, no arg (-option)
+  81 data, command line, valid arg (-option=)
+  82 data, command line, valid arg (--option=)
+00100 --dab
+  100 dab, command line, no arg
+  101 dab, command line, valid arg
+  102 dab, command line, invalid arg
+  103 dab, command line, no-option
+  110 dab, config, no arg
+  111 dab, config, valid arg
+  112 dab, config, invalid arg
+  113 dab, config, no-option
+  120 dab, env var, no arg
+  121 dab, env var, valid arg
+  122 dab, env var, invalid arg
+  123 dab, env var, no-option
+  130 dab command line, no arg (-option)
+  131 dab, command line, valid arg (-option=)
+  132 dab, command line, valid arg (--option=)
+00150 --dump-as-body
+  150 dump-as-body, command line, no arg
+  151 dump-as-body, command line, valid arg
+  152 dump-as-body, command line, invalid arg
+  153 dump-as-body, command line, no-option
+  160 dump-as-body, config, no arg
+  161 dump-as-body, config, valid arg
+  162 dump-as-body, config, invalid arg
+  163 dump-as-body, config, no-option
+  170 dump-as-body, env var, no arg
+  171 dump-as-body, env var, valid arg
+  172 dump-as-body, env var, invalid arg
+  173 dump-as-body, env var, no-option
+  180 dump-as-body command line, no arg (-option)
+  181 dump-as-body, command line, valid arg (-option=)
+  182 dump-as-body, command line, valid arg (--option=)
+00200 --dabsp
+  200 dabsp, command line, no arg
+  # 201 dabsp, command line, valid arg
+  # 202 dabsp, command line, invalid arg
+  203 dabsp, command line, no-option
+  210 dabsp, config, no arg
+  # 211 dabsp, config, valid arg
+  # 212 dabsp, config, invalid arg
+  213 dabsp, config, no-option
+  220 dabsp, env var, no arg
+  # 221 dabsp, env var, valid arg
+  # 222 dabsp, env var, invalid arg
+  223 dabsp, env var, no-option
+  230 dabsp command line, no arg (-option)
+  # 231 dabsp, command line, valid arg (-option=)
+  # 232 dabsp, command line, valid arg (--option=)
+00250 --dump-as-body-shows-password
+  250 dump-as-body-shows-password, command line, no arg
+  # 251 dump-as-body-shows-password, command line, valid arg
+  # 252 dump-as-body-shows-password, command line, invalid arg
+  253 dump-as-body-shows-password, command line, no-option
+  260 dump-as-body-shows-password, config, no arg
+  # 261 dump-as-body-shows-password, config, valid arg
+  # 262 dump-as-body-shows-password, config, invalid arg
+  263 dump-as-body-shows-password, config, no-option
+  270 dump-as-body-shows-password, env var, no arg
+  # 271 dump-as-body-shows-password, env var, valid arg
+  # 272 dump-as-body-shows-password, env var, invalid arg
+  273 dump-as-body-shows-password, env var, no-option
+  280 dump-as-body-shows-password command line, no arg (-option)
+  # 281 dump-as-body-shows-password, command line, valid arg (-option=)
+  # 282 dump-as-body-shows-password, command line, valid arg (--option=)
+00300 --body
+  300 body, command line, no arg
+  301 body, command line, valid arg
+  302 body, command line, invalid arg
+  303 body, command line, no-option
+  310 body, config, no arg
+  311 body, config, valid arg
+  312 body, config, invalid arg
+  313 body, config, no-option
+  320 body, env var, no arg
+  321 body, env var, valid arg
+  322 body, env var, invalid arg
+  323 body, env var, no-option
+  330 body command line, no arg (-option)
+  331 body, command line, valid arg (-option=)
+  332 body, command line, valid arg (--option=)
+00500 --attach-body
+  500 attach-body, command line, no arg
+  501 attach-body, command line, valid arg
+  502 attach-body, command line, invalid arg
+  503 attach-body, command line, no-option
+  510 attach-body, config, no arg
+  511 attach-body, config, valid arg
+  512 attach-body, config, invalid arg
+  513 attach-body, config, no-option
+  520 attach-body, env var, no arg
+  521 attach-body, env var, valid arg
+  522 attach-body, env var, invalid arg
+  523 attach-body, env var, no-option
+  530 attach-body command line, no arg (-option)
+  531 attach-body, command line, valid arg (-option=)
+  532 attach-body, command line, valid arg (--option=)
+00600 --attach-type
+  600 attach-type, command line, no arg
+  601 attach-type, command line, valid arg
+  # 602 attach-type, command line, invalid arg
+  603 attach-type, command line, no-option
+  610 attach-type, config, no arg
+  611 attach-type, config, valid arg
+  # 612 attach-type, config, invalid arg
+  613 attach-type, config, no-option
+  620 attach-type, env var, no arg
+  621 attach-type, env var, valid arg
+  # 622 attach-type, env var, invalid arg
+  623 attach-type, env var, no-option
+  630 attach-type command line, no arg (-option)
+  631 attach-type, command line, valid arg (-option=)
+  632 attach-type, command line, valid arg (--option=)
+00700 --attach-name
+  700 attach-name, command line, no arg
+  701 attach-name, command line, valid arg
+  # 702 attach-name, command line, invalid arg
+  703 attach-name, command line, no-option
+  710 attach-name, config, no arg
+  711 attach-name, config, valid arg
+  # 712 attach-name, config, invalid arg
+  713 attach-name, config, no-option
+  720 attach-name, env var, no arg
+  721 attach-name, env var, valid arg
+  # 722 attach-name, env var, invalid arg
+  723 attach-name, env var, no-option
+  730 attach-name command line, no arg (-option)
+  731 attach-name, command line, valid arg (-option=)
+  732 attach-name, command line, valid arg (--option=)
+00800 --ah
+  800 ah, command line, no arg
+  801 ah, command line, valid arg
+  # 802 ah, command line, invalid arg
+  803 ah, command line, no-option
+  810 ah, config, no arg
+  811 ah, config, valid arg
+  # 812 ah, config, invalid arg
+  813 ah, config, no-option
+  820 ah, env var, no arg
+  821 ah, env var, valid arg
+  # 822 ah, env var, invalid arg
+  823 ah, env var, no-option
+  830 ah command line, no arg (-option)
+  831 ah, command line, valid arg (-option=)
+  832 ah, command line, valid arg (--option=)
+00850 --add-header
+  850 add-header, command line, no arg
+  851 add-header, command line, valid arg
+  # 852 add-header, command line, invalid arg
+  853 add-header, command line, no-option
+  860 add-header, config, no arg
+  861 add-header, config, valid arg
+  # 862 add-header, config, invalid arg
+  863 add-header, config, no-option
+  870 add-header, env var, no arg
+  871 add-header, env var, valid arg
+  # 872 add-header, env var, invalid arg
+  873 add-header, env var, no-option
+  880 add-header command line, no arg (-option)
+  881 add-header, command line, valid arg (-option=)
+  882 add-header, command line, valid arg (--option=)
+00900 --header
+  900 header, command line, no arg
+  901 header, command line, valid arg
+  # 902 header, command line, invalid arg
+  903 header, command line, no-option
+  910 header, config, no arg
+  911 header, config, valid arg
+  # 912 header, config, invalid arg
+  913 header, config, no-option
+  920 header, env var, no arg
+  921 header, env var, valid arg
+  # 922 header, env var, invalid arg
+  923 header, env var, no-option
+  930 header command line, no arg (-option)
+  931 header, command line, valid arg (-option=)
+  932 header, command line, valid arg (--option=)
+01000 --h-From
+  1000 h-From, command line, no arg
+  1001 h-From, command line, valid arg
+  # 1002 h-From, command line, invalid arg
+  1003 h-From, command line, no-option
+  1010 h-From, config, no arg
+  1011 h-From, config, valid arg
+  # 1012 h-From, config, invalid arg
+  1013 h-From, config, no-option
+  1020 h-From, env var, no arg
+  1021 h-From, env var, valid arg
+  # 1022 h-From, env var, invalid arg
+  1023 h-From, env var, no-option
+  1030 h-From command line, no arg (-option)
+  1031 h-From, command line, valid arg (-option=)
+  1032 h-From, command line, valid arg (--option=)
+01050 --h-From:
+  1050 h-From:, command line, no arg
+  1051 h-From:, command line, valid arg
+  # 1052 h-From:, command line, invalid arg
+  1053 h-From:, command line, no-option
+  1060 h-From:, config, no arg
+  1061 h-From:, config, valid arg
+  # 1062 h-From:, config, invalid arg
+  1063 h-From:, config, no-option
+  1070 h-From:, env var, no arg
+  1071 h-From:, env var, valid arg
+  # 1072 h-From:, env var, invalid arg
+  1073 h-From:, env var, no-option
+  1080 h-From: command line, no arg (-option)
+  1081 h-From:, command line, valid arg (-option=)
+  1082 h-From:, command line, valid arg (--option=)
+01100 --header-From
+  1100 header-From, command line, no arg
+  1101 header-From, command line, valid arg
+  # 1102 header-From, command line, invalid arg
+  1103 header-From, command line, no-option
+  1110 header-From, config, no arg
+  1111 header-From, config, valid arg
+  # 1112 header-From, config, invalid arg
+  1113 header-From, config, no-option
+  1120 header-From, env var, no arg
+  1121 header-From, env var, valid arg
+  # 1122 header-From, env var, invalid arg
+  1123 header-From, env var, no-option
+  1130 header-From command line, no arg (-option)
+  1131 header-From, command line, valid arg (-option=)
+  1132 header-From, command line, valid arg (--option=)
+01100 --header-From:
+  1100 header-From:, command line, no arg
+  1101 header-From:, command line, valid arg
+  # 1102 header-From:, command line, invalid arg
+  1103 header-From:, command line, no-option
+  1110 header-From:, config, no arg
+  1111 header-From:, config, valid arg
+  # 1112 header-From:, config, invalid arg
+  1113 header-From:, config, no-option
+  1120 header-From:, env var, no arg
+  1121 header-From:, env var, valid arg
+  # 1122 header-From:, env var, invalid arg
+  1123 header-From:, env var, no-option
+  1130 header-From: command line, no arg (-option)
+  1131 header-From:, command line, valid arg (-option=)
+  1132 header-From:, command line, valid arg (--option=)
+01150 --header-From:
+  1150 header-From:, command line, no arg
+  1151 header-From:, command line, valid arg
+  # 1152 header-From:, command line, invalid arg
+  1153 header-From:, command line, no-option
+  1160 header-From:, config, no arg
+  1161 header-From:, config, valid arg
+  # 1162 header-From:, config, invalid arg
+  1163 header-From:, config, no-option
+  1170 header-From:, env var, no arg
+  1171 header-From:, env var, valid arg
+  # 1172 header-From:, env var, invalid arg
+  1173 header-From:, env var, no-option
+  1180 header-From: command line, no arg (-option)
+  1181 header-From:, command line, valid arg (-option=)
+  1182 header-From:, command line, valid arg (--option=)
+01200 --ndf
+  1200 ndf, command line, no arg
+  # 1201 ndf, command line, valid arg
+  # 1202 ndf, command line, invalid arg
+  1203 ndf, command line, no-option
+  1210 ndf, config, no arg
+  # 1211 ndf, config, valid arg
+  # 1212 ndf, config, invalid arg
+  1213 ndf, config, no-option
+  1220 ndf, env var, no arg
+  # 1221 ndf, env var, valid arg
+  # 1222 ndf, env var, invalid arg
+  1223 ndf, env var, no-option
+  1230 ndf command line, no arg (-option)
+  # 1231 ndf, command line, valid arg (-option=)
+  # 1232 ndf, command line, valid arg (--option=)
+01250 --no-data-fixup
+  1250 no-data-fixup, command line, no arg
+  # 1251 no-data-fixup, command line, valid arg
+  # 1252 no-data-fixup, command line, invalid arg
+  1253 no-data-fixup, command line, no-option
+  1260 no-data-fixup, config, no arg
+  # 1261 no-data-fixup, config, valid arg
+  # 1262 no-data-fixup, config, invalid arg
+  1263 no-data-fixup, config, no-option
+  1270 no-data-fixup, env var, no arg
+  # 1271 no-data-fixup, env var, valid arg
+  # 1272 no-data-fixup, env var, invalid arg
+  1273 no-data-fixup, env var, no-option
+  1280 no-data-fixup command line, no arg (-option)
+  # 1281 no-data-fixup, command line, valid arg (-option=)
+  # 1282 no-data-fixup, command line, valid arg (--option=)
+01300 --nsf
+  1300 nsf, command line, no arg
+  # 1301 nsf, command line, valid arg
+  # 1302 nsf, command line, invalid arg
+  1303 nsf, command line, no-option
+  1310 nsf, config, no arg
+  # 1311 nsf, config, valid arg
+  # 1312 nsf, config, invalid arg
+  1313 nsf, config, no-option
+  1320 nsf, env var, no arg
+  # 1321 nsf, env var, valid arg
+  # 1322 nsf, env var, invalid arg
+  1323 nsf, env var, no-option
+  1330 nsf command line, no arg (-option)
+  # 1331 nsf, command line, valid arg (-option=)
+  # 1332 nsf, command line, valid arg (--option=)
+01350 --no-strip-from
+  1350 no-strip-from, command line, no arg
+  # 1351 no-strip-from, command line, valid arg
+  # 1352 no-strip-from, command line, invalid arg
+  1353 no-strip-from, command line, no-option
+  1360 no-strip-from, config, no arg
+  # 1361 no-strip-from, config, valid arg
+  # 1362 no-strip-from, config, invalid arg
+  1363 no-strip-from, config, no-option
+  1370 no-strip-from, env var, no arg
+  # 1371 no-strip-from, env var, valid arg
+  # 1372 no-strip-from, env var, invalid arg
+  1373 no-strip-from, env var, no-option
+  1380 no-strip-from command line, no arg (-option)
+  # 1381 no-strip-from, command line, valid arg (-option=)
+  # 1382 no-strip-from, command line, valid arg (--option=)
+01400 --g
+  1400 g, command line, no arg
+  # 1401 g, command line, valid arg
+  # 1402 g, command line, invalid arg
+  1403 g, command line, no-option
+  1410 g, config, no arg
+  # 1411 g, config, valid arg
+  # 1412 g, config, invalid arg
+  1413 g, config, no-option
+  1420 g, env var, no arg
+  # 1421 g, env var, valid arg
+  # 1422 g, env var, invalid arg
+  1423 g, env var, no-option
+  1430 g command line, no arg (-option)
+  # 1431 g, command line, valid arg (-option=)
+  # 1432 g, command line, valid arg (--option=)
+
+
+
+05000
+    1 data, test data from file (plain)
+    2 data, data from a file (tokens)
+    3 data, no headers
+    4 data, single header
+    5 data, no body (no trailing newline)
+    6 data, no body (one trailing newline)
+    7 data, no body (two trailing newlines)
+    8 data, quoting inline dots
+    9 data, quoting already-quoted leading dots
+    10 data, quoting trailing dot
+    11 data, - reads from STDIN
+05100 --body
+    0 - works inline
+    1 - '-' reads from stdin
+    2 - works from file
+05200 - headers
+    1 - --add-header adds unique
+    2 - --add-header adds duplicate
+    3 - --add-header works with custom --data (no %BODY% token)
+    11 - --header adds unique
+    12 - --header replaces duplicate
+    13 - --header (unique) works with custom --data (no %BODY% token)
+    14 - --header works with spaces in header name (unique)
+    15 - --header works with spaces in header name (dupe)
+    16 - no colon in header line
+    17 - first line of data looks like a continuation header
+05250 - regression tests for multi-line headers
+  251 header replacement SINGLE-LINE, SINGLE-HEADER FIRST
+  252 header replacement SINGLE-LINE, SINGLE-HEADER MIDDLE
+  253 header replacement SINGLE-LINE, SINGLE-HEADER LAST
+  254 header replacement SINGLE-LINE, MULTIPLE-HEADER-CONSECUTIVE FIRST
+  255 header replacement SINGLE-LINE, MULTIPLE-HEADER-CONSECUTIVE MIDDLE
+  256 header replacement SINGLE-LINE, MULTIPLE-HEADER-CONSECUTIVE LAST
+  257 header replacement SINGLE-LINE, MULTIPLE-HEADER-DISJOINED ANY
+  258 header replacement MULTI-LINE, SINGLE-HEADER FIRST
+  259 header replacement MULTI-LINE, SINGLE-HEADER MIDDLE
+  260 header replacement MULTI-LINE, SINGLE-HEADER LAST
+  261 header replacement MULTI-LINE, MULTIPLE-HEADER-CONSECUTIVE FIRST
+  262 header replacement MULTI-LINE, MULTIPLE-HEADER-CONSECUTIVE MIDDLE
+  263 header replacement MULTI-LINE, MULTIPLE-HEADER-CONSECUTIVE LAST
+  264 header replacement MULTI-LINE, MULTIPLE-HEADER-DISJOINED ANY
+  265 header replacement SINGLE-LINE, SINGLE-HEADER FIRST - body starts with space
+  266 header replacement SINGLE-LINE, SINGLE-HEADER LAST - body starts with space
+  267 header replacement MULTI-LINE, SINGLE-HEADER FIRST - body starts with space
+  268 header replacement MULTI-LINE, SINGLE-HEADER LAST - body starts with space
+  269 header replacement SINGLE-LINE, SINGLE-HEADER FIRST
+  270 header replacement SINGLE-LINE, SINGLE-HEADER MIDDLE
+  271 header replacement SINGLE-LINE, SINGLE-HEADER LAST
+  272 header replacement SINGLE-LINE, MULTIPLE-HEADER-CONSECUTIVE FIRST
+  273 header replacement SINGLE-LINE, MULTIPLE-HEADER-CONSECUTIVE MIDDLE
+  274 header replacement SINGLE-LINE, MULTIPLE-HEADER-CONSECUTIVE LAST
+  275 header replacement SINGLE-LINE, MULTIPLE-HEADER-DISJOINED ANY
+  276 header replacement MULTI-LINE, SINGLE-HEADER FIRST
+  277 header replacement MULTI-LINE, SINGLE-HEADER MIDDLE
+  278 header replacement MULTI-LINE, SINGLE-HEADER LAST
+  279 header replacement MULTI-LINE, MULTIPLE-HEADER-CONSECUTIVE FIRST
+  280 header replacement MULTI-LINE, MULTIPLE-HEADER-CONSECUTIVE MIDDLE
+  281 header replacement MULTI-LINE, MULTIPLE-HEADER-CONSECUTIVE LAST
+  282 header replacement MULTI-LINE, MULTIPLE-HEADER-DISJOINED ANY
+  283 header replacement SINGLE-LINE, SINGLE-HEADER FIRST - body starts with space
+  284 header replacement SINGLE-LINE, SINGLE-HEADER LAST - body starts with space
+  285 header replacement MULTI-LINE, SINGLE-HEADER FIRST - body starts with space
+  286 header replacement MULTI-LINE, SINGLE-HEADER LAST - body starts with space
+05300 --attach
+    0 - works inline
+    1 - '-' reads from stdin
+    2 - works from file
+05400 --attach
+    0 - works inline
+    1 - '-' reads from stdin
+    2 - works from file
+05500 - body, attach interplay
+    0 - baseline. Use --body to set different body value
+    1 - --attach argument
+    2 - --attach from file
+    3 - --attach argument, with --attach-name
+    4 - --attach from file, with --attach-name
+    5 - attach-name only applies to next file
+    6 - multiple duplicate attach-names work
+    7 - multiple unique attach names work
+    8 - attach-type works for all following attachments
+    9 - attach-type text/plain, no filename does NOT encode
+    10 - attach-type text/plain, with filename DOES encode
+    11 - attach-type non-text/plain, no filename DOES encode
+    12 - attach-type non-text/plain, with filename DOES encode
+    13 - attach-name w/ no arg prevents assigning name to attachment
+    14 - attach in form of foo/bar that isn't a real file should be seen as contents, not as a mime-type
+    20 - in mime mode, --body is synonymous w/ --attach-type text/plain --attach-body
+    21 - --attach-body by itself forces mime mode, attaches arg as text/plain, msg: mutlipart/mixed
+    22 - --attach-body INLINE
+    23 - --attach-body FILE
+    24 - multiple bodies forces msg:multipart/alternative (--attach-type text/plain --attach-body body.txt --attach-type text/html --attach-body body.html)
+    25 - single body, multiple attachments = msg:mp/mixed,
+    26 - mult bodies, mult attach = msg:mp/mixed, body:mp/alt, att:whatever
+
+
+
+./gen-tests.pl \
+    -n 1400 \
+    -o g \
+    -v "" \
+    -i '' \
+    -d . \
+    -r \
+    -s '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" %TESTING%'
+
+    -p 'Body:' \
+
+
+Date: C%DATE%\nTo: C%TO_ADDRESS%\nFrom: C%FROM_ADDRESS%\nSubject: Ctest %DATE%\n\nC%BODY%\n
+
+    -p 'Password:' \
+    -p 'XCLIENT string:'
+
+00021
+
+#    \
+#    -s '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-family AF_UNIX --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-version 2'
+
+
+
+
+
+
+
+
+
+
+
+
+

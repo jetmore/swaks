@@ -1,0 +1,17 @@
+Output Info:
+  show_time_lapse    = TRUE
+  show_time_hires    = TRUE
+  show_raw_text      = TRUE
+  suppress_data      = TRUE
+  protect_prompt     = TRUE
+  no_hints_send      = TRUE
+  no_hints_recv      = TRUE
+  no_hints_info      = TRUE
+  silent             = 1
+  dump_mail          = FALSE
+  hide_send          = TRUE
+  hide_receive       = TRUE
+  hide_informational = TRUE
+  hide_all           = TRUE
+  trans_fh_of        = STDOUT (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+  trans_fh_ef        = STDERR (GLOB(0xdeadbeef),GLOB(0xdeadbeef))

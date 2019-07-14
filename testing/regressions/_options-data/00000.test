@@ -1,0 +1,7 @@
+# Generated Sat Jul 13 10:14:16 2019 by ./gen-tests.pl '-n' '0' '-o' 'd' '-v' 'Date: C%DATE%%NEWLINE%%NEWLINE%C%BODY%' '-i' '/path/to/bogus/file' '-d' '.' '-p' 'Data:' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver"'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: d, command line, no arg
+
+auto: INTERACT '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --d' 'Data:' 'Date: C%DATE%%NEWLINE%%NEWLINE%C%BODY%'

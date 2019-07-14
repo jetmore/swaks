@@ -1,5 +1,0 @@
-title: header replacement MULTI-LINE, SINGLE-HEADER FIRST - body starts with space
-id: 0035
-pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
-test action: CMD %SWAKS% --dump data --to user@example.com --data %TESTDIR%/%TESTID%.eml --output-file %OUTDIR%/%TESTID%.out --h-Header1 "TEST PASSED 1"
-test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

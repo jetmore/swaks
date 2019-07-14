@@ -1,5 +1,0 @@
-title: tests against the XCLIENT section
-pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
-test action: CMD %SWAKS% --dump xclient --to user@example.com --helo host.example.com --from from@example.com --output-file %OUTDIR%/%TESTID%.out --xclient-addr 9.9.9.9 --xclient-delim --xclient-name xclient.example.com --xclient-port 99 --xclient-delim --xclient-proto SMTP --xclient-helo "XCLIENT HELO" --xclient-login XCLIENTUSER --xclient-reverse-name reversename.example.com --xclient-destaddr 8.8.8.8 --xclient-destport 88 --xclient 'FOO=bar' --xclient-no-verify --xclient-before-starttls
-test action: MUNGE file:%OUTDIR%/%TESTID%.out "munge_globs" "munge_dates,'^(Subject|Date):'" "munge_message_ids,'^Message-Id:'"
-test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

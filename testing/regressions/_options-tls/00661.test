@@ -1,0 +1,9 @@
+# Generated Tue Dec 11 19:29:22 2018 by ./gen-tests.pl '.' '650' 'tls-get-peer-cert' '/path/to/KeyFile' ''
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tls-get-peer-cert, config, valid arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'tls-get-peer-cert /path/to/KeyFile'
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --tls --server "ser ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

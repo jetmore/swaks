@@ -1,0 +1,257 @@
+00000 --xclient-addr
+  0 xclient-addr, command line, no arg
+  1 xclient-addr, command line, valid arg
+  # 2 xclient-addr, command line, invalid arg
+  3 xclient-addr, command line, no-option
+  10 xclient-addr, config, no arg
+  11 xclient-addr, config, valid arg
+  # 12 xclient-addr, config, invalid arg
+  13 xclient-addr, config, no-option
+  20 xclient-addr, env var, no arg
+  21 xclient-addr, env var, valid arg
+  # 22 xclient-addr, env var, invalid arg
+  23 xclient-addr, env var, no-option
+  30 xclient-addr command line, no arg (-option)
+  31 xclient-addr, command line, valid arg (-option=)
+  32 xclient-addr, command line, valid arg (--option=)
+00050 --xclient-name
+  50 xclient-name, command line, no arg
+  51 xclient-name, command line, valid arg
+  # 52 xclient-name, command line, invalid arg
+  53 xclient-name, command line, no-option
+  60 xclient-name, config, no arg
+  61 xclient-name, config, valid arg
+  # 62 xclient-name, config, invalid arg
+  63 xclient-name, config, no-option
+  70 xclient-name, env var, no arg
+  71 xclient-name, env var, valid arg
+  # 72 xclient-name, env var, invalid arg
+  73 xclient-name, env var, no-option
+  80 xclient-name command line, no arg (-option)
+  81 xclient-name, command line, valid arg (-option=)
+  82 xclient-name, command line, valid arg (--option=)
+00100 --xclient-port
+  100 xclient-port, command line, no arg
+  101 xclient-port, command line, valid arg
+  # 102 xclient-port, command line, invalid arg
+  103 xclient-port, command line, no-option
+  110 xclient-port, config, no arg
+  111 xclient-port, config, valid arg
+  # 112 xclient-port, config, invalid arg
+  113 xclient-port, config, no-option
+  120 xclient-port, env var, no arg
+  121 xclient-port, env var, valid arg
+  # 122 xclient-port, env var, invalid arg
+  123 xclient-port, env var, no-option
+  130 xclient-port command line, no arg (-option)
+  131 xclient-port, command line, valid arg (-option=)
+  132 xclient-port, command line, valid arg (--option=)
+00150 --xclient-proto
+  150 xclient-proto, command line, no arg
+  151 xclient-proto, command line, valid arg
+  # 152 xclient-proto, command line, invalid arg
+  153 xclient-proto, command line, no-option
+  160 xclient-proto, config, no arg
+  161 xclient-proto, config, valid arg
+  # 162 xclient-proto, config, invalid arg
+  163 xclient-proto, config, no-option
+  170 xclient-proto, env var, no arg
+  171 xclient-proto, env var, valid arg
+  # 172 xclient-proto, env var, invalid arg
+  173 xclient-proto, env var, no-option
+  180 xclient-proto command line, no arg (-option)
+  181 xclient-proto, command line, valid arg (-option=)
+  182 xclient-proto, command line, valid arg (--option=)
+00200 --xclient-destaddr
+  200 xclient-destaddr, command line, no arg
+  201 xclient-destaddr, command line, valid arg
+  # 202 xclient-destaddr, command line, invalid arg
+  203 xclient-destaddr, command line, no-option
+  210 xclient-destaddr, config, no arg
+  211 xclient-destaddr, config, valid arg
+  # 212 xclient-destaddr, config, invalid arg
+  213 xclient-destaddr, config, no-option
+  220 xclient-destaddr, env var, no arg
+  221 xclient-destaddr, env var, valid arg
+  # 222 xclient-destaddr, env var, invalid arg
+  223 xclient-destaddr, env var, no-option
+  230 xclient-destaddr command line, no arg (-option)
+  231 xclient-destaddr, command line, valid arg (-option=)
+  232 xclient-destaddr, command line, valid arg (--option=)
+00250 --xclient-destport
+  250 xclient-destport, command line, no arg
+  251 xclient-destport, command line, valid arg
+  # 252 xclient-destport, command line, invalid arg
+  253 xclient-destport, command line, no-option
+  260 xclient-destport, config, no arg
+  261 xclient-destport, config, valid arg
+  # 262 xclient-destport, config, invalid arg
+  263 xclient-destport, config, no-option
+  270 xclient-destport, env var, no arg
+  271 xclient-destport, env var, valid arg
+  # 272 xclient-destport, env var, invalid arg
+  273 xclient-destport, env var, no-option
+  280 xclient-destport command line, no arg (-option)
+  281 xclient-destport, command line, valid arg (-option=)
+  282 xclient-destport, command line, valid arg (--option=)
+00300 --xclient-helo
+  300 xclient-helo, command line, no arg
+  301 xclient-helo, command line, valid arg
+  # 302 xclient-helo, command line, invalid arg
+  303 xclient-helo, command line, no-option
+  310 xclient-helo, config, no arg
+  311 xclient-helo, config, valid arg
+  # 312 xclient-helo, config, invalid arg
+  313 xclient-helo, config, no-option
+  320 xclient-helo, env var, no arg
+  321 xclient-helo, env var, valid arg
+  # 322 xclient-helo, env var, invalid arg
+  323 xclient-helo, env var, no-option
+  330 xclient-helo command line, no arg (-option)
+  331 xclient-helo, command line, valid arg (-option=)
+  332 xclient-helo, command line, valid arg (--option=)
+00350 --xclient-login
+  350 xclient-login, command line, no arg
+  351 xclient-login, command line, valid arg
+  # 352 xclient-login, command line, invalid arg
+  353 xclient-login, command line, no-option
+  360 xclient-login, config, no arg
+  361 xclient-login, config, valid arg
+  # 362 xclient-login, config, invalid arg
+  363 xclient-login, config, no-option
+  370 xclient-login, env var, no arg
+  371 xclient-login, env var, valid arg
+  # 372 xclient-login, env var, invalid arg
+  373 xclient-login, env var, no-option
+  380 xclient-login command line, no arg (-option)
+  381 xclient-login, command line, valid arg (-option=)
+  382 xclient-login, command line, valid arg (--option=)
+00400 --xclient-reverse-name
+  400 xclient-reverse-name, command line, no arg
+  401 xclient-reverse-name, command line, valid arg
+  # 402 xclient-reverse-name, command line, invalid arg
+  403 xclient-reverse-name, command line, no-option
+  410 xclient-reverse-name, config, no arg
+  411 xclient-reverse-name, config, valid arg
+  # 412 xclient-reverse-name, config, invalid arg
+  413 xclient-reverse-name, config, no-option
+  420 xclient-reverse-name, env var, no arg
+  421 xclient-reverse-name, env var, valid arg
+  # 422 xclient-reverse-name, env var, invalid arg
+  423 xclient-reverse-name, env var, no-option
+  430 xclient-reverse-name command line, no arg (-option)
+  431 xclient-reverse-name, command line, valid arg (-option=)
+  432 xclient-reverse-name, command line, valid arg (--option=)
+00450 --xclient
+  450 xclient, command line, no arg
+  451 xclient, command line, valid arg
+  # 452 xclient, command line, invalid arg
+  453 xclient, command line, no-option
+  460 xclient, config, no arg
+  461 xclient, config, valid arg
+  # 462 xclient, config, invalid arg
+  463 xclient, config, no-option
+  470 xclient, env var, no arg
+  471 xclient, env var, valid arg
+  # 472 xclient, env var, invalid arg
+  473 xclient, env var, no-option
+  480 xclient command line, no arg (-option)
+  481 xclient, command line, valid arg (-option=)
+  482 xclient, command line, valid arg (--option=)
+00500 --xclient-no-verify
+  500 xclient-no-verify, command line, no arg
+  # 501 xclient-no-verify, command line, valid arg
+  502 xclient-no-verify, command line, invalid arg
+  503 xclient-no-verify, command line, no-option
+  510 xclient-no-verify, config, no arg
+  # 511 xclient-no-verify, config, valid arg
+  512 xclient-no-verify, config, invalid arg
+  513 xclient-no-verify, config, no-option
+  520 xclient-no-verify, env var, no arg
+  # 521 xclient-no-verify, env var, valid arg
+  522 xclient-no-verify, env var, invalid arg
+  523 xclient-no-verify, env var, no-option
+  530 xclient-no-verify command line, no arg (-option)
+  # 531 xclient-no-verify, command line, valid arg (-option=)
+  # 532 xclient-no-verify, command line, valid arg (--option=)
+00550 --xclient-before-starttls
+  550 xclient-before-starttls, command line, no arg
+  # 551 xclient-before-starttls, command line, valid arg
+  552 xclient-before-starttls, command line, invalid arg
+  553 xclient-before-starttls, command line, no-option
+  560 xclient-before-starttls, config, no arg
+  # 561 xclient-before-starttls, config, valid arg
+  562 xclient-before-starttls, config, invalid arg
+  563 xclient-before-starttls, config, no-option
+  570 xclient-before-starttls, env var, no arg
+  # 571 xclient-before-starttls, env var, valid arg
+  572 xclient-before-starttls, env var, invalid arg
+  573 xclient-before-starttls, env var, no-option
+  580 xclient-before-starttls command line, no arg (-option)
+  # 581 xclient-before-starttls, command line, valid arg (-option=)
+  # 582 xclient-before-starttls, command line, valid arg (--option=)
+00600 --xclient-optional
+  600 xclient-optional, command line, no arg
+  # 601 xclient-optional, command line, valid arg
+  602 xclient-optional, command line, invalid arg
+  603 xclient-optional, command line, no-option
+  610 xclient-optional, config, no arg
+  # 611 xclient-optional, config, valid arg
+  612 xclient-optional, config, invalid arg
+  613 xclient-optional, config, no-option
+  620 xclient-optional, env var, no arg
+  # 621 xclient-optional, env var, valid arg
+  622 xclient-optional, env var, invalid arg
+  623 xclient-optional, env var, no-option
+  630 xclient-optional command line, no arg (-option)
+  # 631 xclient-optional, command line, valid arg (-option=)
+  # 632 xclient-optional, command line, valid arg (--option=)
+00650 --xclient-optional-strict
+  650 xclient-optional-strict, command line, no arg
+  # 651 xclient-optional-strict, command line, valid arg
+  652 xclient-optional-strict, command line, invalid arg
+  653 xclient-optional-strict, command line, no-option
+  660 xclient-optional-strict, config, no arg
+  # 661 xclient-optional-strict, config, valid arg
+  662 xclient-optional-strict, config, invalid arg
+  663 xclient-optional-strict, config, no-option
+  670 xclient-optional-strict, env var, no arg
+  # 671 xclient-optional-strict, env var, valid arg
+  672 xclient-optional-strict, env var, invalid arg
+  673 xclient-optional-strict, env var, no-option
+  680 xclient-optional-strict command line, no arg (-option)
+  # 681 xclient-optional-strict, command line, valid arg (-option=)
+  # 682 xclient-optional-strict, command line, valid arg (--option=)
+
+
+05000 - misc
+  000 same --xclient-* option given multiple times - SKIP
+  001 --xclient-* options get merged together
+  002 --xclient-* options coexist with --xclient
+  003 --xclient-delim interact with --xclient-*
+
+
+
+
+
+
+
+
+
+
+./gen-tests.pl \
+    -n 650 \
+    -o xclient-optional-strict \
+    -v "" \
+    -i 'foo' \
+    -d . \
+    -r \
+    -s '%SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --xclient-port 26'
+
+    -p 'XCLIENT string:' \
+#    \
+#    -s '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-family AF_UNIX --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-version 2'
+
+
+
+

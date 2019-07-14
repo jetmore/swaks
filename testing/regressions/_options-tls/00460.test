@@ -1,0 +1,9 @@
+# Generated Tue Dec 11 19:00:43 2018 by ./gen-tests.pl '.' '450' 'tlsp' 'tlsv1_1,tlsv1_2' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tlsp, config, no arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'tlsp'
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --tls --server "ser ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

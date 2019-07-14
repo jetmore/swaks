@@ -1,0 +1,14 @@
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stderr
+test action: CMD_CAPTURE %SWAKS% --dump support,app,output,transport,protocol,xclient,proxy,tls,auth,data --to user@example.com --server ser.ver --helo host.example.com --from from@example.com
+
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.stdout.2 %OUTDIR%/%TESTID%.stderr.2
+test action: CMD_CAPTURE:2 %SWAKS% --dump all --to user@example.com --server ser.ver --helo host.example.com --from from@example.com
+
+test action: MUNGE file:%OUTDIR%/%TESTID%.stdout   "munge_general,'Cmd Line',\"--dump '[^']+'\",'DUMP_OPT_REMOVED'"
+test action: MUNGE file:%OUTDIR%/%TESTID%.stdout.2 "munge_general,'Cmd Line',\"--dump '[^']+'\",'DUMP_OPT_REMOVED'"
+
+test action: MUNGE file:%OUTDIR%/%TESTID%.stdout   munge_standard
+test action: MUNGE file:%OUTDIR%/%TESTID%.stdout.2 munge_standard
+
+test result: COMPARE_FILE %OUTDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stdout.2
+test result: COMPARE_FILE %OUTDIR%/%TESTID%.stderr %OUTDIR%/%TESTID%.stderr.2

@@ -1,0 +1,8 @@
+# Generated Sat Jul 13 12:40:31 2019 by ./gen-tests.pl '-n' '1200' '-o' 'ndf' '-v' '' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" %TESTING%'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: ndf, config, no arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'ndf'
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --config %OUTDIR%/swaksrc-%TESTID%

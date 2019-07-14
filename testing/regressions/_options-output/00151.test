@@ -1,0 +1,8 @@
+# Generated Mon Dec 10 12:22:47 2018 by ./gen-tests.pl '.' '150' 'stl' 'i' 'foo'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: stl, command line, valid arg
+
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver" \
+    --stl i

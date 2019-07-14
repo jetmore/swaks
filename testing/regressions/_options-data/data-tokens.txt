@@ -1,0 +1,11 @@
+Date: %DATE%
+To: %TO_ADDRESS%
+From: %FROM_ADDRESS%
+Subject: test %DATE%
+Message-Id: <%MESSAGEID%>
+X-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/
+%NEW_HEADERS%
+%BODY%
+This is the message from data-tokens.txt
+
+multi%NEWLINE%line\ntest

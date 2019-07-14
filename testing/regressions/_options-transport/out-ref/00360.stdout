@@ -1,0 +1,10 @@
+spawn %SWAKS_COMMAND% --dump TRANSPORT --to user@example.com --from recip@example.com --server ser ver --config /path/to/OUTDIR/swaksrc-00360
+Local Port: 9999
+Transport Info:
+  type            = socket-inet
+  inet protocol   = any
+  server          = ser ver
+  port            = 25
+  local interface = 
+  local port      = 9999
+  copy routing    = FALSE

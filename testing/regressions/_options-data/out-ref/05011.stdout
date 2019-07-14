@@ -1,0 +1,9 @@
+DATA Info:
+  data = <<.
+From: from-file
+To: to-file
+Subject: file subject
+
+body from file
+
+.

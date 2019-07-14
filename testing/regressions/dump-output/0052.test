@@ -1,5 +1,0 @@
-title: tests against the OUTPUT section
-pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
-test action: CMD %SWAKS% --dump output --to user@example.com --helo host.example.com --from from@example.com --output-file %OUTDIR%/%TESTID%.out --suppress-data --show-time-lapse --no-info-hints --no-send-hints --no-receive-hints  --hide-receive --hide-send --hide-informational --hide-all --silent --show-raw-text --protect-prompt
-test action: MUNGE file:%OUTDIR%/%TESTID%.out "munge_globs" "munge_dates,'^(Subject|Date):'" "munge_message_ids,'^Message-Id:'"
-test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

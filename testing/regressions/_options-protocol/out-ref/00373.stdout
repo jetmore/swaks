@@ -1,0 +1,13 @@
+Protocol Info:
+  protocol        = esmtp
+  helo            = LOCAL_HOST_NAME
+  from            = sender@example.net
+  to              = recip@example.com
+  force getpwuid  = FALSE
+  quit after      = 
+  drop after      = 
+  drop after send = 
+  server_only     = FALSE
+  timeout         = 30
+  pipeline        = FALSE
+  prdr            = FALSE

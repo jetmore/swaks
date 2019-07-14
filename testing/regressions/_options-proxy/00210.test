@@ -1,0 +1,8 @@
+# Generated Tue Dec 25 11:46:21 2018 by ./gen-tests.pl '-n' '200' '-o' 'proxy-source-port' '-v' '1111' '-i' '' '-p' 'PROXY source_port:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-family TCP4 --proxy-source 9.9.9.9'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: proxy-source-port, config, no arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'proxy-source-port'
+auto: INTERACT '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-family TCP4 --proxy-source 9.9.9.9 --config %OUTDIR%/swaksrc-%TESTID%' 'PROXY source_port:' '1111'

@@ -1,0 +1,214 @@
+blank lines and commented (w/ #) lines are skipped
+continuation lines work (lines that end in '\' are combined with the following line
+
+Tokens:
+	%SWAKS%   - will be replaced with the path to swaks. If $TEST_SWAKS is defined it will be used for %SWAKS%
+	%TESTID%  - The current test ID.  This is defined as the filename, minus the .test extension.  Almost always (and preferably) numeric,
+	            it is possible to use alpha chars if there's some reason.
+	%TESTDIR% - the path to the base of the currently running test suite
+	%OUTDIR%  - the path to dynamic files (output of swaks from the test run, dynamically-generated configs, etc). By convention, this
+	            directory will not be versioned.  defined as %TESTDIR%/out-dyn
+	%REFDIR%  - the path to static reference files.  These are the "blessed" output of the command, used as a reference to make sure a given
+	            execution is producing the correct results.  Contents will be versioned.  defined as %TESTDIR%/out-ref
+
+Line definition:
+	type: ARGUMENTS
+
+types:
+	"pre action"  - the VERB is an action.  Will be performed before testing. If more than one, will be performed in order encountered in file.
+	"once action" - the VERB is an action.  This is an action that is performed once and only once for the entire call to run-tests.pl.  This
+	                can be used to set up test environments that are dynamic enough that they can't be put in git, but static enough that
+	                they only need to be done once per test suite execution.  Will be performed before testing. If more than one, will be
+	                performed in order encountered in file.
+	"auto"        - The verb is a comma-delimited list of "standard" actions, followed by a space-delimited list of files.  Exact actions
+	                listed under "auto actions" below
+	"test action" - This is the action that is executing the actual test.  This action is no different than "pre action", it's just
+	                definied differently to make it easier to read and to make it obvious that it ALWAYS happens after "pre action", even if
+	                it's defined in the file before a "pre action"
+	"test result" - This defines an action that will determine whether the test passed or not. This really only works for one "test result",
+	                and really only diff right now.
+	"title"       - deprecated. Replaced by tracking test purposes in a suite's test.txt file
+	"skip"        - if present, the test will be skipped.  In the results it will be listed as a skip and the ARGUMENTS will be displayed
+	                as the reason why
+	"debug"       - comma-delimited list of debugging output to include or "ALL".
+	                Currently supported arguments:
+	                  "action" - prints a message any time an action is processed
+	                  "result" - prints a message any time a result is processed
+	                  "exec"   - any time run-tests.pl is going to execute a process, print what will be executed
+	                  VERB     - Any of the action of result verbs can be used, in which case more detailed info about the
+	                             execution of that verb will be printed
+
+Test execution order:
+	skip        - if present, test is skipped, regardless of any other content
+	once action - next any "once action"s are processed.  They are processed in the order encountered in the file
+	pre action  - next any "pre action"s are processed.  They are processed in the order encountered in the file
+	test action - next any "test action"s are processed.  They are processed in the order encountered in the file
+	test result - next any "test results"s are processed.  They are processed in the order encountered in the file
+	            (note that though it's designed to process multiple, it only works for one right now)
+
+
+
+auto actions
+	REMOVE_FILE
+		Assumes space-delimited list following actions is a list of FILEs
+		For each file FILE, add a "pre action: REMOVE_FILE %OUTDIR%/FILE" line
+
+	CREATE_FILE
+		Assumes space-delimited list following actions is a list of FILEs
+		For each file FILE, add a "pre action: CREATE_FILE %REFDIR%/FILE" line
+
+	MUNGE
+		Assumes space-delimited list following actions is a list of FILEs
+		For each file FILE, add a "test action: MUNGE file:%OUTDIR%/FILE munge_standard" line
+
+	COMPARE_FILE
+		Assumes space-delimited list following actions is a list of FILEs
+		For each file FILE, add a "test result: COMPARE_FILE %REFDIR%/FILE %OUTDIR%/FILE" line
+
+	INTERACT
+		This command is used to spawn a command and provide it input on stdin based on prompts
+		Assumes first element of space-delimited list following actions is a command to spawn (COMMAND)
+		After that, the space delimited list is expected to contain pairs, with the first being prompt
+		  and the second being response (PROMPT_n, RESPONSE_n)
+		Each INTERACT line adds the following lines:
+			pre action: REMOVE_FILE %OUTDIR%/%TESTID%.expect
+			pre action: MERGE %OUTDIR%/%TESTID%.expect string:'spawn COMMAND\\n' \
+			            string:'expect "PROMPT_1"\\n' string:'send -- "RESPONSE_1\\r"\\n' \
+			            string:'expect "PROMPT_N"\\n' string:'send -- "RESPONSE_N\\r"\\n' \
+			            string:'interact\\n'
+			test action: CMD_CAPTURE expect %OUTDIR%/%TESTID%.expect
+
+
+
+Action verbs:
+	REMOVE_FILE FILE [FILE ...]
+		unlink the specified file(s)
+
+	CMD EXECUTE STRING
+		executes the command and arguments.  This is NOT executed by a shell
+
+	CMD_CAPTURE EXECUTE STRING
+		same as CMD but stdout and stderr will be automatically captured to %OUTDIR%/%TESTID%.stdout and .stderr. Because these
+		file paths are static, this is really only usable once per test run. Room for improvement there...
+		Note that if the execute string contains a component that looks like STDIN:/path/to/file.txt, the executed command will
+		have its STDIN attached to /path/to/file.txt
+
+	CREATE_FILE FILE
+		touch a file (but only if FILE does not already exist). mostly useful for making sure test files exist even if there's
+		an execution error that prevents them from being created (prevents diff from barfing)
+
+	SET_ENV VAR CONTENTS
+	SET_ENV VAR "--UNSET--"
+		set an environment variable.  Useful for testing enviroment variables affecting the test command. After each test case is executed,
+		does its best to restore the environment to pre-testcase values so that env configs from one test don't bleed over to another.
+		As a special case, if the CONTENTS is "--UNSET--", the environment variable will be removed entirely (as distinct from setting to
+		an empty value).
+
+	MERGE OUTPUTFILE PART [PART ...]
+		Take all the PARTs, concatenate them, and put them in OUTPUTFILE.  PARTs must have a prefix.  "file:/path/to/file" indicated that
+		/path/to/prefix is a file, and the file contents should be used.  "string:'some text'" indicates that "some text" should be used as
+		the content
+
+	MUNGE file:FILE MUNGEVALUE
+		Oof, this is overly complex.  This is a filter for the FILE indicated by file:FILE.  That FILE will be opened, the requested munges
+		will be applied to each line in the file (potentially) and the munged contents written back to FILE.  This is used to remove run-specific
+		output from the output files (dates, etc).
+		The actual MUNGEVALUE is EITHER TYPE,IF,FIND,REPLACE OR "munge_standard".
+			TYPE:         munge_general, munge_globs, munge_mime_boundaries, munge_version, munge_dates, munge_message_ids, munge_paths,
+			              munge_local_hostname
+			IF:           this is a pattern that is applied to the entire line. If the IF doesn't match, munging isn't attempted
+			FIND/REPLACE: If IF matched, then FIND is looked for.  If FIND matches, everything FIND matches is replaced with REPLACE
+		Because this is so complex and new types often pop up as tests are pushed into new areas, "munge_standard" can be used to apply
+		the standard set of munges to the file.  That way new standard munges can be added via run-tests.pl instead of modifying every
+		test case file.  As of the time of writing, munge_standard is equivilent to:
+			MUNGE file:FILE munge_standard
+				MUNGE file:FILE "munge_globs"
+				MUNGE file:FILE "munge_dates,'^(Subject|Date):'"
+				MUNGE file:FILE "munge_message_ids,'^Message-Id:'"
+				MUNGE file:FILE "munge_version,'X-Mailer'"
+				MUNGE file:FILE "munge_paths"
+				MUNGE file:FILE "munge_mime_boundaries"
+				MUNGE file:FILE "munge_local_hostname"
+
+Result verbs:
+	COMPARE_FILE REFERENCE_FILE TEST_FILE
+		Does a simple diff on the files.  If there's any output from the diff, it is a failure
+
+
+Example test file (lots of manual stuff - this was configured before stdout/stderr was captured, and also before we started adding defaults):
+#####################################
+# In order to test the __END__ configs, we have to generate a swaks that has those configs.  Because swaks will change, we can't
+# just do it once and then commit it as part of the test.  But we also don't need to create it for each test.  So, create it once
+# per test suite execution (also make it executable)
+once action: MERGE %OUTDIR%/swaks file:%SWAKS% file:%TESTDIR%/swaksrc-data
+once action: CMD chmod 00755 %OUTDIR%/swaks
+
+# before testing, remove the outfile so that there's no possibility of previous run output being used in this run
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out
+# before testing, make sure the reference file exists
+pre action: CREATE_FILE %REFDIR%/%TESTID%.out
+
+# Execute the test actions.  Note the line continuation.
+test action: CMD %SWAKS% --dump DATA --to user@example.com --from recip@example.com --server ser.ver  --output-file %OUTDIR%/%TESTID%.out \
+    --config %TESTDIR%/swaksrc-config-1
+# munge the output file
+test action: MUNGE file:%OUTDIR%/%TESTID%.out munge_standard
+# in addition to standard munging, do some test-specific munging
+test action: MUNGE file:%REFDIR%/%TESTID%.out "munge_general,'Cmd Line',\"--dump '[^']+'\",'DUMP_OPT_REMOVED'"
+
+# the actual test results.  compare our reference output and our test output and make sure they match
+test result: COMPARE_FILE %REFDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out
+######################################
+
+Example test file (after moving to stderr and stdout being captured
+######################################
+# before testing, remove the outfile so that there's no possibility of previous run output being used in this run
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stderr
+# before testing, make sure the reference file exists
+pre action: CREATE_FILE %REFDIR%/%TESTID%.stdout %REFDIR%/%TESTID%.stderr
+
+# Execute the test actions.  Note the line continuation.
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --server ser.ver  \
+    --config %TESTDIR%/swaksrc-config-1
+# munge the output file
+test action: MUNGE file:%OUTDIR%/%TESTID%.stdout munge_standard
+# in addition to standard munging, do some test-specific munging
+test action: MUNGE file:%REFDIR%/%TESTID%.stdout "munge_general,'Cmd Line',\"--dump '[^']+'\",'DUMP_OPT_REMOVED'"
+
+# test actions.  All must succeed in order for test to pass
+test result: COMPARE_FILE %REFDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stdout
+test result: COMPARE_FILE %REFDIR%/%TESTID%.stderr %OUTDIR%/%TESTID%.stderr
+######################################
+
+Example test file, turning on a bunch of automated stuff
+######################################
+# This automatically removes OUTDIR files, touches REFDIR files, applies munge_standard to OUTDIR files, and sets up a COMPARE_FILE for each file
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.out
+
+# still have to design the actual test (note that this is a little contrived to have a reason to have stdout, stderr, and out.  Most
+# tests won't have a .out unless we're specifically testing an output file option)
+test action: CMD %SWAKS% --dump DATA --to user@example.com --from recip@example.com --server ser.ver  --output-file %OUTDIR%/%TESTID%.out \
+    --config %TESTDIR%/swaksrc-config-1
+######################################
+
+The above is directly equivilent to this:
+######################################
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.stdout
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.stderr
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out
+
+pre action: CREATE_FILE %REFDIR%/%TESTID%.stdout
+pre action: CREATE_FILE %REFDIR%/%TESTID%.stderr
+pre action: CREATE_FILE %REFDIR%/%TESTID%.out
+
+test action: CMD %SWAKS% --dump DATA --to user@example.com --from recip@example.com --server ser.ver  --output-file %OUTDIR%/%TESTID%.out \
+    --config %TESTDIR%/swaksrc-config-1
+
+test action: MUNGE file:%OUTDIR%/%TESTID%.stdout munge_standard
+test action: MUNGE file:%OUTDIR%/%TESTID%.stderr munge_standard
+test action: MUNGE file:%OUTDIR%/%TESTID%.out munge_standard
+
+test result: COMPARE_FILE %REFDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stdout
+test result: COMPARE_FILE %REFDIR%/%TESTID%.stderr %OUTDIR%/%TESTID%.stderr
+test result: COMPARE_FILE %REFDIR%/%TESTID%.out    %OUTDIR%/%TESTID%.out
+######################################

@@ -1,0 +1,150 @@
+This suite is designed to test the actual setting of options.  It's not designed to fles the options themselves, just that they
+are being passed into the script in a consistent way.  I expect this to be a very big test suite
+
+(config file options) + (env var options) + (command line options)
+
+(config file options) =
+    --config (empty) = nothing processed
+    OR
+    __DATA__ + (config file)
+
+(config file) =
+    --config location > $SWAKS_HOME/.swaksrc > $HOME/.swaksrc > $LOGDIR/.swaksrc
+
+testing
+
+0000 - test config file processing
+ 0 - --config with custom location works
+ 1 - --config specified twice, last use wins
+ 2 - $SWAKS_HOME/.swaksrc works
+ 3 - $HOME/.swaksrc works
+ 4 - $LOGDIR/.swaksrc works
+ 5 - __DATA__ works
+ 6 - $SWAKS_HOME trumps $HOME and $LOGDIR
+ 7 - $HOME trumps $LOGDIR
+ 8 - --config trumps $SWAKS_HOME
+ 9 - --config (empty) turns off $SWAKS_HOME (--config as last option)
+ 10 - --config (empty) turns off $SWAKS_HOME (--config as non-last option)
+ 11 - --config (empty) turns off __DATA__ (--config as last option)
+ 12 - --config (empty) turns off __DATA__ (--config as non-last option)
+ 13 - --config FILE --config (empty) turns off FILE and DATA and $SWAKS_HOME/.swaksrc
+ 14 - --config (empty) --config FILE uses FILE (and DATA, though that's not the test)
+ 15 - $SWAKS_HOME/.swaksrc + __DATA__ blends both
+ 16 - --config FILE + __DATA__ blends both
+ 17 - --config works when none of SWAKS_DIR/HOME/LOGDIR are defined
+ 18 - DATA works when none of SWAKS_DIR/HOME/LOGDIR are defined
+ 19 - --config + DATA work when none of SWAKS_DIR/HOME/LOGDIR are defined
+ 20 - --config inside of a config file is a NOP
+ 50 - quoting is not required. If quoted, quotes will be taken as data. leading spaces (after first) are included
+ 51 - test "from"
+ 52 - test "-from"
+ 53 - test "--from"
+ 54 - test "f"
+ 55 - test "-f"
+ 56 - test "--f"
+ 57 - internal quoting is honored ("h-From: "Fred Example" <fred@example.com>")
+ 61 - no-info-hints ("set but no value" works
+ 62 - show-time-lapse="" (confirm that "set but no value" works)
+ 63 - show-time-lapse="i" (confirm that setting value works works)
+ 64 - invalid option fails (foobarbaz)
+ 65 - invalid option fails w/ arg(foobarbaz ARG)
+ 66 - mutually exclusive options (--pipe --server) fail
+ 67 - option without required argument fails (--auth-map)
+ 70 - --from --from (confirm second one wins)
+ 71 - --from -f (confirm second one wins
+ 72 - --show-time-lapse --no-show-time-lapse (confirm no- works, no args)
+ 73 - --show-time-lapse i --no-show-time-lapse (confirm no- works, with arg)
+ 74 - --6 --no-6 (confirm no- works w/ an option that sorts before "no-", no arg)
+ 75 - --local-port --no-local-port (confirm no- works w/ an option that sorts before "no-", with arg)
+ 76 - --no-info-hints --no-no-info-hints (no- works w/ no- arguments)
+ 77 - --6 --no-6 --6 (confirm that the no- can be overridden)
+
+
+0100 - test environment variable processing
+ 51 - from
+ 54 - f
+ 57 - h-From: "Fred Example" <fred@example.com> (internal quoting is maintained)
+ 60 - local-port (test underscore)
+ 61 - no-info-hints="" (confirm that "set but no value" works)
+ 62 - show-time-lapse="" (confirm that "set but no value" works)
+ 63 - show-time-lapse="i" (confirm that setting value works works)
+ 64 - invalid option fails (foobarbaz)
+ 65 - invalid option fails w/ arg(foobarbaz ARG)
+ 66 - mutually exclusive options (--pipe --server) fail
+ #67 - option without required argument fails (--auth-map) (CURRENTLY SKIPPED - SHOULD FAIL AND IT DOESN'T)
+ #70 - --from --from (which one wins?) (this can't be done in env vars, leaving it off)
+ 71 - --from -f (which one wins) (options are sorted, so whichever sorts last)
+ 72 - --show-time-lapse --no-show-time-lapse (confirm no- works, no args)
+      (testing to lock in behavior, but this doesn't actually work because "no-" sort before "show-". Documenting the behavior)
+ 73 - --show-time-lapse i --no-show-time-lapse (confirm no- works, with arg)
+      (testing to lock in behavior, but this doesn't actually work because "no-" sort before "show-". Documenting the behavior)
+ 74 - --6 --no-6 (confirm no- works w/ an option that sorts before "no-", no arg)
+ 75 - --local-port --no-local-port (confirm no- works w/ an option that sorts before "no-", with arg)
+ 76 - --no-info-hints --no-no-info-hints (no- works w/ no- arguments)
+ #77 - --6 --no-6 --6 (confirm that the no- can be overridden) (this can't be done w/ env vars, leaving off)
+
+
+0200 - test command line processing
+ 52 - test "-from"
+ 53 - test "--from"
+ 55 - test "-f"
+ 56 - test "--f"
+ 57 - internal quoting is honored ("h-From: "Fred Example" <fred@example.com>")
+ 61 - "--no-info-hints" ("set but no argument" works)
+ 62 - "--show-time-lapse ''" (confirm that "set with argument, but argument is empty" works)
+ 63 - show-time-lapse="i" (confirm that setting value works works)
+ 64 - invalid option fails (foobarbaz)
+ 65 - invalid option fails w/ arg(foobarbaz ARG)
+ 66 - mutually exclusive options (--pipe --server) fail
+ 67 - option without required argument fails (--auth-map)
+ 70 - --from --from (confirm second one wins)
+ 71 - --from -f (confirm second one wins
+ 72 - --show-time-lapse --no-show-time-lapse (confirm no- works, no args)
+ 73 - --show-time-lapse i --no-show-time-lapse (confirm no- works, with arg)
+ 74 - --6 --no-6 (confirm no- works w/ an option that sorts before "no-", no arg)
+ 75 - --local-port --no-local-port (confirm no- works w/ an option that sorts before "no-", with arg)
+ 76 - --no-info-hints --no-no-info-hints (no- works w/ no- arguments)
+ 77 - --6 --no-6 --6 (confirm that the no- can be overridden)
+
+0300 - test option processing cross-type interactions
+ 0 - --config only honored first time it's seen across any config type (--config trumps (SWAKS_OPT_config + SWAKS_HOME/.swaksrc:config))
+ 1 - --config only honored first time it's seen across any config type (SWAKS_OPT_config trump SWAKS_HOME/.swaksrc:config)
+ 2 - --config blends w/ DATA config
+ 3 - SWAKS_OPT_config blends w/ DATA config
+ 20 - standard option processing order (--body trumps (SWAKS_OPT_body + SWAKS_HOME/.swaksrc:body))
+ 21 - standard option processing order (SWAKS_OPT_body trumps SWAKS_HOME/.swaksrc:body)
+ 32 - --no-show-time-lapse trumps SWAKS_OPT_show_time_lapse
+ 33 - --no-show-time-lapse trumps SWAKS_OPT_show_time_lapse=i
+ 34 - --no-6 trumps SWAKS_OPT_6
+ 35 - --no-local-port trumps SWAKS_OPT_local_port=9999
+ 36 - --no-no-info-hints trumps SWAKS_OPT_no_info_hints
+ 42 - --no-show-time-lapse trumps config:show-time-lapse
+ 43 - --no-show-time-lapse trumps config:show-time-lapse=i
+ 44 - --no-6 trumps config:6
+ 45 - --no-local-port trumps config:local-port=9999
+ 46 - --no-no-info-hints trumps config:no-info-hints
+ 52 - SWAKS_OPT_no_show_time_lapse trumps config:show-time-lapse
+ 53 - SWAKS_OPT_no_show_time_lapse trumps config:show-time-lapse=i
+ 54 - SWAKS_OPT_no_6 trumps config:6
+ 55 - SWAKS_OPT_no_loca_-port trumps config:local-port=9999
+ 56 - SWAKS_OPT_no_no_info_hints trumps config:no-info-hints
+ 60 - config:6, SWAKS_OPT_no_6, --6 results in 6 being turned on
+ 70 - CROSS-TYPE ERRORS - config:pipe, SWAKS_OPT_server is an error
+ 71 - CROSS-TYPE ERRORS - config:pipe, --server is an error
+ 72 - CROSS-TYPE ERRORS - SWAKS_OPT_pip, --server is an error
+
+
+
+
+These will actually go in their own suites (options-data already exists)
+01000 - transport options
+ --copy-routing with no-option is legal? It shows as FALSE in the TRASNPORT dump.  That doesn't sem like it should be legal
+02000 - protocol options
+03000 - tls options
+04000 - authentication
+05000 - xclient
+06000 - proxy
+07000 - data
+08000 - output
+
+

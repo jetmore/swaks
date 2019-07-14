@@ -1,0 +1,7 @@
+# Generated Tue Dec 25 19:29:24 2018 by ./gen-tests.pl '-n' '650' '-o' 'pipe' '-v' '/path/to/command' '-i' '' '-p' 'Pipe:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: pipe, command line, no arg
+
+auto: INTERACT '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --pipe' 'Pipe:' '/path/to/command'

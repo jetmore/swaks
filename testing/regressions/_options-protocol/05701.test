@@ -1,0 +1,6 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+# this test delays because of live DNS lookup, need to figure out how to work around
+pre action: SET_ENV LOGNAME test_logname
+test action: CMD_CAPTURE %SWAKS% --dump PROTOCOL --to recip@example.com --helo helo-string --server ser.ver \
+    --force-getpwuid

@@ -1,0 +1,6 @@
+spawn %SWAKS_COMMAND% --dump PROXY --to user@example.com --from recip@example.com --server ser ver --proxy
+PROXY string: PROXY_STRING
+PROXY Info:
+  proxy       = yes
+  version     = 1
+  raw string  = PROXY_STRING

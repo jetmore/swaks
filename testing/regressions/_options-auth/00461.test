@@ -1,0 +1,9 @@
+# Generated Thu Jul 11 17:03:54 2019 by ./gen-tests.pl '-n' '450' '-o' 'auth-password' '-v' 'PASSWORD' '-i' '' '-d' '.' '-r' '-p' 'Password:' '-s' '%SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au USER'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: auth-password, config, valid arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'auth-password PASSWORD'
+test action: CMD_CAPTURE %SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au USER \
+    --config %OUTDIR%/swaksrc-%TESTID%

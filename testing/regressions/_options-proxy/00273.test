@@ -1,0 +1,8 @@
+# Generated Tue Dec 25 11:47:31 2018 by ./gen-tests.pl '-n' '250' '-o' 'proxy-dest' '-v' '2.2.2.2' '-i' '' '-p' 'PROXY dest:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-dest-port 8888 --proxy-family TCP4 --proxy-source 9.9.9.9 --proxy-source-port 9999'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: proxy-dest, env var, no-option
+
+pre action: SET_ENV SWAKS_OPT_proxy_dest 2.2.2.2
+test action: CMD_CAPTURE %SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-dest-port 8888 --proxy-family TCP4 --proxy-source 9.9.9.9 --proxy-source-port 9999 --no-proxy-dest

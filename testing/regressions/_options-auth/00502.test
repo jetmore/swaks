@@ -1,0 +1,8 @@
+# Generated Fri Jul 12 16:51:41 2019 by ./gen-tests.pl '-n' '500' '-o' 'ae' '-v' 'FOO=BAR' '-i' 'FOO' '-d' '.' '-s' '%SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au USER --ap PASS'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: ae, command line, invalid arg
+
+test action: CMD_CAPTURE %SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au USER --ap PASS \
+    --ae FOO

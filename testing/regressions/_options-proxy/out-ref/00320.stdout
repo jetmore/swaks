@@ -1,0 +1,12 @@
+spawn %SWAKS_COMMAND% --dump PROXY --to user@example.com --from recip@example.com --server ser ver --proxy-family TCP4 --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8
+PROXY dest_port: 2222
+PROXY Info:
+  proxy       = yes
+  version     = 1
+  family      = TCP4
+  source      = 9.9.9.9
+  source port = 9999
+  dest        = 8.8.8.8
+  dest port   = 2222
+  protocol    = STREAM
+  command     = PROXY

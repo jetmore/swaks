@@ -1,0 +1,9 @@
+# Generated Sat Jul 13 10:35:35 2019 by ./gen-tests.pl '-n' '200' '-o' 'dabsp' '-v' '' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au auth_user --ap auth_pass --dab AUTH'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: dabsp, config, no arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'dabsp'
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au auth_user --ap auth_pass --dab AUTH \
+    --config %OUTDIR%/swaksrc-%TESTID%

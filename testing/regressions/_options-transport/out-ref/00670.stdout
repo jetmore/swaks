@@ -1,0 +1,5 @@
+spawn %SWAKS_COMMAND% --dump TRANSPORT --to user@example.com --from recip@example.com
+Pipe: /path/to/command
+Transport Info:
+  type            = pipe
+  process         = /path/to/command

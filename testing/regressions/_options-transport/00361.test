@@ -1,0 +1,9 @@
+# Generated Tue Dec 25 19:02:28 2018 by ./gen-tests.pl '-n' '350' '-o' 'lport' '-v' '9999' '-i' '' '-p' 'Local Port:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver"'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: lport, config, valid arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'lport 9999'
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

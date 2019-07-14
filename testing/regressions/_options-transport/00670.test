@@ -1,0 +1,8 @@
+# Generated Tue Dec 25 19:29:24 2018 by ./gen-tests.pl '-n' '650' '-o' 'pipe' '-v' '/path/to/command' '-i' '' '-p' 'Pipe:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: pipe, env var, no arg
+
+pre action: SET_ENV SWAKS_OPT_pipe
+auto: INTERACT '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com' 'Pipe:' '/path/to/command'

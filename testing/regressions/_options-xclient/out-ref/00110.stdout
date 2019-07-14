@@ -1,0 +1,7 @@
+spawn %SWAKS_COMMAND% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server ser.ver --config /path/to/OUTDIR/swaksrc-00110
+XCLIENT port: 25
+XCLIENT Info:
+  xclient         = required
+  no_verify       = FALSE
+  before starttls = FALSE
+  strings         = XCLIENT PORT=25

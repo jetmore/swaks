@@ -1,0 +1,6 @@
+once action: MERGE %OUTDIR%/swaks file:%SWAKS% file:%TESTDIR%/swaksrc-data
+once action: CMD chmod 00755 %OUTDIR%/swaks
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+test action: CMD_CAPTURE %OUTDIR%/swaks --dump DATA --to user@example.com --from recip@example.com --server ser.ver

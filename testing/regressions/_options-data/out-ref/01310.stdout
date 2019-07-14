@@ -1,0 +1,10 @@
+DATA Info:
+  data = <<.
+From example@example.com Fri Jun 23 02:56:55 2000
+From: Foo
+Subject: Bar
+
+test body
+
+
+.

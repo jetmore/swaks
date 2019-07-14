@@ -1,5 +1,0 @@
-title: header replacement SINGLE-LINE, MULTIPLE-HEADER-CONSECUTIVE FIRST
-id: 0004
-pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
-test action: CMD %SWAKS% --dump data --to user@example.com --data %TESTDIR%/%TESTID%.eml --output-file %OUTDIR%/%TESTID%.out --h-Header1 "TEST PASSED 1" --h-Header2 "TEST PASSED 2"
-test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

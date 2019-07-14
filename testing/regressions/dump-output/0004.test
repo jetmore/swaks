@@ -1,5 +1,0 @@
-title: no options, but flip at least one option in each section
-pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
-test action: CMD %SWAKS% --dump --to user@example.com --helo host.example.com --from from@example.com --quit-after 'mail' --auth-user 'user' --auth-password 'pass' --tls '1' --hide-send '1' --dump --xclient-addr '192.168.0.4' --xclient-optional '1' --proxy-version '1' --proxy-family 'TCP4' --proxy-source '192.168.0.5' --proxy-source-port '111' --proxy-dest '1.1.1.1' --proxy-dest-port '26' --output-file %OUTDIR%/%TESTID%.out
-test action: MUNGE file:%OUTDIR%/%TESTID%.out "munge_globs" "munge_dates,'^(Subject|Date):'" "munge_message_ids,'^Message-Id:'"
-test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

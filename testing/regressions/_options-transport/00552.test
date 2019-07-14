@@ -1,0 +1,11 @@
+# Generated Tue Dec 25 19:21:07 2018 by ./gen-tests.pl '-n' '550' '-o' '6' '-v' '' '-i' 'anything' '-p' '' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver"'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: 6, command line, invalid arg
+
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver" \
+    --6 anything
+
+skip: This should fail because it doesn't take an arg, but it doesn't.  Skip and come back later
+

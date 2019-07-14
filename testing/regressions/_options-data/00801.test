@@ -1,0 +1,7 @@
+# Generated Sat Jul 13 12:20:02 2019 by ./gen-tests.pl '-n' '800' '-o' 'ah' '-v' 'From: added-by--add-header' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" %TESTING%'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: ah, command line, valid arg
+
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --ah 'From: added-by--add-header'

@@ -1,0 +1,10 @@
+TLS / Encryption Info:
+  tls                 = starttls (required)
+  peer cert           = /PEER/CERT
+  local cert          = /LOCAL/CERT
+  local key           = /LOCAL/KEY
+  local cipher list   = TEST_CIPHER
+  ca path             = /path/to/TESTDIR/0302.test
+  verify server cert  = TRUE
+  available protocols = SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2
+  requested protocols = TLSv1_1

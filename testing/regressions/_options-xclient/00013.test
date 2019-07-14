@@ -1,0 +1,9 @@
+# Generated Wed Jul 10 22:45:59 2019 by ./gen-tests.pl '-n' '0' '-o' 'xclient-addr' '-v' '1.1.1.1' '-i' '' '-p' 'XCLIENT addr:' '-d' '.' '-r'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: xclient-addr, config, no-option
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'xclient-addr 1.1.1.1\nno-xclient-addr'
+test action: CMD_CAPTURE %SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

@@ -1,0 +1,5 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+skip: UNKNOWN - this should fail and it doesn't
+pre action: SET_ENV SWAKS_OPT_auth-map ''
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --server ser.ver

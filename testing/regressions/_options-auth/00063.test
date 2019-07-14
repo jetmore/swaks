@@ -1,0 +1,9 @@
+# Generated Thu Jul 11 16:40:48 2019 by ./gen-tests.pl '-n' '50' '-o' 'auth' '-v' 'LOGIN' '-i' 'foo' '-d' '.' '-r' '-s' '%SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au USER -ap PASS'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: auth, config, no-option
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'auth LOGIN\nno-auth'
+test action: CMD_CAPTURE %SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

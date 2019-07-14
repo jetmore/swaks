@@ -1,0 +1,4 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'6\nno-6\n'
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --server ser.ver --config %OUTDIR%/swaksrc-%TESTID%

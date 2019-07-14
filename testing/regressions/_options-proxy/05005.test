@@ -1,0 +1,5 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+test action: CMD_CAPTURE %SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver" \
+    --proxy PROXY_STRING \
+    --proxy-dest TCP4

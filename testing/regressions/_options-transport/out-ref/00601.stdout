@@ -1,0 +1,3 @@
+Transport Info:
+  type            = socket-unix
+  sockfile        = /path/to/file

@@ -1,0 +1,7 @@
+# Generated Wed Jul 10 22:55:06 2019 by ./gen-tests.pl '-n' '300' '-o' 'xclient-helo' '-v' 'HELOSTR' '-i' '' '-p' 'XCLIENT helo:' '-d' '.' '-r'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: xclient-helo, command line, no arg
+
+auto: INTERACT '%SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --xclient-helo' 'XCLIENT helo:' 'HELOSTR'

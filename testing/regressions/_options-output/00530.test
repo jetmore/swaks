@@ -1,0 +1,8 @@
+# Generated Thu Dec 20 17:35:20 2018 by ./gen-tests.pl '.' '500' 'no-hints' '' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: no-hints command line, no arg (-option)
+
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver" \
+    -no-hints
