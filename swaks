@@ -2548,13 +2548,25 @@ sub process_args {
 
 		# build the header string into an object.  Each header is an array, each index is a line (to handle header continuation lines)
 		foreach my $headerLine (split(/\r?\n/, $header)) {
-			if ($headerLine =~ /^(\S[^:]+):/) {
+			if ($headerLine =~ /^\s/) {
+				# continuation line
+				if (scalar(@headers)) {
+					push(@{$headers[-1]}, $headerLine);
+				}
+				else {
+					# it's illegal to have a continuation line w/o a previous header, but we're a test tool
+					push(@headers, [ $headerLine ]);
+				}
+			}
+			elsif ($headerLine =~ /^(\S[^:]+):/) {
+				# properly formed header
 				push(@headers, [ $headerLine ]);
 				$headers{$1} = $headers[-1];
 			}
 			else {
-				# continuation line (a header line that starts with a space continues the previous header)
-				push(@{$headers[-1]}, $headerLine);
+				# malformed header - no colon.  Allow it anyway, we're a test tool
+				push(@headers, [ $headerLine ]);
+				$headers{$headerLine} = $headers[-1];
 			}
 		}
 
