@@ -2050,17 +2050,21 @@ sub fetch_args {
 			}
 			ptrans(12, "Unknown option $ARGV[$i], Exiting");
 			exit(1);
-		} elsif ($ARGV[$i] =~ /^-?-attach-name$/) {
-			if ($ARGV[$i+1] =~ /^-/) {
+		}
+		elsif ($ARGV[$i] =~ /^-?-(attach.*)$/) {
+			# all of the --attach* options end up in the same array because the order we receive them in
+			# is important.  But we only get the value, so flag them so we will be able to tell which
+			# argument belongs with which option later
+
+			my $opt = uc($1);
+			if ($ARGV[$i] =~ /^-?-attach-name$/ && $ARGV[$i+1] =~ /^-/) {
 				# in this case, the user is trying to tell us not to use
 				# a filename for the next attachment.  This means we actually have to
 				# insert an argument, flagged as a filename, with no value
-				# XXX WCSFIXME
-				splice(@ARGV, $i+1, 0, "FILENAME:");
-			} else {
-				# We were given a filename - mark it as such so we can figure
-				# it out later
-				$ARGV[$i+1] = "FILENAME:" . $ARGV[$i+1];
+				splice(@ARGV, $i+1, 0, 'SWAKS_ATTACH-NAME:');
+			}
+			else {
+				$ARGV[$i+1] = 'SWAKS_' . $opt . ':' . $ARGV[$i+1];
 			}
 		}
 	}
@@ -2457,16 +2461,18 @@ sub process_args {
 		my @parts     = ( { body => $body, type => 'text/plain' } );
 		$bound        = "----=_MIME_BOUNDARY_000_$$";
 		while (defined(my $t = shift(@{$o->{attach_822}}))) {
-			if ($t =~ m|^[^/]+/[^/]+$| && !stat($t)) {
-				$mime_type = $t;
-			} elsif ($t =~ /^FILENAME:(.*)$/) {
+			if ($t =~ /^SWAKS_ATTACH-TYPE:(.*)$/) {
+				$mime_type = $1;
+			} elsif ($t =~ /^SWAKS_ATTACH-NAME:(.*)$/) {
 				$next_name = $1;
-			} else {
-				push(@parts, { body => "$t", type => $mime_type });
+			} elsif ($t =~ /^SWAKS_ATTACH:(.*)$/) {
+				push(@parts, { body => $1, type => $mime_type });
 				if (defined($next_name)) {
 					$parts[-1]{name} = $next_name;
 					$next_name       = undef();
 				}
+			} else {
+				die "Error processing attach args, unknown type when processing $t\n";
 			}
 		}
 		$body = '';
