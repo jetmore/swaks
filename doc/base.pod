@@ -666,7 +666,7 @@ Specify the destination port of the proxied connection.
 
 =head1 DATA OPTIONS
 
-These options pertain to the contents for the DATA portion of the SMTP transaction.
+These options pertain to the contents for the DATA portion of the SMTP transaction.  By default a very simple message is sent.  If the --attach or --attach-body options are used, Swaks attempts to upgrade to a MIME message.
 
 =over 4
 
@@ -722,19 +722,23 @@ Cause --dump-as-body to include plaintext passwords.  This option is not recomme
 
 Specify the body of the email.  The default is "This is a test mailing".  If no argument to --body is given, prompt to supply one interactively.  If '-' is supplied, the body will be read from standard input.  If any other text is provided and the text represents an open-able file, the content of that file is used as the body.  If it does not represent an open-able file, the text itself is used as the body.
 
-If the message is forced to MIME format (see --attach) the argument to this option will be included unencoded as the first MIME part.  Its content-type will always be text/plain.
+If the message is forced to MIME format (see --attach) "--body 'body text'" is the same as "--attach-type text/plain --attach-body 'body text'".  See --attach-body for details on creating a multipart/alternative body.
 
 =item --attach [attachment-specification]
 
 When one or more --attach option is supplied, the message is changed into a multipart/mixed MIME message.  The arguments to --attach are processed the same as --body with respect to STDIN, file contents, etc.  --attach can be supplied multiple times to create multiple attachments.  By default, each attachment is attached as an application/octet-stream file.  See --attach-type for changing this behavior.
 
-If a filename is specified, the MIME encoding will include that file name.  See --attach-name for more detail on file naming.
+If the contents of the attachment are provided via a file name, the MIME encoding will include that file name.  See --attach-name for more detail on file naming.
 
 It is legal for '-' (STDIN) to be specified as an argument multiple times (once for --body and multiple times for --attach).  In this case, the same content will be attached each time it is specified.  This is useful for attaching the same content with multiple MIME types.
 
+=item --attach-body [body-specification]
+
+This is a variation on --attach that is specifically for the body part of the email.  It behaves identically to --attach in that it takes the same arguments and forces the creation of a MIME message.  However, it is different in that the argument will always be the first MIME part in the message, no matter where in option processing order it is encountered.  Additionally, --attach-body options stack to allow creation of multipart/alternative bodies.  For example, '--attach-type text/plain --attach "plain text body" --attach-type text/html --attach "html body"' would create a multipart/alternative message body.
+
 =item --attach-type [mime-type]
 
-By default, content that gets MIME attached to a message with the --attach option is encoded as application/octet-stream.  --attach-type changes the mime type for every --attach option which follows it.  It can be specified multiple times.
+By default, content that gets MIME attached to a message with the --attach option is encoded as application/octet-stream (except for the body, which is text/plain by default).  --attach-type changes the mime type for every --attach option which follows it.  It can be specified multiple times.  The current MIME type gets reset to application/octet-stream between processing body parts and other parts.
 
 =item --attach-name [name]
 

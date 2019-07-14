@@ -789,3 +789,5 @@
 * 20181110 Fix issue with malformed headers.  Don't fall over if header
            doesn't contain a colon or looks like an illegal continuation.
 * 20181110 Fix --attach* option processing to remove possibly ambiguity
+* 20181110 Implement --body-attach option to allow more granularity in
+           setting body information (different mime types, alternatives, etc).

@@ -1804,7 +1804,7 @@ sub get_option_struct {
 		{ opts => ['body'],                           suffix => ':s',
 		  okey => 'body_822',                         type => 'scalar', },
 		# A file to attach
-		{ opts => ['attach-name','attach-type','attach'], suffix => ':s',
+		{ opts => ['attach-name','attach-type','attach','attach-body'], suffix => ':s',
 		  okey => 'attach_822',                           type => 'list', },
 		# replacement for %NEW_HEADERS% DATA token
 		{ opts => ['ah', 'add-header'],               suffix => ':s',
@@ -2435,6 +2435,7 @@ sub process_args {
 	my $body  = 'This is a test mailing'; # default message body
 	$body = 'DUMP_AS_BODY_HAS_BEEN_SET' if (defined($o->{dump_as_body}));
 	my $bound = "";
+	my $main_content_type = "multipart/mixed";
 	my $stdin = undef;
 	if (defined($o->{body_822})) {
 		# the --body option is the entire 822 body and trumps and other options
@@ -2456,59 +2457,99 @@ sub process_args {
 		# this option is a list of files (or STDIN) to attach.  In this case,
 		# the message become a mime message and the "body" goes in the
 		# first text/plain part
-		my $mime_type = 'application/octet-stream';
+		my $mime_type = '%SWAKS_DEFAULT_MIMETYTPE%';
 		my $next_name = undef();
-		my @parts     = ( { body => $body, type => 'text/plain' } );
+		my %parts     = ( body => [], rest => [] );
 		$bound        = "----=_MIME_BOUNDARY_000_$$";
 		while (defined(my $t = shift(@{$o->{attach_822}}))) {
 			if ($t =~ /^SWAKS_ATTACH-TYPE:(.*)$/) {
 				$mime_type = $1;
 			} elsif ($t =~ /^SWAKS_ATTACH-NAME:(.*)$/) {
 				$next_name = $1;
+			} elsif ($t =~ /^SWAKS_ATTACH-BODY:(.*)$/) {
+				if ($mime_type eq '%SWAKS_DEFAULT_MIMETYTPE%') {
+					$mime_type = 'text/plain';
+				}
+				push(@{$parts{body}}, { body => $1, type => $mime_type });
+				$next_name = undef(); # can't set filename for body, unset next_name so random attachment doesn't get it
+				$mime_type = '%SWAKS_DEFAULT_MIMETYTPE%'; # after each body, reset the default mime type
 			} elsif ($t =~ /^SWAKS_ATTACH:(.*)$/) {
-				push(@parts, { body => $1, type => $mime_type });
+				push(@{$parts{rest}}, { body => $1, type => $mime_type });
 				if (defined($next_name)) {
-					$parts[-1]{name} = $next_name;
-					$next_name       = undef();
+					$parts{rest}[-1]{name} = $next_name;
+					$next_name             = undef();
 				}
 			} else {
 				die "Error processing attach args, unknown type when processing $t\n";
 			}
 		}
-		$body = '';
-		foreach my $p (@parts) {
-			if ($p->{body} eq '-') {
-				if ($stdin) {
-					$p->{body} = $stdin;
-				} else {
-					$p->{body} = join('', <STDIN>);
-					$stdin     = $p->{body};
+
+		# if no body parts were set via --attach-body, set a text/plain body to $body
+		if (!scalar(@{$parts{body}})) {
+			push(@{$parts{body}}, { body => $body, type => 'text/plain' });
+		}
+
+		# now loop through and reconcile stdin/file contents
+		foreach my $type ('body', 'rest') {
+			foreach my $part (@{$parts{$type}}) {
+				if ($part->{body} eq '-') {
+					if ($stdin) {
+						$part->{body} = $stdin;
+					} else {
+						$part->{body} = join('', <STDIN>);
+						$stdin        = $part->{body};
+					}
+				} elsif (open(I, "<$part->{body}")) {
+					if (!exists($part->{name}) && $type ne 'body') {
+						($part->{name}) = $part->{body} =~ m|/?([^/]+)$|;
+					}
+					$part->{body} = join('', <I>);
+					close(I);
 				}
-			} elsif (open(I, "<$p->{body}")) {
-				if (!exists($p->{name})) {
-					($p->{name}) = $p->{body} =~ m|/?([^/]+)$|;
-				}
-				$p->{body} = join('', <I>);
-				close(I);
 			}
-			$body .= "--$bound\n";
-			if ($p->{type} =~ m|^text/plain$|i && !$p->{name}) {
-				$body .= "Content-Type: $p->{type}\n\n" . $p->{body} . "\n";
-			} else {
-				if ($p->{name}) {
-					$body .= "Content-Type: $p->{type}; name=\"$p->{name}\"\n"
-					      .  "Content-Description: $p->{name}\n"
-					      .  "Content-Disposition: attachment; filename=\"$p->{name}\"\n";
-				} else {
-					$body .= "Content-Type: $p->{type}\n"
-					      .  "Content-Disposition: attachment\n";
+		}
+
+		$body = '';
+		if (!scalar(@{$parts{rest}})) {
+			# if there are no non-body parts
+			if (scalar(@{$parts{body}}) > 1) {
+				$main_content_type = 'multipart/alternative';
+			}
+			else {
+				$main_content_type = 'multipart/mixed';
+			}
+
+			foreach my $part (@{$parts{body}}) {
+				$body .= encode_mime_part($part, $bound, 1);
+			}
+		}
+		else {
+			# otherwise, there's a mixture of both body and other. multipart/mixed
+			$main_content_type = 'multipart/mixed';
+			if (scalar(@{$parts{body}}) > 1) {
+				# we have multiple body parts, plus other attachments.  Need to create a mp/mixes mime object for the bodies
+				my $mp_bound = "----=_MIME_BOUNDARY_004_$$";
+
+				$body .= "--$bound\n"
+				      .  'Content-Type: multipart/alternative; boundary="' . $mp_bound . '"' . "\n\n";
+
+				foreach my $part (@{$parts{body}}) {
+					$body .= encode_mime_part($part, $mp_bound, 1);
 				}
-				$body .= "Content-Transfer-Encoding: BASE64\n"
-				      .  "\n" . eb64($p->{body}, "\n") . "\n";
+				$body .= "--$mp_bound--\n";
+			}
+			else {
+				$body .= encode_mime_part($parts{body}[0], $bound, 1);
+			}
+
+			# now handle the non-body attachments
+			foreach my $part (@{$parts{rest}}) {
+				$body .= encode_mime_part($part, $bound);
 			}
 		}
 		$body .= "--$bound--\n";
 	}
+	$body =~ s|%SWAKS_DEFAULT_MIMETYTPE%|application/octet-stream|g;
 
 	# SMTP DATA
 	# a '-' arg to -d is the same as setting -g
@@ -2522,7 +2563,7 @@ sub process_args {
 	$n{data} ||= 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
 	            "Message-Id: <%MESSAGEID%>\n" .
 	            "X-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/".'\n' .
-	            ($bound ? 'MIME-Version: 1.0\nContent-Type: multipart/mixed; boundary="'.$bound.'"\n' : '') .
+	            ($bound ? 'MIME-Version: 1.0\nContent-Type: ' . $main_content_type . '; boundary="' . $bound. '"\n' : '') .
 	            '%NEW_HEADERS%' . # newline will be added in replacement if it exists
 	            '\n' .
 	            '%BODY%\n';
@@ -2959,6 +3000,36 @@ sub process_args {
 	}
 
 	return(\%n);
+}
+
+sub encode_mime_part {
+	my $part           = shift;
+	my $boundary       = shift;
+	my $no_attach_text = shift; # if this is true and there's no name, Don't set disposition to attachment
+	my $text           = '';
+
+	$text .= "--$boundary\n";
+	if ($part->{type} =~ m|^text/plain$|i && !$part->{name}) {
+		$text .= "Content-Type: $part->{type}\n\n" . $part->{body} . "\n";
+	}
+	else {
+		if ($part->{name}) {
+			$text .= "Content-Type: $part->{type}; name=\"$part->{name}\"\n"
+			      .  "Content-Description: $part->{name}\n"
+			      .  "Content-Disposition: attachment; filename=\"$part->{name}\"\n";
+		}
+		else {
+			$text .= "Content-Type: $part->{type}\n";
+			if (!($part->{type} =~ m|^text/|i && $no_attach_text)) {
+				$text .= "Content-Disposition: attachment\n";
+			}
+		}
+		$text .= "Content-Transfer-Encoding: BASE64\n"
+		      .  "\n" . eb64($part->{body}, "\n") . "\n";
+	}
+
+
+	return($text);
 }
 
 sub parse_server {
