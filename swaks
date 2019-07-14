@@ -2040,6 +2040,13 @@ sub fetch_args {
 	# also see if there are any --no- options that need to be processed
 	RUNOPTS:
 	for (my $i = 0; $i < scalar(@ARGV); $i++) {
+		# before doing any option processing, massage from the optional '--option=arg' format into '--option arg' format.
+		if ($ARGV[$i] =~ /^(-[^=]+)=(.*)$/) {
+			$ARGV[$i] = $1;
+			splice(@ARGV, $i+1, 0, $2);
+		}
+
+		# if we're referencing an option which was previously marked for removal, remove the removal flag
 		if ($ARGV[$i] =~ /^-?-(.*)$/) {
 			my $opt_name = $1;
 			foreach my $e (@$l) {
@@ -2048,9 +2055,12 @@ sub fetch_args {
 				}
 			}
 		}
+
 		if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
+			# rewrite '--header-Foo bar' into '--header "Foo: bar"'
 			$ARGV[$i] = "--header"; $ARGV[$i+1] = "$1: $ARGV[$i+1]";
 		} elsif ($ARGV[$i] =~ /^-?-(no-(.*))$/) {
+			# allow --no-OPTION to remove any previous OPTION settings
 			my $whole_name = $1; my $opt_name = $2;
 			# loop through each of the options and see if it matches
 			foreach my $e (@$l) {

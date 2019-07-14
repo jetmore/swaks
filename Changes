@@ -834,3 +834,5 @@
            data value
 * 20190713 --attach option processing was calling die() instead of
            ptrans/exit on error
+* 20190713 Fix handling of --option=arg option format which prevented it
+           from being used with --header and --attach* options
