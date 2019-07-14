@@ -113,21 +113,23 @@ To prevent potential confusion in this document a flag to Swaks is always referr
 
 Options can be given to Swaks in three ways.  They can be specified in a configuration file, in environment variables, and on the command line.  Depending on the specific option and whether an argument is given to it, Swaks may prompt the user for the argument.
 
-When Swaks evaluates its options, it first looks for a configuration file (either in a default location or specified with --config).  Then it evaluates any options in environment variables.  Finally, it evaluates command line options.  At each round of processing, any options set earlier will be overridden.  Additionally, any option can be prefixed with "no-" to cause Swaks to forget that the variable had previously been set.  This capability is necessary because many options treat defined-but-no-argument differently than not-defined.
+When Swaks evaluates its options, it first looks for a configuration file (either in a default location or specified with --config).  Then it evaluates any options in environment variables.  Finally, it evaluates command line options.  At each round of processing, any options set earlier will be overridden.  Additionally, any option can be prefixed with "no-" to cause Swaks to forget that the variable had previously been set (either in an earlier round, or earlier in the same round).  This capability is necessary because many options treat defined-but-no-argument differently than not-defined.
+
+As a general rule, if the same option is given multiple time, the last time it is given is the one that will be used.  This applies to both intra-method (if "--from user1@example.com --from user2@example.com" is given, user2@example.com will be used) and inter-method (if "from user1@example.com" is given in a config file and "--from user2@example.com" is given on the command line, user2@example.com will be used)
 
 The exact mechanism and format for using each of the types is listed below.
 
 =over 4
 
-=item CONFIGURATION FILE
+=item CONFIGURATION FILES
 
 A configuration file can be used to set commonly-used or abnormally verbose options.  By default, Swaks looks in order for $SWAKS_HOME/.swaksrc, $HOME/.swaksrc, and $LOGDIR/.swaksrc.  If one of those is found to exist (and --config has not been used) that file is used as the configuration file.
 
-Additionally, a configuration file in a non-default location can be specified using --config.  If this is set and not given an argument Swaks will not use any configuration file, including any default file.  If --config points to a readable file, it is used as the configuration file, overriding any default that may exist.  If it points to a non-readable file and error will be shown and Swaks will exit.
+Additionally, a configuration file in a non-default location can be specified using --config.  If this is set and not given an argument Swaks will not use any configuration file, including any default file.  If --config points to a readable file, it is used as the configuration file, overriding any default that may exist.  If it points to a non-readable file an error will be shown and Swaks will exit.
 
 A set of "portable" defaults can also be created by adding options to the end of the Swaks program file.  As distributed, the last line of Swaks should be "__END__".  Any lines added after __END__ will be treated as the contents of a configuration file.  This allows a set of user preferences to be automatically copied from server to server in a single file.
 
-If present and configuration files have not been explicitly turned off, the __END__ config is always read.  Only one other configuration file will ever be used per single invocation of Swaks, even if multiple configuration files are specified.  Specifying the --config option with no argument turns off the processing of both the __END__ config and any actual config files.
+If configuration files have not been explicitly turned off, the __END__ config is always read.  Only one other configuration file will ever be used per single invocation of Swaks, even if multiple configuration files are specified.  If the __END__ config and another config are to be read, the __END__ config will be processed first.  Specifying the --config option with no argument turns off the processing of both the __END__ config and any actual config files.
 
 In a configuration file lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to Swaks, with the leading dash or dashes optional.  Everything after a option line's first space is assumed to be the option's argument and is not shell processed.  Therefore, quoting is usually unneeded and will be included literally in the argument.  Here is an example of the contents of a configuration file:
 
@@ -139,6 +141,16 @@ In a configuration file lines beginning with a hash (#) are ignored.  All other 
     # entire argument.
     h-From: "Fred Example" <fred@example.com>
 
+Options specific to configuration file:
+
+=over 4
+
+=item --config [/path/to/config]
+
+This option provides a path to a specific configuration file to be used.  If specified with no argument, no automatically-found configuration file (via $HOME, etc, or __END__) will be processed.  If the argument is a valid file, that file will be used as the configuration file (after __END__ config).  If option is not a valid, readable file, Swaks will error and exit.  This option can be specified multiple times, but only the first time it is specified (in environment variable and the command line search order) will be used.
+
+=back
+
 =item ENVIRONMENT VARIABLES
 
 Options can be supplied via environment variables.  The variables are in the form $SWAKS_OPT_name, where name is the name of the option that would be specified on the command line.  Because dashes aren't allowed in environment variable names in most UNIX-ish shells, no leading dashes should be used and any dashes inside the option's name should be replaced with underscores.  The following would create the same options shown in the configuration file example:
@@ -147,6 +159,8 @@ Options can be supplied via environment variables.  The variables are in the for
     $ SWAKS_OPT_h_From='"Fred Example" <fred@example.com>'
 
 Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting SWAKS_OPT_server="" would cause Swaks to prompt the use for the server to which to connect at each invocation.
+
+Because there is no inherent order in options provided by setting environment variables, the options are sorted before being processed.  This is not a great solution, but it at least defines the behavior, which would be otherwise undefined.  As an example, if both SWAKS_OPT_from and SWAKS_OPT_f were set, the value from SWAKS_OPT_from would be used, because it sorts after SWAKS_OPT_f.  Also as a result of not having an inherent order in environment processing, unsetting options with the "no-" prefix is unreliable.  It works if the option being turned off sorts before "no-", but fails if it sorts after. Because "no-" is primarily meant to operate between config types (for instance, unsetting from the command line an option that was set in a config file), this is not likely to be a problem.
 
 In addition to setting the equivalent of command line options, SWAKS_HOME can be set to a directory containing the default .swaksrc to be used.
 
@@ -268,7 +282,7 @@ In a STARTTLS (but not tls-on-connect) session, terminate the transaction after 
 
 Quit after XCLIENT is sent.
 
-=item TLS
+=item STARTTLS, TLS
 
 Quit the transaction immediately following TLS negotiation.  Note that this happens in different places depending on whether STARTTLS or tls-on-connect are used.  This always quits after the point where TLS would have been negotiated, regardless of whether it was attempted.
 
@@ -594,7 +608,7 @@ This is the "free form" XCLIENT option.  Whatever value is provided for XCLIENT_
 
 The primary advantage to this over the more specific options above is that there is no XCLIENT syntax validation here.  This allows you to send invalid XCLIENT to the target server for testing.  Additionally, at least one MTA (Message Systems' Momentum, formerly ecelerity) implements XCLIENT without advertising supported attributes.  The --xclient option allows you to skip the "supported attributes" check when communicating with this type of MTA (though see also --xclient-no-verify).
 
-The --xclient option can be mixed freely with the --xclient-* options above.  If "--xclient-addr 192.168.0.1 --xclient 'FOO=bar NAME=wind'" is given to Swaks, "XCLIENT ADDR=192.168.0.1 FOO=bar NAME=wind" will be sent to the target server.
+The --xclient option can be mixed freely with the --xclient-* options above.  The argument to --xclient will be sent in its own command group.  For instance, if "--xclient-addr 192.168.0.1 --xclient-port 26 --xclient 'FOO=bar NAME=wind'" is given to Swaks, "XCLIENT ADDR=192.168.0.1 PORT=26" and "XCLIENT FOO=bar NAME=wind" will both be sent to the target server.
 
 =item --xclient-no-verify
 
@@ -666,15 +680,23 @@ Specify the destination port of the proxied connection.
 
 =head1 DATA OPTIONS
 
-These options pertain to the contents for the DATA portion of the SMTP transaction.
+These options pertain to the contents for the DATA portion of the SMTP transaction.  By default a very simple message is sent.  If the --attach or --attach-body options are used, Swaks attempts to upgrade to a MIME message.
 
 =over 4
 
 =item -d, --data [data-portion]
 
-Use argument as the entire contents of DATA, or prompt user if no argument specified.  If the argument '-' is provided the data will be read from STDIN.  If any other argument is provided and it represents the name of an open-able file, the contents of the file will be used.  Any other argument will be itself for the DATA contents.
+Use argument as the entire contents of DATA.
 
-The value can be on one single line, with \n (ASCII 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is "Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\nMessage-Id: <%MESSAGEID%>\nX-Mailer: swaks v%SWAKS_VERSION jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n".
+If no argument is provided, user will be prompted to supply value.
+
+If the argument '-' is provided the data will be read from STDIN with no prompt (same as -g).
+
+If the argument does not contain any literal (0x0a) or representative (0x5c, 0x6e or %NEWLINE%) newline characters, it will be treated as a filename.  If the file is open-able, the contents of the file will be used as the data portion.  If the file cannot be opened, Swaks will error and exit.
+
+Any other argument will be used as the DATA contents.
+
+The value can be on one single line, with \n (ASCII 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is "Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\nMessage-Id: <%MESSAGEID%>\nX-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n".
 
 Very basic token parsing is performed on the DATA portion.  The following table shows the recognized tokens and their replacement values:
 
@@ -708,6 +730,10 @@ Replaced with the contents of the --add-header option.  If --add-header is not s
 
 Replaced with the value specified by the --body option.  See --body for default.
 
+=item %NEWLINE%
+
+Replaced with carriage return, newline (0x0d, 0x0a).  This is identical to using '\n' (0x5c, 0x6e), but doesn't have the escaping concerns that the backslash can cause on the newline.
+
 =back
 
 =item -dab, --dump-as-body [section[,section]]
@@ -722,19 +748,23 @@ Cause --dump-as-body to include plaintext passwords.  This option is not recomme
 
 Specify the body of the email.  The default is "This is a test mailing".  If no argument to --body is given, prompt to supply one interactively.  If '-' is supplied, the body will be read from standard input.  If any other text is provided and the text represents an open-able file, the content of that file is used as the body.  If it does not represent an open-able file, the text itself is used as the body.
 
-If the message is forced to MIME format (see --attach) the argument to this option will be included unencoded as the first MIME part.  Its content-type will always be text/plain.
+If the message is forced to MIME format (see --attach) "--body 'body text'" is the same as "--attach-type text/plain --attach-body 'body text'".  See --attach-body for details on creating a multipart/alternative body.
 
 =item --attach [attachment-specification]
 
 When one or more --attach option is supplied, the message is changed into a multipart/mixed MIME message.  The arguments to --attach are processed the same as --body with respect to STDIN, file contents, etc.  --attach can be supplied multiple times to create multiple attachments.  By default, each attachment is attached as an application/octet-stream file.  See --attach-type for changing this behavior.
 
-If a filename is specified, the MIME encoding will include that file name.  See --attach-name for more detail on file naming.
+If the contents of the attachment are provided via a file name, the MIME encoding will include that file name.  See --attach-name for more detail on file naming.
 
 It is legal for '-' (STDIN) to be specified as an argument multiple times (once for --body and multiple times for --attach).  In this case, the same content will be attached each time it is specified.  This is useful for attaching the same content with multiple MIME types.
 
+=item --attach-body [body-specification]
+
+This is a variation on --attach that is specifically for the body part of the email.  It behaves identically to --attach in that it takes the same arguments and forces the creation of a MIME message.  However, it is different in that the argument will always be the first MIME part in the message, no matter where in option processing order it is encountered.  Additionally, --attach-body options stack to allow creation of multipart/alternative bodies.  For example, '--attach-type text/plain --attach "plain text body" --attach-type text/html --attach "html body"' would create a multipart/alternative message body.
+
 =item --attach-type [mime-type]
 
-By default, content that gets MIME attached to a message with the --attach option is encoded as application/octet-stream.  --attach-type changes the mime type for every --attach option which follows it.  It can be specified multiple times.
+By default, content that gets MIME attached to a message with the --attach option is encoded as application/octet-stream (except for the body, which is text/plain by default).  --attach-type changes the mime type for every --attach option which follows it.  It can be specified multiple times.  The current MIME type gets reset to application/octet-stream between processing body parts and other parts.
 
 =item --attach-name [name]
 
@@ -742,7 +772,7 @@ This option sets the filename that will be included in the MIME part created for
 
 =item -ah, --add-header [header]
 
-This option allows headers to be added to the DATA.  If %H is present in the DATA it is replaced with the argument to this option.  If %H is not present, the argument is inserted between the first two consecutive newlines in the DATA (that is, it is inserted at the end of the existing headers).
+This option allows headers to be added to the DATA.  If %NEW_HEADERS% is present in the DATA it is replaced with the argument to this option.  If %NEW_HEADERS% is not present, the argument is inserted between the first two consecutive newlines in the DATA (that is, it is inserted at the end of the existing headers).
 
 The option can either be specified multiple times or a single time with multiple headers separated by a literal '\n' string.  So, "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header 'Foo: bar\nBaz: foo'" end up adding the same two headers.
 
@@ -898,11 +928,11 @@ This option causes Swaks to print the results of option processing, immediately 
 
 =item --help
 
-Display this help information.
+Display this help information and exit.
 
 =item --version
 
-Display version information.
+Display version information and exit.
 
 =back
 
@@ -921,6 +951,24 @@ Because this program should work anywhere Perl works, I would appreciate knowing
 =item MAIL SERVERS
 
 This program was almost exclusively developed against Exim mail servers.  It has been used casually by the author, though not thoroughly tested, with Sendmail, Smail, Exchange, Oracle Collaboration Suite, qpsmtpd, and Communigate.  Because all functionality in Swaks is based on known standards it should work with any fairly modern mail server.  If a problem is found, please alert the author at the address below.
+
+=back
+
+=head1 ENVIRONMENT VARIABLES
+
+=over 4
+
+=item LOGNAME
+
+If Swaks must create a sender address, $LOGNAME is used as the message local-part if it is set, and unless --force-getpwuid is used.
+
+=item SWAKS_HOME
+
+Used when searching for a .swaksrc configuration file.  See OPTION PROCESSING -> CONFIGUATION FILES above.
+
+=item SWAKS_OPT_*
+
+Environment variable prefix used to specify Swaks options from environment variables.  See OPTION PROCESSING -> ENVIRONMENT VARIABLES above.
 
 =back
 
