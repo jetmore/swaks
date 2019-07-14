@@ -814,3 +814,5 @@
 * 20181210 --version and --help should work even if they aren't the very
            first option.
 * 20181210 Add a flag for --dump-mail in the OUTPUT section of --dump
+* 20181210 Turn on case-sensitivity for configuration options.  Needed to
+           make -S distinct from -s, as documented.
