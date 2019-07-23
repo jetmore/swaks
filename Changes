@@ -859,3 +859,15 @@
 * 20191012 Fix bug which treated `SWAKS_OPT_foo=` as `--foo ''` instead of
            `--foo`.  This affected error handling for options which
            required args.
+* 20191019 Reimplementation of option processing fixed lots of missed edge
+           cases, especially options which were documented to require an
+           argument but didn't error if none was provided (--add-header,
+           --header, --attach, --attach-type, --attach-body, possibly others)
+* 20191021 The --xclient-name, -addr, etc options can now only be provided
+           once per call. Multiple uses of one of these options will result
+           in only the last one being used.  Previously these options could
+           be set multiple times to send the same xclient attribute multiple
+           times.  If that's needed, see the --xclient option.
+* 20191022 The "no-" option negating now works much better (previously was
+           hit-or-miss on special option families like --attach*, --xclient*,
+           and --header*.

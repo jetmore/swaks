@@ -782,7 +782,7 @@ The option can either be specified multiple times or a single time with multiple
 
 =item --header [header-and-data], --h-Header [data]
 
-These options allow a way to change headers that already exist in the DATA.  '--header "Subject: foo"' and '--h-Subject foo' are equivalent.  If the header does not already exist in the data then this argument behaves identically to --add-header.  However, if the header already exists it is replaced with the one specified.
+These options allow a way to change headers that already exist in the DATA.  '--header "Subject: foo"' and '--h-Subject foo' are equivalent.  If the header does not already exist in the data then this argument behaves identically to --add-header.  However, if the header already exists it is replaced with the one specified.  Negating the version of this option with the header name in the option (eg '--no-header-Subject') will remove all previously processed --header options, not just the ones used for 'Subject'.
 
 =item -g
 

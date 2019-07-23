@@ -1,6 +1,4 @@
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
-skip: I don't like the way this behaves, but I'm not sure it's really wrong, per se
-
 test action: CMD_CAPTURE %SWAKS% --dump XCLIENT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" \
     --xclient-addr 1.1.1.1 --xclient-addr 1.1.1.1
