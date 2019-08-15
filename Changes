@@ -836,3 +836,5 @@
            ptrans/exit on error
 * 20190713 Fix handling of --option=arg option format which prevented it
            from being used with --header and --attach* options
+* 20190814 --tls-optional-strict was incorrectly marked internally as
+           optionally accepting an argument

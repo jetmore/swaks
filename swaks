@@ -1713,7 +1713,7 @@ sub get_option_struct {
 		{ opts => ['tlso', 'tls-optional'],           suffix => '',
 		  okey => 'tls_optional',                     type => 'scalar', },
 		# req tls if avail
-		{ opts => ['tlsos', 'tls-optional-strict'],   suffix => ':s',
+		{ opts => ['tlsos', 'tls-optional-strict'],   suffix => '',
 		  okey => 'tls_optional_strict',              type => 'scalar', },
 		# use tls if available
 		{ opts => ['tlsc', 'tls-on-connect'],         suffix => '',
