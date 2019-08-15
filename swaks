@@ -1746,9 +1746,6 @@ sub get_option_struct {
 		# Don't strip From_ line from DATA
 		{ opts => ['nsf', 'no-strip-from'],           suffix => '',
 		  okey => 'no_strip_from',                    type => 'scalar', },
-		# Use the old, one-character substitution tokens (%H, %D, etc)
-		{ opts => ['use-old-data-tokens'],            suffix => '',
-		  okey => 'use_old_data_tokens',              type => 'scalar', },
 		# Don't show send/receive hints (legacy)
 		{ opts => ['nth', 'no-hints'],                suffix => '',
 		  okey => 'no_hints',                         type => 'scalar', },

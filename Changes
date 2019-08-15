@@ -838,3 +838,4 @@
            from being used with --header and --attach* options
 * 20190814 --tls-optional-strict was incorrectly marked internally as
            optionally accepting an argument
+* 20190814 --use-old-data-tokens was not completely removed, clean up
