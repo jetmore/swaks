@@ -1237,9 +1237,11 @@ sub transact {
 	push(@G::pending_send, \%h); # push onto send queue
 	if (!($G::pipeline && $G::pipeline_adv) || !$h{defer}) {
 
-		if ($G::show_time_lapse) {
-			if ($G::show_time_hires) {$time = [Time::HiRes::gettimeofday()];   }
-			else                     { $time = time(); }
+		if ($G::show_time_lapse eq 'hires') {
+			$time = [Time::HiRes::gettimeofday()];
+		}
+		elsif ($G::show_time_lapse eq 'integer') {
+			$time = time();
 		}
 
 		while (my $i = shift(@G::pending_send)) {
@@ -1273,16 +1275,14 @@ sub transact {
 				alarm(0);
 			};
 
-			if ($G::show_time_lapse) {
-				if ($G::show_time_hires) {
-					$time = sprintf("%0.03f", Time::HiRes::tv_interval($time, [Time::HiRes::gettimeofday()]));
-					ptrans(11, "response in ${time}s");
-					$time = [Time::HiRes::gettimeofday()];
-				} else {
-					$time = time() - $time;
-					ptrans(11, "response in ${time}s");
-					$time = time();
-				}
+			if ($G::show_time_lapse eq 'hires') {
+				$time = sprintf("%0.03f", Time::HiRes::tv_interval($time, [Time::HiRes::gettimeofday()]));
+				ptrans(11, "response in ${time}s");
+				$time = [Time::HiRes::gettimeofday()];
+			} elsif ($G::show_time_lapse eq 'integer') {
+				$time = time() - $time;
+				ptrans(11, "response in ${time}s");
+				$time = time();
 			}
 
 			${$i->{return_text}} = $buff;
@@ -2336,9 +2336,18 @@ sub process_args {
 	}
 
 	# set global flag for -stl flag
-	$G::show_time_lapse = time() if (defined($o->{show_time_lapse}));
-	$G::show_time_hires = 1      if ($G::show_time_lapse && avail("hires_timing") &&
-	                                                        $o->{show_time_lapse} !~ /^i/i);
+	if (defined($o->{show_time_lapse})) {
+		if (length($o->{show_time_lapse}) && $o->{show_time_lapse} !~ /^i/i) {
+			ptrans(12, "Unknown argument '$o->{show_time_lapse}' to option show-time-lapse, exiting");
+			exit(1);
+		}
+		if (avail("hires_timing") && $o->{show_time_lapse} !~ /^i/i) {
+			$G::show_time_lapse = 'hires';
+		}
+		else {
+			$G::show_time_lapse = 'integer';
+		}
+	}
 
 	# pipe command, if one is specified
 	$G::link{process}   = $o->{pipe_cmd} || interact("Pipe: ", '^.+$')
@@ -3132,8 +3141,7 @@ sub get_running_state {
 	if ($dump_args->{'OUTPUT'} || $dump_args->{'ALL'}) {
 		push(@parts, [
 			'Output Info:',
-			'  show_time_lapse    = ' . ($G::show_time_lapse    ? 'TRUE' : 'FALSE'),
-			'  show_time_hires    = ' . ($G::show_time_hires    ? 'TRUE' : 'FALSE'),
+			'  show_time_lapse    = ' . ($G::show_time_lapse    ? "TRUE ($G::show_time_lapse)"  : 'FALSE'),
 			'  show_raw_text      = ' . ($G::show_raw_text      ? 'TRUE' : 'FALSE'),
 			'  suppress_data      = ' . ($G::suppress_data      ? 'TRUE' : 'FALSE'),
 			'  protect_prompt     = ' . ($G::protect_prompt     ? 'TRUE' : 'FALSE'),

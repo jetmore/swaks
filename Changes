@@ -841,3 +841,5 @@
 * 20190814 --use-old-data-tokens was not completely removed, clean up
 * 20190815 Updating copyright year to 2019
 * 20190815 --protocol's argument was incorrectly marked as optional
+* 20180816 Rework how the --show-time-lapse option is tracked internally
+           and displayed in --dump output
