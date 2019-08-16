@@ -1641,7 +1641,7 @@ sub get_option_struct {
 		{ opts => ['p', 'port'],                      suffix => ':s',
 		  okey => 'mail_port',                        type => 'scalar', },
 		# protocol to use (smtp, esmtp, lmtp)
-		{ opts => ['protocol'],                       suffix => ':s',
+		{ opts => ['protocol'],                       suffix => '=s',
 		  okey => 'mail_protocol',                    type => 'scalar', },
 		# (d)ata portion ('\n' for newlines)
 		{ opts => ['d', 'data'],                      suffix => ':s',

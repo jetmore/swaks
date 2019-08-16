@@ -840,3 +840,4 @@
            optionally accepting an argument
 * 20190814 --use-old-data-tokens was not completely removed, clean up
 * 20190815 Updating copyright year to 2019
+* 20190815 --protocol's argument was incorrectly marked as optional
