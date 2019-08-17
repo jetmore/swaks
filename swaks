@@ -1614,313 +1614,313 @@ sub load_dependencies {
 sub get_option_struct {
 	@G::raw_option_data = (
 		# location of config file
-		{ opts => ['config'],                         suffix => ':s',
-		  okey => 'config_file',                      type => 'scalar', },
+		{ opts    => ['config'],                                           suffix => ':s',
+		  okey    => 'config_file',                                        type   => 'scalar', },
 		# envelope-(f)rom address
-		{ opts => ['f', 'from'],                      suffix => ':s',
-		  okey => 'mail_from',                        type => 'scalar', },
+		{ opts    => ['f', 'from'],                                        suffix => ':s',
+		  okey    => 'mail_from',                                          type   => 'scalar', },
 		# envelope-(t)o address
-		{ opts => ['t', 'to'],                        suffix => ':s',
-		  okey => 'mail_to',                          type => 'scalar', },
+		{ opts    => ['t', 'to'],                                          suffix => ':s',
+		  okey    => 'mail_to',                                            type   => 'scalar', },
 		# (h)elo string
-		{ opts => ['h', 'helo', 'ehlo', 'lhlo'],      suffix => ':s',
-		  okey => 'mail_helo',                        type => 'scalar', },
+		{ opts    => ['h', 'helo', 'ehlo', 'lhlo'],                        suffix => ':s',
+		  okey    => 'mail_helo',                                          type   => 'scalar', },
 		# (s)erver to use
-		{ opts => ['s', 'server'],                    suffix => ':s',
-		  okey => 'mail_server',                      type => 'scalar', },
+		{ opts    => ['s', 'server'],                                      suffix => ':s',
+		  okey    => 'mail_server',                                        type   => 'scalar', },
 		# force ipv4 only
-		{ opts => ['4'],                              suffix => '',
-		  okey => 'force_ipv4',                       type => 'scalar', },
+		{ opts    => ['4'],                                                suffix => '',
+		  okey    => 'force_ipv4',                                         type   => 'scalar', },
 		# force ipv6 only
-		{ opts => ['6'],                              suffix => '',
-		  okey => 'force_ipv6',                       type => 'scalar', },
+		{ opts    => ['6'],                                                suffix => '',
+		  okey    => 'force_ipv6',                                         type   => 'scalar', },
 		# copy MX/routing from another domain
-		{ opts => ['copy-routing'],                   suffix => ':s',
-		  okey => 'copy_routing',                     type => 'scalar', },
+		{ opts    => ['copy-routing'],                                     suffix => ':s',
+		  okey    => 'copy_routing',                                       type   => 'scalar', },
 		# (p)ort to use
-		{ opts => ['p', 'port'],                      suffix => ':s',
-		  okey => 'mail_port',                        type => 'scalar', },
+		{ opts    => ['p', 'port'],                                        suffix => ':s',
+		  okey    => 'mail_port',                                          type   => 'scalar', },
 		# protocol to use (smtp, esmtp, lmtp)
-		{ opts => ['protocol'],                       suffix => '=s',
-		  okey => 'mail_protocol',                    type => 'scalar', },
+		{ opts    => ['protocol'],                                         suffix => '=s',
+		  okey    => 'mail_protocol',                                      type   => 'scalar', },
 		# (d)ata portion ('\n' for newlines)
-		{ opts => ['d', 'data'],                      suffix => ':s',
-		  okey => 'mail_data',                        type => 'scalar', },
+		{ opts    => ['d', 'data'],                                        suffix => ':s',
+		  okey    => 'mail_data',                                          type   => 'scalar', },
 		# use the --dump text as default body
-		{ opts => ['dab', 'dump-as-body'],            suffix => ':s',
-		  okey => 'dump_as_body',                     type => 'scalar', },
+		{ opts    => ['dab', 'dump-as-body'],                              suffix => ':s',
+		  okey    => 'dump_as_body',                                       type   => 'scalar', },
 		# implies --dump-as-body; forces raw passwords to be used
-		{ opts => ['dabsp', 'dump-as-body-shows-password'], suffix => '',
-		  okey => 'dab_sp',                           type => 'scalar', },
+		{ opts    => ['dabsp', 'dump-as-body-shows-password'],             suffix => '',
+		  okey    => 'dab_sp',                                             type   => 'scalar', },
 		# timeout for each trans (def 30s)
-		{ opts => ['timeout'],                        suffix => ':s',
-		  okey => 'timeout',                          type => 'scalar', },
+		{ opts    => ['timeout'],                                          suffix => ':s',
+		  okey    => 'timeout',                                            type   => 'scalar', },
 		# (g)et data on stdin
-		{ opts => ['g'],                              suffix => '',
-		  okey => 'data_on_stdin',                    type => 'scalar', },
+		{ opts    => ['g'],                                                suffix => '',
+		  okey    => 'data_on_stdin',                                      type   => 'scalar', },
 		# (q)uit after
-		{ opts => ['q', 'quit', 'quit-after'],        suffix => '=s',
-		  okey => 'quit_after',                       type => 'scalar', },
+		{ opts    => ['q', 'quit', 'quit-after'],                          suffix => '=s',
+		  okey    => 'quit_after',                                         type   => 'scalar', },
 		# drop after (don't quit, just drop)
-		{ opts => ['da', 'drop', 'drop-after'],       suffix => '=s',
-		  okey => 'drop_after',                       type => 'scalar', },
+		{ opts    => ['da', 'drop', 'drop-after'],                         suffix => '=s',
+		  okey    => 'drop_after',                                         type   => 'scalar', },
 		# drop after send (between send and read)
-		{ opts => ['das', 'drop-after-send'],         suffix => '=s',
-		  okey => 'drop_after_send',                  type => 'scalar', },
+		{ opts    => ['das', 'drop-after-send'],                           suffix => '=s',
+		  okey    => 'drop_after_send',                                    type   => 'scalar', },
 		# do (n)ot print data portion
-		{ opts => ['n', 'suppress-data'],             suffix => '',
-		  okey => 'suppress_data',                    type => 'scalar', },
+		{ opts    => ['n', 'suppress-data'],                               suffix => '',
+		  okey    => 'suppress_data',                                      type   => 'scalar', },
 		# force auth, exit if not supported
-		{ opts => ['a', 'auth'],                      suffix => ':s',
-		  okey => 'auth',                             type => 'scalar', },
+		{ opts    => ['a', 'auth'],                                        suffix => ':s',
+		  okey    => 'auth',                                               type   => 'scalar', },
 		# user for auth
-		{ opts => ['au', 'auth-user'],                suffix => ':s',
-		  okey => 'auth_user',                        type => 'scalar', },
+		{ opts    => ['au', 'auth-user'],                                  suffix => ':s',
+		  okey    => 'auth_user',                                          type   => 'scalar', },
 		# pass for auth
-		{ opts => ['ap', 'auth-password'],            suffix => ':s',
-		  okey => 'auth_pass',                        type => 'scalar', },
+		{ opts    => ['ap', 'auth-password'],                              suffix => ':s',
+		  okey    => 'auth_pass',                                          type   => 'scalar', },
 		# auth type map
-		{ opts => ['am', 'auth-map'],                 suffix => '=s',
-		  okey => 'auth_map',                         type => 'scalar', },
+		{ opts    => ['am', 'auth-map'],                                   suffix => '=s',
+		  okey    => 'auth_map',                                           type   => 'scalar', },
 		# extra, authenticator-specific options
-		{ opts => ['ae', 'auth-extra'],               suffix => '=s',
-		  okey => 'auth_extra',                       type => 'scalar', },
+		{ opts    => ['ae', 'auth-extra'],                                 suffix => '=s',
+		  okey    => 'auth_extra',                                         type   => 'scalar', },
 		# hide passwords when possible
-		{ opts => ['ahp', 'auth-hide-password'],      suffix => ':s',
-		  okey => 'auth_hidepw',                      type => 'scalar', },
+		{ opts    => ['ahp', 'auth-hide-password'],                        suffix => ':s',
+		  okey    => 'auth_hidepw',                                        type   => 'scalar', },
 		# translate base64 strings
-		{ opts => ['apt', 'auth-plaintext'],          suffix => '',
-		  okey => 'auth_showpt',                      type => 'scalar', },
+		{ opts    => ['apt', 'auth-plaintext'],                            suffix => '',
+		  okey    => 'auth_showpt',                                        type   => 'scalar', },
 		# auth optional (ignore failure)
-		{ opts => ['ao', 'auth-optional'],            suffix => ':s',
-		  okey => 'auth_optional',                    type => 'scalar', },
+		{ opts    => ['ao', 'auth-optional'],                              suffix => ':s',
+		  okey    => 'auth_optional',                                      type   => 'scalar', },
 		# req auth if avail
-		{ opts => ['aos', 'auth-optional-strict'],    suffix => ':s',
-		  okey => 'auth_optional_strict',             type => 'scalar', },
+		{ opts    => ['aos', 'auth-optional-strict'],                      suffix => ':s',
+		  okey    => 'auth_optional_strict',                               type   => 'scalar', },
 		# report capabilties
-		{ opts => ['support'],                        suffix => '',
-		  okey => 'get_support',                      type => 'scalar', },
+		{ opts    => ['support'],                                          suffix => '',
+		  okey    => 'get_support',                                        type   => 'scalar', },
 		# local interface to use
-		{ opts => ['li', 'local-interface'],          suffix => ':s',
-		  okey => 'lint',                             type => 'scalar', },
+		{ opts    => ['li', 'local-interface'],                            suffix => ':s',
+		  okey    => 'lint',                                               type   => 'scalar', },
 		# local port
-		{ opts => ['lp', 'local-port', 'lport'],      suffix => ':s',
-		  okey => 'lport',                            type => 'scalar', },
+		{ opts    => ['lp', 'local-port', 'lport'],                        suffix => ':s',
+		  okey    => 'lport',                                              type   => 'scalar', },
 		# use TLS
-		{ opts => ['tls'],                            suffix => '',
-		  okey => 'tls',                              type => 'scalar', },
+		{ opts    => ['tls'],                                              suffix => '',
+		  okey    => 'tls',                                                type   => 'scalar', },
 		# use tls if available
-		{ opts => ['tlso', 'tls-optional'],           suffix => '',
-		  okey => 'tls_optional',                     type => 'scalar', },
+		{ opts    => ['tlso', 'tls-optional'],                             suffix => '',
+		  okey    => 'tls_optional',                                       type   => 'scalar', },
 		# req tls if avail
-		{ opts => ['tlsos', 'tls-optional-strict'],   suffix => '',
-		  okey => 'tls_optional_strict',              type => 'scalar', },
+		{ opts    => ['tlsos', 'tls-optional-strict'],                     suffix => '',
+		  okey    => 'tls_optional_strict',                                type   => 'scalar', },
 		# use tls if available
-		{ opts => ['tlsc', 'tls-on-connect'],         suffix => '',
-		  okey => 'tls_on_connect',                   type => 'scalar', },
+		{ opts    => ['tlsc', 'tls-on-connect'],                           suffix => '',
+		  okey    => 'tls_on_connect',                                     type   => 'scalar', },
 		# local cert to present to server
-		{ opts => ['tls-cert'],                       suffix => '=s',
-		  okey => 'tls_cert',                         type => 'scalar', },
+		{ opts    => ['tls-cert'],                                         suffix => '=s',
+		  okey    => 'tls_cert',                                           type   => 'scalar', },
 		# local key to present to server
-		{ opts => ['tls-key'],                        suffix => '=s',
-		  okey => 'tls_key',                          type => 'scalar', },
+		{ opts    => ['tls-key'],                                          suffix => '=s',
+		  okey    => 'tls_key',                                            type   => 'scalar', },
 		# local key to present to server
-		{ opts => ['tlsp', 'tls-protocol'],           suffix => '=s',
-		  okey => 'tls_protocol',                     type => 'scalar', },
+		{ opts    => ['tlsp', 'tls-protocol'],                             suffix => '=s',
+		  okey    => 'tls_protocol',                                       type   => 'scalar', },
 		# local key to present to server
-		{ opts => ['tls-cipher'],                     suffix => '=s',
-		  okey => 'tls_cipher',                       type => 'scalar', },
+		{ opts    => ['tls-cipher'],                                       suffix => '=s',
+		  okey    => 'tls_cipher',                                         type   => 'scalar', },
 		# save tls peer certificate
-		{ opts => ['tls-get-peer-cert'],              suffix => ':s',
-		  okey => 'tls_get_peer_cert',                type => 'scalar', },
+		{ opts    => ['tls-get-peer-cert'],                                suffix => ':s',
+		  okey    => 'tls_get_peer_cert',                                  type   => 'scalar', },
 		# require verification of server certificate
-		{ opts => ['tls-verify'],                     suffix => '',
-		  okey => 'tls_verify',                       type => 'scalar', },
+		{ opts    => ['tls-verify'],                                       suffix => '',
+		  okey    => 'tls_verify',                                         type   => 'scalar', },
 		# local key to present to server
-		{ opts => ['tls-ca-path'],                    suffix => '=s',
-		  okey => 'tls_ca_path',                      type => 'scalar', },
+		{ opts    => ['tls-ca-path'],                                      suffix => '=s',
+		  okey    => 'tls_ca_path',                                        type   => 'scalar', },
 		# suppress output to varying degrees
-		{ opts => ['S', 'silent'],                    suffix => ':i',
-		  okey => 'silent',                           type => 'sub',
-		  literal => 'sub { $r->{silent} = $_[1] || 1; }',              },
+		{ opts    => ['S', 'silent'],                                      suffix => ':i',
+		  literal => 'sub { $r->{silent} = $_[1] || 1; }',
+		  okey    => 'silent',                                             type   => 'sub',    },
 		# Don't strip From_ line from DATA
-		{ opts => ['nsf', 'no-strip-from'],           suffix => '',
-		  okey => 'no_strip_from',                    type => 'scalar', },
+		{ opts    => ['nsf', 'no-strip-from'],                             suffix => '',
+		  okey    => 'no_strip_from',                                      type   => 'scalar', },
 		# Don't show send/receive hints (legacy)
-		{ opts => ['nth', 'no-hints'],                suffix => '',
-		  okey => 'no_hints',                         type => 'scalar', },
+		{ opts    => ['nth', 'no-hints'],                                  suffix => '',
+		  okey    => 'no_hints',                                           type   => 'scalar', },
 		# Don't show transaction hints
-		{ opts => ['nsh', 'no-send-hints'],           suffix => '',
-		  okey => 'no_hints_send',                    type => 'scalar', },
+		{ opts    => ['nsh', 'no-send-hints'],                             suffix => '',
+		  okey    => 'no_hints_send',                                      type   => 'scalar', },
 		# Don't show transaction hints
-		{ opts => ['nrh', 'no-receive-hints'],        suffix => '',
-		  okey => 'no_hints_recv',                    type => 'scalar', },
+		{ opts    => ['nrh', 'no-receive-hints'],                          suffix => '',
+		  okey    => 'no_hints_recv',                                      type   => 'scalar', },
 		# Don't show transaction hints
-		{ opts => ['nih', 'no-info-hints'],           suffix => '',
-		  okey => 'no_hints_info',                    type => 'scalar', },
+		{ opts    => ['nih', 'no-info-hints'],                             suffix => '',
+		  okey    => 'no_hints_info',                                      type   => 'scalar', },
 		# Don't show reception lines
-		{ opts => ['hr', 'hide-receive'],             suffix => '',
-		  okey => 'hide_receive',                     type => 'scalar', },
+		{ opts    => ['hr', 'hide-receive'],                               suffix => '',
+		  okey    => 'hide_receive',                                       type   => 'scalar', },
 		# Don't show sending lines
-		{ opts => ['hs', 'hide-send'],                suffix => '',
-		  okey => 'hide_send',                        type => 'scalar', },
+		{ opts    => ['hs', 'hide-send'],                                  suffix => '',
+		  okey    => 'hide_send',                                          type   => 'scalar', },
 		# Don't echo input on potentially sensitive prompts
-		{ opts => ['pp', 'protect-prompt'],           suffix => '',
-		  okey => 'protect_prompt',                   type => 'scalar', },
+		{ opts    => ['pp', 'protect-prompt'],                             suffix => '',
+		  okey    => 'protect_prompt',                                     type   => 'scalar', },
 		# Don't show any swaks-generated, non-error informational lines
-		{ opts => ['hi', 'hide-informational'],       suffix => '',
-		  okey => 'hide_informational',               type => 'scalar', },
+		{ opts    => ['hi', 'hide-informational'],                         suffix => '',
+		  okey    => 'hide_informational',                                 type   => 'scalar', },
 		# Don't send any output to the terminal
-		{ opts => ['ha', 'hide-all'],                 suffix => '',
-		  okey => 'hide_all',                         type => 'scalar', },
+		{ opts    => ['ha', 'hide-all'],                                   suffix => '',
+		  okey    => 'hide_all',                                           type   => 'scalar', },
 		# print lapse for send/recv
-		{ opts => ['stl', 'show-time-lapse'],         suffix => ':s',
-		  okey => 'show_time_lapse',                  type => 'scalar', },
+		{ opts    => ['stl', 'show-time-lapse'],                           suffix => ':s',
+		  okey    => 'show_time_lapse',                                    type   => 'scalar', },
 		# print version and exit
-		{ opts => ['version'],                        suffix => '',
-		  okey => 'version',                          type => 'scalar', },
+		{ opts    => ['version'],                                          suffix => '',
+		  okey    => 'version',                                            type   => 'scalar', },
 		# print help and exit
-		{ opts => ['help'],                           suffix => '',
-		  okey => 'help',                             type => 'scalar', },
+		{ opts    => ['help'],                                             suffix => '',
+		  okey    => 'help',                                               type   => 'scalar', },
 		# don't touch the data
-		{ opts => ['ndf', 'no-data-fixup'],           suffix => '',
-		  okey => 'no_data_fixup',                    type => 'scalar', },
+		{ opts    => ['ndf', 'no-data-fixup'],                             suffix => '',
+		  okey    => 'no_data_fixup',                                      type   => 'scalar', },
 		# show dumps of the raw read/written text
-		{ opts => ['raw', 'show-raw-text'],           suffix => '',
-		  okey => 'show_raw_text',                    type => 'scalar', },
+		{ opts    => ['raw', 'show-raw-text'],                             suffix => '',
+		  okey    => 'show_raw_text',                                      type   => 'scalar', },
 		# specify file to write to
-		{ opts => ['output-file', 'output'],          suffix => '=s',
-		  okey => 'output_file',                      type => 'scalar', },
+		{ opts    => ['output-file', 'output'],                            suffix => '=s',
+		  okey    => 'output_file',                                        type   => 'scalar', },
 		# specify file to write to
-		{ opts => ['output-file-stdout'],             suffix => '=s',
-		  okey => 'output_file_stdout',               type => 'scalar', },
+		{ opts    => ['output-file-stdout'],                               suffix => '=s',
+		  okey    => 'output_file_stdout',                                 type   => 'scalar', },
 		# specify file to write to
-		{ opts => ['output-file-stderr'],             suffix => '=s',
-		  okey => 'output_file_stderr',               type => 'scalar', },
+		{ opts    => ['output-file-stderr'],                               suffix => '=s',
+		  okey    => 'output_file_stderr',                                 type   => 'scalar', },
 		# command to communicate with
-		{ opts => ['pipe'],                           suffix => ':s',
-		  okey => 'pipe_cmd',                         type => 'scalar', },
+		{ opts    => ['pipe'],                                             suffix => ':s',
+		  okey    => 'pipe_cmd',                                           type   => 'scalar', },
 		# unix domain socket to talk to
-		{ opts => ['socket'],                         suffix => ':s',
-		  okey => 'socket',                           type => 'scalar', },
+		{ opts    => ['socket'],                                           suffix => ':s',
+		  okey    => 'socket',                                             type   => 'scalar', },
 		# the content of the body of the DATA
-		{ opts => ['body'],                           suffix => ':s',
-		  okey => 'body_822',                         type => 'scalar', },
+		{ opts    => ['body'],                                             suffix => ':s',
+		  okey    => 'body_822',                                           type   => 'scalar', },
 		# A file to attach
-		{ opts => ['attach-name','attach-type','attach','attach-body'], suffix => ':s',
-		  okey => 'attach_822',                           type => 'list', },
+		{ opts    => ['attach-name','attach-type','attach','attach-body'], suffix => ':s',
+		  okey    => 'attach_822',                                         type   => 'list', },
 		# replacement for %NEW_HEADERS% DATA token
-		{ opts => ['ah', 'add-header'],               suffix => ':s',
-		  okey => 'add_header',                       type => 'list', },
+		{ opts    => ['ah', 'add-header'],                                 suffix => ':s',
+		  okey    => 'add_header',                                         type   => 'list', },
 		# replace header if exist, else add
-		{ opts => ['header'],                         suffix => ':s',
-		  okey => 'header',                           type => 'list', },
+		{ opts    => ['header'],                                           suffix => ':s',
+		  okey    => 'header',                                             type   => 'list', },
 		# build options and dump
-		{ opts => ['dump'],                           suffix => ':s',
-		  okey => 'dump_args',                        type => 'scalar', },
+		{ opts    => ['dump'],                                             suffix => ':s',
+		  okey    => 'dump_args',                                          type   => 'scalar', },
 		# build options and dump the generate message body (EML)
-		{ opts => ['dump-mail'],                      suffix => '',
-		  okey => 'dump_mail',                        type => 'scalar', },
+		{ opts    => ['dump-mail'],                                        suffix => '',
+		  okey    => 'dump_mail',                                          type   => 'scalar', },
 		# attempt PIPELINING
-		{ opts => ['pipeline'],                       suffix => '',
-		  okey => 'pipeline',                         type => 'scalar', },
+		{ opts    => ['pipeline'],                                         suffix => '',
+		  okey    => 'pipeline',                                           type   => 'scalar', },
 		# attempt PRDR
-		{ opts => ['prdr'],                           suffix => '',
-		  okey => 'prdr',                             type => 'scalar', },
+		{ opts    => ['prdr'],                                             suffix => '',
+		  okey    => 'prdr',                                               type   => 'scalar', },
 		# use getpwuid building -f
-		{ opts => ['force-getpwuid'],                 suffix => '',
-		  okey => 'force_getpwuid',                   type => 'scalar', },
+		{ opts    => ['force-getpwuid'],                                   suffix => '',
+		  okey    => 'force_getpwuid',                                     type   => 'scalar', },
 
 		# XCLIENT
 		# These xclient_attrs options all get pushed onto an array so that we can determine their order later
 		# argument is a raw XCLIENT string
-		{ opts => ['xclient'],                        suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient'],                                          suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT NAME
-		{ opts => ['xclient-name'],                   suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-name'],                                     suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT ADDR
-		{ opts => ['xclient-addr'],                   suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-addr'],                                     suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT PORT
-		{ opts => ['xclient-port'],                   suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-port'],                                     suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT PROTO
-		{ opts => ['xclient-proto'],                  suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-proto'],                                    suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT DESTADDR
-		{ opts => ['xclient-destaddr'],               suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-destaddr'],                                 suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT DESTPORT
-		{ opts => ['xclient-destport'],               suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-destport'],                                 suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT HELO
-		{ opts => ['xclient-helo'],                   suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-helo'],                                     suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT LOGIN
-		{ opts => ['xclient-login'],                  suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-login'],                                    suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT REVERSE_NAME
-		{ opts => ['xclient-reverse-name'],           suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-reverse-name'],                             suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT delimiter.  Used to indicate that user wants to start a new xclient attr grouping
-		{ opts => ['xclient-delim'],                  suffix => '',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-delim'],                                    suffix => '',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# if set, XCLIENT will proceed even if XCLIENT not advertised
-		{ opts => ['xclient-optional'],               suffix => '',
-		  okey => 'xclient_optional',                 type => 'scalar', },
+		{ opts    => ['xclient-optional'],                                 suffix => '',
+		  okey    => 'xclient_optional',                                   type   => 'scalar', },
 		# proceed if xclient not offered, but fail if offered and not accepted
-		{ opts => ['xclient-optional-strict'],        suffix => '',
-		  okey => 'xclient_optional_strict',          type => 'scalar', },
+		{ opts    => ['xclient-optional-strict'],                          suffix => '',
+		  okey    => 'xclient_optional_strict',                            type   => 'scalar', },
 		# we send xclient after starttls by default.  if --xclient-before-starttls will send before tls
-		{ opts => ['xclient-before-starttls'],        suffix => '',
-		  okey => 'xclient_before_starttls',          type => 'scalar', },
+		{ opts    => ['xclient-before-starttls'],                          suffix => '',
+		  okey    => 'xclient_before_starttls',                            type   => 'scalar', },
 		# Don't require that the --xclient-ATTR attributes be advertised by server
-		{ opts => ['xclient-no-verify'],              suffix => '',
-		  okey => 'xclient_no_verify',                type => 'scalar', },
+		{ opts    => ['xclient-no-verify'],                                suffix => '',
+		  okey    => 'xclient_no_verify',                                  type   => 'scalar', },
 		## xclient send by default after first helo, but can be sent almost anywhere (cf quit-after)
-		#{ opts => ['xclient-after'],                  suffix => ':s',
-		#  okey => 'xclient_after',                    type => 'scalar', },
+		# { opts    => ['xclient-after'],                                    suffix => ':s',
+		#   okey    => 'xclient_after',                                      type   => 'scalar', },
 
 		# PROXY
 		# argument is the raw PROXY string
-		{ opts => ['proxy'],                          suffix => ':s',
-		  okey => 'proxy_raw',                        type => 'scalar', },
+		{ opts    => ['proxy'],                                            suffix => ':s',
+		  okey    => 'proxy_raw',                                          type   => 'scalar', },
 		# PROXY version (1 or 2)
-		{ opts => ['proxy-version'],                  suffix => ':s',
-		  okey => 'proxy_version',                    type => 'scalar', },
+		{ opts    => ['proxy-version'],                                    suffix => ':s',
+		  okey    => 'proxy_version',                                      type   => 'scalar', },
 		# PROXY protocol family (TCP4 or TCP6)
-		{ opts => ['proxy-family'],                   suffix => ':s',
-		  okey => 'proxy_family',                     type => 'scalar', },
+		{ opts    => ['proxy-family'],                                     suffix => ':s',
+		  okey    => 'proxy_family',                                       type   => 'scalar', },
 		# PROXY protocol command (LOCAL or PROXY)
-		{ opts => ['proxy-command'],                  suffix => ':s',
-		  okey => 'proxy_command',                    type => 'scalar', },
+		{ opts    => ['proxy-command'],                                    suffix => ':s',
+		  okey    => 'proxy_command',                                      type   => 'scalar', },
 		# PROXY transport protocol
-		{ opts => ['proxy-protocol'],                 suffix => ':s',
-		  okey => 'proxy_protocol',                   type => 'scalar', },
+		{ opts    => ['proxy-protocol'],                                   suffix => ':s',
+		  okey    => 'proxy_protocol',                                     type   => 'scalar', },
 		# PROXY source address (IPv4 or IPv6)
-		{ opts => ['proxy-source'],                   suffix => ':s',
-		  okey => 'proxy_source',                     type => 'scalar', },
+		{ opts    => ['proxy-source'],                                     suffix => ':s',
+		  okey    => 'proxy_source',                                       type   => 'scalar', },
 		# PROXY source port
-		{ opts => ['proxy-source-port'],              suffix => ':s',
-		  okey => 'proxy_source_port',                type => 'scalar', },
+		{ opts    => ['proxy-source-port'],                                suffix => ':s',
+		  okey    => 'proxy_source_port',                                  type   => 'scalar', },
 		# PROXY destination address (IPv4 or IPv6)
-		{ opts => ['proxy-dest'],                     suffix => ':s',
-		  okey => 'proxy_dest',                       type => 'scalar', },
+		{ opts    => ['proxy-dest'],                                       suffix => ':s',
+		  okey    => 'proxy_dest',                                         type   => 'scalar', },
 		# PROXY destination port
-		{ opts => ['proxy-dest-port'],                suffix => ':s',
-		  okey => 'proxy_dest_port',                  type => 'scalar', },
+		{ opts    => ['proxy-dest-port'],                                  suffix => ':s',
+		  okey    => 'proxy_dest_port',                                    type   => 'scalar', },
 	);
 
 	return(\@G::raw_option_data);
