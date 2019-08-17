@@ -2207,7 +2207,7 @@ sub process_args {
 	$G::trans_fh_ef = "STDERR";
 	if ($o->{output_file} && (!$o->{output_file_stderr} || !$o->{output_file_stdout})) {
 		if (!open(OUTFH, ">>$o->{output_file}")) {
-			ptrans(12, "Unable to open $o->{output_file} for writing\n");
+			ptrans(12, "Unable to open $o->{output_file} for writing");
 			exit(1);
 		}
 		$G::trans_fh_oh = \*OUTFH;
@@ -2217,7 +2217,7 @@ sub process_args {
 	}
 	if ($o->{output_file_stderr}) {
 		if (!open(OUTEFH, ">>$o->{output_file_stderr}")) {
-			ptrans(12, "Unable to open $o->{output_file_stderr} for writing\n");
+			ptrans(12, "Unable to open $o->{output_file_stderr} for writing");
 			exit(1);
 		}
 		$G::trans_fh_eh = \*OUTEFH;
@@ -2225,7 +2225,7 @@ sub process_args {
 	}
 	if ($o->{output_file_stdout}) {
 		if (!open(OUTOFH, ">>$o->{output_file_stdout}")) {
-			ptrans(12, "Unable to open $o->{output_file_stdout} for writing\n");
+			ptrans(12, "Unable to open $o->{output_file_stdout} for writing");
 			exit(1);
 		}
 		$G::trans_fh_oh = \*OUTOFH;

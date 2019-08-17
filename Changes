@@ -847,3 +847,4 @@
            for major rework
 * 20190817 Remove interactive prompts for helo and from when hostname
            cannot be determined internally.  Just error instead.
+* 20190817 Cleaning up error messages that contained extra newlines
