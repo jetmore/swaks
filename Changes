@@ -845,3 +845,5 @@
            and displayed in --dump output
 * 20190817 Rearrange internal option definition structure in preparation
            for major rework
+* 20190817 Remove interactive prompts for helo and from when hostname
+           cannot be determined internally.  Just error instead.

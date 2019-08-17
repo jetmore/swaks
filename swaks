@@ -2368,9 +2368,16 @@ sub process_args {
 	# SMTP mail from
 	$n{from}   = $o->{mail_from} || interact("From: ", '^.*$')
 		if (defined($o->{mail_from}));
-	$n{from} ||= ($hostname || ($G::server_only && $G::quit_after ne 'mail' && $G::drop_after ne 'mail' && $G::drop_after_send ne 'mail')
-	              ? "$user\@$hostname"
-	              : interact("From: ", '^.*$'));
+	if (!$n{from}) {
+		if ($hostname || ($G::server_only && $G::quit_after ne 'mail' && $G::drop_after ne 'mail' && $G::drop_after_send ne 'mail')) {
+			# if we have a hostname, or it doesn't matter anyway because we won't actually need it, use our manufactured from
+			$n{from} = "$user\@$hostname";
+		}
+		else {
+			ptrans(12, "From string required but couldn't be determined automatically.  Please use --from");
+			exit(1);
+		}
+	}
 	$n{from}   = '' if ($n{from} eq '<>');
 
 	# local interface to connect from
@@ -2383,9 +2390,16 @@ sub process_args {
 	# SMTP helo/ehlo
 	$n{helo}   = $o->{mail_helo} || interact("Helo: ", '^.*$')
 		if (defined($o->{mail_helo}));
-	$n{helo} ||= ($hostname || ($G::quit_after eq 'connect' || $G::drop_after eq 'connect' || $G::drop_after_send eq 'connect')
-	              ? $hostname
-	              : interact("Helo: ", '^.*$'));
+	if (!$n{helo}) {
+		if ($hostname || ($G::quit_after eq 'connect' || $G::drop_after eq 'connect' || $G::drop_after_send eq 'connect')) {
+			# if we have a hostname, or it doesn't matter anyway because we won't actually need it, use our manufactured from
+			$n{helo} = $hostname;
+		}
+		else {
+			ptrans(12, "Helo string required but couldn't be determined automatically.  Please use --helo");
+			exit(1);
+		}
+	}
 
 	# SMTP server and rcpt to are interdependant, so they are handled together
 	$G::link{server}   = $o->{mail_server} || interact("Server: ", '^.*$')
