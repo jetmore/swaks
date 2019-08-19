@@ -2816,10 +2816,12 @@ sub process_args {
 		# to, so if it isn't a resolvable port, keep prompting for another one
 		my $o_port = $G::link{port};
 		if ($G::link{port} !~ /^\d+$/) {
-			$G::link{port} = getservbyname($G::link{port}, 'tcp');
-			while (!$G::link{port}) {
-				$G::link{port} = $o_port = interact("Unable to resolve port $o_port\nPort: ", '^\w+$');
-				$G::link{port} = getservbyname($G::link{port}, 'tcp') if ($G::link{port} !~ /^\d+$/);
+			if (my $port = getservbyname($G::link{port}, 'tcp')) {
+				$G::link{port} = $port;
+			}
+			else {
+				ptrans(12, "unable to resolve service name $G::link{port} into a port, exiting");
+				exit(1);
 			}
 		}
 	} else {

@@ -6,5 +6,3 @@ title: p, env var, invalid arg
 
 pre action: SET_ENV SWAKS_OPT_p badportname
 test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver"
-
-skip: This should fail, but it reprompts.  readdress when options are changed to fail

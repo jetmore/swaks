@@ -196,7 +196,7 @@ Explicitly tell Swaks to use network sockets and specify the hostname or IP addr
 
 =item -p, --port [port]
 
-Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is determined by the --protocol option.  See --protocol for more details.
+Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is smtp/25 unless infiuenced by the --protocol or --tls-on-connect options.
 
 =item -li, --local-interface [IP or hostname[:port]]
 
