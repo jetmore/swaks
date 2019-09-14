@@ -836,3 +836,17 @@
            ptrans/exit on error
 * 20190713 Fix handling of --option=arg option format which prevented it
            from being used with --header and --attach* options
+* 20190814 --tls-optional-strict was incorrectly marked internally as
+           optionally accepting an argument
+* 20190814 --use-old-data-tokens was not completely removed, clean up
+* 20190815 Updating copyright year to 2019
+* 20190815 --protocol's argument was incorrectly marked as optional
+* 20180816 Rework how the --show-time-lapse option is tracked internally
+           and displayed in --dump output
+* 20190817 Rearrange internal option definition structure in preparation
+           for major rework
+* 20190817 Remove interactive prompts for helo and from when hostname
+           cannot be determined internally.  Just error instead.
+* 20190817 Cleaning up error messages that contained extra newlines
+* 20190817 Remove re-prompting for port when an invalid service name was
+           supplied. Just error and exit instead

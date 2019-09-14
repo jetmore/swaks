@@ -1,6 +1,5 @@
 Output Info:
   show_time_lapse    = FALSE
-  show_time_hires    = FALSE
   show_raw_text      = FALSE
   suppress_data      = FALSE
   protect_prompt     = FALSE

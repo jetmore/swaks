@@ -7,5 +7,3 @@ title: p, config, invalid arg
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'p badportname'
 test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver" \
     --config %OUTDIR%/swaksrc-%TESTID%
-
-skip: This should fail, but it reprompts.  readdress when options are changed to fail

@@ -196,7 +196,7 @@ Explicitly tell Swaks to use network sockets and specify the hostname or IP addr
 
 =item -p, --port [port]
 
-Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is determined by the --protocol option.  See --protocol for more details.
+Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is smtp/25 unless infiuenced by the --protocol or --tls-on-connect options.
 
 =item -li, --local-interface [IP or hostname[:port]]
 
@@ -258,11 +258,11 @@ There is no default value for this option.  If no recipients are provided via an
 
 =item -f, --from [email-address]
 
-Use argument as envelope-sender for email, or prompt user if no argument specified.  The string E<lt>E<gt> can be supplied to mean the null sender.  If user does not specify a sender address a default value is used.  The domain-part of the default sender is a best guess at the fully-qualified domain name of the local host.  The method of determining the local-part varies.  On Windows, Win32::LoginName() is used.  On UNIX-ish platforms, the $LOGNAME environment variable is used if it is set.  Otherwise getpwuid(3) is used.  See also --force-getpwuid.
+Use argument as envelope-sender for email, or prompt user if no argument specified.  The string E<lt>E<gt> can be supplied to mean the null sender.  If user does not specify a sender address a default value is used.  The domain-part of the default sender is a best guess at the fully-qualified domain name of the local host.  The method of determining the local-part varies.  On Windows, Win32::LoginName() is used.  On UNIX-ish platforms, the $LOGNAME environment variable is used if it is set.  Otherwise getpwuid(3) is used.  See also --force-getpwuid.  If Swaks cannot determine a local hostname and the sender address is needed for the transaction, Swaks will error and exit.  In this case, a valid string must be provided via this option.
 
 =item --ehlo, --lhlo, -h, --helo [helo-string]
 
-String to use as argument to HELO/EHLO/LHLO command, or prompt user if no argument is specified.  If this option is not used a best guess at the fully-qualified domain name of the local host is used.  If the Sys::Hostname module, which is part of the base distribution, is not available the user will be prompted for a HELO value.  Note that Sys::Hostname has been observed to not be able to find the local hostname in certain circumstances.  This has the same effect as if Sys::Hostname were unavailable.
+String to use as argument to HELO/EHLO/LHLO command, or prompt user if no argument is specified.  If this option is not used a best guess at the fully-qualified domain name of the local host is used.  If Swaks cannot determine a local hostname and the helo string is needed for the transaction, Swaks will error and exit.  In this case, a valid string must be provided via this option.
 
 =item -q, --quit, --quit-after [stop-point]
 
