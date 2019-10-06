@@ -196,7 +196,7 @@ Explicitly tell Swaks to use network sockets and specify the hostname or IP addr
 
 =item -p, --port [port]
 
-Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is smtp/25 unless infiuenced by the --protocol or --tls-on-connect options.
+Specify which TCP port on the target is to be used, or prompt if no argument is listed.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  The default port is smtp/25 unless influenced by the --protocol or --tls-on-connect options.
 
 =item -li, --local-interface [IP or hostname[:port]]
 
@@ -964,7 +964,7 @@ If Swaks must create a sender address, $LOGNAME is used as the message local-par
 
 =item SWAKS_HOME
 
-Used when searching for a .swaksrc configuration file.  See OPTION PROCESSING -> CONFIGUATION FILES above.
+Used when searching for a .swaksrc configuration file.  See OPTION PROCESSING -> CONFIGURATION FILES above.
 
 =item SWAKS_OPT_*
 

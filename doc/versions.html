@@ -42,6 +42,120 @@ This page lists every official release of Swaks, from newest to oldest.  All rel
 
 <table cellpadding=3 border=0 width=600>
 <tr>
+<td valign=top><font size=-1><b>20190914.0</b></font></td>
+<td><font size=-1>
+<B>Links:</b> <a href=files/swaks-20190914.0.tar.gz>Distribution</a>, <a href=files/swaks-20190914.0/swaks>script only</a>, <a href=files/swaks-20190914.0/doc/ref.txt>version docs</a>
+<P>
+<B>Change Summary:</B><BR>
+<pre>
+New Features:
+  * Source is now available on github.com/jetmore/swaks
+  * Added --body-attach option to allow more granularity in setting body
+    information
+  * Added 'data' and 'dot' as valid --drop-after-send and
+    --drop-after arguments
+  * Added %NEWLINE% as a new --data token
+Notable Changes:
+  * Options provided via environment variable are now sorted before
+    processing to provide a deterministic processing order
+  * Option bundling is no longer enabled.  This fixes several option
+    processing oddities, like "-foobar" being interpreted as
+    "-f oobar"
+  * If the arg to --data looks like a file but is not openable, error
+    and exit instead of using it the file name as the raw data value
+  * Remove interactive prompts for --helo and --from when hostname cannot
+    be determined internally, just error  and exit instead. If the user
+    was not expecting an interactive experience, don't start one
+  * Remove re-prompting for port when an invalid service name was supplied,
+    just error and exit instead.  If the user was not expecting an
+    interactive experience, don't start one
+Notable Bugs Fixed:
+  * Handle malformed headers more gracefully in header replacement
+  * Fix bug causing the processing of options  prefixed with the negating
+    "no-" to work unreliably
+  * --version and --help should work even if they aren't the very
+    first option
+  * -S is now a distinct option from -s, as documented
+  * Fix bug preventing the --option=arg option format from being
+    unusable with --header and --attach* options
+</pre>
+<B>Changelog:</B><BR>
+<pre>
+* 20181110 --add-header documentation was still referencing a single-char,
+           no longer valid, replacement token. Replace with the correct token.
+* 20181110 Doc fix for default body - %SWAKS_VERSION% missing trailing char.
+* 20181110 Fix issue with malformed headers.  Don't fall over if header
+           doesn't contain a colon or looks like an illegal continuation.
+* 20181110 Fix --attach* option processing to remove possibly ambiguity
+* 20181110 Implement --body-attach option to allow more granularity in
+           setting body information (different mime types, alternatives, etc).
+* 20181201 Config file fixes around searching default $SWAKS_HOME, $HOME,
+           and $LOGDIR locations:
+             - Searching default locations for the first existing
+               PATH/.swaksrc did not actually work as documented.
+             - If none of the default search environment variables was set,
+               Swaks would not process the "portable" defaults optionally
+               stored in the actual swaks script.
+* 20181202 Since there is no inherent order to options provided in environment
+           variables, sort them before processing to define an order.
+* 20181202 Document the general rule that when processing duplicate options,
+           the last option specified wins, both inter- and intra-method.
+* 20181202 Document the unreliability of using environment variables to unset
+           other environment variable options with the "no-" prefix.
+* 20181203 Fix bug causing in "no-" option processing to work unreliably.
+* 20181204 Tidying and clarifying the OPTION PROCESSING section of the docs.
+* 20181204 Adding an ENVIRONMENT VARIABLES section to the doc.
+* 20181208 When processing config file options with no leading '-' and any
+           environment variable config, prefix the option with '--' for
+           processing, not '-'. Bandaid for very minor difference between
+           '-' and '--' option processing which I hope to fix soon.
+* 20181210 --version and --help should work even if they aren't the very
+           first option.
+* 20181210 Add a flag for --dump-mail in the OUTPUT section of --dump
+* 20181210 Turn on case-sensitivity for configuration options.  Needed to
+           make -S distinct from -s, as documented.
+* 20181210 Turn off option bundling. No practical use and it could cause
+           real confusion (with bundling turned on, -foobar was "-f oobar"
+           instead of an unknown option.
+* 20181225 Add validation to --proxy-family (when proxy-version=1) and
+           --proxy-version options.
+* 20181225 --copy-routing should error when no argument given.
+* 20190105 Update copyright year to 2019
+* 20190105 Add documentation for missing --quit-after synonym STARTTLS
+* 20190216 Adding data and dot as valid --drop-after-send and --drop-after
+           arguments
+* 20190618 Typo in documentation for --ehlo, reported by Konstantin Stephan
+* 20190710 Clarify how XCLIENT arguments are grouped in --xclient doc
+* 20190712 Enforce key=value format for arguments to --auth-extra and
+           --auth-map
+* 20190713 Small code tidy around %DATE% token replacement
+* 20190713 Add %NEWLINE% as a new --data token
+* 20190713 If the arg to --data looks like a file but is not openable,
+           error and exit instead of using it the file name as the raw
+           data value
+* 20190713 --attach option processing was calling die() instead of
+           ptrans/exit on error
+* 20190713 Fix handling of --option=arg option format which prevented it
+           from being used with --header and --attach* options
+* 20190814 --tls-optional-strict was incorrectly marked internally as
+           optionally accepting an argument
+* 20190814 --use-old-data-tokens was not completely removed, clean up
+* 20190815 Updating copyright year to 2019
+* 20190815 --protocol's argument was incorrectly marked as optional
+* 20180816 Rework how the --show-time-lapse option is tracked internally
+           and displayed in --dump output
+* 20190817 Rearrange internal option definition structure in preparation
+           for major rework
+* 20190817 Remove interactive prompts for helo and from when hostname
+           cannot be determined internally.  Just error instead.
+* 20190817 Cleaning up error messages that contained extra newlines
+* 20190817 Remove re-prompting for port when an invalid service name was
+           supplied. Just error and exit instead
+> 20190914 released 20190914.0
+</pre>
+</td></tr>
+<tr><td align=center colspan=2><hr width=25%></td></tr>
+<tr>
 <td valign=top><font size=-1><b>v20181104.0</b></font></td>
 <td><font size=-1>
 <B>Links:</b> <a href=files/swaks-20181104.0.tar.gz>Distribution</a>, <a href=files/swaks-20181104.0/swaks>script only</a>, <a href=files/swaks-20181104.0/doc/ref.txt>version docs</a>
