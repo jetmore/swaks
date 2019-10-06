@@ -77,31 +77,3 @@ while (<I>) {
 print O reverse(@lines);
 close(O);
 close(I);
-
-
-print <<EOM;
-
-******  Update Changes to include release, if not already there (rerun script if you had to add it)
-******  UPDATE RELEASE/README.txt
-******  UPDATE doc/index.html, doc/version.html
-
-SVN COMMIT to put /RELEASE/ into SVN
-
-TAG RELEASE:
-  svn copy http://svn.jetmore.org/swaks/trunk/RELEASE http://svn.jetmore.org/swaks/tags/r-$release
-EXPORT AND PACKAGE RELEASE (fulton):
-  cd ~/jetmore.org/john/code/swaks/files
-  release=20170101.0
-  svn export http://svn.jetmore.org/swaks/tags/r-$release swaks-$release
-  tar -cvf - swaks-$release | gzip > swaks-$release.tar.gz
-  cd /home/jetmore/jetmore.org/john/code/swaks/
-  svn export --force http://svn.jetmore.org/swaks/trunk/doc/index.html
-  svn export --force http://svn.jetmore.org/swaks/trunk/doc/versions.html
-  /bin/rm -f latest latest.tar.gz
-  ln -s files/swaks-$release ./latest
-  ln -s files/swaks-$release.tar.gz ./latest.tar.gz
-
-blog
-twitter
-email list
-EOM
