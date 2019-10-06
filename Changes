@@ -851,3 +851,4 @@
 * 20190817 Remove re-prompting for port when an invalid service name was
            supplied. Just error and exit instead
 * 20191005 Fixed typos in base.pod and recipes.pod
+> 20191006 released 20190914.0
