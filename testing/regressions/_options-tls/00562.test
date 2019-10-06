@@ -1,0 +1,9 @@
+# Generated Tue Dec 11 19:01:43 2018 by ./gen-tests.pl '.' '550' 'tls-verify' '' 'sdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tls-verify, config, invalid arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'tls-verify sdf'
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --tls --server "ser ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

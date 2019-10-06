@@ -1,0 +1,7 @@
+# Generated Sat Jul 13 12:12:48 2019 by ./gen-tests.pl '-n' '700' '-o' 'attach-name' '-v' 'customname.txt' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" %TESTING% --attach "CUSTOM ATTACH"'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: attach-name, command line, valid arg
+
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --attach-name 'customname.txt' --attach "CUSTOM ATTACH"

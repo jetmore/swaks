@@ -1,0 +1,7 @@
+# Generated Sat Jan  5 13:17:40 2019 by ./gen-tests.pl '-n' '100' '-o' 'from' '-v' 'from@bar.com' '-i' '' '-p' 'From:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --to sender@example.com --server ser.ver'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: from command line, no arg (-option)
+
+auto: INTERACT '%SWAKS% --dump PROTOCOL --to sender@example.com --server ser.ver -from' 'From:' 'from@bar.com'

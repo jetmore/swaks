@@ -1,0 +1,7 @@
+# Generated Tue Dec 25 11:54:21 2018 by ./gen-tests.pl '-n' '400' '-o' 'proxy-command' '-v' 'LOCAL' '-i' 'FOOBAR' '-p' 'PROXY command:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-family AF_UNIX --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-version 2'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: proxy-command, command line, no arg
+
+auto: INTERACT '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-family AF_UNIX --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-version 2 --proxy-command' 'PROXY command:' 'LOCAL'

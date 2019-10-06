@@ -1,0 +1,8 @@
+# Generated Sat Jul 13 10:55:50 2019 by ./gen-tests.pl '-n' '400' '-o' 'attach' '-v' 'CUSTOM ATTACH BODY' '-i' '/path/to/file.txt' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver"'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: attach, command line, no-option
+
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" \
+    --attach 'CUSTOM ATTACH BODY' --no-attach

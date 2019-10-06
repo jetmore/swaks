@@ -40,18 +40,23 @@ Check the following files
         Hints, tips, tricks that don't fit in the reference
 
 ------------------------------
+Source
+------------------------------
+The Swaks source code is available at https://github.com/jetmore/swaks
+
+------------------------------
 Communication
 ------------------------------
-The main Swaks website is currently http://jetmore.org/john/code/swaks/
 
 Ways to stay up to date on new releases:
-      Homepage: http://jetmore.org/john/code/swaks/
-   Online Docs: http://jetmore.org/john/code/swaks/latest/doc/ref.txt
-                http://jetmore.org/john/code/swaks/faq.html
- Announce List: send mail to updates-swaks@jetmore.net
-   Project RSS: http://jetmore.org/john/blog/c/swaks/feed/
-       Twitter: http://www.twitter.com/SwaksSMTP
-          Help: send questions to proj-swaks@jetmore.net
+               Homepage: https://jetmore.org/john/code/swaks/
+            Online Docs: https://jetmore.org/john/code/swaks/latest/doc/ref.txt
+                         https://jetmore.org/john/code/swaks/faq.html
+          Announce List: send mail to updates-swaks@jetmore.net
+            Project RSS: https://jetmore.org/john/blog/c/swaks/feed/
+                Twitter: https://www.twitter.com/SwaksSMTP
+                   Help: send questions to proj-swaks@jetmore.net
+Bugs / Feature Requests: https://github.com/jetmore/swaks/issues
 
 ------------------------------
 Authorship
@@ -81,27 +86,34 @@ A full copy of this license should be available in the LICENSE.txt file.
 ------------------------------
 Change Summary
 ------------------------------
-v20181104.0
+v20190914.0
   New Features:
-    * Added --dump-mail option.
-    * Added --xclient-delim, --xclient-destaddr, --xclient-destport,
-      --xclient-no-verify, and --xclient-before-starttls options.
+    * Source is now available on github.com/jetmore/swaks
+    * Added --body-attach option to allow more granularity in setting body
+      information
+    * Added 'data' and 'dot' as valid --drop-after-send and
+      --drop-after arguments
+    * Added %NEWLINE% as a new --data token
   Notable Changes:
-    * XCLIENT can now send multiple XCLIENT requests.  Because of this,
-      --xclient and --xclient-ATTR values are no longer merged into one
-      string.  This breaks previously documented behavior.
-    * Numerous improvements to the output of --dump and --dump-as-body,
-      including the ability to limit output by section, layout improvements,
-      adding missing options to output, and fixing bugs.
+    * Options provided via environment variable are now sorted before
+      processing to provide a deterministic processing order
+    * Option bundling is no longer enabled.  This fixes several option
+      processing oddities, like "-foobar" being interpreted as
+      "-f oobar"
+    * If the arg to --data looks like a file but is not openable, error
+      and exit instead of using it the file name as the raw data value
+    * Remove interactive prompts for --helo and --from when hostname cannot
+      be determined internally, just error  and exit instead. If the user
+      was not expecting an interactive experience, don't start one
+    * Remove re-prompting for port when an invalid service name was supplied,
+      just error and exit instead.  If the user was not expecting an
+      interactive experience, don't start one
   Notable Bugs Fixed:
-    * Fixed bug preventing Proxy from working with --tls-on-connect.
-    * XCLIENT is now sent after STARTTLS to match with Postfix's expectations.
-    * Fixed bug which could allow mail sending to proceed without a valid
-      recipient.
-    * Replacing a multi-line header via --header or --h-HEADER now replaces
-      the entire header, not just the first line.
-    * The option for specifying the local port was documented as --local-port
-      but implemented as --lport.  Both are now documented and implemented.
-    * Fixed two bugs which prevented interactions between --dump,
-      --auth-hide-password, --dump-as-body, and --dump-as-body-shows-password
-      from producing consistent output.
+    * Handle malformed headers more gracefully in header replacement
+    * Fix bug causing the processing of options  prefixed with the negating
+      "no-" to work unreliably
+    * --version and --help should work even if they aren't the very
+      first option
+    * -S is now a distinct option from -s, as documented
+    * Fix bug preventing the --option=arg option format from being
+      unusable with --header and --attach* options

@@ -1,0 +1,8 @@
+Transport Info:
+  type            = socket-inet
+  inet protocol   = any
+  server          = ser ver
+  port            = 25
+  local interface = foo
+  local port      = 1025
+  copy routing    = FALSE

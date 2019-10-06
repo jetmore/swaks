@@ -1,0 +1,8 @@
+# Generated Thu Dec 20 17:05:39 2018 by ./gen-tests.pl '.' '250' 'tlsos' '' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tlsos command line, no arg (-option)
+
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --server "ser ver" \
+    -tlsos

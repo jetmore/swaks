@@ -1,0 +1,8 @@
+# Generated Mon Dec 10 12:36:35 2018 by ./gen-tests.pl '.' '750' 'hr' '' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: hr, env var, no-option
+
+pre action: SET_ENV SWAKS_OPT_hr 
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver" --no-hr

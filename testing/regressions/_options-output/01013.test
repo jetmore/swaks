@@ -1,0 +1,9 @@
+# Generated Mon Dec 10 12:37:23 2018 by ./gen-tests.pl '.' '1000' 'hide-all' '' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: hide-all, config, no-option
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'hide-all \nno-hide-all'
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

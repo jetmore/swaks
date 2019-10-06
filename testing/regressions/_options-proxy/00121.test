@@ -1,0 +1,8 @@
+# Generated Tue Dec 25 11:35:10 2018 by ./gen-tests.pl '-n' '100' '-o' 'proxy-family' '-v' 'TCP4' '-i' 'FOOBAR' '-p' 'PROXY family:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver" --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: proxy-family, env var, valid arg
+
+pre action: SET_ENV SWAKS_OPT_proxy_family TCP4
+test action: CMD_CAPTURE %SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver" --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888

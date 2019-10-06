@@ -1,0 +1,5 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --server ser.ver \
+  --local-port 9999 \
+  --no-local-port

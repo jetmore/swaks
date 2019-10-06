@@ -1,0 +1,8 @@
+# Generated Wed Jul 10 22:49:20 2019 by ./gen-tests.pl '-n' '100' '-o' 'xclient-port' '-v' '25' '-i' '' '-p' 'XCLIENT port:' '-d' '.' '-r'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: xclient-port, config, no arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'xclient-port'
+auto: INTERACT '%SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --config %OUTDIR%/swaksrc-%TESTID%' 'XCLIENT port:' '25'

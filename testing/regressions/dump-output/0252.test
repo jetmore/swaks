@@ -1,5 +1,0 @@
-title: tests against the PROXY section
-pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
-test action: CMD %SWAKS% --dump proxy --to user@example.com --helo host.example.com --from from@example.com --output-file %OUTDIR%/%TESTID%.out --proxy-version 1 --proxy-family TCP4 --proxy-source 9.9.9.9 --proxy-source-port 99 --proxy-dest 8.8.8.8 --proxy-dest-port 88
-test action: MUNGE file:%OUTDIR%/%TESTID%.out "munge_globs" "munge_dates,'^(Subject|Date):'" "munge_message_ids,'^Message-Id:'"
-test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

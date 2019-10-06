@@ -1,8 +1,8 @@
 =pod
 
-=head1 swaks - Recipes for use
+=head1 Swaks - Recipes for use
 
-Because swaks is a very flexible tool it can be hard to fully grasp what it can do (and few people want or need to).  However, I have used swaks in interesting ways, and others have done the same and shared them with me.  I hate for these interesting ideas go to waste, so I am including them in this file.
+Because Swaks is a very flexible tool it can be hard to fully grasp what it can do (and few people want or need to).  However, I have used Swaks in interesting ways, and others have done the same and shared them with me.  I hate for these interesting ideas go to waste, so I am including them in this file.
 
 =head1 Simple address verification
 
@@ -39,7 +39,7 @@ This allows you to quickly ask a mail server whether a recipient is valid (depen
 
 =back
 
-This is a valid email (the mail server returned 250 in response to my RCPT request).  This is fairly verbose though.  Note the "0" in my command prompt is the exit status of the last command ($?).  Since swaks tries to be good about setting a useful return value, I could make vrfy totally silent:
+This is a valid email (the mail server returned 250 in response to my RCPT request).  This is fairly verbose though.  Note the "0" in my command prompt is the exit status of the last command ($?).  Since Swaks tries to be good about setting a useful return value, I could make vrfy totally silent:
 
 =over 4
 
@@ -67,9 +67,9 @@ This works well if you use $? in your command prompt, but if not it is less usef
 
 =head1 Stress-testing an SMTP server
 
-I've received a couple of different requests and a couple of different patches over the years to add functionality to have swaks fork and send a bunch of emails to a single address.  I may still add this functionality some day, but I still feel pretty strongly that ultimately swaks core is a single transaction.  Forking multiple swaks seems just outside the scope of the tool.
+I've received a couple of different requests and a couple of different patches over the years to add functionality to have Swaks fork and send a bunch of emails to a single address.  I may still add this functionality some day, but I still feel pretty strongly that ultimately Swaks core is a single transaction.  Forking multiple Swaks seems just outside the scope of the tool.
 
-However, this does seem to be something people want to do.  To that end, here is a quick-and-dirty shell script that is (almost) a drop in replacement for swaks:
+However, this does seem to be something people want to do.  To that end, here is a quick-and-dirty shell script that is (almost) a drop in replacement for Swaks:
 
 =over 4
 

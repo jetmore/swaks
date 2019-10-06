@@ -1,0 +1,36 @@
+DATA Info:
+  data = <<.
+Date: Wed, 03 Nov 1999 11:24:29 -0500
+To: user@example.com
+From: from@example.com
+Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+Message-Id: <19991103112429.047942@localhost>
+X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="----=_MIME_BOUNDARY_000_99999"
+
+------=_MIME_BOUNDARY_000_99999
+Content-Type: text/plain
+
+this is the body included from body.txt
+
+------=_MIME_BOUNDARY_000_99999
+Content-Type: text/html; name="body.html"
+Content-Description: body.html
+Content-Disposition: attachment; filename="body.html"
+Content-Transfer-Encoding: BASE64
+
+PGh0bWw+PGJvZHk+VGhpcyBpcyB0aGUgPGI+aHRtbDwvYj4gYm9keTwvYm9keT48L2h0bWw+Cg==
+
+------=_MIME_BOUNDARY_000_99999
+Content-Type: text/plain; name="body.txt"
+Content-Description: body.txt
+Content-Disposition: attachment; filename="body.txt"
+Content-Transfer-Encoding: BASE64
+
+dGhpcyBpcyB0aGUgYm9keSBpbmNsdWRlZCBmcm9tIGJvZHkudHh0Cg==
+
+------=_MIME_BOUNDARY_000_99999--
+
+
+.

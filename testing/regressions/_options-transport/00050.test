@@ -1,0 +1,7 @@
+# Generated Tue Dec 25 18:20:03 2018 by ./gen-tests.pl '-n' '50' '-o' 's' '-v' 'TESTSERVER' '-i' '' '-p' 'Server:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: s, command line, no arg
+
+auto: INTERACT '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --s' 'Server:' 'TESTSERVER'

@@ -1,0 +1,9 @@
+# Generated Mon Dec 10 12:45:31 2018 by ./gen-tests.pl '.' '1100' 'silent' '2' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: silent, config, valid arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'silent 2'
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

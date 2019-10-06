@@ -1,0 +1,8 @@
+# Generated Tue Dec 25 11:09:28 2018 by ./gen-tests.pl '-n' '0' '-o' 'proxy' '-v' 'PROXY_STRING' '-i' '' '-p' 'PROXY string:' '-d' '.' '-r'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: proxy, env var, valid arg
+
+pre action: SET_ENV SWAKS_OPT_proxy PROXY_STRING
+test action: CMD_CAPTURE %SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"

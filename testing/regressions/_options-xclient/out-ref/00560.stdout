@@ -1,0 +1,5 @@
+XCLIENT Info:
+  xclient         = required
+  no_verify       = FALSE
+  before starttls = TRUE
+  strings         = XCLIENT PORT=26

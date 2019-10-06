@@ -1,0 +1,12 @@
+spawn %SWAKS_COMMAND% --dump PROXY --to user@example.com --from recip@example.com --server ser ver --proxy-family AF_UNIX --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-version 2
+PROXY command: LOCAL
+PROXY Info:
+  proxy       = yes
+  version     = 2
+  family      = AF_UNIX
+  source      = 9.9.9.9
+  source port = 9999
+  dest        = 8.8.8.8
+  dest port   = 8888
+  protocol    = STREAM
+  command     = LOCAL

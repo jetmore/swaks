@@ -1,0 +1,438 @@
+
+00000 --to
+  0 to, command line, no arg
+  1 to, command line, valid arg
+  # 2 to, command line, invalid arg
+  3 to, command line, no-option
+  10 to, config, no arg
+  11 to, config, valid arg
+  # 12 to, config, invalid arg
+  13 to, config, no-option
+  20 to, env var, no arg
+  21 to, env var, valid arg
+  # 22 to, env var, invalid arg
+  23 to, env var, no-option
+  30 to command line, no arg (-option)
+  31 to, command line, valid arg (-option=)
+  32 to, command line, valid arg (--option=)
+00050 --t
+  50 t, command line, no arg
+  51 t, command line, valid arg
+  # 52 t, command line, invalid arg
+  53 t, command line, no-option
+  60 t, config, no arg
+  61 t, config, valid arg
+  # 62 t, config, invalid arg
+  63 t, config, no-option
+  70 t, env var, no arg
+  71 t, env var, valid arg
+  # 72 t, env var, invalid arg
+  73 t, env var, no-option
+  80 t command line, no arg (-option)
+  81 t, command line, valid arg (-option=)
+  82 t, command line, valid arg (--option=)
+00100 --from
+  100 from, command line, no arg
+  101 from, command line, valid arg
+  # 102 from, command line, invalid arg
+  103 from, command line, no-option
+  110 from, config, no arg
+  111 from, config, valid arg
+  # 112 from, config, invalid arg
+  113 from, config, no-option
+  120 from, env var, no arg
+  121 from, env var, valid arg
+  # 122 from, env var, invalid arg
+  123 from, env var, no-option
+  130 from command line, no arg (-option)
+  131 from, command line, valid arg (-option=)
+  132 from, command line, valid arg (--option=)
+00150 --f
+  150 f, command line, no arg
+  151 f, command line, valid arg
+  # 152 f, command line, invalid arg
+  153 f, command line, no-option
+  160 f, config, no arg
+  161 f, config, valid arg
+  # 162 f, config, invalid arg
+  163 f, config, no-option
+  170 f, env var, no arg
+  171 f, env var, valid arg
+  # 172 f, env var, invalid arg
+  173 f, env var, no-option
+  180 f command line, no arg (-option)
+  181 f, command line, valid arg (-option=)
+  182 f, command line, valid arg (--option=)
+00200 --helo
+  200 helo, command line, no arg
+  201 helo, command line, valid arg
+  # 202 helo, command line, invalid arg
+  203 helo, command line, no-option
+  210 helo, config, no arg
+  211 helo, config, valid arg
+  # 212 helo, config, invalid arg
+  213 helo, config, no-option
+  220 helo, env var, no arg
+  221 helo, env var, valid arg
+  # 222 helo, env var, invalid arg
+  223 helo, env var, no-option
+  230 helo command line, no arg (-option)
+  231 helo, command line, valid arg (-option=)
+  232 helo, command line, valid arg (--option=)
+00250 --ehlo
+  250 ehlo, command line, no arg
+  251 ehlo, command line, valid arg
+  # 252 ehlo, command line, invalid arg
+  253 ehlo, command line, no-option
+  260 ehlo, config, no arg
+  261 ehlo, config, valid arg
+  # 262 ehlo, config, invalid arg
+  263 ehlo, config, no-option
+  270 ehlo, env var, no arg
+  271 ehlo, env var, valid arg
+  # 272 ehlo, env var, invalid arg
+  273 ehlo, env var, no-option
+  280 ehlo command line, no arg (-option)
+  281 ehlo, command line, valid arg (-option=)
+  282 ehlo, command line, valid arg (--option=)
+00300 --lhlo
+  300 lhlo, command line, no arg
+  301 lhlo, command line, valid arg
+  # 302 lhlo, command line, invalid arg
+  303 lhlo, command line, no-option
+  310 lhlo, config, no arg
+  311 lhlo, config, valid arg
+  # 312 lhlo, config, invalid arg
+  313 lhlo, config, no-option
+  320 lhlo, env var, no arg
+  321 lhlo, env var, valid arg
+  # 322 lhlo, env var, invalid arg
+  323 lhlo, env var, no-option
+  330 lhlo command line, no arg (-option)
+  331 lhlo, command line, valid arg (-option=)
+  332 lhlo, command line, valid arg (--option=)
+00350 --h
+  350 h, command line, no arg
+  351 h, command line, valid arg
+  # 352 h, command line, invalid arg
+  353 h, command line, no-option
+  360 h, config, no arg
+  361 h, config, valid arg
+  # 362 h, config, invalid arg
+  363 h, config, no-option
+  370 h, env var, no arg
+  371 h, env var, valid arg
+  # 372 h, env var, invalid arg
+  373 h, env var, no-option
+  380 h command line, no arg (-option)
+  381 h, command line, valid arg (-option=)
+  382 h, command line, valid arg (--option=)
+00400 --quit-after
+  400 quit-after, command line, no arg
+  401 quit-after, command line, valid arg
+  402 quit-after, command line, invalid arg
+  403 quit-after, command line, no-option
+  410 quit-after, config, no arg
+  411 quit-after, config, valid arg
+  412 quit-after, config, invalid arg
+  413 quit-after, config, no-option
+  420 quit-after, env var, no arg    # should fail but doesn't, issue of not being able to tell empty from undefined in env vars. codify behavior
+  421 quit-after, env var, valid arg
+  422 quit-after, env var, invalid arg
+  423 quit-after, env var, no-option
+  430 quit-after command line, no arg (-option)
+  431 quit-after, command line, valid arg (-option=)
+  432 quit-after, command line, valid arg (--option=)
+00450 --quit
+  450 quit, command line, no arg
+  451 quit, command line, valid arg
+  452 quit, command line, invalid arg
+  453 quit, command line, no-option
+  460 quit, config, no arg
+  461 quit, config, valid arg
+  462 quit, config, invalid arg
+  463 quit, config, no-option
+  470 quit, env var, no arg    # should fail but doesn't, issue of not being able to tell empty from undefined in env vars. codify behavior
+  471 quit, env var, valid arg
+  472 quit, env var, invalid arg
+  473 quit, env var, no-option
+  480 quit command line, no arg (-option)
+  481 quit, command line, valid arg (-option=)
+  482 quit, command line, valid arg (--option=)
+00500 --q
+  500 q, command line, no arg
+  501 q, command line, valid arg
+  502 q, command line, invalid arg
+  503 q, command line, no-option
+  510 q, config, no arg
+  511 q, config, valid arg
+  512 q, config, invalid arg
+  513 q, config, no-option
+  520 q, env var, no arg    # should fail but doesn't, issue of not being able to tell empty from undefined in env vars. codify behavior
+  521 q, env var, valid arg
+  522 q, env var, invalid arg
+  523 q, env var, no-option
+  530 q command line, no arg (-option)
+  531 q, command line, valid arg (-option=)
+  532 q, command line, valid arg (--option=)
+00550 --timeout
+  550 timeout, command line, no arg
+  551 timeout, command line, valid arg
+  552 timeout, command line, invalid arg
+  553 timeout, command line, no-option
+  560 timeout, config, no arg
+  561 timeout, config, valid arg
+  562 timeout, config, invalid arg
+  563 timeout, config, no-option
+  570 timeout, env var, no arg
+  571 timeout, env var, valid arg
+  572 timeout, env var, invalid arg
+  573 timeout, env var, no-option
+  580 timeout command line, no arg (-option)
+  581 timeout, command line, valid arg (-option=)
+  582 timeout, command line, valid arg (--option=)
+00600 --drop-after
+  600 drop-after, command line, no arg
+  601 drop-after, command line, valid arg
+  602 drop-after, command line, invalid arg
+  603 drop-after, command line, no-option
+  610 drop-after, config, no arg
+  611 drop-after, config, valid arg
+  612 drop-after, config, invalid arg
+  613 drop-after, config, no-option
+  620 drop-after, env var, no arg    # should fail but doesn't, issue of not being able to tell empty from undefined in env vars. codify behavior
+  621 drop-after, env var, valid arg
+  622 drop-after, env var, invalid arg
+  623 drop-after, env var, no-option
+  630 drop-after command line, no arg (-option)
+  631 drop-after, command line, valid arg (-option=)
+  632 drop-after, command line, valid arg (--option=)
+00650 --da
+  650 da, command line, no arg
+  651 da, command line, valid arg
+  652 da, command line, invalid arg
+  653 da, command line, no-option
+  660 da, config, no arg
+  661 da, config, valid arg
+  662 da, config, invalid arg
+  663 da, config, no-option
+  670 da, env var, no arg    # should fail but doesn't, issue of not being able to tell empty from undefined in env vars. codify behavior
+  671 da, env var, valid arg
+  672 da, env var, invalid arg
+  673 da, env var, no-option
+  680 da command line, no arg (-option)
+  681 da, command line, valid arg (-option=)
+  682 da, command line, valid arg (--option=)
+00700 --drop-after-send
+  700 drop-after-send, command line, no arg
+  701 drop-after-send, command line, valid arg
+  702 drop-after-send, command line, invalid arg
+  703 drop-after-send, command line, no-option
+  710 drop-after-send, config, no arg
+  711 drop-after-send, config, valid arg
+  712 drop-after-send, config, invalid arg
+  713 drop-after-send, config, no-option
+  720 drop-after-send, env var, no arg    # should fail but doesn't, issue of not being able to tell empty from undefined in env vars. codify behavior
+  721 drop-after-send, env var, valid arg
+  722 drop-after-send, env var, invalid arg
+  723 drop-after-send, env var, no-option
+  730 drop-after-send command line, no arg (-option)
+  731 drop-after-send, command line, valid arg (-option=)
+  732 drop-after-send, command line, valid arg (--option=)
+00750 --das
+  750 das, command line, no arg
+  751 das, command line, valid arg
+  752 das, command line, invalid arg
+  753 das, command line, no-option
+  760 das, config, no arg
+  761 das, config, valid arg
+  762 das, config, invalid arg
+  763 das, config, no-option
+  770 das, env var, no arg    # should fail but doesn't, issue of not being able to tell empty from undefined in env vars. codify behavior
+  771 das, env var, valid arg
+  772 das, env var, invalid arg
+  773 das, env var, no-option
+  780 das command line, no arg (-option)
+  781 das, command line, valid arg (-option=)
+  782 das, command line, valid arg (--option=)
+00800 --protocol
+  800 protocol, command line, no arg
+  801 protocol, command line, valid arg
+  802 protocol, command line, invalid arg
+  803 protocol, command line, no-option
+  810 protocol, config, no arg
+  811 protocol, config, valid arg
+  812 protocol, config, invalid arg
+  813 protocol, config, no-option
+  820 protocol, env var, no arg
+  821 protocol, env var, valid arg
+  822 protocol, env var, invalid arg
+  823 protocol, env var, no-option
+  830 protocol command line, no arg (-option)
+  831 protocol, command line, valid arg (-option=)
+  832 protocol, command line, valid arg (--option=)
+00850 --pipeline
+  850 pipeline, command line, no arg
+  # 851 pipeline, command line, valid arg
+  852 pipeline, command line, invalid arg
+  853 pipeline, command line, no-option
+  860 pipeline, config, no arg
+  # 861 pipeline, config, valid arg
+  862 pipeline, config, invalid arg
+  863 pipeline, config, no-option
+  870 pipeline, env var, no arg
+  # 871 pipeline, env var, valid arg
+  872 pipeline, env var, invalid arg
+  873 pipeline, env var, no-option
+  880 pipeline command line, no arg (-option)
+  # 881 pipeline, command line, valid arg (-option=)
+  # 882 pipeline, command line, valid arg (--option=)
+00900 --prdr
+  900 prdr, command line, no arg
+  # 901 prdr, command line, valid arg
+  902 prdr, command line, invalid arg
+  903 prdr, command line, no-option
+  910 prdr, config, no arg
+  # 911 prdr, config, valid arg
+  912 prdr, config, invalid arg
+  913 prdr, config, no-option
+  920 prdr, env var, no arg
+  # 921 prdr, env var, valid arg
+  922 prdr, env var, invalid arg
+  923 prdr, env var, no-option
+  930 prdr command line, no arg (-option)
+  # 931 prdr, command line, valid arg (-option=)
+  # 932 prdr, command line, valid arg (--option=)
+00950 --force-getpwuid
+  950 force-getpwuid, command line, no arg
+  # 951 force-getpwuid, command line, valid arg
+  952 force-getpwuid, command line, invalid arg
+  953 force-getpwuid, command line, no-option
+  960 force-getpwuid, config, no arg
+  # 961 force-getpwuid, config, valid arg
+  962 force-getpwuid, config, invalid arg
+  963 force-getpwuid, config, no-option
+  970 force-getpwuid, env var, no arg
+  # 971 force-getpwuid, env var, valid arg
+  972 force-getpwuid, env var, invalid arg
+  973 force-getpwuid, env var, no-option
+  980 force-getpwuid command line, no arg (-option)
+  # 981 force-getpwuid, command line, valid arg (-option=)
+  # 982 force-getpwuid, command line, valid arg (--option=)
+
+
+./gen-tests.pl \
+    -n 950 \
+    -o force-getpwuid \
+    -v '' \
+    -i invalid-option \
+    -p '' \
+    -d . \
+    -r \
+    -s '%SWAKS% --dump PROTOCOL --to recip@example.com --from sender@example.net --helo helo-string --server ser.ver'
+
+
+
+--
+05000
+  000 --from '<>' forces empty sender
+--
+  100 --quit-after CONNECT
+  101 --quit-after BANNER
+  102 --quit-after FIRST-HELO
+  103 --quit-after FIRST-EHLO
+  104 --quit-after FIRST-LHLO
+  105 --quit-after XCLIENT
+  106 --quit-after TLS
+  107 --quit-after HELO
+  108 --quit-after EHLO
+  109 --quit-after LHLO
+  110 --quit-after AUTH
+  111 --quit-after MAIL
+  112 --quit-after FROM
+  113 --quit-after RCPT
+  114 --quit-after TO
+  115 --quit-after STARTTLS
+  120 --quit-after CONNECT + no recip doesn't prompt for To:
+  121 --quit-after FIRST-HELO + no recip doesn't prompt for To:
+  122 --quit-after XCLIENT + no recip doesn't prompt for To:
+  123 --quit-after TLS + no recip doesn't prompt for To:
+  124 --quit-after HELO + no recip doesn't prompt for To:
+  125 --quit-after AUTH + no recip doesn't prompt for To:
+  126 --quit-after MAIL + no recip doesn't prompt for To:
+  127 --quit-after RCPT + no recip DOES prompt for To:
+--
+  200 --drop-after CONNECT
+  201 --drop-after BANNER
+  202 --drop-after FIRST-HELO
+  203 --drop-after FIRST-EHLO
+  204 --drop-after FIRST-LHLO
+  205 --drop-after XCLIENT
+  206 --drop-after TLS
+  207 --drop-after HELO
+  208 --drop-after EHLO
+  209 --drop-after LHLO
+  210 --drop-after AUTH
+  211 --drop-after MAIL
+  212 --drop-after FROM
+  213 --drop-after RCPT
+  214 --drop-after TO
+  215 --drop-after STARTTLS
+--
+  300 --drop-after-send CONNECT
+  301 --drop-after-send BANNER
+  302 --drop-after-send FIRST-HELO
+  303 --drop-after-send FIRST-EHLO
+  304 --drop-after-send FIRST-LHLO
+  305 --drop-after-send XCLIENT
+  306 --drop-after-send TLS
+  307 --drop-after-send HELO
+  308 --drop-after-send EHLO
+  309 --drop-after-send LHLO
+  310 --drop-after-send AUTH
+  311 --drop-after-send MAIL
+  312 --drop-after-send FROM
+  313 --drop-after-send RCPT
+  314 --drop-after-send TO
+  315 --drop-after-send STARTTLS
+--
+  400 --protocol smtp
+  401 --protocol ssmtp
+  402 --protocol ssmtpa
+  403 --protocol smtps
+  404 --protocol esmtp
+  405 --protocol esmtpa
+  406 --protocol esmtps
+  407 --protocol esmtpsa
+  408 --protocol lmtp
+  409 --protocol lmtpa
+  410 --protocol lmtps
+  411 --protocol lmtpsa
+--
+  500 --timeout 2
+  501 --timeout 2s
+  502 --timeout 2S
+  503 --timeout 2h
+  504 --timeout 2H
+  505 --timeout 2m
+  506 --timeout 2M
+  507 --timeout 0
+  508 --timeout 0s
+  509 --timeout 2g # error
+--
+  600 --to addr1,addr2,addr3 uses the domain of the last address (if no other target provided)
+--
+  700 $LOGNAME is used for sender by default
+  701 --force-getpwuid overrides $LOGNAME
+
+for i in `series -w 2 1-9`
+do
+  cp 05500.test 055$i.test
+  subl 055$i.test
+done
+
+
+
+
+
+

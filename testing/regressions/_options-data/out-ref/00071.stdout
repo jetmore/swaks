@@ -1,0 +1,8 @@
+DATA Info:
+  data = <<.
+Date: CWed, 03 Nov 1999 11:24:29 -0500
+
+CThis is a test mailing
+
+
+.

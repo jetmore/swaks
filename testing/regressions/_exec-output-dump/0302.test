@@ -1,0 +1,4 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+test action: CMD_CAPTURE %SWAKS% --dump tls --to user@example.com --server ser.ver --helo host.example.com --from from@example.com --tls --tls-protocol TLSv1_1 --tls-cipher TEST_CIPHER --tls-verify --tls-ca-path %TESTDIR%/%TESTID%.test --tls-cert /LOCAL/CERT --tls-key /LOCAL/KEY --tls-get-peer-cert /PEER/CERT
+

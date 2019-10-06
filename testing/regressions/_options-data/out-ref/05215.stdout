@@ -1,0 +1,9 @@
+DATA Info:
+  data = <<.
+From: foo
+New Header: replacement string
+Subject: bar
+To: baz
+
+body of message
+.

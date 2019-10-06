@@ -1,0 +1,8 @@
+# Generated Sat Jul 13 10:18:19 2019 by ./gen-tests.pl '-n' '50' '-o' 'data' '-v' 'Date: C%DATE%%NEWLINE%%NEWLINE%C%BODY%' '-i' '/path/to/bogus/file' '-d' '.' '-p' 'Data:' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver"'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: data, command line, no-option
+
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" \
+    --data 'Date: C%DATE%%NEWLINE%%NEWLINE%C%BODY%' --no-data

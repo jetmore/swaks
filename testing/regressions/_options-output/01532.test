@@ -1,0 +1,8 @@
+# Generated Thu Dec 20 17:33:09 2018 by ./gen-tests.pl '.' '1500' 'output' '%OUTDIR%/%TESTID%.out' '/foo/bar/baz.t'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.out
+
+title: output, command line, valid arg (--option=)
+
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver" \
+    --output=%OUTDIR%/%TESTID%.out

@@ -23,3 +23,7 @@ Thumbs.db
 # sublime project files
 *.sublime-project
 *.sublime-workspace
+
+# I used to have this versioned but I removed it from all commits. Eventually it will
+# move to real bug tracking butin the mean time allow it to live ignored in my local repo
+punchlist.txt

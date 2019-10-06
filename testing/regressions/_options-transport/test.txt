@@ -1,0 +1,287 @@
+
+
+00000 --server
+  0 server, command line, no arg
+  1 server, command line, valid arg
+  # 2 server, command line, invalid arg
+  3 server, command line, no-option
+  10 server, config, no arg
+  11 server, config, valid arg
+  # 12 server, config, invalid arg
+  13 server, config, no-option
+  20 server, env var, no arg
+  21 server, env var, valid arg
+  # 22 server, env var, invalid arg
+  23 server, env var, no-option
+  30 server command line, no arg (-option)
+  31 server, command line, valid arg (-option=)
+  32 server, command line, valid arg (--option=)
+00050 --s
+  50 s, command line, no arg
+  51 s, command line, valid arg
+  # 52 s, command line, invalid arg
+  53 s, command line, no-option
+  60 s, config, no arg
+  61 s, config, valid arg
+  # 62 s, config, invalid arg
+  63 s, config, no-option
+  70 s, env var, no arg
+  71 s, env var, valid arg
+  # 72 s, env var, invalid arg
+  73 s, env var, no-option
+  80 s command line, no arg (-option)
+  81 s, command line, valid arg (-option=)
+  82 s, command line, valid arg (--option=)
+00100 --port
+  100 port, command line, no arg
+  101 port, command line, valid arg
+  102 port, command line, invalid arg
+  103 port, command line, no-option
+  110 port, config, no arg
+  111 port, config, valid arg
+  112 port, config, invalid arg
+  113 port, config, no-option
+  120 port, env var, no arg
+  121 port, env var, valid arg
+  122 port, env var, invalid arg
+  123 port, env var, no-option
+  130 port command line, no arg (-option)
+  131 port, command line, valid arg (-option=)
+  132 port, command line, valid arg (--option=)
+00150 --p
+  150 p, command line, no arg
+  151 p, command line, valid arg
+  152 p, command line, invalid arg
+  153 p, command line, no-option
+  160 p, config, no arg
+  161 p, config, valid arg
+  162 p, config, invalid arg
+  163 p, config, no-option
+  170 p, env var, no arg
+  171 p, env var, valid arg
+  172 p, env var, invalid arg
+  173 p, env var, no-option
+  180 p command line, no arg (-option)
+  181 p, command line, valid arg (-option=)
+  182 p, command line, valid arg (--option=)
+00200 --local-interface
+  200 local-interface, command line, no arg
+  201 local-interface, command line, valid arg
+  # 202 local-interface, command line, invalid arg
+  203 local-interface, command line, no-option
+  210 local-interface, config, no arg
+  211 local-interface, config, valid arg
+  # 212 local-interface, config, invalid arg
+  213 local-interface, config, no-option
+  220 local-interface, env var, no arg
+  221 local-interface, env var, valid arg
+  # 222 local-interface, env var, invalid arg
+  223 local-interface, env var, no-option
+  230 local-interface command line, no arg (-option)
+  231 local-interface, command line, valid arg (-option=)
+  232 local-interface, command line, valid arg (--option=)
+00250 --local-interface
+  250 local-interface, command line, no arg
+  251 local-interface, command line, valid arg
+  # 252 local-interface, command line, invalid arg
+  253 local-interface, command line, no-option
+  260 local-interface, config, no arg
+  261 local-interface, config, valid arg
+  # 262 local-interface, config, invalid arg
+  263 local-interface, config, no-option
+  270 local-interface, env var, no arg
+  271 local-interface, env var, valid arg
+  # 272 local-interface, env var, invalid arg
+  273 local-interface, env var, no-option
+  280 local-interface command line, no arg (-option)
+  281 local-interface, command line, valid arg (-option=)
+  282 local-interface, command line, valid arg (--option=)
+00300 --local-port
+  300 local-port, command line, no arg
+  301 local-port, command line, valid arg
+  # 302 local-port, command line, invalid arg
+  303 local-port, command line, no-option
+  310 local-port, config, no arg
+  311 local-port, config, valid arg
+  # 312 local-port, config, invalid arg
+  313 local-port, config, no-option
+  320 local-port, env var, no arg
+  321 local-port, env var, valid arg
+  # 322 local-port, env var, invalid arg
+  323 local-port, env var, no-option
+  330 local-port command line, no arg (-option)
+  331 local-port, command line, valid arg (-option=)
+  332 local-port, command line, valid arg (--option=)
+00350 --lport
+  350 lport, command line, no arg
+  351 lport, command line, valid arg
+  # 352 lport, command line, invalid arg
+  353 lport, command line, no-option
+  360 lport, config, no arg
+  361 lport, config, valid arg
+  # 362 lport, config, invalid arg
+  363 lport, config, no-option
+  370 lport, env var, no arg
+  371 lport, env var, valid arg
+  # 372 lport, env var, invalid arg
+  373 lport, env var, no-option
+  380 lport command line, no arg (-option)
+  381 lport, command line, valid arg (-option=)
+  382 lport, command line, valid arg (--option=)
+00400 --lp
+  400 lp, command line, no arg
+  401 lp, command line, valid arg
+  # 402 lp, command line, invalid arg
+  403 lp, command line, no-option
+  410 lp, config, no arg
+  411 lp, config, valid arg
+  # 412 lp, config, invalid arg
+  413 lp, config, no-option
+  420 lp, env var, no arg
+  421 lp, env var, valid arg
+  # 422 lp, env var, invalid arg
+  423 lp, env var, no-option
+  430 lp command line, no arg (-option)
+  431 lp, command line, valid arg (-option=)
+  432 lp, command line, valid arg (--option=)
+00450 --copy-routing
+  450 copy-routing, command line, no arg
+  451 copy-routing, command line, valid arg
+  # 452 copy-routing, command line, invalid arg
+  453 copy-routing, command line, no-option
+  460 copy-routing, config, no arg
+  461 copy-routing, config, valid arg
+  # 462 copy-routing, config, invalid arg
+  463 copy-routing, config, no-option
+  470 copy-routing, env var, no arg
+  471 copy-routing, env var, valid arg
+  # 472 copy-routing, env var, invalid arg
+  473 copy-routing, env var, no-option
+  480 copy-routing command line, no arg (-option)
+  481 copy-routing, command line, valid arg (-option=)
+  482 copy-routing, command line, valid arg (--option=)
+00500 --4
+  500 4, command line, no arg
+  # 501 4, command line, valid arg
+  502 4, command line, invalid arg
+  503 4, command line, no-option
+  510 4, config, no arg
+  # 511 4, config, valid arg
+  512 4, config, invalid arg
+  513 4, config, no-option
+  520 4, env var, no arg
+  # 521 4, env var, valid arg
+  522 4, env var, invalid arg
+  523 4, env var, no-option
+  530 4 command line, no arg (-option)
+  # 531 4, command line, valid arg (-option=)
+  # 532 4, command line, valid arg (--option=)
+00550 --6
+  550 6, command line, no arg
+  # 551 6, command line, valid arg
+  552 6, command line, invalid arg
+  553 6, command line, no-option
+  560 6, config, no arg
+  # 561 6, config, valid arg
+  562 6, config, invalid arg
+  563 6, config, no-option
+  570 6, env var, no arg
+  # 571 6, env var, valid arg
+  572 6, env var, invalid arg
+  573 6, env var, no-option
+  580 6 command line, no arg (-option)
+  # 581 6, command line, valid arg (-option=)
+  # 582 6, command line, valid arg (--option=)
+00600 --socket
+  600 socket, command line, no arg
+  601 socket, command line, valid arg
+  # 602 socket, command line, invalid arg
+  603 socket, command line, no-option
+  610 socket, config, no arg
+  611 socket, config, valid arg
+  # 612 socket, config, invalid arg
+  613 socket, config, no-option
+  620 socket, env var, no arg
+  621 socket, env var, valid arg
+  # 622 socket, env var, invalid arg
+  623 socket, env var, no-option
+  630 socket command line, no arg (-option)
+  631 socket, command line, valid arg (-option=)
+  632 socket, command line, valid arg (--option=)
+00650 --pipe
+  650 pipe, command line, no arg
+  651 pipe, command line, valid arg
+  # 652 pipe, command line, invalid arg
+  653 pipe, command line, no-option
+  660 pipe, config, no arg
+  661 pipe, config, valid arg
+  # 662 pipe, config, invalid arg
+  663 pipe, config, no-option
+  670 pipe, env var, no arg
+  671 pipe, env var, valid arg
+  # 672 pipe, env var, invalid arg
+  673 pipe, env var, no-option
+  680 pipe command line, no arg (-option)
+  681 pipe, command line, valid arg (-option=)
+  682 pipe, command line, valid arg (--option=)
+-
+05000
+  000 --server and --pipe are mutually exclusive
+  001 --server and --socket are mutually exclusive
+  002 --socket and --pipe are mutually exclusive
+-
+  010 --server foo:1025 sets port
+  011 --server 1.1.1.1:1025
+  012 --server [foo]:1025
+  013 --server [1.1.1.1]:1025
+  014 --server [::1]:1025
+  015 --server foo/1025
+  016 --server 1.1.1.1/1025
+  017 --server ::1/1025
+  018 --server [::1]:telnet
+  019 --server [::1]:foobar (should fail)
+-
+  020 --port telnet (demonstrate successful lookup by service name
+-
+  030 --local-interface foo:1025 sets port
+  031 --local-interface 1.1.1.1:1025
+  032 --local-interface [foo]:1025
+  033 --local-interface [1.1.1.1]:1025
+  034 --local-interface [::1]:1025
+  035 --local-interface foo/1025
+  036 --local-interface 1.1.1.1/1025
+  037 --local-interface ::1/1025
+  038 --local-interface [::1]:telnet
+  039 --local-interface [::1]:foobar (should fail)
+-
+  040 -4                       --server <ipv6>          fails
+  041 -4                       --local-interface <ipv6> fails
+  042 -6                       --server <ipv4>          fails
+  043 -6                       --local-interface <ipv4> fails
+  044 --server <ipv4>          --local-interface <ipv6> fails
+  045 --server <ipv6>          --local-interface <ipv4> fails
+
+
+
+./gen-tests.pl \
+    -n 650 \
+    -o pipe \
+    -v /path/to/command \
+    -i '' \
+    -p 'Pipe:' \
+    -d . \
+    -r \
+    -s '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com'
+
+ --server "ser ver"
+
+skip: This should fail because it doesn't take an arg, but it doesn't.  Skip and come back later
+
+--copy-routing overrides --to, but not --server (not sure this is how it should be, but codify how it is)
+
+-4 -> ipv6 server
+-4 -> ipv6 lint
+-6 -> ipv4 server
+-6 -> ipv4 lint
+ipv4 server -> ipv6 lint
+ipv6 lint   -> ipv4 server

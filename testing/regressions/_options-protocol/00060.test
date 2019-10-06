@@ -1,0 +1,8 @@
+# Generated Sat Jan  5 13:05:39 2019 by ./gen-tests.pl '-n' '50' '-o' 't' '-v' 'foo@bar.com' '-i' '' '-p' 'To:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --from recip@example.com --server ser.ver'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: t, config, no arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'t'
+auto: INTERACT '%SWAKS% --dump PROTOCOL --from recip@example.com --server ser.ver --config %OUTDIR%/swaksrc-%TESTID%' 'To:' 'foo@bar.com'

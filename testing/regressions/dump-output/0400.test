@@ -1,5 +1,0 @@
-title: tests against the DATA section
-pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.diff
-test action: CMD %SWAKS% --dump DATA --to user@example.com --helo host.example.com --from from@example.com --output-file %OUTDIR%/%TESTID%.out
-test action: MUNGE file:%OUTDIR%/%TESTID%.out "munge_globs" "munge_dates,'^(Subject|Date):'" "munge_message_ids,'^Message-Id:'"
-test result: COMPARE_FILE %TESTDIR%/%TESTID%.out %OUTDIR%/%TESTID%.out

@@ -1,0 +1,8 @@
+# Generated Tue Dec 11 19:00:34 2018 by ./gen-tests.pl '.' '400' 'tls-protocol' 'tlsv1_1,tlsv1_2' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tls-protocol, command line, no-option
+
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --tls --server "ser ver" \
+    --tls-protocol tlsv1_1,tlsv1_2 --no-tls-protocol

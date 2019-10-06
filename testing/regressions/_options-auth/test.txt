@@ -1,0 +1,313 @@
+00000 --a
+  0 a, command line, no arg
+  1 a, command line, valid arg
+  2 a, command line, invalid arg
+  3 a, command line, no-option
+  10 a, config, no arg
+  11 a, config, valid arg
+  12 a, config, invalid arg
+  13 a, config, no-option
+  20 a, env var, no arg
+  21 a, env var, valid arg
+  22 a, env var, invalid arg
+  23 a, env var, no-option
+  30 a command line, no arg (-option)
+  31 a, command line, valid arg (-option=)
+  32 a, command line, valid arg (--option=)
+00050 --auth
+  50 auth, command line, no arg
+  51 auth, command line, valid arg
+  52 auth, command line, invalid arg
+  53 auth, command line, no-option
+  60 auth, config, no arg
+  61 auth, config, valid arg
+  62 auth, config, invalid arg
+  63 auth, config, no-option
+  70 auth, env var, no arg
+  71 auth, env var, valid arg
+  72 auth, env var, invalid arg
+  73 auth, env var, no-option
+  80 auth command line, no arg (-option)
+  81 auth, command line, valid arg (-option=)
+  82 auth, command line, valid arg (--option=)
+00100 --ao
+  100 ao, command line, no arg
+  101 ao, command line, valid arg
+  102 ao, command line, invalid arg
+  103 ao, command line, no-option
+  110 ao, config, no arg
+  111 ao, config, valid arg
+  112 ao, config, invalid arg
+  113 ao, config, no-option
+  120 ao, env var, no arg
+  121 ao, env var, valid arg
+  122 ao, env var, invalid arg
+  123 ao, env var, no-option
+  130 ao command line, no arg (-option)
+  131 ao, command line, valid arg (-option=)
+  132 ao, command line, valid arg (--option=)
+00150 --auth-optional
+  150 auth-optional, command line, no arg
+  151 auth-optional, command line, valid arg
+  152 auth-optional, command line, invalid arg
+  153 auth-optional, command line, no-option
+  160 auth-optional, config, no arg
+  161 auth-optional, config, valid arg
+  162 auth-optional, config, invalid arg
+  163 auth-optional, config, no-option
+  170 auth-optional, env var, no arg
+  171 auth-optional, env var, valid arg
+  172 auth-optional, env var, invalid arg
+  173 auth-optional, env var, no-option
+  180 auth-optional command line, no arg (-option)
+  181 auth-optional, command line, valid arg (-option=)
+  182 auth-optional, command line, valid arg (--option=)
+00200 --aos
+  200 aos, command line, no arg
+  201 aos, command line, valid arg
+  202 aos, command line, invalid arg
+  203 aos, command line, no-option
+  210 aos, config, no arg
+  211 aos, config, valid arg
+  212 aos, config, invalid arg
+  213 aos, config, no-option
+  220 aos, env var, no arg
+  221 aos, env var, valid arg
+  222 aos, env var, invalid arg
+  223 aos, env var, no-option
+  230 aos command line, no arg (-option)
+  231 aos, command line, valid arg (-option=)
+  232 aos, command line, valid arg (--option=)
+00250 --auth-optional-strict
+  250 auth-optional-strict, command line, no arg
+  251 auth-optional-strict, command line, valid arg
+  252 auth-optional-strict, command line, invalid arg
+  253 auth-optional-strict, command line, no-option
+  260 auth-optional-strict, config, no arg
+  261 auth-optional-strict, config, valid arg
+  262 auth-optional-strict, config, invalid arg
+  263 auth-optional-strict, config, no-option
+  270 auth-optional-strict, env var, no arg
+  271 auth-optional-strict, env var, valid arg
+  272 auth-optional-strict, env var, invalid arg
+  273 auth-optional-strict, env var, no-option
+  280 auth-optional-strict command line, no arg (-option)
+  281 auth-optional-strict, command line, valid arg (-option=)
+  282 auth-optional-strict, command line, valid arg (--option=)
+00300 --au
+  300 au, command line, no arg
+  301 au, command line, valid arg
+  # 302 au, command line, invalid arg
+  303 au, command line, no-option
+  310 au, config, no arg
+  311 au, config, valid arg
+  # 312 au, config, invalid arg
+  313 au, config, no-option
+  320 au, env var, no arg
+  321 au, env var, valid arg
+  # 322 au, env var, invalid arg
+  323 au, env var, no-option
+  330 au command line, no arg (-option)
+  331 au, command line, valid arg (-option=)
+  332 au, command line, valid arg (--option=)
+00350 --auth-user
+  350 auth-user, command line, no arg
+  351 auth-user, command line, valid arg
+  # 352 auth-user, command line, invalid arg
+  353 auth-user, command line, no-option
+  360 auth-user, config, no arg
+  361 auth-user, config, valid arg
+  # 362 auth-user, config, invalid arg
+  363 auth-user, config, no-option
+  370 auth-user, env var, no arg
+  371 auth-user, env var, valid arg
+  # 372 auth-user, env var, invalid arg
+  373 auth-user, env var, no-option
+  380 auth-user command line, no arg (-option)
+  381 auth-user, command line, valid arg (-option=)
+  382 auth-user, command line, valid arg (--option=)
+00400 --ap
+  400 ap, command line, no arg
+  401 ap, command line, valid arg
+  # 402 ap, command line, invalid arg
+  403 ap, command line, no-option
+  410 ap, config, no arg
+  411 ap, config, valid arg
+  # 412 ap, config, invalid arg
+  413 ap, config, no-option
+  420 ap, env var, no arg
+  421 ap, env var, valid arg
+  # 422 ap, env var, invalid arg
+  423 ap, env var, no-option
+  430 ap command line, no arg (-option)
+  431 ap, command line, valid arg (-option=)
+  432 ap, command line, valid arg (--option=)
+00450 --auth-password
+  450 auth-password, command line, no arg
+  451 auth-password, command line, valid arg
+  # 452 auth-password, command line, invalid arg
+  453 auth-password, command line, no-option
+  460 auth-password, config, no arg
+  461 auth-password, config, valid arg
+  # 462 auth-password, config, invalid arg
+  463 auth-password, config, no-option
+  470 auth-password, env var, no arg
+  471 auth-password, env var, valid arg
+  # 472 auth-password, env var, invalid arg
+  473 auth-password, env var, no-option
+  480 auth-password command line, no arg (-option)
+  481 auth-password, command line, valid arg (-option=)
+  482 auth-password, command line, valid arg (--option=)
+00500 --ae
+  500 ae, command line, no arg
+  501 ae, command line, valid arg
+  502 ae, command line, invalid arg
+  503 ae, command line, no-option
+  510 ae, config, no arg
+  511 ae, config, valid arg
+  512 ae, config, invalid arg
+  513 ae, config, no-option
+  520 ae, env var, no arg
+  521 ae, env var, valid arg
+  522 ae, env var, invalid arg
+  523 ae, env var, no-option
+  530 ae command line, no arg (-option)
+  531 ae, command line, valid arg (-option=)
+  532 ae, command line, valid arg (--option=)
+00550 --auth-extra
+  550 auth-extra, command line, no arg
+  551 auth-extra, command line, valid arg
+  552 auth-extra, command line, invalid arg
+  553 auth-extra, command line, no-option
+  560 auth-extra, config, no arg
+  561 auth-extra, config, valid arg
+  562 auth-extra, config, invalid arg
+  563 auth-extra, config, no-option
+  570 auth-extra, env var, no arg
+  571 auth-extra, env var, valid arg
+  572 auth-extra, env var, invalid arg
+  573 auth-extra, env var, no-option
+  580 auth-extra command line, no arg (-option)
+  581 auth-extra, command line, valid arg (-option=)
+  582 auth-extra, command line, valid arg (--option=)
+00700 --apt
+  700 apt, command line, no arg
+  # 701 apt, command line, valid arg
+  # 702 apt, command line, invalid arg
+  703 apt, command line, no-option
+  710 apt, config, no arg
+  # 711 apt, config, valid arg
+  # 712 apt, config, invalid arg
+  713 apt, config, no-option
+  720 apt, env var, no arg
+  # 721 apt, env var, valid arg
+  # 722 apt, env var, invalid arg
+  723 apt, env var, no-option
+  730 apt command line, no arg (-option)
+  # 731 apt, command line, valid arg (-option=)
+  # 732 apt, command line, valid arg (--option=)
+00750 --auth-plaintext
+  750 auth-plaintext, command line, no arg
+  # 751 auth-plaintext, command line, valid arg
+  # 752 auth-plaintext, command line, invalid arg
+  753 auth-plaintext, command line, no-option
+  760 auth-plaintext, config, no arg
+  # 761 auth-plaintext, config, valid arg
+  # 762 auth-plaintext, config, invalid arg
+  763 auth-plaintext, config, no-option
+  770 auth-plaintext, env var, no arg
+  # 771 auth-plaintext, env var, valid arg
+  # 772 auth-plaintext, env var, invalid arg
+  773 auth-plaintext, env var, no-option
+  780 auth-plaintext command line, no arg (-option)
+  # 781 auth-plaintext, command line, valid arg (-option=)
+  # 782 auth-plaintext, command line, valid arg (--option=)
+00800 --ahp
+  800 ahp, command line, no arg
+  801 ahp, command line, valid arg
+  # 802 ahp, command line, invalid arg
+  803 ahp, command line, no-option
+  810 ahp, config, no arg
+  811 ahp, config, valid arg
+  # 812 ahp, config, invalid arg
+  813 ahp, config, no-option
+  820 ahp, env var, no arg
+  821 ahp, env var, valid arg
+  # 822 ahp, env var, invalid arg
+  823 ahp, env var, no-option
+  830 ahp command line, no arg (-option)
+  831 ahp, command line, valid arg (-option=)
+  832 ahp, command line, valid arg (--option=)
+00850 --auth-hide-password
+  850 auth-hide-password, command line, no arg
+  851 auth-hide-password, command line, valid arg
+  # 852 auth-hide-password, command line, invalid arg
+  853 auth-hide-password, command line, no-option
+  860 auth-hide-password, config, no arg
+  861 auth-hide-password, config, valid arg
+  # 862 auth-hide-password, config, invalid arg
+  863 auth-hide-password, config, no-option
+  870 auth-hide-password, env var, no arg
+  871 auth-hide-password, env var, valid arg
+  # 872 auth-hide-password, env var, invalid arg
+  873 auth-hide-password, env var, no-option
+  880 auth-hide-password command line, no arg (-option)
+  881 auth-hide-password, command line, valid arg (-option=)
+  882 auth-hide-password, command line, valid arg (--option=)
+
+
+05000 - misc
+  000 every known auth type is supported  ### Note that this will be flaky, the output will oscilate depending on what auth types are supported
+  001 --auth any supported
+  002 --auth-extra REALM sets DOMAIN
+  003 --auth-extra DOMAIN sets REALM
+
+
+
+
+
+
+
+
+perl -pni -e 's/ --au USER//;' 004?3.test
+
+./gen-tests.pl \
+    -n 850 \
+    -o auth-hide-password \
+    -v "CUSTOM_STRING" \
+    -i '' \
+    -d . \
+    -r \
+    -s '%SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au USER --ap PASS'
+
+
+
+    -p 'Password:' \
+    -p 'XCLIENT string:'
+
+
+
+#    \
+#    -s '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-family AF_UNIX --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-version 2'
+
+
+
+05000 - misc
+  000 same --xclient-* option given multiple times - SKIP
+  001 --xclient-* options get merged together
+  002 --xclient-* options coexist with --xclient
+  003 --xclient-delim interact with --xclient-*
+
+
+
+
+
+
+
+
+
+
+
+
+
+

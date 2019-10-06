@@ -1,0 +1,8 @@
+# Generated Tue Dec 11 19:48:58 2018 by ./gen-tests.pl '.' '700' 'tls-cert' '%TESTDIR%/%TESTID%.test' '/path/to/CertFile'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tls-cert, env var, no arg
+
+pre action: SET_ENV SWAKS_OPT_tls_cert
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --tls --tls-key %TESTDIR%/%TESTID%.test --server "ser ver"

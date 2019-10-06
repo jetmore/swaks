@@ -1,0 +1,4 @@
+DATA Info:
+  data = <<.
+Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\nMessage-Id: <%MESSAGEID%>
+X-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n

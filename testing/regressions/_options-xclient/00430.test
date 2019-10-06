@@ -1,0 +1,7 @@
+# Generated Wed Jul 10 22:58:33 2019 by ./gen-tests.pl '-n' '400' '-o' 'xclient-reverse-name' '-v' 'REVSTR' '-i' '' '-p' 'XCLIENT reverse_name:' '-d' '.' '-r'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: xclient-reverse-name command line, no arg (-option)
+
+auto: INTERACT '%SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" -xclient-reverse-name' 'XCLIENT reverse_name:' 'REVSTR'

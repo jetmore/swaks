@@ -1,0 +1,5 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+test action: CMD_CAPTURE %SWAKS% --dump data --to user@example.com --server ser.ver \
+  --from Z-user@example.com \
+  --from A-user@example.com

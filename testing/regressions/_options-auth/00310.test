@@ -1,0 +1,8 @@
+# Generated Thu Jul 11 16:59:59 2019 by ./gen-tests.pl '-n' '300' '-o' 'au' '-v' 'LOGIN' '-i' '' '-d' '.' '-r' '-p' 'Username:' '-s' '%SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --ap PASS'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: au, config, no arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'au'
+auto: INTERACT '%SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --ap PASS --config %OUTDIR%/swaksrc-%TESTID%' 'Username:' 'LOGIN'

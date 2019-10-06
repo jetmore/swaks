@@ -1,0 +1,15 @@
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stdout.2 %OUTDIR%/%TESTID%.stderr %OUTDIR%/%TESTID%.stderr.2
+
+test action: CMD_CAPTURE %SWAKS% --dump data --to user@example.com --server ser.ver \
+  -f from-1 \
+  --from from-2
+
+test action: CMD_CAPTURE:2 %SWAKS% --dump data --to user@example.com --server ser.ver \
+  --from from-1 \
+  -f from-2
+
+test action: MUNGE file:%OUTDIR%/%TESTID%.stdout munge_standard
+test action: MUNGE file:%OUTDIR%/%TESTID%.stdout.2 munge_standard
+
+test result: COMPARE_FILE %OUTDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stdout.2
+test result: COMPARE_FILE %OUTDIR%/%TESTID%.stderr %OUTDIR%/%TESTID%.stderr.2

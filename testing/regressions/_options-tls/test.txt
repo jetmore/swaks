@@ -1,0 +1,253 @@
+
+
+00000 --tls
+  0 tls, command line, no arg
+  # 1 tls, command line, valid arg
+  2 tls, command line, invalid arg
+  3 tls, command line, no-option
+  10 tls, config, no arg
+  # 11 tls, config, valid arg
+  12 tls, config, invalid arg
+  13 tls, config, no-option
+  20 tls, env var, no arg
+  # 21 tls, env var, valid arg
+  22 tls, env var, invalid arg
+  23 tls, env var, no-option
+  30 tls command line, no arg (-option)
+  # 31 tls, command line, valid arg (-option=)
+  # 32 tls, command line, valid arg (--option=)
+####00050 - available
+00100 --tls-optional
+  100 tls-optional, command line, no arg
+  # 101 tls-optional, command line, valid arg
+  102 tls-optional, command line, invalid arg
+  103 tls-optional, command line, no-option
+  110 tls-optional, config, no arg
+  # 111 tls-optional, config, valid arg
+  112 tls-optional, config, invalid arg
+  113 tls-optional, config, no-option
+  120 tls-optional, env var, no arg
+  # 121 tls-optional, env var, valid arg
+  122 tls-optional, env var, invalid arg
+  123 tls-optional, env var, no-option
+  130 tls-optional command line, no arg (-option)
+  # 131 tls-optional, command line, valid arg (-option=)
+  # 132 tls-optional, command line, valid arg (--option=)
+00150 --tlso
+  150 tlso, command line, no arg
+  # 151 tlso, command line, valid arg
+  152 tlso, command line, invalid arg
+  153 tlso, command line, no-option
+  160 tlso, config, no arg
+  # 161 tlso, config, valid arg
+  162 tlso, config, invalid arg
+  163 tlso, config, no-option
+  170 tlso, env var, no arg
+  # 171 tlso, env var, valid arg
+  172 tlso, env var, invalid arg
+  173 tlso, env var, no-option
+  180 tlso command line, no arg (-option)
+  # 181 tlso, command line, valid arg (-option=)
+  # 182 tlso, command line, valid arg (--option=)
+00200 --tls-optional-strict
+  200 tls-optional-strict, command line, no arg
+  # 201 tls-optional-strict, command line, valid arg
+  202 tls-optional-strict, command line, invalid arg
+  203 tls-optional-strict, command line, no-option
+  210 tls-optional-strict, config, no arg
+  # 211 tls-optional-strict, config, valid arg
+  212 tls-optional-strict, config, invalid arg
+  213 tls-optional-strict, config, no-option
+  220 tls-optional-strict, env var, no arg
+  # 221 tls-optional-strict, env var, valid arg
+  222 tls-optional-strict, env var, invalid arg
+  223 tls-optional-strict, env var, no-option
+  230 tls-optional-strict command line, no arg (-option)
+  # 231 tls-optional-strict, command line, valid arg (-option=)
+  # 232 tls-optional-strict, command line, valid arg (--option=)
+00250 --tlsos
+  250 tlsos, command line, no arg
+  # 251 tlsos, command line, valid arg
+  252 tlsos, command line, invalid arg
+  253 tlsos, command line, no-option
+  260 tlsos, config, no arg
+  # 261 tlsos, config, valid arg
+  262 tlsos, config, invalid arg
+  263 tlsos, config, no-option
+  270 tlsos, env var, no arg
+  # 271 tlsos, env var, valid arg
+  272 tlsos, env var, invalid arg
+  273 tlsos, env var, no-option
+  280 tlsos command line, no arg (-option)
+  # 281 tlsos, command line, valid arg (-option=)
+  # 282 tlsos, command line, valid arg (--option=)
+00300 --tls-on-connect
+  300 tls-on-connect, command line, no arg
+  # 301 tls-on-connect, command line, valid arg
+  302 tls-on-connect, command line, invalid arg
+  303 tls-on-connect, command line, no-option
+  310 tls-on-connect, config, no arg
+  # 311 tls-on-connect, config, valid arg
+  312 tls-on-connect, config, invalid arg
+  313 tls-on-connect, config, no-option
+  320 tls-on-connect, env var, no arg
+  # 321 tls-on-connect, env var, valid arg
+  322 tls-on-connect, env var, invalid arg
+  323 tls-on-connect, env var, no-option
+  330 tls-on-connect command line, no arg (-option)
+  # 331 tls-on-connect, command line, valid arg (-option=)
+  # 332 tls-on-connect, command line, valid arg (--option=)
+00350 --tlsc
+  350 tlsc, command line, no arg
+  # 351 tlsc, command line, valid arg
+  352 tlsc, command line, invalid arg
+  353 tlsc, command line, no-option
+  360 tlsc, config, no arg
+  # 361 tlsc, config, valid arg
+  362 tlsc, config, invalid arg
+  363 tlsc, config, no-option
+  370 tlsc, env var, no arg
+  # 371 tlsc, env var, valid arg
+  372 tlsc, env var, invalid arg
+  373 tlsc, env var, no-option
+  380 tlsc command line, no arg (-option)
+  # 381 tlsc, command line, valid arg (-option=)
+  # 382 tlsc, command line, valid arg (--option=)
+
+
+
+
+00400 --tls-protocol
+  400 tls-protocol, command line, no arg
+  401 tls-protocol, command line, valid arg
+  402 tls-protocol, command line, invalid arg
+  403 tls-protocol, command line, no-option
+  410 tls-protocol, config, no arg
+  411 tls-protocol, config, valid arg
+  412 tls-protocol, config, invalid arg
+  413 tls-protocol, config, no-option
+  420 tls-protocol, env var, no arg
+  421 tls-protocol, env var, valid arg
+  422 tls-protocol, env var, invalid arg
+  423 tls-protocol, env var, no-option
+  430 tls-protocol command line, no arg (-option)
+  431 tls-protocol, command line, valid arg (-option=)
+  432 tls-protocol, command line, valid arg (--option=)
+00450 --tlsp
+  450 tlsp, command line, no arg
+  451 tlsp, command line, valid arg
+  452 tlsp, command line, invalid arg
+  453 tlsp, command line, no-option
+  460 tlsp, config, no arg
+  461 tlsp, config, valid arg
+  462 tlsp, config, invalid arg
+  463 tlsp, config, no-option
+  470 tlsp, env var, no arg
+  471 tlsp, env var, valid arg
+  472 tlsp, env var, invalid arg
+  473 tlsp, env var, no-option
+  480 tlsp command line, no arg (-option)
+  481 tlsp, command line, valid arg (-option=)
+  482 tlsp, command line, valid arg (--option=)
+00500 --tls-cipher
+  500 tls-cipher, command line, no arg
+  501 tls-cipher, command line, valid arg
+  # 502 tls-cipher, command line, invalid arg
+  503 tls-cipher, command line, no-option
+  510 tls-cipher, config, no arg
+  511 tls-cipher, config, valid arg
+  # 512 tls-cipher, config, invalid arg
+  513 tls-cipher, config, no-option
+  520 tls-cipher, env var, no arg
+  521 tls-cipher, env var, valid arg
+  # 522 tls-cipher, env var, invalid arg
+  523 tls-cipher, env var, no-option
+  530 tls-cipher command line, no arg (-option)
+  531 tls-cipher, command line, valid arg (-option=)
+  532 tls-cipher, command line, valid arg (--option=)
+00550 --tls-verify
+  550 tls-verify, command line, no arg
+  # 551 tls-verify, command line, valid arg
+  552 tls-verify, command line, invalid arg
+  553 tls-verify, command line, no-option
+  560 tls-verify, config, no arg
+  # 561 tls-verify, config, valid arg
+  562 tls-verify, config, invalid arg
+  563 tls-verify, config, no-option
+  570 tls-verify, env var, no arg
+  # 571 tls-verify, env var, valid arg
+  572 tls-verify, env var, invalid arg
+  573 tls-verify, env var, no-option
+  580 tls-verify command line, no arg (-option)
+  # 581 tls-verify, command line, valid arg (-option=)
+  # 582 tls-verify, command line, valid arg (--option=)
+00600 --tls-ca-path
+  600 tls-ca-path, command line, no arg
+  601 tls-ca-path, command line, valid arg
+  # 602 tls-ca-path, command line, invalid arg
+  603 tls-ca-path, command line, no-option
+  610 tls-ca-path, config, no arg
+  611 tls-ca-path, config, valid arg
+  # 612 tls-ca-path, config, invalid arg
+  613 tls-ca-path, config, no-option
+  620 tls-ca-path, env var, no arg
+  621 tls-ca-path, env var, valid arg
+  # 622 tls-ca-path, env var, invalid arg
+  623 tls-ca-path, env var, no-option
+  630 tls-ca-path command line, no arg (-option)
+  631 tls-ca-path, command line, valid arg (-option=)
+  632 tls-ca-path, command line, valid arg (--option=)
+00650 --tls-get-peer-cert
+  650 tls-get-peer-cert, command line, no arg
+  651 tls-get-peer-cert, command line, valid arg
+  # 652 tls-get-peer-cert, command line, invalid arg
+  653 tls-get-peer-cert, command line, no-option
+  660 tls-get-peer-cert, config, no arg
+  661 tls-get-peer-cert, config, valid arg
+  # 662 tls-get-peer-cert, config, invalid arg
+  663 tls-get-peer-cert, config, no-option
+  670 tls-get-peer-cert, env var, no arg
+  671 tls-get-peer-cert, env var, valid arg
+  # 672 tls-get-peer-cert, env var, invalid arg
+  673 tls-get-peer-cert, env var, no-option
+  680 tls-get-peer-cert command line, no arg (-option)
+  681 tls-get-peer-cert, command line, valid arg (-option=)
+  682 tls-get-peer-cert, command line, valid arg (--option=)
+00700 --tls-cert
+  700 tls-cert, command line, no arg
+  701 tls-cert, command line, valid arg
+  702 tls-cert, command line, invalid arg
+  703 tls-cert, command line, no-option
+  710 tls-cert, config, no arg
+  711 tls-cert, config, valid arg
+  712 tls-cert, config, invalid arg
+  713 tls-cert, config, no-option
+  720 tls-cert, env var, no arg
+  721 tls-cert, env var, valid arg
+  722 tls-cert, env var, invalid arg
+  723 tls-cert, env var, no-option
+  730 tls-cert command line, no arg (-option)
+  731 tls-cert, command line, valid arg (-option=)
+  732 tls-cert, command line, valid arg (--option=)
+00750 --tls-key
+  750 tls-key, command line, no arg
+  751 tls-key, command line, valid arg
+  752 tls-key, command line, invalid arg
+  753 tls-key, command line, no-option
+  760 tls-key, config, no arg
+  761 tls-key, config, valid arg
+  762 tls-key, config, invalid arg
+  763 tls-key, config, no-option
+  770 tls-key, env var, no arg
+  771 tls-key, env var, valid arg
+  772 tls-key, env var, invalid arg
+  773 tls-key, env var, no-option
+  780 tls-key command line, no arg (-option)
+  781 tls-key, command line, valid arg (-option=)
+  782 tls-key, command line, valid arg (--option=)
+
+
+perl -pni -e 's/example.com --server "ser ver"/example.com --tls --server "ser ver"/;' 00[67]??.test
+perl -pni -e 's|/path/to/CAFile|%TESTDIR%/%TESTID%.test|;' 00[67]??.test
+
+

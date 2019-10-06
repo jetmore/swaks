@@ -1,0 +1,8 @@
+# Generated Tue Dec 11 18:55:06 2018 by ./gen-tests.pl '.' '100' 'tls-optional' '' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tls-optional, command line, invalid arg
+
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --server "ser ver" \
+    --tls-optional asdf

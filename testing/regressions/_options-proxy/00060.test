@@ -1,0 +1,8 @@
+# Generated Tue Dec 25 11:13:37 2018 by ./gen-tests.pl '-n' '50' '-o' 'proxy-version' '-v' '2' '-i' '4' '-p' 'PROXY version:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver" --proxy FORCEPROXY'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: proxy-version, config, no arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'proxy-version'
+auto: INTERACT '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver" --proxy FORCEPROXY --config %OUTDIR%/swaksrc-%TESTID%' 'PROXY version:' '2'

@@ -16,7 +16,7 @@ my($p_name)   = $0 =~ m|/?([^/]+)$|;
 my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010-2018 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2010-2019 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,11 +33,11 @@ my $p_cp      = <<'EOM';
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 EOM
 
-# before we do anything else, check for --help
-ext_usage();
-
 # Get all input provided to our program, via file, env, command line, etc
 my %O = %{ load_args() };
+
+# before we do anything else, check for --help and --version
+ext_usage();
 
 # Get our functional dependencies and then print and exit early if requested
 load_dependencies();
@@ -307,10 +307,14 @@ sub sendmail {
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'rcpt');
 
 	# send DATA
+	$G::drop_before_read = 1 if ($G::drop_after_send eq 'data');
 	do_smtp_gen('DATA', '354') || do_smtp_quit(1, 25);
+	do_smtp_drop() if ($G::drop_after eq 'data');
 
 	# send the actual data
+	$G::drop_before_read = 1 if ($G::drop_after_send eq 'dot');
 	do_smtp_data($data, $G::suppress_data) || do_smtp_quit(1, 26);
+	do_smtp_drop() if ($G::drop_after eq 'dot');
 
 	# send QUIT
 	do_smtp_quit(0) || do_smtp_quit(1, 27);
@@ -1233,9 +1237,11 @@ sub transact {
 	push(@G::pending_send, \%h); # push onto send queue
 	if (!($G::pipeline && $G::pipeline_adv) || !$h{defer}) {
 
-		if ($G::show_time_lapse) {
-			if ($G::show_time_hires) {$time = [Time::HiRes::gettimeofday()];   }
-			else                     { $time = time(); }
+		if ($G::show_time_lapse eq 'hires') {
+			$time = [Time::HiRes::gettimeofday()];
+		}
+		elsif ($G::show_time_lapse eq 'integer') {
+			$time = time();
 		}
 
 		while (my $i = shift(@G::pending_send)) {
@@ -1269,16 +1275,14 @@ sub transact {
 				alarm(0);
 			};
 
-			if ($G::show_time_lapse) {
-				if ($G::show_time_hires) {
-					$time = sprintf("%0.03f", Time::HiRes::tv_interval($time, [Time::HiRes::gettimeofday()]));
-					ptrans(11, "response in ${time}s");
-					$time = [Time::HiRes::gettimeofday()];
-				} else {
-					$time = time() - $time;
-					ptrans(11, "response in ${time}s");
-					$time = time();
-				}
+			if ($G::show_time_lapse eq 'hires') {
+				$time = sprintf("%0.03f", Time::HiRes::tv_interval($time, [Time::HiRes::gettimeofday()]));
+				ptrans(11, "response in ${time}s");
+				$time = [Time::HiRes::gettimeofday()];
+			} elsif ($G::show_time_lapse eq 'integer') {
+				$time = time() - $time;
+				ptrans(11, "response in ${time}s");
+				$time = time();
 			}
 
 			${$i->{return_text}} = $buff;
@@ -1610,310 +1614,313 @@ sub load_dependencies {
 sub get_option_struct {
 	@G::raw_option_data = (
 		# location of config file
-		{ opts => ['config'],                         suffix => ':s',
-		  okey => 'config_file',                      type => 'scalar', },
+		{ opts    => ['config'],                                           suffix => ':s',
+		  okey    => 'config_file',                                        type   => 'scalar', },
 		# envelope-(f)rom address
-		{ opts => ['f', 'from'],                      suffix => ':s',
-		  okey => 'mail_from',                        type => 'scalar', },
+		{ opts    => ['f', 'from'],                                        suffix => ':s',
+		  okey    => 'mail_from',                                          type   => 'scalar', },
 		# envelope-(t)o address
-		{ opts => ['t', 'to'],                        suffix => ':s',
-		  okey => 'mail_to',                          type => 'scalar', },
+		{ opts    => ['t', 'to'],                                          suffix => ':s',
+		  okey    => 'mail_to',                                            type   => 'scalar', },
 		# (h)elo string
-		{ opts => ['h', 'helo', 'ehlo', 'lhlo'],      suffix => ':s',
-		  okey => 'mail_helo',                        type => 'scalar', },
+		{ opts    => ['h', 'helo', 'ehlo', 'lhlo'],                        suffix => ':s',
+		  okey    => 'mail_helo',                                          type   => 'scalar', },
 		# (s)erver to use
-		{ opts => ['s', 'server'],                    suffix => ':s',
-		  okey => 'mail_server',                      type => 'scalar', },
+		{ opts    => ['s', 'server'],                                      suffix => ':s',
+		  okey    => 'mail_server',                                        type   => 'scalar', },
 		# force ipv4 only
-		{ opts => ['4'],                              suffix => '',
-		  okey => 'force_ipv4',                       type => 'scalar', },
+		{ opts    => ['4'],                                                suffix => '',
+		  okey    => 'force_ipv4',                                         type   => 'scalar', },
 		# force ipv6 only
-		{ opts => ['6'],                              suffix => '',
-		  okey => 'force_ipv6',                       type => 'scalar', },
+		{ opts    => ['6'],                                                suffix => '',
+		  okey    => 'force_ipv6',                                         type   => 'scalar', },
 		# copy MX/routing from another domain
-		{ opts => ['copy-routing'],                   suffix => ':s',
-		  okey => 'copy_routing',                     type => 'scalar', },
+		{ opts    => ['copy-routing'],                                     suffix => ':s',
+		  okey    => 'copy_routing',                                       type   => 'scalar', },
 		# (p)ort to use
-		{ opts => ['p', 'port'],                      suffix => ':s',
-		  okey => 'mail_port',                        type => 'scalar', },
+		{ opts    => ['p', 'port'],                                        suffix => ':s',
+		  okey    => 'mail_port',                                          type   => 'scalar', },
 		# protocol to use (smtp, esmtp, lmtp)
-		{ opts => ['protocol'],                       suffix => ':s',
-		  okey => 'mail_protocol',                    type => 'scalar', },
+		{ opts    => ['protocol'],                                         suffix => '=s',
+		  okey    => 'mail_protocol',                                      type   => 'scalar', },
 		# (d)ata portion ('\n' for newlines)
-		{ opts => ['d', 'data'],                      suffix => ':s',
-		  okey => 'mail_data',                        type => 'scalar', },
+		{ opts    => ['d', 'data'],                                        suffix => ':s',
+		  okey    => 'mail_data',                                          type   => 'scalar', },
 		# use the --dump text as default body
-		{ opts => ['dab', 'dump-as-body'],            suffix => ':s',
-		  okey => 'dump_as_body',                     type => 'scalar', },
+		{ opts    => ['dab', 'dump-as-body'],                              suffix => ':s',
+		  okey    => 'dump_as_body',                                       type   => 'scalar', },
 		# implies --dump-as-body; forces raw passwords to be used
-		{ opts => ['dabsp', 'dump-as-body-shows-password'], suffix => '',
-		  okey => 'dab_sp',                           type => 'scalar', },
+		{ opts    => ['dabsp', 'dump-as-body-shows-password'],             suffix => '',
+		  okey    => 'dab_sp',                                             type   => 'scalar', },
 		# timeout for each trans (def 30s)
-		{ opts => ['timeout'],                        suffix => ':s',
-		  okey => 'timeout',                          type => 'scalar', },
+		{ opts    => ['timeout'],                                          suffix => ':s',
+		  okey    => 'timeout',                                            type   => 'scalar', },
 		# (g)et data on stdin
-		{ opts => ['g'],                              suffix => '',
-		  okey => 'data_on_stdin',                    type => 'scalar', },
+		{ opts    => ['g'],                                                suffix => '',
+		  okey    => 'data_on_stdin',                                      type   => 'scalar', },
 		# (q)uit after
-		{ opts => ['q', 'quit', 'quit-after'],        suffix => '=s',
-		  okey => 'quit_after',                       type => 'scalar', },
+		{ opts    => ['q', 'quit', 'quit-after'],                          suffix => '=s',
+		  okey    => 'quit_after',                                         type   => 'scalar', },
 		# drop after (don't quit, just drop)
-		{ opts => ['da', 'drop', 'drop-after'],       suffix => '=s',
-		  okey => 'drop_after',                       type => 'scalar', },
+		{ opts    => ['da', 'drop', 'drop-after'],                         suffix => '=s',
+		  okey    => 'drop_after',                                         type   => 'scalar', },
 		# drop after send (between send and read)
-		{ opts => ['das', 'drop-after-send'],         suffix => '=s',
-		  okey => 'drop_after_send',                  type => 'scalar', },
+		{ opts    => ['das', 'drop-after-send'],                           suffix => '=s',
+		  okey    => 'drop_after_send',                                    type   => 'scalar', },
 		# do (n)ot print data portion
-		{ opts => ['n', 'suppress-data'],             suffix => '',
-		  okey => 'suppress_data',                    type => 'scalar', },
+		{ opts    => ['n', 'suppress-data'],                               suffix => '',
+		  okey    => 'suppress_data',                                      type   => 'scalar', },
 		# force auth, exit if not supported
-		{ opts => ['a', 'auth'],                      suffix => ':s',
-		  okey => 'auth',                             type => 'scalar', },
+		{ opts    => ['a', 'auth'],                                        suffix => ':s',
+		  okey    => 'auth',                                               type   => 'scalar', },
 		# user for auth
-		{ opts => ['au', 'auth-user'],                suffix => ':s',
-		  okey => 'auth_user',                        type => 'scalar', },
+		{ opts    => ['au', 'auth-user'],                                  suffix => ':s',
+		  okey    => 'auth_user',                                          type   => 'scalar', },
 		# pass for auth
-		{ opts => ['ap', 'auth-password'],            suffix => ':s',
-		  okey => 'auth_pass',                        type => 'scalar', },
+		{ opts    => ['ap', 'auth-password'],                              suffix => ':s',
+		  okey    => 'auth_pass',                                          type   => 'scalar', },
 		# auth type map
-		{ opts => ['am', 'auth-map'],                 suffix => '=s',
-		  okey => 'auth_map',                         type => 'scalar', },
+		{ opts    => ['am', 'auth-map'],                                   suffix => '=s',
+		  okey    => 'auth_map',                                           type   => 'scalar', },
 		# extra, authenticator-specific options
-		{ opts => ['ae', 'auth-extra'],               suffix => '=s',
-		  okey => 'auth_extra',                       type => 'scalar', },
+		{ opts    => ['ae', 'auth-extra'],                                 suffix => '=s',
+		  okey    => 'auth_extra',                                         type   => 'scalar', },
 		# hide passwords when possible
-		{ opts => ['ahp', 'auth-hide-password'],      suffix => ':s',
-		  okey => 'auth_hidepw',                      type => 'scalar', },
+		{ opts    => ['ahp', 'auth-hide-password'],                        suffix => ':s',
+		  okey    => 'auth_hidepw',                                        type   => 'scalar', },
 		# translate base64 strings
-		{ opts => ['apt', 'auth-plaintext'],          suffix => '',
-		  okey => 'auth_showpt',                      type => 'scalar', },
+		{ opts    => ['apt', 'auth-plaintext'],                            suffix => '',
+		  okey    => 'auth_showpt',                                        type   => 'scalar', },
 		# auth optional (ignore failure)
-		{ opts => ['ao', 'auth-optional'],            suffix => ':s',
-		  okey => 'auth_optional',                    type => 'scalar', },
+		{ opts    => ['ao', 'auth-optional'],                              suffix => ':s',
+		  okey    => 'auth_optional',                                      type   => 'scalar', },
 		# req auth if avail
-		{ opts => ['aos', 'auth-optional-strict'],    suffix => ':s',
-		  okey => 'auth_optional_strict',             type => 'scalar', },
+		{ opts    => ['aos', 'auth-optional-strict'],                      suffix => ':s',
+		  okey    => 'auth_optional_strict',                               type   => 'scalar', },
 		# report capabilties
-		{ opts => ['support'],                        suffix => '',
-		  okey => 'get_support',                      type => 'scalar', },
+		{ opts    => ['support'],                                          suffix => '',
+		  okey    => 'get_support',                                        type   => 'scalar', },
 		# local interface to use
-		{ opts => ['li', 'local-interface'],          suffix => ':s',
-		  okey => 'lint',                             type => 'scalar', },
+		{ opts    => ['li', 'local-interface'],                            suffix => ':s',
+		  okey    => 'lint',                                               type   => 'scalar', },
 		# local port
-		{ opts => ['lp', 'local-port', 'lport'],      suffix => ':s',
-		  okey => 'lport',                            type => 'scalar', },
+		{ opts    => ['lp', 'local-port', 'lport'],                        suffix => ':s',
+		  okey    => 'lport',                                              type   => 'scalar', },
 		# use TLS
-		{ opts => ['tls'],                            suffix => '',
-		  okey => 'tls',                              type => 'scalar', },
+		{ opts    => ['tls'],                                              suffix => '',
+		  okey    => 'tls',                                                type   => 'scalar', },
 		# use tls if available
-		{ opts => ['tlso', 'tls-optional'],           suffix => '',
-		  okey => 'tls_optional',                     type => 'scalar', },
+		{ opts    => ['tlso', 'tls-optional'],                             suffix => '',
+		  okey    => 'tls_optional',                                       type   => 'scalar', },
 		# req tls if avail
-		{ opts => ['tlsos', 'tls-optional-strict'],   suffix => ':s',
-		  okey => 'tls_optional_strict',              type => 'scalar', },
+		{ opts    => ['tlsos', 'tls-optional-strict'],                     suffix => '',
+		  okey    => 'tls_optional_strict',                                type   => 'scalar', },
 		# use tls if available
-		{ opts => ['tlsc', 'tls-on-connect'],         suffix => '',
-		  okey => 'tls_on_connect',                   type => 'scalar', },
+		{ opts    => ['tlsc', 'tls-on-connect'],                           suffix => '',
+		  okey    => 'tls_on_connect',                                     type   => 'scalar', },
 		# local cert to present to server
-		{ opts => ['tls-cert'],                       suffix => '=s',
-		  okey => 'tls_cert',                         type => 'scalar', },
+		{ opts    => ['tls-cert'],                                         suffix => '=s',
+		  okey    => 'tls_cert',                                           type   => 'scalar', },
 		# local key to present to server
-		{ opts => ['tls-key'],                        suffix => '=s',
-		  okey => 'tls_key',                          type => 'scalar', },
+		{ opts    => ['tls-key'],                                          suffix => '=s',
+		  okey    => 'tls_key',                                            type   => 'scalar', },
 		# local key to present to server
-		{ opts => ['tlsp', 'tls-protocol'],           suffix => '=s',
-		  okey => 'tls_protocol',                     type => 'scalar', },
+		{ opts    => ['tlsp', 'tls-protocol'],                             suffix => '=s',
+		  okey    => 'tls_protocol',                                       type   => 'scalar', },
 		# local key to present to server
-		{ opts => ['tls-cipher'],                     suffix => '=s',
-		  okey => 'tls_cipher',                       type => 'scalar', },
+		{ opts    => ['tls-cipher'],                                       suffix => '=s',
+		  okey    => 'tls_cipher',                                         type   => 'scalar', },
 		# save tls peer certificate
-		{ opts => ['tls-get-peer-cert'],              suffix => ':s',
-		  okey => 'tls_get_peer_cert',                type => 'scalar', },
+		{ opts    => ['tls-get-peer-cert'],                                suffix => ':s',
+		  okey    => 'tls_get_peer_cert',                                  type   => 'scalar', },
 		# require verification of server certificate
-		{ opts => ['tls-verify'],                     suffix => '',
-		  okey => 'tls_verify',                       type => 'scalar', },
+		{ opts    => ['tls-verify'],                                       suffix => '',
+		  okey    => 'tls_verify',                                         type   => 'scalar', },
 		# local key to present to server
-		{ opts => ['tls-ca-path'],                    suffix => '=s',
-		  okey => 'tls_ca_path',                      type => 'scalar', },
+		{ opts    => ['tls-ca-path'],                                      suffix => '=s',
+		  okey    => 'tls_ca_path',                                        type   => 'scalar', },
 		# suppress output to varying degrees
-		{ opts => ['S', 'silent'],                    suffix => ':i',
-		  okey => 'silent',                           type => 'sub',
-		  literal => 'sub { $r->{silent} = $_[1] || 1; }',              },
+		{ opts    => ['S', 'silent'],                                      suffix => ':i',
+		  literal => 'sub { $r->{silent} = $_[1] || 1; }',
+		  okey    => 'silent',                                             type   => 'sub',    },
 		# Don't strip From_ line from DATA
-		{ opts => ['nsf', 'no-strip-from'],           suffix => '',
-		  okey => 'no_strip_from',                    type => 'scalar', },
-		# Use the old, one-character substitution tokens (%H, %D, etc)
-		{ opts => ['use-old-data-tokens'],            suffix => '',
-		  okey => 'use_old_data_tokens',              type => 'scalar', },
+		{ opts    => ['nsf', 'no-strip-from'],                             suffix => '',
+		  okey    => 'no_strip_from',                                      type   => 'scalar', },
 		# Don't show send/receive hints (legacy)
-		{ opts => ['nth', 'no-hints'],                suffix => '',
-		  okey => 'no_hints',                         type => 'scalar', },
+		{ opts    => ['nth', 'no-hints'],                                  suffix => '',
+		  okey    => 'no_hints',                                           type   => 'scalar', },
 		# Don't show transaction hints
-		{ opts => ['nsh', 'no-send-hints'],           suffix => '',
-		  okey => 'no_hints_send',                    type => 'scalar', },
+		{ opts    => ['nsh', 'no-send-hints'],                             suffix => '',
+		  okey    => 'no_hints_send',                                      type   => 'scalar', },
 		# Don't show transaction hints
-		{ opts => ['nrh', 'no-receive-hints'],        suffix => '',
-		  okey => 'no_hints_recv',                    type => 'scalar', },
+		{ opts    => ['nrh', 'no-receive-hints'],                          suffix => '',
+		  okey    => 'no_hints_recv',                                      type   => 'scalar', },
 		# Don't show transaction hints
-		{ opts => ['nih', 'no-info-hints'],           suffix => '',
-		  okey => 'no_hints_info',                    type => 'scalar', },
+		{ opts    => ['nih', 'no-info-hints'],                             suffix => '',
+		  okey    => 'no_hints_info',                                      type   => 'scalar', },
 		# Don't show reception lines
-		{ opts => ['hr', 'hide-receive'],             suffix => '',
-		  okey => 'hide_receive',                     type => 'scalar', },
+		{ opts    => ['hr', 'hide-receive'],                               suffix => '',
+		  okey    => 'hide_receive',                                       type   => 'scalar', },
 		# Don't show sending lines
-		{ opts => ['hs', 'hide-send'],                suffix => '',
-		  okey => 'hide_send',                        type => 'scalar', },
+		{ opts    => ['hs', 'hide-send'],                                  suffix => '',
+		  okey    => 'hide_send',                                          type   => 'scalar', },
 		# Don't echo input on potentially sensitive prompts
-		{ opts => ['pp', 'protect-prompt'],           suffix => '',
-		  okey => 'protect_prompt',                   type => 'scalar', },
+		{ opts    => ['pp', 'protect-prompt'],                             suffix => '',
+		  okey    => 'protect_prompt',                                     type   => 'scalar', },
 		# Don't show any swaks-generated, non-error informational lines
-		{ opts => ['hi', 'hide-informational'],       suffix => '',
-		  okey => 'hide_informational',               type => 'scalar', },
+		{ opts    => ['hi', 'hide-informational'],                         suffix => '',
+		  okey    => 'hide_informational',                                 type   => 'scalar', },
 		# Don't send any output to the terminal
-		{ opts => ['ha', 'hide-all'],                 suffix => '',
-		  okey => 'hide_all',                         type => 'scalar', },
+		{ opts    => ['ha', 'hide-all'],                                   suffix => '',
+		  okey    => 'hide_all',                                           type   => 'scalar', },
 		# print lapse for send/recv
-		{ opts => ['stl', 'show-time-lapse'],         suffix => ':s',
-		  okey => 'show_time_lapse',                  type => 'scalar', },
+		{ opts    => ['stl', 'show-time-lapse'],                           suffix => ':s',
+		  okey    => 'show_time_lapse',                                    type   => 'scalar', },
+		# print version and exit
+		{ opts    => ['version'],                                          suffix => '',
+		  okey    => 'version',                                            type   => 'scalar', },
+		# print help and exit
+		{ opts    => ['help'],                                             suffix => '',
+		  okey    => 'help',                                               type   => 'scalar', },
 		# don't touch the data
-		{ opts => ['ndf', 'no-data-fixup'],           suffix => '',
-		  okey => 'no_data_fixup',                    type => 'scalar', },
+		{ opts    => ['ndf', 'no-data-fixup'],                             suffix => '',
+		  okey    => 'no_data_fixup',                                      type   => 'scalar', },
 		# show dumps of the raw read/written text
-		{ opts => ['raw', 'show-raw-text'],           suffix => '',
-		  okey => 'show_raw_text',                    type => 'scalar', },
+		{ opts    => ['raw', 'show-raw-text'],                             suffix => '',
+		  okey    => 'show_raw_text',                                      type   => 'scalar', },
 		# specify file to write to
-		{ opts => ['output-file', 'output'],          suffix => '=s',
-		  okey => 'output_file',                      type => 'scalar', },
+		{ opts    => ['output-file', 'output'],                            suffix => '=s',
+		  okey    => 'output_file',                                        type   => 'scalar', },
 		# specify file to write to
-		{ opts => ['output-file-stdout'],             suffix => '=s',
-		  okey => 'output_file_stdout',               type => 'scalar', },
+		{ opts    => ['output-file-stdout'],                               suffix => '=s',
+		  okey    => 'output_file_stdout',                                 type   => 'scalar', },
 		# specify file to write to
-		{ opts => ['output-file-stderr'],             suffix => '=s',
-		  okey => 'output_file_stderr',               type => 'scalar', },
+		{ opts    => ['output-file-stderr'],                               suffix => '=s',
+		  okey    => 'output_file_stderr',                                 type   => 'scalar', },
 		# command to communicate with
-		{ opts => ['pipe'],                           suffix => ':s',
-		  okey => 'pipe_cmd',                         type => 'scalar', },
+		{ opts    => ['pipe'],                                             suffix => ':s',
+		  okey    => 'pipe_cmd',                                           type   => 'scalar', },
 		# unix domain socket to talk to
-		{ opts => ['socket'],                         suffix => ':s',
-		  okey => 'socket',                           type => 'scalar', },
+		{ opts    => ['socket'],                                           suffix => ':s',
+		  okey    => 'socket',                                             type   => 'scalar', },
 		# the content of the body of the DATA
-		{ opts => ['body'],                           suffix => ':s',
-		  okey => 'body_822',                         type => 'scalar', },
+		{ opts    => ['body'],                                             suffix => ':s',
+		  okey    => 'body_822',                                           type   => 'scalar', },
 		# A file to attach
-		{ opts => ['attach-name','attach-type','attach'], suffix => ':s',
-		  okey => 'attach_822',                           type => 'list', },
+		{ opts    => ['attach-name','attach-type','attach','attach-body'], suffix => ':s',
+		  okey    => 'attach_822',                                         type   => 'list', },
 		# replacement for %NEW_HEADERS% DATA token
-		{ opts => ['ah', 'add-header'],               suffix => ':s',
-		  okey => 'add_header',                       type => 'list', },
+		{ opts    => ['ah', 'add-header'],                                 suffix => ':s',
+		  okey    => 'add_header',                                         type   => 'list', },
 		# replace header if exist, else add
-		{ opts => ['header'],                         suffix => ':s',
-		  okey => 'header',                           type => 'list', },
+		{ opts    => ['header'],                                           suffix => ':s',
+		  okey    => 'header',                                             type   => 'list', },
 		# build options and dump
-		{ opts => ['dump'],                           suffix => ':s',
-		  okey => 'dump_args',                        type => 'scalar', },
+		{ opts    => ['dump'],                                             suffix => ':s',
+		  okey    => 'dump_args',                                          type   => 'scalar', },
 		# build options and dump the generate message body (EML)
-		{ opts => ['dump-mail'],                      suffix => '',
-		  okey => 'dump_mail',                        type => 'scalar', },
+		{ opts    => ['dump-mail'],                                        suffix => '',
+		  okey    => 'dump_mail',                                          type   => 'scalar', },
 		# attempt PIPELINING
-		{ opts => ['pipeline'],                       suffix => '',
-		  okey => 'pipeline',                         type => 'scalar', },
+		{ opts    => ['pipeline'],                                         suffix => '',
+		  okey    => 'pipeline',                                           type   => 'scalar', },
 		# attempt PRDR
-		{ opts => ['prdr'],                           suffix => '',
-		  okey => 'prdr',                             type => 'scalar', },
+		{ opts    => ['prdr'],                                             suffix => '',
+		  okey    => 'prdr',                                               type   => 'scalar', },
 		# use getpwuid building -f
-		{ opts => ['force-getpwuid'],                 suffix => '',
-		  okey => 'force_getpwuid',                   type => 'scalar', },
+		{ opts    => ['force-getpwuid'],                                   suffix => '',
+		  okey    => 'force_getpwuid',                                     type   => 'scalar', },
 
 		# XCLIENT
 		# These xclient_attrs options all get pushed onto an array so that we can determine their order later
 		# argument is a raw XCLIENT string
-		{ opts => ['xclient'],                        suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient'],                                          suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT NAME
-		{ opts => ['xclient-name'],                   suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-name'],                                     suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT ADDR
-		{ opts => ['xclient-addr'],                   suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-addr'],                                     suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT PORT
-		{ opts => ['xclient-port'],                   suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-port'],                                     suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT PROTO
-		{ opts => ['xclient-proto'],                  suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-proto'],                                    suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT DESTADDR
-		{ opts => ['xclient-destaddr'],               suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-destaddr'],                                 suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT DESTPORT
-		{ opts => ['xclient-destport'],               suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-destport'],                                 suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT HELO
-		{ opts => ['xclient-helo'],                   suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-helo'],                                     suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT LOGIN
-		{ opts => ['xclient-login'],                  suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-login'],                                    suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT REVERSE_NAME
-		{ opts => ['xclient-reverse-name'],           suffix => ':s',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-reverse-name'],                             suffix => ':s',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# XCLIENT delimiter.  Used to indicate that user wants to start a new xclient attr grouping
-		{ opts => ['xclient-delim'],                  suffix => '',
-		  okey => 'xclient_attrs',                    type => 'sub',
-		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }', },
+		{ opts    => ['xclient-delim'],                                    suffix => '',
+		  literal => 'sub { option_callback($r, "xclient_attrs", @_); }',
+		  okey    => 'xclient_attrs',                                      type   => 'sub',    },
 		# if set, XCLIENT will proceed even if XCLIENT not advertised
-		{ opts => ['xclient-optional'],               suffix => '',
-		  okey => 'xclient_optional',                 type => 'scalar', },
+		{ opts    => ['xclient-optional'],                                 suffix => '',
+		  okey    => 'xclient_optional',                                   type   => 'scalar', },
 		# proceed if xclient not offered, but fail if offered and not accepted
-		{ opts => ['xclient-optional-strict'],        suffix => '',
-		  okey => 'xclient_optional_strict',          type => 'scalar', },
+		{ opts    => ['xclient-optional-strict'],                          suffix => '',
+		  okey    => 'xclient_optional_strict',                            type   => 'scalar', },
 		# we send xclient after starttls by default.  if --xclient-before-starttls will send before tls
-		{ opts => ['xclient-before-starttls'],        suffix => '',
-		  okey => 'xclient_before_starttls',          type => 'scalar', },
+		{ opts    => ['xclient-before-starttls'],                          suffix => '',
+		  okey    => 'xclient_before_starttls',                            type   => 'scalar', },
 		# Don't require that the --xclient-ATTR attributes be advertised by server
-		{ opts => ['xclient-no-verify'],              suffix => '',
-		  okey => 'xclient_no_verify',                type => 'scalar', },
+		{ opts    => ['xclient-no-verify'],                                suffix => '',
+		  okey    => 'xclient_no_verify',                                  type   => 'scalar', },
 		## xclient send by default after first helo, but can be sent almost anywhere (cf quit-after)
-		#{ opts => ['xclient-after'],                  suffix => ':s',
-		#  okey => 'xclient_after',                    type => 'scalar', },
+		# { opts    => ['xclient-after'],                                    suffix => ':s',
+		#   okey    => 'xclient_after',                                      type   => 'scalar', },
 
 		# PROXY
 		# argument is the raw PROXY string
-		{ opts => ['proxy'],                          suffix => ':s',
-		  okey => 'proxy_raw',                        type => 'scalar', },
+		{ opts    => ['proxy'],                                            suffix => ':s',
+		  okey    => 'proxy_raw',                                          type   => 'scalar', },
 		# PROXY version (1 or 2)
-		{ opts => ['proxy-version'],                  suffix => ':s',
-		  okey => 'proxy_version',                    type => 'scalar', },
+		{ opts    => ['proxy-version'],                                    suffix => ':s',
+		  okey    => 'proxy_version',                                      type   => 'scalar', },
 		# PROXY protocol family (TCP4 or TCP6)
-		{ opts => ['proxy-family'],                   suffix => ':s',
-		  okey => 'proxy_family',                     type => 'scalar', },
+		{ opts    => ['proxy-family'],                                     suffix => ':s',
+		  okey    => 'proxy_family',                                       type   => 'scalar', },
 		# PROXY protocol command (LOCAL or PROXY)
-		{ opts => ['proxy-command'],                  suffix => ':s',
-		  okey => 'proxy_command',                    type => 'scalar', },
+		{ opts    => ['proxy-command'],                                    suffix => ':s',
+		  okey    => 'proxy_command',                                      type   => 'scalar', },
 		# PROXY transport protocol
-		{ opts => ['proxy-protocol'],                 suffix => ':s',
-		  okey => 'proxy_protocol',                   type => 'scalar', },
+		{ opts    => ['proxy-protocol'],                                   suffix => ':s',
+		  okey    => 'proxy_protocol',                                     type   => 'scalar', },
 		# PROXY source address (IPv4 or IPv6)
-		{ opts => ['proxy-source'],                   suffix => ':s',
-		  okey => 'proxy_source',                     type => 'scalar', },
+		{ opts    => ['proxy-source'],                                     suffix => ':s',
+		  okey    => 'proxy_source',                                       type   => 'scalar', },
 		# PROXY source port
-		{ opts => ['proxy-source-port'],              suffix => ':s',
-		  okey => 'proxy_source_port',                type => 'scalar', },
+		{ opts    => ['proxy-source-port'],                                suffix => ':s',
+		  okey    => 'proxy_source_port',                                  type   => 'scalar', },
 		# PROXY destination address (IPv4 or IPv6)
-		{ opts => ['proxy-dest'],                     suffix => ':s',
-		  okey => 'proxy_dest',                       type => 'scalar', },
+		{ opts    => ['proxy-dest'],                                       suffix => ':s',
+		  okey    => 'proxy_dest',                                         type   => 'scalar', },
 		# PROXY destination port
-		{ opts => ['proxy-dest-port'],                suffix => ':s',
-		  okey => 'proxy_dest_port',                  type => 'scalar', },
+		{ opts    => ['proxy-dest-port'],                                  suffix => ':s',
+		  okey    => 'proxy_dest_port',                                    type   => 'scalar', },
 	);
 
 	return(\@G::raw_option_data);
@@ -1942,42 +1949,51 @@ sub load_args {
 	# If we encounter --config in later processing it is a noop.
 	# first find the default file
 	my $config_file       = '';
+	my $skip_config       = 0;
 	my $config_is_default = 1;
 	foreach my $v (qw(SWAKS_HOME HOME LOGDIR)) {
-		if ($ENV{$v}) { $config_file = "$ENV{$v}/.swaksrc"; last; }
+		if (exists($ENV{$v}) && length($ENV{$v}) && -f "$ENV{$v}/.swaksrc") {
+			$config_file = "$ENV{$v}/.swaksrc";
+			last;
+		}
 	}
 	# then look through the ENV args to see if another file set there
 	if (exists($ENV{SWAKS_OPT_config})) {
 		if (!$ENV{SWAKS_OPT_config}) {
 			# if exist but not set, it just means "don't use default file"
-			$config_file = "";
+			$skip_config = 1;
 		} else {
 			$config_file = $ENV{SWAKS_OPT_config};
 			$config_is_default = 0;
 		}
 	}
-	# lastly go through original command line looking for config file
-	for (my $i = 0; $i < scalar(@real_ARGV); $i++) {
+	# lastly go (backwards) through original command line looking for config file,
+	# choosing the first one found (meaning last one specified)
+	for (my $i = scalar(@real_ARGV) - 1; $i >= 0; $i--) {
 		if ($real_ARGV[$i] =~ /^-?-config$/) {
-			if ($real_ARGV[$i+1] =~ /^-/) {
-				$config_file = "";
+			if ($i == scalar(@real_ARGV) - 1 || $real_ARGV[$i+1] =~ /^-/) {
+				$skip_config = 1;
 			} else {
 				$config_file       = $real_ARGV[$i+1];
 				$config_is_default = 0;
+				$skip_config       = 0;
 			}
+			last;
 		}
 	}
 
 	# All of the above will result in $config_file either being empty or
-	# containing the one and only config file we will use.
-	if ($config_file) {
-		foreach my $configf ('&DATA', $config_file) {
+	# containing the one and only config file we will use (though merged with DATA)
+	if (!$skip_config) {
+		my @configs = ('&DATA');
+		push(@configs, $config_file) if ($config_file);
+		foreach my $configf (@configs) {
 			if (open(C, "<$configf")) {
 				# "#" in col 0 is a comment
 				while (defined(my $m = <C>)) {
 					next if ($m =~ m|^#|);
 					chomp($m);
-					$m = '-' . $m if ($m !~ /^-/);
+					$m = '--' . $m if ($m !~ /^-/);
 					push(@ARGV, split(/\s/, $m, 2));
 				}
 				close(C);
@@ -1996,10 +2012,10 @@ sub load_args {
 	# OK, %ARGS contains all the settings from the config file.  No do it again
 	# with SWAKS_OPT_* environment variables
 	@ARGV = ();
-	foreach my $v (keys %ENV) {
+	foreach my $v (sort keys %ENV) {
 		if ($v =~ m|^SWAKS_OPT_(.*)$|) {
 			my $tv = $1; $tv =~ s|_|-|g;
-			push(@ARGV, "-$tv", $ENV{$v});
+			push(@ARGV, "--$tv", $ENV{$v});
 		}
 	}
 	fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
@@ -2021,6 +2037,13 @@ sub fetch_args {
 	# also see if there are any --no- options that need to be processed
 	RUNOPTS:
 	for (my $i = 0; $i < scalar(@ARGV); $i++) {
+		# before doing any option processing, massage from the optional '--option=arg' format into '--option arg' format.
+		if ($ARGV[$i] =~ /^(-[^=]+)=(.*)$/) {
+			$ARGV[$i] = $1;
+			splice(@ARGV, $i+1, 0, $2);
+		}
+
+		# if we're referencing an option which was previously marked for removal, remove the removal flag
 		if ($ARGV[$i] =~ /^-?-(.*)$/) {
 			my $opt_name = $1;
 			foreach my $e (@$l) {
@@ -2029,9 +2052,12 @@ sub fetch_args {
 				}
 			}
 		}
+
 		if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
+			# rewrite '--header-Foo bar' into '--header "Foo: bar"'
 			$ARGV[$i] = "--header"; $ARGV[$i+1] = "$1: $ARGV[$i+1]";
 		} elsif ($ARGV[$i] =~ /^-?-(no-(.*))$/) {
+			# allow --no-OPTION to remove any previous OPTION settings
 			my $whole_name = $1; my $opt_name = $2;
 			# loop through each of the options and see if it matches
 			foreach my $e (@$l) {
@@ -2046,17 +2072,21 @@ sub fetch_args {
 			}
 			ptrans(12, "Unknown option $ARGV[$i], Exiting");
 			exit(1);
-		} elsif ($ARGV[$i] =~ /^-?-attach-name$/) {
-			if ($ARGV[$i+1] =~ /^-/) {
+		}
+		elsif ($ARGV[$i] =~ /^-?-(attach.*)$/) {
+			# all of the --attach* options end up in the same array because the order we receive them in
+			# is important.  But we only get the value, so flag them so we will be able to tell which
+			# argument belongs with which option later
+
+			my $opt = uc($1);
+			if ($ARGV[$i] =~ /^-?-attach-name$/ && $ARGV[$i+1] =~ /^-/) {
 				# in this case, the user is trying to tell us not to use
 				# a filename for the next attachment.  This means we actually have to
 				# insert an argument, flagged as a filename, with no value
-				# XXX WCSFIXME
-				splice(@ARGV, $i+1, 0, "FILENAME:");
-			} else {
-				# We were given a filename - mark it as such so we can figure
-				# it out later
-				$ARGV[$i+1] = "FILENAME:" . $ARGV[$i+1];
+				splice(@ARGV, $i+1, 0, 'SWAKS_ATTACH-NAME:');
+			}
+			else {
+				$ARGV[$i+1] = 'SWAKS_' . $opt . ':' . $ARGV[$i+1];
 			}
 		}
 	}
@@ -2086,7 +2116,7 @@ sub fetch_args {
 		exit(1);
 	}
 
-	Getopt::Long::Configure("bundling_override");
+	Getopt::Long::Configure("no_ignore_case");
 	GetOptions(%options) || exit(1);
 
 	# now remove any options that might have been added by a --no option
@@ -2094,10 +2124,8 @@ sub fetch_args {
 	# in the same context (config file, command line, env var)
 	if (scalar keys %to_delete) {
 		foreach my $e (@$l) {
-			foreach my $opt_name (@{$e->{opts}}) {
-				if ($to_delete{$opt_name}) {
-					delete($r->{$e->{okey}});
-				}
+			if ($to_delete{$e->{okey}}) {
+				delete($r->{$e->{okey}});
 			}
 		}
 	}
@@ -2179,7 +2207,7 @@ sub process_args {
 	$G::trans_fh_ef = "STDERR";
 	if ($o->{output_file} && (!$o->{output_file_stderr} || !$o->{output_file_stdout})) {
 		if (!open(OUTFH, ">>$o->{output_file}")) {
-			ptrans(12, "Unable to open $o->{output_file} for writing\n");
+			ptrans(12, "Unable to open $o->{output_file} for writing");
 			exit(1);
 		}
 		$G::trans_fh_oh = \*OUTFH;
@@ -2189,7 +2217,7 @@ sub process_args {
 	}
 	if ($o->{output_file_stderr}) {
 		if (!open(OUTEFH, ">>$o->{output_file_stderr}")) {
-			ptrans(12, "Unable to open $o->{output_file_stderr} for writing\n");
+			ptrans(12, "Unable to open $o->{output_file_stderr} for writing");
 			exit(1);
 		}
 		$G::trans_fh_eh = \*OUTEFH;
@@ -2197,7 +2225,7 @@ sub process_args {
 	}
 	if ($o->{output_file_stdout}) {
 		if (!open(OUTOFH, ">>$o->{output_file_stdout}")) {
-			ptrans(12, "Unable to open $o->{output_file_stdout} for writing\n");
+			ptrans(12, "Unable to open $o->{output_file_stdout} for writing");
 			exit(1);
 		}
 		$G::trans_fh_oh = \*OUTOFH;
@@ -2288,22 +2316,38 @@ sub process_args {
 			elsif (${"G::$opt"} ne 'connect' && ${"G::$opt"} ne 'first-helo' &&
 			       ${"G::$opt"} ne 'tls'     && ${"G::$opt"} ne 'helo'       &&
 			       ${"G::$opt"} ne 'auth'    && ${"G::$opt"} ne 'mail'       &&
-			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient')
+			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient'    &&
+			       ${"G::$opt"} ne 'data'    && ${"G::$opt"} ne 'dot')
 			{
 				ptrans(12, "Unknown $opt value " . ${"G::$opt"} . ", exiting");
 				exit(1);
 			}
-			# only rcpt _requires_ a to address
-			$G::server_only = 1 if (${"G::$opt"} ne 'rcpt');
+			# only rcpt, data, and dot _require_ a to address
+			$G::server_only = 1 if (${"G::$opt"} !~ /^(rcpt|data|dot)$/);
+
+			# data and dot aren't legal for quit_after
+			if ($opt eq 'quit_after' && (${"G::$opt"} eq 'data' || ${"G::$opt"} eq 'dot')) {
+				ptrans(12, "Unknown $opt value " . ${"G::$opt"} . ", exiting");
+				exit(1);
+			}
 		} else {
 			${"G::$opt"} = '';
 		}
 	}
 
 	# set global flag for -stl flag
-	$G::show_time_lapse = time() if (defined($o->{show_time_lapse}));
-	$G::show_time_hires = 1      if ($G::show_time_lapse && avail("hires_timing") &&
-	                                                        $o->{show_time_lapse} !~ /^i/i);
+	if (defined($o->{show_time_lapse})) {
+		if (length($o->{show_time_lapse}) && $o->{show_time_lapse} !~ /^i/i) {
+			ptrans(12, "Unknown argument '$o->{show_time_lapse}' to option show-time-lapse, exiting");
+			exit(1);
+		}
+		if (avail("hires_timing") && $o->{show_time_lapse} !~ /^i/i) {
+			$G::show_time_lapse = 'hires';
+		}
+		else {
+			$G::show_time_lapse = 'integer';
+		}
+	}
 
 	# pipe command, if one is specified
 	$G::link{process}   = $o->{pipe_cmd} || interact("Pipe: ", '^.+$')
@@ -2324,9 +2368,16 @@ sub process_args {
 	# SMTP mail from
 	$n{from}   = $o->{mail_from} || interact("From: ", '^.*$')
 		if (defined($o->{mail_from}));
-	$n{from} ||= ($hostname || ($G::server_only && $G::quit_after ne 'mail' && $G::drop_after ne 'mail' && $G::drop_after_send ne 'mail')
-	              ? "$user\@$hostname"
-	              : interact("From: ", '^.*$'));
+	if (!$n{from}) {
+		if ($hostname || ($G::server_only && $G::quit_after ne 'mail' && $G::drop_after ne 'mail' && $G::drop_after_send ne 'mail')) {
+			# if we have a hostname, or it doesn't matter anyway because we won't actually need it, use our manufactured from
+			$n{from} = "$user\@$hostname";
+		}
+		else {
+			ptrans(12, "From string required but couldn't be determined automatically.  Please use --from");
+			exit(1);
+		}
+	}
 	$n{from}   = '' if ($n{from} eq '<>');
 
 	# local interface to connect from
@@ -2339,9 +2390,16 @@ sub process_args {
 	# SMTP helo/ehlo
 	$n{helo}   = $o->{mail_helo} || interact("Helo: ", '^.*$')
 		if (defined($o->{mail_helo}));
-	$n{helo} ||= ($hostname || ($G::quit_after eq 'connect' || $G::drop_after eq 'connect' || $G::drop_after_send eq 'connect')
-	              ? $hostname
-	              : interact("Helo: ", '^.*$'));
+	if (!$n{helo}) {
+		if ($hostname || ($G::quit_after eq 'connect' || $G::drop_after eq 'connect' || $G::drop_after_send eq 'connect')) {
+			# if we have a hostname, or it doesn't matter anyway because we won't actually need it, use our manufactured from
+			$n{helo} = $hostname;
+		}
+		else {
+			ptrans(12, "Helo string required but couldn't be determined automatically.  Please use --helo");
+			exit(1);
+		}
+	}
 
 	# SMTP server and rcpt to are interdependant, so they are handled together
 	$G::link{server}   = $o->{mail_server} || interact("Server: ", '^.*$')
@@ -2369,8 +2427,19 @@ sub process_args {
 			$G::link{force_ipv4} = 1;
 		}
 
-		$n{copy_routing}   = $o->{copy_routing}; # only used in --dump output
-		$G::link{server} ||= get_server($o->{copy_routing} ?  $o->{copy_routing} : $n{to});
+		if (defined($o->{copy_routing})) {
+			if ($o->{copy_routing}) {
+				$n{copy_routing}   = $o->{copy_routing}; # only used in --dump output
+				$G::link{server} ||= get_server($o->{copy_routing});
+			}
+			else {
+				ptrans(12, "Option --copy-routing requires an argument");
+				exit 1;
+			}
+		}
+		else {
+			$G::link{server} ||= get_server($n{to});
+		}
 
 		if ($o->{force_ipv4} && $G::link{server} =~ m|:|) {
 			ptrans(12, "Option -4 is set but server appears to be ipv6, cannot proceed");
@@ -2420,6 +2489,7 @@ sub process_args {
 	my $body  = 'This is a test mailing'; # default message body
 	$body = 'DUMP_AS_BODY_HAS_BEEN_SET' if (defined($o->{dump_as_body}));
 	my $bound = "";
+	my $main_content_type = "multipart/mixed";
 	my $stdin = undef;
 	if (defined($o->{body_822})) {
 		# the --body option is the entire 822 body and trumps and other options
@@ -2441,57 +2511,100 @@ sub process_args {
 		# this option is a list of files (or STDIN) to attach.  In this case,
 		# the message become a mime message and the "body" goes in the
 		# first text/plain part
-		my $mime_type = 'application/octet-stream';
+		my $mime_type = '%SWAKS_DEFAULT_MIMETYTPE%';
 		my $next_name = undef();
-		my @parts     = ( { body => $body, type => 'text/plain' } );
+		my %parts     = ( body => [], rest => [] );
 		$bound        = "----=_MIME_BOUNDARY_000_$$";
 		while (defined(my $t = shift(@{$o->{attach_822}}))) {
-			if ($t =~ m|^[^/]+/[^/]+$| && !stat($t)) {
-				$mime_type = $t;
-			} elsif ($t =~ /^FILENAME:(.*)$/) {
+			if ($t =~ /^SWAKS_ATTACH-TYPE:(.*)$/) {
+				$mime_type = $1;
+			} elsif ($t =~ /^SWAKS_ATTACH-NAME:(.*)$/) {
 				$next_name = $1;
-			} else {
-				push(@parts, { body => "$t", type => $mime_type });
+			} elsif ($t =~ /^SWAKS_ATTACH-BODY:(.*)$/) {
+				if ($mime_type eq '%SWAKS_DEFAULT_MIMETYTPE%') {
+					$mime_type = 'text/plain';
+				}
+				push(@{$parts{body}}, { body => $1, type => $mime_type });
+				$next_name = undef(); # can't set filename for body, unset next_name so random attachment doesn't get it
+				$mime_type = '%SWAKS_DEFAULT_MIMETYTPE%'; # after each body, reset the default mime type
+			} elsif ($t =~ /^SWAKS_ATTACH:(.*)$/) {
+				push(@{$parts{rest}}, { body => $1, type => $mime_type });
 				if (defined($next_name)) {
-					$parts[-1]{name} = $next_name;
-					$next_name       = undef();
+					$parts{rest}[-1]{name} = $next_name;
+					$next_name             = undef();
+				}
+			} else {
+				ptrans(12, "Error processing attach args, unknown type when processing $t");
+				exit(1);
+			}
+		}
+
+		# if no body parts were set via --attach-body, set a text/plain body to $body
+		if (!scalar(@{$parts{body}})) {
+			push(@{$parts{body}}, { body => $body, type => 'text/plain' });
+		}
+
+		# now loop through and reconcile stdin/file contents
+		foreach my $type ('body', 'rest') {
+			foreach my $part (@{$parts{$type}}) {
+				if ($part->{body} eq '-') {
+					if ($stdin) {
+						$part->{body} = $stdin;
+					} else {
+						$part->{body} = join('', <STDIN>);
+						$stdin        = $part->{body};
+					}
+				} elsif (open(I, "<$part->{body}")) {
+					if (!exists($part->{name}) && $type ne 'body') {
+						($part->{name}) = $part->{body} =~ m|/?([^/]+)$|;
+					}
+					$part->{body} = join('', <I>);
+					close(I);
 				}
 			}
 		}
+
 		$body = '';
-		foreach my $p (@parts) {
-			if ($p->{body} eq '-') {
-				if ($stdin) {
-					$p->{body} = $stdin;
-				} else {
-					$p->{body} = join('', <STDIN>);
-					$stdin     = $p->{body};
-				}
-			} elsif (open(I, "<$p->{body}")) {
-				if (!exists($p->{name})) {
-					($p->{name}) = $p->{body} =~ m|/?([^/]+)$|;
-				}
-				$p->{body} = join('', <I>);
-				close(I);
+		if (!scalar(@{$parts{rest}})) {
+			# if there are no non-body parts
+			if (scalar(@{$parts{body}}) > 1) {
+				$main_content_type = 'multipart/alternative';
 			}
-			$body .= "--$bound\n";
-			if ($p->{type} =~ m|^text/plain$|i && !$p->{name}) {
-				$body .= "Content-Type: $p->{type}\n\n" . $p->{body} . "\n";
-			} else {
-				if ($p->{name}) {
-					$body .= "Content-Type: $p->{type}; name=\"$p->{name}\"\n"
-					      .  "Content-Description: $p->{name}\n"
-					      .  "Content-Disposition: attachment; filename=\"$p->{name}\"\n";
-				} else {
-					$body .= "Content-Type: $p->{type}\n"
-					      .  "Content-Disposition: attachment\n";
+			else {
+				$main_content_type = 'multipart/mixed';
+			}
+
+			foreach my $part (@{$parts{body}}) {
+				$body .= encode_mime_part($part, $bound, 1);
+			}
+		}
+		else {
+			# otherwise, there's a mixture of both body and other. multipart/mixed
+			$main_content_type = 'multipart/mixed';
+			if (scalar(@{$parts{body}}) > 1) {
+				# we have multiple body parts, plus other attachments.  Need to create a mp/mixes mime object for the bodies
+				my $mp_bound = "----=_MIME_BOUNDARY_004_$$";
+
+				$body .= "--$bound\n"
+				      .  'Content-Type: multipart/alternative; boundary="' . $mp_bound . '"' . "\n\n";
+
+				foreach my $part (@{$parts{body}}) {
+					$body .= encode_mime_part($part, $mp_bound, 1);
 				}
-				$body .= "Content-Transfer-Encoding: BASE64\n"
-				      .  "\n" . eb64($p->{body}, "\n") . "\n";
+				$body .= "--$mp_bound--\n";
+			}
+			else {
+				$body .= encode_mime_part($parts{body}[0], $bound, 1);
+			}
+
+			# now handle the non-body attachments
+			foreach my $part (@{$parts{rest}}) {
+				$body .= encode_mime_part($part, $bound);
 			}
 		}
 		$body .= "--$bound--\n";
 	}
+	$body =~ s|%SWAKS_DEFAULT_MIMETYTPE%|application/octet-stream|g;
 
 	# SMTP DATA
 	# a '-' arg to -d is the same as setting -g
@@ -2505,14 +2618,19 @@ sub process_args {
 	$n{data} ||= 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
 	            "Message-Id: <%MESSAGEID%>\n" .
 	            "X-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/".'\n' .
-	            ($bound ? 'MIME-Version: 1.0\nContent-Type: multipart/mixed; boundary="'.$bound.'"\n' : '') .
+	            ($bound ? 'MIME-Version: 1.0\nContent-Type: ' . $main_content_type . '; boundary="' . $bound. '"\n' : '') .
 	            '%NEW_HEADERS%' . # newline will be added in replacement if it exists
 	            '\n' .
 	            '%BODY%\n';
 	# The -g option trumps all other methods of getting the data
 	if ($o->{data_on_stdin}) {
 		$n{data} = join('', <STDIN>);
-	} elsif ($n{data} !~ m/(\\n|\n)/ && open(F, "<$n{data}")) {
+	} elsif ($n{data} !~ m/\\n|\n|%NEWLINE%/) {
+		# if it doesn't have any newlines assume it's a file. Fail if we can't open.
+		if (!open(F, "<$n{data}")) {
+			ptrans(12, "data option appears to be a file but is not openable: $n{data} ($!)");
+			exit(1);
+		}
 		$n{data} = join('', <F>);
 		close(F);
 	}
@@ -2537,13 +2655,25 @@ sub process_args {
 
 		# build the header string into an object.  Each header is an array, each index is a line (to handle header continuation lines)
 		foreach my $headerLine (split(/\r?\n/, $header)) {
-			if ($headerLine =~ /^(\S[^:]+):/) {
+			if ($headerLine =~ /^\s/) {
+				# continuation line
+				if (scalar(@headers)) {
+					push(@{$headers[-1]}, $headerLine);
+				}
+				else {
+					# it's illegal to have a continuation line w/o a previous header, but we're a test tool
+					push(@headers, [ $headerLine ]);
+				}
+			}
+			elsif ($headerLine =~ /^(\S[^:]+):/) {
+				# properly formed header
 				push(@headers, [ $headerLine ]);
 				$headers{$1} = $headers[-1];
 			}
 			else {
-				# continuation line (a header line that starts with a space continues the previous header)
-				push(@{$headers[-1]}, $headerLine);
+				# malformed header - no colon.  Allow it anyway, we're a test tool
+				push(@headers, [ $headerLine ]);
+				$headers{$headerLine} = $headers[-1];
 			}
 		}
 
@@ -2586,15 +2716,12 @@ sub process_args {
 		# Now re-assemble our data by adding the headers back on to the front
 		$n{data} = $newHeader . "\r\n" . $n{data};
 
-		$n{data} =~ s/\\n/\r\n/g;
+		$n{data} =~ s/\\n|%NEWLINE%/\r\n/g;
 		$n{data} =~ s/%FROM_ADDRESS%/$n{from}/g;
 		$n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
 		$n{data} =~ s/%MESSAGEID%/get_messageid()/ge;
 		$n{data} =~ s/%SWAKS_VERSION%/$p_version/g;
-		if ($n{data} =~ /%DATE%/) {
-			my $date_string = get_date_string(); # May be multiple replacements, but we only want to generate the string once
-			$n{data} =~ s/%DATE%/$date_string/g;
-		}
+		$n{data} =~ s/%DATE%/get_date_string()/ge;
 		$n{data} =~ s/^From [^\n]*\n// if (!$O{no_strip_from});
 		$n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
 		$n{data} =~ s/\n\./\n../g;         # quote any other leading dots
@@ -2689,10 +2816,12 @@ sub process_args {
 		# to, so if it isn't a resolvable port, keep prompting for another one
 		my $o_port = $G::link{port};
 		if ($G::link{port} !~ /^\d+$/) {
-			$G::link{port} = getservbyname($G::link{port}, 'tcp');
-			while (!$G::link{port}) {
-				$G::link{port} = $o_port = interact("Unable to resolve port $o_port\nPort: ", '^\w+$');
-				$G::link{port} = getservbyname($G::link{port}, 'tcp') if ($G::link{port} !~ /^\d+$/);
+			if (my $port = getservbyname($G::link{port}, 'tcp')) {
+				$G::link{port} = $port;
+			}
+			else {
+				ptrans(12, "unable to resolve service name $G::link{port} into a port, exiting");
+				exit(1);
 			}
 		}
 	} else {
@@ -2763,7 +2892,15 @@ sub process_args {
 			$G::proxy{attr}{$attr} = $o->{"proxy_" . $attr} || interact("PROXY $attr: ", '^.+$');
 		}
 	}
-	$G::proxy{version} ||= 1;
+	if ($G::proxy{version}) {
+		if ($G::proxy{version} != 1 && $G::proxy{version} != 2) {
+			ptrans(12, "Invalid argument to --proxy: $G::proxy{version} is not a legal proxy version");
+			exit(35);
+		}
+	}
+	else {
+		$G::proxy{version} = 1;
+	}
 	$G::proxy{try}       = 1 if ($G::proxy{raw} || scalar(keys(%{$G::proxy{attr}})));
 	if ($G::proxy{try} && !$G::proxy{raw}) {
 		$G::proxy{attr}{protocol} ||= 'STREAM';
@@ -2785,6 +2922,10 @@ sub process_args {
 		}
 		if ($G::proxy{version} == 2 && $G::proxy{attr}{family} !~ /^(AF_UNSPEC|AF_INET|AF_INET6|AF_UNIX)$/) {
 			ptrans(12, "unknown --proxy-family argument $G::proxy{attr}{family} for version 2");
+			exit(35);
+		}
+		if ($G::proxy{version} == 1 && $G::proxy{attr}{family} !~ /^(TCP4|TCP6)$/) {
+			ptrans(12, "unknown --proxy-family argument $G::proxy{attr}{family} for version 1");
 			exit(35);
 		}
 	}
@@ -2822,18 +2963,24 @@ sub process_args {
 		                          "CRAM-MD5=CRAM-MD5","DIGEST-MD5=DIGEST-MD5",
 		                          "CRAM-SHA1=CRAM-SHA1","NTLM=NTLM","SPA=NTLM","MSN=NTLM")
 		{
-			my($alias,$type)        = split(/=/, uc($_), 2);
-			# this gives us a list of all aliases and what the alias
-			$G::auth_map_f{$alias}  = $type;
-			# this gives a list of all base types and any aliases for it.
-			$G::auth_map_t{$type} ||= [];
-			push(@{$G::auth_map_t{$type}}, $alias);
+			if (/^([^=]+)=(.+)$/) {
+				my($alias,$type)        = ($1,$2);
+				$G::auth_map_f{$alias}  = $type; # this gives us a list of all aliases pointing to types
+				$G::auth_map_t{$type} ||= [];    # this gives a list of all base types and any aliases for it.
+				push(@{$G::auth_map_t{$type}}, $alias);
+			} else {
+				ptrans(12, "Unknown auth-map format '$_'");
+				exit(1);
+			}
 		}
 		# Now handle the --auth-extra options
 		foreach (split(/\s*,\s*/, $o->{auth_extra})) {
-			my($keyword,$value)       = split(/=/, $_, 2);
-			$keyword                  = uc($keyword);
-			$G::auth_extras{$keyword} = $value;
+			if (/^([^=]+)=(.+)$/) {
+				$G::auth_extras{uc($1)} = $2;
+			} else {
+				ptrans(12, "Unknown auth-extra format '$_'");
+				exit(1);
+			}
 		}
 		# handle the realm/domain synonyms
 		if ($G::auth_extras{DOMAIN}) {
@@ -2932,6 +3079,36 @@ sub process_args {
 	return(\%n);
 }
 
+sub encode_mime_part {
+	my $part           = shift;
+	my $boundary       = shift;
+	my $no_attach_text = shift; # if this is true and there's no name, Don't set disposition to attachment
+	my $text           = '';
+
+	$text .= "--$boundary\n";
+	if ($part->{type} =~ m|^text/plain$|i && !$part->{name}) {
+		$text .= "Content-Type: $part->{type}\n\n" . $part->{body} . "\n";
+	}
+	else {
+		if ($part->{name}) {
+			$text .= "Content-Type: $part->{type}; name=\"$part->{name}\"\n"
+			      .  "Content-Description: $part->{name}\n"
+			      .  "Content-Disposition: attachment; filename=\"$part->{name}\"\n";
+		}
+		else {
+			$text .= "Content-Type: $part->{type}\n";
+			if (!($part->{type} =~ m|^text/|i && $no_attach_text)) {
+				$text .= "Content-Disposition: attachment\n";
+			}
+		}
+		$text .= "Content-Transfer-Encoding: BASE64\n"
+		      .  "\n" . eb64($part->{body}, "\n") . "\n";
+	}
+
+
+	return($text);
+}
+
 sub parse_server {
 	my $server = shift;
 	my $port   = shift;
@@ -2980,8 +3157,7 @@ sub get_running_state {
 	if ($dump_args->{'OUTPUT'} || $dump_args->{'ALL'}) {
 		push(@parts, [
 			'Output Info:',
-			'  show_time_lapse    = ' . ($G::show_time_lapse    ? 'TRUE' : 'FALSE'),
-			'  show_time_hires    = ' . ($G::show_time_hires    ? 'TRUE' : 'FALSE'),
+			'  show_time_lapse    = ' . ($G::show_time_lapse    ? "TRUE ($G::show_time_lapse)"  : 'FALSE'),
 			'  show_raw_text      = ' . ($G::show_raw_text      ? 'TRUE' : 'FALSE'),
 			'  suppress_data      = ' . ($G::suppress_data      ? 'TRUE' : 'FALSE'),
 			'  protect_prompt     = ' . ($G::protect_prompt     ? 'TRUE' : 'FALSE'),
@@ -2989,6 +3165,7 @@ sub get_running_state {
 			'  no_hints_recv      = ' . ($G::no_hints_recv      ? 'TRUE' : 'FALSE'),
 			'  no_hints_info      = ' . ($G::no_hints_info      ? 'TRUE' : 'FALSE'),
 			"  silent             = $G::silent",
+			'  dump_mail          = ' . ($G::dump_mail          ? 'TRUE' : 'FALSE'),
 			'  hide_send          = ' . ($G::hide_send          ? 'TRUE' : 'FALSE'),
 			'  hide_receive       = ' . ($G::hide_receive       ? 'TRUE' : 'FALSE'),
 			'  hide_informational = ' . ($G::hide_informational ? 'TRUE' : 'FALSE'),
@@ -3237,7 +3414,7 @@ sub build_version {
 }
 
 sub ext_usage {
-	if ($ARGV[0] =~ /^--help$/i) {
+	if ($O{help}) {
 		require Config;
 		$ENV{PATH} .= ":" unless $ENV{PATH} eq "";
 		$ENV{PATH}  = "$ENV{PATH}$Config::Config{'installscript'}";
@@ -3245,7 +3422,7 @@ sub ext_usage {
 		exec("perldoc", $0) || exit(1);
 		# make parser happy
 		%Config::Config = ();
-	} elsif ($ARGV[0] =~ /^--version$/i) {
+	} elsif ($O{version}) {
 		print "$p_name version $p_version\n\n$p_cp\n";
 	} else {
 		return;

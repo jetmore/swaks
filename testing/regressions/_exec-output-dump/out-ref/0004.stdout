@@ -1,0 +1,114 @@
+=== AUTH CRAM-MD5 supported
+=== AUTH CRAM-SHA1 supported
+=== AUTH DIGEST-MD5 supported
+*** AUTH NTLM not available: requires Authen::NTLM
+=== Basic AUTH supported
+=== Date Manipulation supported
+=== High Resolution Timing supported
+=== IPv6 supported
+=== Local Hostname Detection supported
+=== MX Routing supported
+=== Pipe Transport supported
+=== Socket Transport supported
+=== TLS supported
+
+App Info:
+  X-Mailer = swaks v99999999.9 jetmore.org/john/code/swaks/
+  Cmd Line = %SWAKS_COMMAND% --from 'from@example.com' --to 'user@example.com' --helo 'host.example.com' --server 'ser.ver' --quit-after 'mail' --auth-user 'user' --auth-password 'pass' --tls '1' --hide-send '1' --dump --xclient-addr '192.168.0.4' --xclient-optional '1' --proxy-version '1' --proxy-family 'TCP4' --proxy-source '192.168.0.5' --proxy-source-port '111' --proxy-dest '1.1.1.1' --proxy-dest-port '26'
+
+Output Info:
+  show_time_lapse    = FALSE
+  show_raw_text      = FALSE
+  suppress_data      = FALSE
+  protect_prompt     = FALSE
+  no_hints_send      = FALSE
+  no_hints_recv      = FALSE
+  no_hints_info      = FALSE
+  silent             = 0
+  dump_mail          = FALSE
+  hide_send          = TRUE
+  hide_receive       = FALSE
+  hide_informational = FALSE
+  hide_all           = FALSE
+  trans_fh_of        = STDOUT (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+  trans_fh_ef        = STDERR (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+
+Transport Info:
+  type            = socket-inet
+  inet protocol   = any
+  server          = ser.ver
+  port            = 25
+  local interface = 
+  local port      = 
+  copy routing    = FALSE
+
+Protocol Info:
+  protocol        = esmtp
+  helo            = host.example.com
+  from            = from@example.com
+  to              = user@example.com
+  force getpwuid  = FALSE
+  quit after      = mail
+  drop after      = 
+  drop after send = 
+  server_only     = TRUE
+  timeout         = 30
+  pipeline        = FALSE
+  prdr            = FALSE
+
+XCLIENT Info:
+  xclient         = optional
+  no_verify       = FALSE
+  before starttls = FALSE
+  strings         = XCLIENT ADDR=192.168.0.4
+
+PROXY Info:
+  proxy       = yes
+  version     = 1
+  family      = TCP4
+  source      = 192.168.0.5
+  source port = 111
+  dest        = 1.1.1.1
+  dest port   = 26
+  protocol    = STREAM
+  command     = PROXY
+
+TLS / Encryption Info:
+  tls                 = starttls (required)
+  peer cert           = 
+  local cert          = 
+  local key           = 
+  local cipher list   = 
+  ca path             = 
+  verify server cert  = FALSE
+  available protocols = SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2
+  requested protocols = 
+
+Authentication Info:
+  auth           = required
+  username       = 'user'
+  password       = 'pass'
+  show plaintext = FALSE
+  hide password  = FALSE
+  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, PLAIN
+  extras         = 
+  type map       = CRAM-MD5 = CRAM-MD5
+                   CRAM-SHA1 = CRAM-SHA1
+                   DIGEST-MD5 = DIGEST-MD5
+                   LOGIN = LOGIN
+                   NTLM = NTLM, SPA, MSN
+                   PLAIN = PLAIN
+
+DATA Info:
+  data = <<.
+Date: Wed, 03 Nov 1999 11:24:29 -0500
+To: user@example.com
+From: from@example.com
+Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+Message-Id: <19991103112429.047942@localhost>
+X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+
+This is a test mailing
+
+
+.

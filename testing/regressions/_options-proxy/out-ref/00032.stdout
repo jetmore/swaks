@@ -1,0 +1,4 @@
+PROXY Info:
+  proxy       = yes
+  version     = 1
+  raw string  = PROXY_STRING

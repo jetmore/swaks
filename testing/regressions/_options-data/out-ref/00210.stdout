@@ -1,0 +1,27 @@
+DATA Info:
+  data = <<.
+Date: Wed, 03 Nov 1999 11:24:29 -0500
+To: user@example.com
+From: recip@example.com
+Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+Message-Id: <19991103112429.047942@localhost>
+X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+
+Authentication Info:
+  auth           = required
+  username       = 'auth_user'
+  password       = 'auth_pass'
+  show plaintext = FALSE
+  hide password  = FALSE
+  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, PLAIN
+  extras         = 
+  type map       = CRAM-MD5 = CRAM-MD5
+                   CRAM-SHA1 = CRAM-SHA1
+                   DIGEST-MD5 = DIGEST-MD5
+                   LOGIN = LOGIN
+                   NTLM = NTLM, SPA, MSN
+                   PLAIN = PLAIN
+
+
+
+.

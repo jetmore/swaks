@@ -1,0 +1,8 @@
+# Generated Sat Jan  5 13:22:45 2019 by ./gen-tests.pl '-n' '200' '-o' 'helo' '-v' 'test-helo-string' '-i' '' '-p' 'Helo:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --to recip@example.com --from sender@example.net --server ser.ver'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: helo, config, no arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'helo'
+auto: INTERACT '%SWAKS% --dump PROTOCOL --to recip@example.com --from sender@example.net --server ser.ver --config %OUTDIR%/swaksrc-%TESTID%' 'Helo:' 'test-helo-string'

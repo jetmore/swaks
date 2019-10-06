@@ -1,0 +1,8 @@
+# Generated Tue Dec 25 11:13:37 2018 by ./gen-tests.pl '-n' '50' '-o' 'proxy-version' '-v' '2' '-i' '4' '-p' 'PROXY version:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver" --proxy FORCEPROXY'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: proxy-version, env var, invalid arg
+
+pre action: SET_ENV SWAKS_OPT_proxy_version 4
+test action: CMD_CAPTURE %SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver" --proxy FORCEPROXY

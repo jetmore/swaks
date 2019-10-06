@@ -1,0 +1,8 @@
+# Generated Wed Jul 10 22:54:11 2019 by ./gen-tests.pl '-n' '250' '-o' 'xclient-destport' '-v' '26' '-i' '' '-p' 'XCLIENT destport:' '-d' '.' '-r'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: xclient-destport, env var, no arg
+
+pre action: SET_ENV SWAKS_OPT_xclient_destport
+auto: INTERACT '%SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver"' 'XCLIENT destport:' '26'

@@ -1,0 +1,15 @@
+spawn %SWAKS_COMMAND% --dump PROTOCOL --from sender@example.net --server ser.ver --helo hstring --quit-after RCPT
+To: test-recip
+Protocol Info:
+  protocol        = esmtp
+  helo            = hstring
+  from            = sender@example.net
+  to              = test-recip
+  force getpwuid  = FALSE
+  quit after      = rcpt
+  drop after      = 
+  drop after send = 
+  server_only     = FALSE
+  timeout         = 30
+  pipeline        = FALSE
+  prdr            = FALSE

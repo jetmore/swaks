@@ -1,0 +1,7 @@
+spawn %SWAKS_COMMAND% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server ser.ver
+XCLIENT reverse_name: REVSTR
+XCLIENT Info:
+  xclient         = required
+  no_verify       = FALSE
+  before starttls = FALSE
+  strings         = XCLIENT REVERSE_NAME=REVSTR

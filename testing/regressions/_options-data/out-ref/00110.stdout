@@ -1,0 +1,80 @@
+DATA Info:
+  data = <<.
+Date: Wed, 03 Nov 1999 11:24:29 -0500
+To: user@example.com
+From: recip@example.com
+Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+Message-Id: <19991103112429.047942@localhost>
+X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+
+App Info:
+  X-Mailer = swaks v99999999.9 jetmore.org/john/code/swaks/
+  Cmd Line = %SWAKS_COMMAND% --config '/path/to/OUTDIR/swaksrc-00110' --from 'recip@example.com' --to 'user@example.com' --helo 'hserver' --server 'ser.ver' --dump-as-body --auth-user 'auth_user' --auth-password 'PROVIDED_BUT_REMOVED' --dump 'DATA'
+
+Output Info:
+  show_time_lapse    = FALSE
+  show_raw_text      = FALSE
+  suppress_data      = FALSE
+  protect_prompt     = FALSE
+  no_hints_send      = FALSE
+  no_hints_recv      = FALSE
+  no_hints_info      = FALSE
+  silent             = 0
+  dump_mail          = FALSE
+  hide_send          = FALSE
+  hide_receive       = FALSE
+  hide_informational = FALSE
+  hide_all           = FALSE
+  trans_fh_of        = STDOUT (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+  trans_fh_ef        = STDERR (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+
+Transport Info:
+  type            = socket-inet
+  inet protocol   = any
+  server          = ser.ver
+  port            = 25
+  local interface = 
+  local port      = 
+  copy routing    = FALSE
+
+Protocol Info:
+  protocol        = esmtp
+  helo            = hserver
+  from            = recip@example.com
+  to              = user@example.com
+  force getpwuid  = FALSE
+  quit after      = 
+  drop after      = 
+  drop after send = 
+  server_only     = FALSE
+  timeout         = 30
+  pipeline        = FALSE
+  prdr            = FALSE
+
+XCLIENT Info:
+  xclient = no
+
+PROXY Info:
+  proxy = no
+
+TLS / Encryption Info:
+  tls = no
+
+Authentication Info:
+  auth           = required
+  username       = 'auth_user'
+  password       = 'PROVIDED_BUT_REMOVED'
+  show plaintext = FALSE
+  hide password  = FALSE
+  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, PLAIN
+  extras         = 
+  type map       = CRAM-MD5 = CRAM-MD5
+                   CRAM-SHA1 = CRAM-SHA1
+                   DIGEST-MD5 = DIGEST-MD5
+                   LOGIN = LOGIN
+                   NTLM = NTLM, SPA, MSN
+                   PLAIN = PLAIN
+
+
+
+.

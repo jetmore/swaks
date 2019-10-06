@@ -1,0 +1,16 @@
+pre action: REMOVE_FILE %OUTDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stdout.2 %OUTDIR%/%TESTID%.stderr %OUTDIR%/%TESTID%.stderr.2
+
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --server ser.ver --helo host.example.com --from from@example.com \
+  --body "This is the plain text argument to --body" \
+  --attach %TESTDIR%/body.html
+
+test action: CMD_CAPTURE:2 %SWAKS% --dump DATA --to user@example.com --server ser.ver --helo host.example.com --from from@example.com \
+  --attach-type text/plain \
+  --attach-body "This is the plain text argument to --body" \
+  --attach %TESTDIR%/body.html
+
+test action: MUNGE file:%OUTDIR%/%TESTID%.stdout munge_standard
+test action: MUNGE file:%OUTDIR%/%TESTID%.stdout.2 munge_standard
+
+test result: COMPARE_FILE %OUTDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stdout.2
+test result: COMPARE_FILE %OUTDIR%/%TESTID%.stderr %OUTDIR%/%TESTID%.stderr.2

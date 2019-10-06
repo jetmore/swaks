@@ -1,0 +1,9 @@
+# Generated Mon Dec 10 12:45:41 2018 by ./gen-tests.pl '.' '1150' 'S' '2' 'asdf'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: S, config, invalid arg
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'S asdf'
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

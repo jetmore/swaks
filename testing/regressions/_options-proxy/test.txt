@@ -1,0 +1,186 @@
+00000 --proxy
+  0 proxy, command line, no arg
+  1 proxy, command line, valid arg
+  # 2 proxy, command line, invalid arg
+  3 proxy, command line, no-option
+  10 proxy, config, no arg
+  11 proxy, config, valid arg
+  # 12 proxy, config, invalid arg
+  13 proxy, config, no-option
+  20 proxy, env var, no arg
+  21 proxy, env var, valid arg
+  # 22 proxy, env var, invalid arg
+  23 proxy, env var, no-option
+  30 proxy command line, no arg (-option)
+  31 proxy, command line, valid arg (-option=)
+  32 proxy, command line, valid arg (--option=)
+00050 --proxy-version
+  50 proxy-version, command line, no arg
+  51 proxy-version, command line, valid arg
+  52 proxy-version, command line, invalid arg
+  53 proxy-version, command line, no-option
+  60 proxy-version, config, no arg
+  61 proxy-version, config, valid arg
+  62 proxy-version, config, invalid arg
+  63 proxy-version, config, no-option
+  70 proxy-version, env var, no arg
+  71 proxy-version, env var, valid arg
+  72 proxy-version, env var, invalid arg
+  73 proxy-version, env var, no-option
+  80 proxy-version command line, no arg (-option)
+  81 proxy-version, command line, valid arg (-option=)
+  82 proxy-version, command line, valid arg (--option=)
+00100 --proxy-family
+  100 proxy-family, command line, no arg
+  101 proxy-family, command line, valid arg
+  102 proxy-family, command line, invalid arg
+  103 proxy-family, command line, no-option
+  110 proxy-family, config, no arg
+  111 proxy-family, config, valid arg
+  112 proxy-family, config, invalid arg
+  113 proxy-family, config, no-option
+  120 proxy-family, env var, no arg
+  121 proxy-family, env var, valid arg
+  122 proxy-family, env var, invalid arg
+  123 proxy-family, env var, no-option
+  130 proxy-family command line, no arg (-option)
+  131 proxy-family, command line, valid arg (-option=)
+  132 proxy-family, command line, valid arg (--option=)
+00150 --proxy-source
+  150 proxy-source, command line, no arg
+  151 proxy-source, command line, valid arg
+  # 152 proxy-source, command line, invalid arg
+  153 proxy-source, command line, no-option
+  160 proxy-source, config, no arg
+  161 proxy-source, config, valid arg
+  # 162 proxy-source, config, invalid arg
+  163 proxy-source, config, no-option
+  170 proxy-source, env var, no arg
+  171 proxy-source, env var, valid arg
+  # 172 proxy-source, env var, invalid arg
+  173 proxy-source, env var, no-option
+  180 proxy-source command line, no arg (-option)
+  181 proxy-source, command line, valid arg (-option=)
+  182 proxy-source, command line, valid arg (--option=)
+00200 --proxy-source-port
+  200 proxy-source-port, command line, no arg
+  201 proxy-source-port, command line, valid arg
+  # 202 proxy-source-port, command line, invalid arg
+  203 proxy-source-port, command line, no-option
+  210 proxy-source-port, config, no arg
+  211 proxy-source-port, config, valid arg
+  # 212 proxy-source-port, config, invalid arg
+  213 proxy-source-port, config, no-option
+  220 proxy-source-port, env var, no arg
+  221 proxy-source-port, env var, valid arg
+  # 222 proxy-source-port, env var, invalid arg
+  223 proxy-source-port, env var, no-option
+  230 proxy-source-port command line, no arg (-option)
+  231 proxy-source-port, command line, valid arg (-option=)
+  232 proxy-source-port, command line, valid arg (--option=)
+00250 --proxy-dest
+  250 proxy-dest, command line, no arg
+  251 proxy-dest, command line, valid arg
+  # 252 proxy-dest, command line, invalid arg
+  253 proxy-dest, command line, no-option
+  260 proxy-dest, config, no arg
+  261 proxy-dest, config, valid arg
+  # 262 proxy-dest, config, invalid arg
+  263 proxy-dest, config, no-option
+  270 proxy-dest, env var, no arg
+  271 proxy-dest, env var, valid arg
+  # 272 proxy-dest, env var, invalid arg
+  273 proxy-dest, env var, no-option
+  280 proxy-dest command line, no arg (-option)
+  281 proxy-dest, command line, valid arg (-option=)
+  282 proxy-dest, command line, valid arg (--option=)
+00300 --proxy-dest-port
+  300 proxy-dest-port, command line, no arg
+  301 proxy-dest-port, command line, valid arg
+  # 302 proxy-dest-port, command line, invalid arg
+  303 proxy-dest-port, command line, no-option
+  310 proxy-dest-port, config, no arg
+  311 proxy-dest-port, config, valid arg
+  # 312 proxy-dest-port, config, invalid arg
+  313 proxy-dest-port, config, no-option
+  320 proxy-dest-port, env var, no arg
+  321 proxy-dest-port, env var, valid arg
+  # 322 proxy-dest-port, env var, invalid arg
+  323 proxy-dest-port, env var, no-option
+  330 proxy-dest-port command line, no arg (-option)
+  331 proxy-dest-port, command line, valid arg (-option=)
+  332 proxy-dest-port, command line, valid arg (--option=)
+00350 --proxy-protocol
+  350 proxy-protocol, command line, no arg
+  351 proxy-protocol, command line, valid arg
+  352 proxy-protocol, command line, invalid arg
+  353 proxy-protocol, command line, no-option
+  360 proxy-protocol, config, no arg
+  361 proxy-protocol, config, valid arg
+  362 proxy-protocol, config, invalid arg
+  363 proxy-protocol, config, no-option
+  370 proxy-protocol, env var, no arg
+  371 proxy-protocol, env var, valid arg
+  372 proxy-protocol, env var, invalid arg
+  373 proxy-protocol, env var, no-option
+  380 proxy-protocol command line, no arg (-option)
+  381 proxy-protocol, command line, valid arg (-option=)
+  382 proxy-protocol, command line, valid arg (--option=)
+00400 --proxy-command
+  400 proxy-command, command line, no arg
+  401 proxy-command, command line, valid arg
+  402 proxy-command, command line, invalid arg
+  403 proxy-command, command line, no-option
+  410 proxy-command, config, no arg
+  411 proxy-command, config, valid arg
+  412 proxy-command, config, invalid arg
+  413 proxy-command, config, no-option
+  420 proxy-command, env var, no arg
+  421 proxy-command, env var, valid arg
+  422 proxy-command, env var, invalid arg
+  423 proxy-command, env var, no-option
+  430 proxy-command command line, no arg (-option)
+  431 proxy-command, command line, valid arg (-option=)
+  432 proxy-command, command line, valid arg (--option=)
+
+
+05000 - misc
+  000 --proxy is mutually exclusive with --proxy-family
+  001 --proxy is mutually exclusive with --proxy-protocol
+  002 --proxy is mutually exclusive with --proxy-command
+  003 --proxy is mutually exclusive with --proxy-source
+  004 --proxy is mutually exclusive with --proxy-source-port
+  005 --proxy is mutually exclusive with --proxy-dest
+  006 --proxy is mutually exclusive with --proxy-dest-port
+-
+  010 --proxy-family TCP4      is legal with proxy-version=1
+  011 --proxy-family TCP6      is legal with proxy-version=1
+  012 --proxy-family AF_UNSPEC is legal with proxy-version=2
+  013 --proxy-family AF_INET   is legal with proxy-version=2
+  014 --proxy-family AF_INET6  is legal with proxy-version=2
+  015 --proxy-family AF_UNIX   is legal with proxy-version=2
+-
+  020 --proxy-family TCP4      is NOT legal with proxy-version=2
+  021 --proxy-family TCP6      is NOT legal with proxy-version=2
+  022 --proxy-family AF_UNSPEC is NOT legal with proxy-version=1
+  023 --proxy-family AF_INET   is NOT legal with proxy-version=1
+  024 --proxy-family AF_INET6  is NOT legal with proxy-version=1
+  025 --proxy-family AF_UNIX   is NOT legal with proxy-version=1
+-
+  030 --proxy-protocol UNSPEC is legal
+  031 --proxy-protocol STREAM is legal
+  032 --proxy-protocol DGRAM  is legal
+  035 --proxy-command LOCAL is legal
+  036 --proxy-command PROXY is legal
+
+
+
+./gen-tests.pl \
+    -n 400 \
+    -o proxy-command \
+    -v LOCAL \
+    -i FOOBAR \
+    -p 'PROXY command:' \
+    -d . \
+    -r \
+    -s '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-family AF_UNIX --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-version 2'
