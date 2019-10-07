@@ -19,7 +19,7 @@ Deliver a standard test email to user@example.com on port 25 of test-server.exam
 
 =back
 
-Deliver a standard test email, requiring CRAM-MD5 authentication as user me@example.com.  An "X-Test" header will be added to the email body.  The authentication password will be prompted for.
+Deliver a standard test email, requiring CRAM-MD5 authentication as user me@example.com.  An "X-Test" header will be added to the email body.  The authentication password will be prompted for if it cannot be obtained from your L<.netrc|Net::Netrc> file.
 
 =over 4
 
@@ -158,7 +158,7 @@ Options can be supplied via environment variables.  The variables are in the for
     $ SWAKS_OPT_from='fred@example.com'
     $ SWAKS_OPT_h_From='"Fred Example" <fred@example.com>'
 
-Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting SWAKS_OPT_server="" would cause Swaks to prompt the use for the server to which to connect at each invocation.
+Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting SWAKS_OPT_server="" would cause Swaks to prompt the user for the server to which to connect at each invocation.
 
 Because there is no inherent order in options provided by setting environment variables, the options are sorted before being processed.  This is not a great solution, but it at least defines the behavior, which would be otherwise undefined.  As an example, if both SWAKS_OPT_from and SWAKS_OPT_f were set, the value from SWAKS_OPT_from would be used, because it sorts after SWAKS_OPT_f.  Also as a result of not having an inherent order in environment processing, unsetting options with the "no-" prefix is unreliable.  It works if the option being turned off sorts before "no-", but fails if it sorts after. Because "no-" is primarily meant to operate between config types (for instance, unsetting from the command line an option that was set in a config file), this is not likely to be a problem.
 
