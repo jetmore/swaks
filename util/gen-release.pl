@@ -52,8 +52,19 @@ close(O);
 close(I);
 print "done\n";
 
-print "Building recipes.txt... ";
+print "Building installation.pod... ";
+open(I, "<$home/doc/installation.pod") || die "can't read from $home/doc/installation.pod: $!\n";
+open(O, ">$release_d/doc/installation.pod") || die "Can't write to installation.pod: $!\n";
+while (<I>) {
+  print O;
+}
+close(O);
+close(I);
+print "done\n";
+
+print "Building recipes.txt and installation.txt... ";
 $pod2text->parse_from_file("$release_d/doc/recipes.pod", "$release_d/doc/recipes.txt");
+$pod2text->parse_from_file("$release_d/doc/installation.pod", "$release_d/doc/installation.txt");
 print "done\n";
 
 # ugh, the resulting html sucks, skip it
