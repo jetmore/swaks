@@ -316,6 +316,7 @@ sub runAction {
 	elsif ($verb eq 'MERGE') {
 		debug('MERGE', join('; ', @args));
 		my $outFile = shift(@args);
+		my %post    = ();
 		open(O, ">$outFile") || die "MERGE: Can't open $outFile to write: $!\n";
 		#print "opened $outFile\n";
 		foreach my $part (@args) {
@@ -331,11 +332,24 @@ sub runAction {
 				#print "adding string $string to $outFile\n";
 				print O $string;
 			}
+			elsif ($part =~ /^(mode|owner|group):(.*)$/) {
+				$post{$1} = $2;
+			}
 			else {
 				die "MERGE: unknown part format $part\n";
 			}
 		}
 		close(O);
+
+		if (length($post{mode})) {
+			chmod(oct($post{mode}), $outFile);
+		}
+		elsif (length($post{owner})) {
+			chown($post{owner}, -1, $outFile);
+		}
+		elsif (length($post{group})) {
+			chown(-1, $post{group}, $outFile);
+		}
 	}
 	elsif ($verb eq 'MUNGE') {
 		debug('MUNGE', join('; ', @args));

@@ -1,0 +1,15 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+# create a .netrc
+pre action: MERGE %OUTDIR%/.netrc mode:0600 string:'machine host1.nodns.test.swaks.net login netrc-username1 password netrc-password1\nmachine host1.nodns.test.swaks.net login netrc-username2 password netrc-password2\nmachine host1.nodns.test.swaks.net login netrc-username3 password netrc-password3\n'
+
+# set $HOME to output dir so that Net::Netrc will look there for the file (hopefully)
+pre action: SET_ENV HOME %OUTDIR%
+
+# set PERL5LIB to our local test lib to pull in a version of Net::Netrc that uses $HOME instead of getpwuid()
+pre action: SET_ENV PERL5LIB %TESTDIR%/../lib/netrc-local
+
+#test action: CMD_CAPTURE %SWAKS% --dump AUTH --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server host2.nodns.test.swaks.net --auth --auth-password not-netrc
+
+
+auto: INTERACT '%SWAKS% --dump AUTH --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server host1.nodns.test.swaks.net --auth --auth-user CMDLINE-USER' 'Password:' 'PROMPT-PASSWORD'

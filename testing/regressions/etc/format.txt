@@ -107,7 +107,9 @@ Action verbs:
 	MERGE OUTPUTFILE PART [PART ...]
 		Take all the PARTs, concatenate them, and put them in OUTPUTFILE.  PARTs must have a prefix.  "file:/path/to/file" indicated that
 		/path/to/prefix is a file, and the file contents should be used.  "string:'some text'" indicates that "some text" should be used as
-		the content
+		the content.  mode:### indicates that the file's mode should be changed after writing (should be octal, like 0644).  owner:###
+		indicates that the file's owner should be changed after writing.  group:### indicates that the file's group should be changed
+		after writing. Owner and group are currently numeric only.
 
 	MUNGE file:FILE MUNGEVALUE
 		Oof, this is overly complex.  This is a filter for the FILE indicated by file:FILE.  That FILE will be opened, the requested munges

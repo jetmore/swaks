@@ -261,7 +261,12 @@
   001 --auth any supported
   002 --auth-extra REALM sets DOMAIN
   003 --auth-extra DOMAIN sets REALM
-
+  004 .netrc --auth will honor .netrc
+  005 .netrc --auth will honor .netrc (specific login)
+  006 .netrc --auth-password will override netrc (--auth-username provided)
+  007 .netrc --auth-password will override netrc (--auth-username not provided)
+  008 .netrc prompts as usual when valid netrc is present but there's no machine match
+  009 .netrc prompts as usual when valid netrc is present and there's a machine match, but no login match
 
 
 
