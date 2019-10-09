@@ -1346,6 +1346,16 @@ sub unencode_smtp {
 	}
 }
 
+sub obtain_from_netrc {
+	return if !avail('netrc');
+	my $field = shift;
+	my $login = shift;
+	my $login =
+	  Net::Netrc->lookup( $G::link{server}, defined $login ? $login : () )
+	  or return;
+	$login->$field;
+}
+
 sub interact {
 	my $prompt     = shift;
 	my $regexp     = shift;
@@ -1601,6 +1611,7 @@ sub load_dependencies {
 		auth_ntlm       => { name => "AUTH NTLM",                req => ['Authen::NTLM']      },
 		auth_digest_md5 => { name => "AUTH DIGEST-MD5",          req => ['Authen::SASL']      },
 		dns             => { name => "MX Routing",               req => ['Net::DNS']          },
+		netrc           => { name => '~/.netrc support',         req => ['Net::Netrc']        },
 		tls             => { name => "TLS",                      req => ['Net::SSLeay']       },
 		pipe            => { name => "Pipe Transport",           req => ['IPC::Open2']        },
 		socket          => { name => "Socket Transport",         req => ['IO::Socket']        },
@@ -3037,11 +3048,17 @@ sub process_args {
 					exit(10);
 				}
 			} else {
-				$n{a_user}   = $o->{auth_user} if (defined($o->{auth_user}));
+				$n{a_user} =
+				  defined $o->{auth_user}
+				  ? $o->{auth_user}
+				  : obtain_from_netrc('login');
 				$n{a_user} ||= interact("Username: ", 'SKIP');
 				$n{a_user}   = '' if ($n{a_user} eq '<>');
 
-				$n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
+				$n{a_pass} =
+				  defined $o->{auth_pass}
+				  ? $o->{auth_pass}
+				  : obtain_from_netrc( 'password', $n{a_user} );
 				$n{a_pass} ||= interact("Password: ", 'SKIP', 1);
 				$n{a_pass}   = '' if ($n{a_pass} eq '<>');
 
