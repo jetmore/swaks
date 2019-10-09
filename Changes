@@ -852,3 +852,4 @@
            supplied. Just error and exit instead
 * 20191005 Fixed typos in base.pod and recipes.pod
 > 20191006 released 20190914.0
+* 20191009 added .netrc support

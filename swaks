@@ -1347,9 +1347,9 @@ sub unencode_smtp {
 }
 
 sub obtain_from_netrc {
+	return if !avail('netrc');
 	my $field = shift;
 	my $login = shift;
-	require Net::Netrc;
 	my $login =
 	  Net::Netrc->lookup( $G::link{server}, defined $login ? $login : () )
 	  or return;
@@ -1611,6 +1611,7 @@ sub load_dependencies {
 		auth_ntlm       => { name => "AUTH NTLM",                req => ['Authen::NTLM']      },
 		auth_digest_md5 => { name => "AUTH DIGEST-MD5",          req => ['Authen::SASL']      },
 		dns             => { name => "MX Routing",               req => ['Net::DNS']          },
+		netrc           => { name => '~/.netrc support',         req => ['Net::Netrc']        },
 		tls             => { name => "TLS",                      req => ['Net::SSLeay']       },
 		pipe            => { name => "Pipe Transport",           req => ['IPC::Open2']        },
 		socket          => { name => "Socket Transport",         req => ['IO::Socket']        },

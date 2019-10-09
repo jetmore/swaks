@@ -516,11 +516,13 @@ This option is a compromise between --auth and --auth-optional.  If no common au
 
 =item -au, --auth-user [username]
 
-Provide the username to be used for authentication, or prompt the user for it if no argument is provided.  The string E<lt>E<gt> can be supplied to mean an empty username.
+Provide the username to be used for authentication.  If no username is provided, indicate that Swaks should attempt to find the username via .netrc (requires the Net::Netrc module).  If no username is provided
+ and cannot be found via .netrc,  the user will be prompted to provide one.  The string E<lt>E<gt> can be supplied to mean an empty username.
 
 =item -ap, --auth-password [password]
 
-Provide the password to be used for authentication, or prompt the user for it if no argument is provided.  The string E<lt>E<gt> can be supplied to mean an empty password.
+Provide the password to be used for authentication. If no password is provided, indicate that Swaks should attempt to find the password via .netrc (requires the Net::Netrc module).  If no password is provided
+and cannot be found via .netrc,  the user will be prompted to provide one.  The string E<lt>E<gt> can be supplied to mean an empty password.
 
 =item -ae, --auth-extra [KEYWORD=value[,...]]
 
