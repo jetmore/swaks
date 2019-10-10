@@ -1,9 +1,9 @@
-# Generated Wed Jul 10 23:15:49 2019 by ./gen-tests.pl '-n' '550' '-o' 'xclient-before-starttls' '-v' '' '-i' 'foo' '-d' '.' '-r' '-s' '%SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --xclient-port 26'
+# Generated Wed Jul 10 23:15:49 2019 by ./gen-tests.pl '-n' '550' '-o' 'xclient-before-starttls' '-v' '' '-i' 'foo' '-d' '.' '-r' '-s' '%SWAKS% --dump XCLIENT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --xclient-port 26'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: xclient-before-starttls, config, no-option
 
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'xclient-before-starttls \nno-xclient-before-starttls'
-test action: CMD_CAPTURE %SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --xclient-port 26 \
+test action: CMD_CAPTURE %SWAKS% --dump XCLIENT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --xclient-port 26 \
     --config %OUTDIR%/swaksrc-%TESTID%

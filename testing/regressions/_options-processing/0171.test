@@ -1,6 +1,6 @@
-pre action: SET_ENV SWAKS_OPT_from from-from@example.com
-pre action: SET_ENV SWAKS_OPT_f    from-f@example.com
+pre action: SET_ENV SWAKS_OPT_from from-from@host1.nodns.test.swaks.net
+pre action: SET_ENV SWAKS_OPT_f    from-f@host1.nodns.test.swaks.net
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
-test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --server ser.ver
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver

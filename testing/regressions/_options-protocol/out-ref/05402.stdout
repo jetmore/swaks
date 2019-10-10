@@ -1,4 +1,4 @@
-spawn %SWAKS_COMMAND% --dump AUTH,TLS,TRANSPORT,PROTOCOL --to recip@example.com --from sender@example.net --helo hstring --server ser.ver --protocol ssmtpa
+spawn %SWAKS_COMMAND% --dump AUTH,TLS,TRANSPORT,PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo hstring --server ser.ver --protocol ssmtpa
 Username: test-username
 Password: test-password
 Transport Info:
@@ -13,8 +13,8 @@ Transport Info:
 Protocol Info:
   protocol        = esmtp
   helo            = hstring
-  from            = sender@example.net
-  to              = recip@example.com
+  from            = sender@host2.nodns.test.swaks.net
+  to              = recip@host1.nodns.test.swaks.net
   force getpwuid  = FALSE
   quit after      = 
   drop after      = 

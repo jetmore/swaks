@@ -1,8 +1,8 @@
-# Generated Sat Jan  5 14:02:06 2019 by ./gen-tests.pl '-n' '800' '-o' 'protocol' '-v' 'LMTP' '-i' 'invalid-option' '-p' '' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT,PROTOCOL --to recip@example.com --from sender@example.net --helo helo-string --server ser.ver'
+# Generated Sat Jan  5 14:02:06 2019 by ./gen-tests.pl '-n' '800' '-o' 'protocol' '-v' 'LMTP' '-i' 'invalid-option' '-p' '' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT,PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo helo-string --server ser.ver'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: protocol, env var, no-option
 
 pre action: SET_ENV SWAKS_OPT_protocol LMTP
-test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT,PROTOCOL --to recip@example.com --from sender@example.net --helo helo-string --server ser.ver --no-protocol
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT,PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo helo-string --server ser.ver --no-protocol

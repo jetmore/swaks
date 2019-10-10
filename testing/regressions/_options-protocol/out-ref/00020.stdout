@@ -1,9 +1,9 @@
-spawn %SWAKS_COMMAND% --dump PROTOCOL --from recip@example.com --server ser.ver
+spawn %SWAKS_COMMAND% --dump PROTOCOL --from recip@host1.nodns.test.swaks.net --server ser.ver
 To: foo@bar.com
 Protocol Info:
   protocol        = esmtp
   helo            = LOCAL_HOST_NAME
-  from            = recip@example.com
+  from            = recip@host1.nodns.test.swaks.net
   to              = foo@bar.com
   force getpwuid  = FALSE
   quit after      = 

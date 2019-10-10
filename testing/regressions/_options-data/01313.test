@@ -1,8 +1,8 @@
-# Generated Sat Jul 13 12:46:57 2019 by ./gen-tests.pl '-n' '1300' '-o' 'nsf' '-v' '' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" %TESTING% --data "From example@example.com Fri Jun 23 02:56:55 2000%NEWLINE%From: Foo%NEWLINE%Subject: Bar%NEWLINE%%NEWLINE%test body"'
+# Generated Sat Jul 13 12:46:57 2019 by ./gen-tests.pl '-n' '1300' '-o' 'nsf' '-v' '' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" %TESTING% --data "From example@host1.nodns.test.swaks.net Fri Jun 23 02:56:55 2000%NEWLINE%From: Foo%NEWLINE%Subject: Bar%NEWLINE%%NEWLINE%test body"'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: nsf, config, no-option
 
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'nsf \nno-nsf'
-test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --config %OUTDIR%/swaksrc-%TESTID% --data "From example@example.com Fri Jun 23 02:56:55 2000%NEWLINE%From: Foo%NEWLINE%Subject: Bar%NEWLINE%%NEWLINE%test body"
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --config %OUTDIR%/swaksrc-%TESTID% --data "From example@host1.nodns.test.swaks.net Fri Jun 23 02:56:55 2000%NEWLINE%From: Foo%NEWLINE%Subject: Bar%NEWLINE%%NEWLINE%test body"

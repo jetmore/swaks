@@ -36,16 +36,16 @@ my @standardLines = (
 	'',
 );
 # tests 0 -> 350
-# my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --server "ser ver"';
+# my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"';
 
 # tests 400->650
-my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --tls --server "ser ver"';
+my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --tls --server "ser ver"';
 
 # test 700
-# my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --tls --tls-key %TESTDIR%/%TESTID%.test --server "ser ver"';
+# my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --tls --tls-key %TESTDIR%/%TESTID%.test --server "ser ver"';
 
 # test 750
-# my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --tls --tls-cert %TESTDIR%/%TESTID%.test --server "ser ver"';
+# my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --tls --tls-cert %TESTDIR%/%TESTID%.test --server "ser ver"';
 my $testNum;
 my $testText;
 

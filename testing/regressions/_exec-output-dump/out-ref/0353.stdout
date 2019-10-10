@@ -5,7 +5,7 @@ Authentication Info:
   show plaintext = TRUE
   hide password  = CUSTOM_HIDE_STRING
   allowed types  = LOGIN, PLAIN
-  extras         = DMD5-HOST=dmd5.example.com, REALM=realm.example.org
+  extras         = DMD5-HOST=dmd5.nodns.test.swaks.net, REALM=realm.nodns.test.swaks.net
   type map       = CRAM-MD5 = AUTHTYPE, CRAM-MD5
                    CRAM-SHA1 = CRAM-SHA1
                    DIGEST-MD5 = DIGEST-MD5

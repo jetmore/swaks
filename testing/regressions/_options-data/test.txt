@@ -474,7 +474,7 @@
     -i '' \
     -d . \
     -r \
-    -s '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" %TESTING%'
+    -s '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" %TESTING%'
 
     -p 'Body:' \
 
@@ -487,7 +487,7 @@ Date: C%DATE%\nTo: C%TO_ADDRESS%\nFrom: C%FROM_ADDRESS%\nSubject: Ctest %DATE%\n
 00021
 
 #    \
-#    -s '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-family AF_UNIX --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-version 2'
+#    -s '%SWAKS% --dump PROXY --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"  --proxy-family AF_UNIX --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-version 2'
 
 
 

@@ -1,3 +1,3 @@
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
-test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --server ser.ver --helo host.example.com --from from@example.com --body "This is the plain text argument to --body" --attach %TESTDIR%/body.txt --attach-name --attach %TESTDIR%/body.html
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver --helo host1.nodns.test.swaks.net --from from@host1.nodns.test.swaks.net --body "This is the plain text argument to --body" --attach %TESTDIR%/body.txt --attach-name --attach %TESTDIR%/body.html

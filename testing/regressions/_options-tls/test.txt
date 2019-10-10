@@ -247,7 +247,7 @@
   782 tls-key, command line, valid arg (--option=)
 
 
-perl -pni -e 's/example.com --server "ser ver"/example.com --tls --server "ser ver"/;' 00[67]??.test
+perl -pni -e 's/host1.nodns.test.swaks.net --server "ser ver"/host1.nodns.test.swaks.net --tls --server "ser ver"/;' 00[67]??.test
 perl -pni -e 's|/path/to/CAFile|%TESTDIR%/%TESTID%.test|;' 00[67]??.test
 
 

@@ -149,7 +149,7 @@ pre action: REMOVE_FILE %OUTDIR%/%TESTID%.out
 pre action: CREATE_FILE %REFDIR%/%TESTID%.out
 
 # Execute the test actions.  Note the line continuation.
-test action: CMD %SWAKS% --dump DATA --to user@example.com --from recip@example.com --server ser.ver  --output-file %OUTDIR%/%TESTID%.out \
+test action: CMD %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser.ver  --output-file %OUTDIR%/%TESTID%.out \
     --config %TESTDIR%/swaksrc-config-1
 # munge the output file
 test action: MUNGE file:%OUTDIR%/%TESTID%.out munge_standard
@@ -168,7 +168,7 @@ pre action: REMOVE_FILE %OUTDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stderr
 pre action: CREATE_FILE %REFDIR%/%TESTID%.stdout %REFDIR%/%TESTID%.stderr
 
 # Execute the test actions.  Note the line continuation.
-test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --server ser.ver  \
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser.ver  \
     --config %TESTDIR%/swaksrc-config-1
 # munge the output file
 test action: MUNGE file:%OUTDIR%/%TESTID%.stdout munge_standard
@@ -187,7 +187,7 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 # still have to design the actual test (note that this is a little contrived to have a reason to have stdout, stderr, and out.  Most
 # tests won't have a .out unless we're specifically testing an output file option)
-test action: CMD %SWAKS% --dump DATA --to user@example.com --from recip@example.com --server ser.ver  --output-file %OUTDIR%/%TESTID%.out \
+test action: CMD %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser.ver  --output-file %OUTDIR%/%TESTID%.out \
     --config %TESTDIR%/swaksrc-config-1
 ######################################
 
@@ -201,7 +201,7 @@ pre action: CREATE_FILE %REFDIR%/%TESTID%.stdout
 pre action: CREATE_FILE %REFDIR%/%TESTID%.stderr
 pre action: CREATE_FILE %REFDIR%/%TESTID%.out
 
-test action: CMD %SWAKS% --dump DATA --to user@example.com --from recip@example.com --server ser.ver  --output-file %OUTDIR%/%TESTID%.out \
+test action: CMD %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser.ver  --output-file %OUTDIR%/%TESTID%.out \
     --config %TESTDIR%/swaksrc-config-1
 
 test action: MUNGE file:%OUTDIR%/%TESTID%.stdout munge_standard

@@ -1,6 +1,6 @@
 App Info:
   X-Mailer = swaks v99999999.9 jetmore.org/john/code/swaks/
-  Cmd Line = %SWAKS_COMMAND% --from 'from@example.com' --to 'user@example.com' --helo 'host.example.com' --server 'ser.ver' --dump-as-body 'app,auth' --auth-user 'TEST_USER' --auth-password 'TEST_PASS' --dump 'app,auth,data'
+  Cmd Line = %SWAKS_COMMAND% --from 'from@host1.nodns.test.swaks.net' --to 'user@host1.nodns.test.swaks.net' --helo 'host1.nodns.test.swaks.net' --server 'ser.ver' --dump-as-body 'app,auth' --auth-user 'TEST_USER' --auth-password 'TEST_PASS' --dump 'app,auth,data'
 
 Authentication Info:
   auth           = required
@@ -20,15 +20,15 @@ Authentication Info:
 DATA Info:
   data = <<.
 Date: Wed, 03 Nov 1999 11:24:29 -0500
-To: user@example.com
-From: from@example.com
+To: user@host1.nodns.test.swaks.net
+From: from@host1.nodns.test.swaks.net
 Subject: test Wed, 03 Nov 1999 11:24:29 -0500
 Message-Id: <19991103112429.047942@localhost>
 X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
 
 App Info:
   X-Mailer = swaks v99999999.9 jetmore.org/john/code/swaks/
-  Cmd Line = %SWAKS_COMMAND% --from 'from@example.com' --to 'user@example.com' --helo 'host.example.com' --server 'ser.ver' --dump-as-body 'app,auth' --auth-user 'TEST_USER' --auth-password 'PROVIDED_BUT_REMOVED' --dump 'app,auth,data'
+  Cmd Line = %SWAKS_COMMAND% --from 'from@host1.nodns.test.swaks.net' --to 'user@host1.nodns.test.swaks.net' --helo 'host1.nodns.test.swaks.net' --server 'ser.ver' --dump-as-body 'app,auth' --auth-user 'TEST_USER' --auth-password 'PROVIDED_BUT_REMOVED' --dump 'app,auth,data'
 
 Authentication Info:
   auth           = required

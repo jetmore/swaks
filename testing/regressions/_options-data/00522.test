@@ -1,8 +1,8 @@
-# Generated Sat Jul 13 11:36:15 2019 by ./gen-tests.pl '-n' '500' '-o' 'attach-body' '-v' 'CUSTOM BODY' '-i' '/path/to/file.txt' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver"'
+# Generated Sat Jul 13 11:36:15 2019 by ./gen-tests.pl '-n' '500' '-o' 'attach-body' '-v' 'CUSTOM BODY' '-i' '/path/to/file.txt' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: attach-body, env var, invalid arg
 
 pre action: SET_ENV SWAKS_OPT_attach_body '/path/to/file.txt'
-test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver"
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"

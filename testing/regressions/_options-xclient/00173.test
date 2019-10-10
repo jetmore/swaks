@@ -5,4 +5,4 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 title: xclient-proto, env var, no-option
 
 pre action: SET_ENV SWAKS_OPT_xclient_proto ESMTP
-test action: CMD_CAPTURE %SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --no-xclient-proto
+test action: CMD_CAPTURE %SWAKS% --dump XCLIENT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --no-xclient-proto

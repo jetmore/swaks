@@ -1,10 +1,10 @@
-spawn %SWAKS_COMMAND% --dump PROTOCOL --to recip@example.com --from sender@example.net --server ser.ver --config /path/to/OUTDIR/swaksrc-00260
+spawn %SWAKS_COMMAND% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --server ser.ver --config /path/to/OUTDIR/swaksrc-00260
 Helo: test-helo-string
 Protocol Info:
   protocol        = esmtp
   helo            = test-helo-string
-  from            = sender@example.net
-  to              = recip@example.com
+  from            = sender@host2.nodns.test.swaks.net
+  to              = recip@host1.nodns.test.swaks.net
   force getpwuid  = FALSE
   quit after      = 
   drop after      = 
