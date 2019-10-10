@@ -1,7 +1,7 @@
 Protocol Info:
   protocol        = esmtp
   helo            = hstring
-  from            = sender@example.net
+  from            = sender@host2.nodns.test.swaks.net
   to              = 
   force getpwuid  = FALSE
   quit after      = auth

@@ -1,7 +1,7 @@
-# Generated Sat Jan  5 13:54:51 2019 by ./gen-tests.pl '-n' '550' '-o' 'timeout' '-v' '444' '-i' 'tuesday' '-p' 'Timeout:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --to recip@example.com --from sender@example.net --helo helo-string --server ser.ver'
+# Generated Sat Jan  5 13:54:51 2019 by ./gen-tests.pl '-n' '550' '-o' 'timeout' '-v' '444' '-i' 'tuesday' '-p' 'Timeout:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo helo-string --server ser.ver'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: timeout command line, no arg (-option)
 
-auto: INTERACT '%SWAKS% --dump PROTOCOL --to recip@example.com --from sender@example.net --helo helo-string --server ser.ver -timeout' 'Timeout:' '444'
+auto: INTERACT '%SWAKS% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo helo-string --server ser.ver -timeout' 'Timeout:' '444'

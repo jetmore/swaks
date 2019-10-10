@@ -1,9 +1,9 @@
-# Generated Fri Jul 12 16:52:47 2019 by ./gen-tests.pl '-n' '600' '-o' 'am' '-v' 'FOO=BAR' '-i' 'FOO' '-d' '.' '-r' '-s' '%SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au USER --ap PASS'
+# Generated Fri Jul 12 16:52:47 2019 by ./gen-tests.pl '-n' '600' '-o' 'am' '-v' 'FOO=BAR' '-i' 'FOO' '-d' '.' '-r' '-s' '%SWAKS% --dump AUTH --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --au USER --ap PASS'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: am, config, invalid arg
 
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'am FOO'
-test action: CMD_CAPTURE %SWAKS% --dump AUTH --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au USER --ap PASS \
+test action: CMD_CAPTURE %SWAKS% --dump AUTH --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --au USER --ap PASS \
     --config %OUTDIR%/swaksrc-%TESTID%

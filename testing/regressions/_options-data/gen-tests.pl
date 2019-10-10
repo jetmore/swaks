@@ -49,7 +49,7 @@ if (!$option) {
 }
 
 if (!$swaks) {
-	$swaks = '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver"';
+	$swaks = '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"';
 }
 
 if ($swaks !~ /%TESTING%/) {

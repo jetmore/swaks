@@ -1,7 +1,7 @@
 Transport Info:
   type            = socket-inet
   inet protocol   = any
-  server          = example.org
+  server          = host3.nodns.test.swaks.net
   port            = 25
   local interface = 
   local port      = 
@@ -10,8 +10,8 @@ Transport Info:
 Protocol Info:
   protocol        = esmtp
   helo            = helo-string
-  from            = sender@example.net
-  to              = recip@example.com,recip@example.net,recip@example.org
+  from            = sender@host2.nodns.test.swaks.net
+  to              = recip@host1.nodns.test.swaks.net,recip@host2.nodns.test.swaks.net,recip@host3.nodns.test.swaks.net
   force getpwuid  = FALSE
   quit after      = 
   drop after      = 

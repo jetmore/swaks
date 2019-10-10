@@ -2,4 +2,4 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 pre action: SET_ENV SWAKS_OPT_server test-value
 pre action: SET_ENV SWAKS_OPT_pipe /path/to/test-pipe
-test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net

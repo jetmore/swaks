@@ -1,8 +1,8 @@
 Protocol Info:
   protocol        = esmtp
   helo            = LOCAL_HOST_NAME
-  from            = sender@example.net
-  to              = recip@example.com
+  from            = sender@host2.nodns.test.swaks.net
+  to              = recip@host1.nodns.test.swaks.net
   force getpwuid  = FALSE
   quit after      = 
   drop after      = helo

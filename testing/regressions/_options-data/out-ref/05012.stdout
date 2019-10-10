@@ -1,6 +1,6 @@
 DATA Info:
   data = <<.
-From foo@example.com date string
+From foo@host1.nodns.test.swaks.net date string
 From: %FROM_ADDRESS%
 Subject: this is the test subject
 

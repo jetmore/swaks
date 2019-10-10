@@ -5,4 +5,4 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 title: tls-protocol, env var, no-option
 
 pre action: SET_ENV SWAKS_OPT_tls_protocol tlsv1_1,tlsv1_2
-test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@example.com --from recip@example.com --tls --server "ser ver" --no-tls-protocol
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --tls --server "ser ver" --no-tls-protocol

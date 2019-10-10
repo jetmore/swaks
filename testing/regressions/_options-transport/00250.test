@@ -1,7 +1,7 @@
-# Generated Tue Dec 25 18:59:40 2018 by ./gen-tests.pl '-n' '250' '-o' 'local-interface' '-v' '9.9.9.9' '-i' '' '-p' 'Interface:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver"'
+# Generated Tue Dec 25 18:59:40 2018 by ./gen-tests.pl '-n' '250' '-o' 'local-interface' '-v' '9.9.9.9' '-i' '' '-p' 'Interface:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: local-interface, command line, no arg
 
-auto: INTERACT '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver" --local-interface' 'Interface:' '9.9.9.9'
+auto: INTERACT '%SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver" --local-interface' 'Interface:' '9.9.9.9'

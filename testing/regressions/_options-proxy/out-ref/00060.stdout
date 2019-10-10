@@ -1,4 +1,4 @@
-spawn %SWAKS_COMMAND% --dump PROXY --to user@example.com --from recip@example.com --server ser ver --proxy FORCEPROXY --config /path/to/OUTDIR/swaksrc-00060
+spawn %SWAKS_COMMAND% --dump PROXY --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser ver --proxy FORCEPROXY --config /path/to/OUTDIR/swaksrc-00060
 PROXY version: 2
 PROXY Info:
   proxy       = yes

@@ -5,4 +5,4 @@ Transport Info:
   port            = 9999
   local interface = 9.9.9.9
   local port      = 8888
-  copy routing    = copy-routing-host.example.com
+  copy routing    = copy-routing-host1.nodns.test.swaks.net

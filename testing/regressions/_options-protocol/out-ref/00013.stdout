@@ -1,7 +1,7 @@
 Protocol Info:
   protocol        = esmtp
   helo            = LOCAL_HOST_NAME
-  from            = recip@example.com
+  from            = recip@host1.nodns.test.swaks.net
   to              = 
   force getpwuid  = FALSE
   quit after      = connect
