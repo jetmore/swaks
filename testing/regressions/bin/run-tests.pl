@@ -4,6 +4,10 @@
 #  - TEST_SWAKS=../../swaks bin/run-tests.pl _options-data
 # - example usage (run every test under _options-data matching ^05)
 #  - TEST_SWAKS=../../swaks bin/run-tests.pl _options-data ^05
+# - example usage (run every test without prompting the user, but save the results):
+#  - TEST_SWAKS=../../swaks bin/run-tests.pl --headless --outfile var/results.1570707905 _options-data
+# - example usage (only run tests that failed during the previous headless run):
+#  - TEST_SWAKS=../../swaks bin/run-tests.pl --errors --infile var/results.1570707905 _options-data
 
 use strict;
 use Getopt::Long;
@@ -11,8 +15,12 @@ use Sys::Hostname;
 use Term::ReadKey;
 use Text::ParseWords;
 
+# --headless - don't prompt the user, just run and display the results
+# --outfile - save the results in a way that can be read by infile
+# --infile - load state of a previous run.  Only really useful in conjunction with --errors
+# --errors - load the state from --infile.  Only run tests that were marked as failures in the infile state.
 my $opts = {};
-GetOptions($opts, 'headless|h!', 'bogusopt=s') || die "Couldn't understand options\n";
+GetOptions($opts, 'headless|h!', 'outfile|o=s', 'infile|i=s', 'errors|e!', 'bogusopt=s') || die "Couldn't understand options\n";
 
 my $testDir =  shift || die "Please provide the path to the test directory\n";
 $testDir    =~ s|/+$||;
@@ -44,9 +52,23 @@ if (!-d $refDir) {
 	mkdir($refDir) || die "Can't mkdir($refDir): $!\n";
 }
 
-opendir(D, $testDir) || die "Couldn't opendir($testDir): $!\n";
-my(@testDefs) = grep(/^\d+\.test/, readdir(D));
-closedir(D);
+my @testDefs = ();
+if ($opts->{errors}) {
+	die "--infile is required when running with --errors\n" if (!$opts->{infile});
+	open(I, "<$opts->{infile}") || die "Can't open infile $opts->{infile}: $!\n";
+	while (my $line = <I>) {
+		chomp();
+		if ($line =~ m|^$testDir/(\d+): FAIL|) {
+			push(@testDefs, "$1.test");
+		}
+	}
+	close(I);
+}
+else {
+	opendir(D, $testDir) || die "Couldn't opendir($testDir): $!\n";
+	(@testDefs) = grep(/^\d+\.test/, readdir(D));
+	closedir(D);
+}
 
 TEST_EXECUTION:
 foreach my $testFile (sort @testDefs) {
@@ -92,7 +114,7 @@ sub runTest {
 	}
 
 	if ($obj->{'skip'}) {
-		print "$testDir/$obj->{id}: SKIP: $obj->{'skip'}\n";
+		saveResult("$testDir/$obj->{id}: SKIP: $obj->{'skip'}");
 		return;
 	}
 
@@ -119,14 +141,23 @@ sub runTest {
 
 	if ($obj->{'test result'}) {
 		my $failed = runResult($obj, $allTokens, $obj->{'test result'});
-		if ($failed) {
-			print "$testDir/$obj->{id}: FAIL ($failed)\n";
-		}
-		else {
-			print "$testDir/$obj->{id}: PASS\n";
-		}
+		my $result = "$testDir/$obj->{id}: " . ($failed ? "FAIL ($failed)" : 'PASS');
+		saveResult($result);
 	}
 }
+
+sub saveResult {
+	my $string = shift;
+
+	print $string, "\n";
+
+	if ($opts->{outfile}) {
+		open(O, ">>$opts->{outfile}") || die "Can't open $opts->{outfile} to write: $!\n"; # cache this in future
+		print O $string, "\n";
+		close(O);
+	}
+}
+
 
 sub runResult {
 	my $testObj = shift;
