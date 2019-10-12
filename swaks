@@ -105,8 +105,8 @@ sub open_link {
 		push(@extra_options, "LocalAddr", $G::link{lint})  if ($G::link{lint});
 		push(@extra_options, "LocalPort", $G::link{lport}) if ($G::link{lport});
 
-		# INET6 also support v4, so use it for everything if it's available.  That
-		# allows the module to handle A vs AAAA records on domain lookups where te
+		# INET6 also supports v4, so use it for everything if it's available.  That
+		# allows the module to handle A vs AAAA records on domain lookups where the
 		# user hasn't set a specific ip version to be used.  If INET6 isn't available
 		# and it's a domain that only has AAAA records, INET will just handle it like
 		# a bogus record and we just won't be able to connect
@@ -2031,13 +2031,14 @@ sub load_args {
 		}
 	}
 
-	# OK, %ARGS contains all the settings from the config file.  No do it again
+	# OK, %ARGS contains all the settings from the config file.  Now do it again
 	# with SWAKS_OPT_* environment variables
 	@ARGV = ();
 	foreach my $v (sort keys %ENV) {
 		if ($v =~ m|^SWAKS_OPT_(.*)$|) {
 			my $tv = $1; $tv =~ s|_|-|g;
-			push(@ARGV, "--$tv", $ENV{$v});
+			push(@ARGV, "--$tv");
+			push(@ARGV, $ENV{$v}) if (length($ENV{$v}));
 		}
 	}
 	fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));

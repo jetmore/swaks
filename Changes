@@ -852,6 +852,9 @@
            supplied. Just error and exit instead
 * 20191005 Fixed typos in base.pod and recipes.pod
 > 20191006 released 20190914.0
-* 20191008 added skeleton of installation doc (missingcharacter)
-* 20191009 added .netrc support (fany)
-* 20191012 added --tls-sni option (lightsey)
+* 20191008 Added skeleton of installation doc (missingcharacter)
+* 20191009 Added .netrc support (fany)
+* 20191012 Added --tls-sni option (lightsey)
+* 20191012 Fix bug which treated `SWAKS_OPT_foo=` as `--foo ''` instead of
+           `--foo`.  This affected error handling for options which
+           required args.

@@ -19,8 +19,9 @@ use Text::ParseWords;
 # --outfile - save the results in a way that can be read by infile
 # --infile - load state of a previous run.  Only really useful in conjunction with --errors
 # --errors - load the state from --infile.  Only run tests that were marked as failures in the infile state.
+# --skip-only - temporarily ignore the skip directive in a test and run it anyway. Ignore non-skip tests
 my $opts = {};
-GetOptions($opts, 'headless|h!', 'outfile|o=s', 'infile|i=s', 'errors|e!', 'bogusopt=s') || die "Couldn't understand options\n";
+GetOptions($opts, 'headless|h!', 'outfile|o=s', 'infile|i=s', 'errors|e!', 'skip-only') || die "Couldn't understand options\n";
 
 my $testDir =  shift || die "Please provide the path to the test directory\n";
 $testDir    =~ s|/+$||;
@@ -113,7 +114,10 @@ sub runTest {
 		}
 	}
 
-	if ($obj->{'skip'}) {
+	if ($opts->{'skip-only'} && !$obj->{'skip'}) {
+		return;
+	}
+	elsif (!$opts->{'skip-only'} && $obj->{'skip'}) {
 		saveResult("$testDir/$obj->{id}: SKIP: $obj->{'skip'}");
 		return;
 	}
@@ -466,7 +470,11 @@ sub readTestFile {
 					map { push(@{$obj->{'test action'}}, "MUNGE file:%OUTDIR%/$_ munge_standard"); } (@files);
 				}
 				elsif ($type eq 'COMPARE_FILE') {
-					map { push(@{$obj->{'test result'}}, "COMPARE_FILE %REFDIR%/$_ %OUTDIR%/$_"); } (@files);
+					# if we're comparing stdout and stderr, manipulate the list to compare stderr first.  It turns
+					# out that seeing errors first is much more useful, but I don't want to modify all the existing tests
+					my @filesSorted = grep(/\.stderr/, @files);
+					push(@filesSorted, grep(/\.stdout/, @files), grep(!/\.(stdout|stderr)/, @files));
+					map { push(@{$obj->{'test result'}}, "COMPARE_FILE %REFDIR%/$_ %OUTDIR%/$_"); } (@filesSorted);
 				}
 				elsif ($type eq 'INTERACT') {
 					my $file     = '%OUTDIR%/%TESTID%.expect';
