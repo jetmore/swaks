@@ -452,7 +452,7 @@ Provide a path to a file containing the local private key Swaks should use if TL
 
 Get a copy of the TLS peer's certificate.  If no argument is given, it will be displayed to STDOUT.  If an argument is given it is assumed to be a filesystem path specifying where the certificate should be written.  The saved certificate can then be examined using standard tools such as the openssl command.  If a file is specified its contents will be overwritten.
 
-=item --tls-sni-hostname HOSTNAME_STRING
+=item --tls-sni SERVERNAME
 
 Specify the Server Name Indication field to send when the TLS connection is initiated.
 
