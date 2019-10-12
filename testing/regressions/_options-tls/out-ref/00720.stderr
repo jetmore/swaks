@@ -1,1 +1,1 @@
-*** --tls-cert and --tls-key require each other.  Exiting
+Option tls-cert requires an argument
