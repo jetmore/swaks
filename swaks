@@ -442,6 +442,14 @@ sub start_tls {
 		return(0);
 	}
 
+	if ($G::tls_sni_hostname) {
+		if (!Net::SSLeay::set_tlsext_host_name($t{ssl}, $G::tls_sni_hostname)) {
+			$t{res} = "Unable to set SNI hostname to $G::tls_sni_hostname: "
+			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+			return(0);
+		}
+	}
+
 	if ($G::link{type} eq 'pipe') {
 		Net::SSLeay::set_wfd($t{ssl}, fileno($G::link{sock}{wr})); # error check?
 		Net::SSLeay::set_rfd($t{ssl}, fileno($G::link{sock}{re})); # error check?
@@ -1744,6 +1752,9 @@ sub get_option_struct {
 		# save tls peer certificate
 		{ opts    => ['tls-get-peer-cert'],                                suffix => ':s',
 		  okey    => 'tls_get_peer_cert',                                  type   => 'scalar', },
+		# hostname to request in TLS SNI header
+		{ opts    => ['tls-sni-hostname'],                                 suffix => '=s',
+		  okey    => 'tls_sni_hostname',                                   type   => 'scalar', },
 		# require verification of server certificate
 		{ opts    => ['tls-verify'],                                       suffix => '',
 		  okey    => 'tls_verify',                                         type   => 'scalar', },
@@ -2761,10 +2772,11 @@ sub process_args {
 				exit(10);
 			}
 		}
-		$G::tls_verify  = 1 if (defined($o->{tls_verify}));
-		$G::tls_cipher  = $o->{tls_cipher};
-		$G::tls_cert    = $o->{tls_cert};
-		$G::tls_key     = $o->{tls_key};
+		$G::tls_verify       = 1 if (defined($o->{tls_verify}));
+		$G::tls_sni_hostname = $o->{tls_sni_hostname};
+		$G::tls_cipher       = $o->{tls_cipher};
+		$G::tls_cert         = $o->{tls_cert};
+		$G::tls_key          = $o->{tls_key};
 		if (($G::tls_cert || $G::tls_key) && !($G::tls_cert && $G::tls_key)) {
 			ptrans(12, "--tls-cert and --tls-key require each other.  Exiting");
 			exit(1);

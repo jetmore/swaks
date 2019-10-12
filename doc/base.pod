@@ -418,7 +418,7 @@ Attempt to use STARTTLS if available, continue with normal transaction if TLS wa
 
 Attempt to use STARTTLS if available.  Proceed with transaction if TLS is negotiated successfully or STARTTLS not advertised.  If STARTTLS is advertised but TLS negotiations fail, treat as an error and abort transaction.  Due to the caveat noted above, this is a much saner option than --tls-optional.
 
-=item --tlsc, --tls-on-connect
+=item -tlsc, --tls-on-connect
 
 Initiate a TLS connection immediately on connection.  Following common convention, if this option is specified the default port changes from 25 to 465, though this can still be overridden with the --port option.
 
@@ -428,7 +428,7 @@ Specify which protocols to use (or not use) when negotiating TLS.  At the time o
 
 The specification string is a comma-delimited list of protocols that can be used or not used.  For instance 'tlsv1,tlsv1_1' will only succeed if one of those two protocols is available on both the client and the server.  Conversely, 'no_sslv2,no_sslv3' will attempt to negotiate any protocol except sslv2 and sslv3.  The two forms of specification cannot be mixed.
 
-=item -tls-cipher CIPHER_STRING
+=item --tls-cipher CIPHER_STRING
 
 The argument to this option is passed to the underlying OpenSSL library to set the list of acceptable ciphers to the be used for the connection.  The format of this string is opaque to Swaks and is defined in http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT.  A brief example would be --tls-cipher '3DES:+RSA'.
 
@@ -451,6 +451,10 @@ Provide a path to a file containing the local private key Swaks should use if TL
 =item --tls-get-peer-cert [/path/to/file]
 
 Get a copy of the TLS peer's certificate.  If no argument is given, it will be displayed to STDOUT.  If an argument is given it is assumed to be a filesystem path specifying where the certificate should be written.  The saved certificate can then be examined using standard tools such as the openssl command.  If a file is specified its contents will be overwritten.
+
+=item --tls-sni-hostname HOSTNAME_STRING
+
+Specify the Server Name Indication field to send when the TLS connection is initiated.
 
 =back
 
