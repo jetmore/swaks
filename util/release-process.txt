@@ -12,8 +12,6 @@ export SWAKSDIR=/Users/jetmore/Documents/git/swaks
 
 # Update Changes, add a release entry
 
-# review RELEASE/README.txt and update with detailed changes and high-level overview of release
-
 # Generate a skeleton of the announce blog post.  Don't publish it yet, but you should
 # draft and save it so you can have the URL for the following docs
 
@@ -38,10 +36,15 @@ aspell --mode html check doc/index.html
 aspell check RELEASE/README.txt
 aspell check doc/recipes.pod
 aspell check doc/base.pod
+aspell check doc/installation.pod
 aspell check README.md
 
 # run the actual script (this preps some stuff, but this won't be the final release):
 $SWAKSDIR/util/gen-release.pl $RELEASE
+
+# review RELEASE/README.txt and update with detailed changes and high-level overview of release
+
+aspell check RELEASE/README.txt
 
 # Create the release gz and post on the website
 mv RELEASE swaks-$RELEASE
