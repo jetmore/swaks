@@ -1,53 +1,56 @@
 #!/usr/bin/perl
 
 use strict;
+use Getopt::Std;
 
 my $comment    = "# Generated " . scalar(localtime) . " by $0 " . join(' ', map { "'$_'" } @ARGV);
 
-my $outdir     = shift;
-my $startnum   = shift;
-my $option     = shift;
-my $validArg   = shift;
-my $invalidArg = shift;
-my $forceRegen = shift;
+my %opts = ();
+getopts('d:n:o:v:i:p:s:r', \%opts) || die "Couldn't process opts\n";
+# d - outdir
+# n - startnum
+# o - option name
+# v - valid arg string
+# i - invalid arg string
+# p - empty arg will prompt.  Argument is the prompt string to expect
+# s - swaks command.  Provide this on command line if different than the standard swaks encoded in this script
+# r - force regenerate file even if file already exists
 
-if (!$outdir || !-d $outdir) {
-	print STDERR "Usage: $0 OUTDIR STARTNUM OPTION VALID-ARG INVALID-ARG\n";
-	print STDERR "Invalid OUTDIR '$outdir'\n";
-	exit;
-}
-
-if (!length($startnum) || $startnum !~ /^\d+$/) {
-	print STDERR "Usage: $0 OUTDIR STARTNUM OPTION VALID-ARG INVALID-ARG\n";
-	print STDERR "Invalid STARTNUM '$startnum'\n";
-	exit;
-}
-
-if (!$option) {
-	print STDERR "Usage: $0 OUTDIR STARTNUM OPTION [VALID-ARG] [INVALID-ARG]\n";
-	print STDERR "Invalid OPTION '$option'\n";
-	exit;
-}
-
+my $outdir     = $opts{'d'};
+my $startnum   = $opts{'n'};
+my $option     = $opts{'o'};
+my $validArg   = $opts{'v'};
+my $invalidArg = $opts{'i'};
+my $prompt     = $opts{'p'};
+my $swaks      = $opts{'s'};
+my $forceRegen = $opts{'r'};
+my $testNum;
+my $testText;
 my @standardLines = (
 	$comment,
 	'',
 	'auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr',
 	'',
 );
-# tests 0 -> 350
-# my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"';
 
-# tests 400->650
-my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --tls --server "ser ver"';
+if (!$outdir || !-d $outdir) {
+	print STDERR "Invalid OUTDIR '$outdir'\n";
+	exit;
+}
 
-# test 700
-# my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --tls --tls-key %TESTDIR%/%TESTID%.test --server "ser ver"';
+if (!length($startnum) || $startnum !~ /^\d+$/) {
+	print STDERR "Invalid STARTNUM '$startnum'\n";
+	exit;
+}
 
-# test 750
-# my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --tls --tls-cert %TESTDIR%/%TESTID%.test --server "ser ver"';
-my $testNum;
-my $testText;
+if (!$option) {
+	print STDERR "Invalid OPTION '$option'\n";
+	exit;
+}
+
+if (!$swaks) {
+	$swaks = '%SWAKS% --dump XCLIENT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"';
+}
 
 printf "%05d --$option\n", $startnum;
 
@@ -55,17 +58,25 @@ printf "%05d --$option\n", $startnum;
 
 $testNum  = $startnum + 0;
 $testText = "$option, command line, no arg";
-saveTest($testNum, $testText, [
-	@standardLines, "title: $testText", '',
-	$swaks . " \\\n    --$option",
-]);
+if ($prompt) {
+	saveTest($testNum, $testText, [
+		@standardLines, "title: $testText", '',
+		"auto: INTERACT '$swaks --$option' '$prompt' '$validArg'",
+	]);
+}
+else {
+	saveTest($testNum, $testText, [
+		@standardLines, "title: $testText", '',
+		'test action: CMD_CAPTURE ' . $swaks . " \\\n    --$option",
+	]);
+}
 
 $testNum  = $startnum + 1;
 $testText = "$option, command line, valid arg";
 if ($validArg) {
 	saveTest($testNum, $testText, [
 		@standardLines, "title: $testText", '',
-		$swaks . " \\\n    --$option $validArg"
+		'test action: CMD_CAPTURE ' . $swaks . " \\\n    --$option $validArg"
 	]);
 }
 else {
@@ -77,7 +88,7 @@ $testText = "$option, command line, invalid arg";
 if ($invalidArg) {
 	saveTest($testNum, $testText, [
 		@standardLines, "title: $testText", '',
-		$swaks . " \\\n    --$option $invalidArg"
+		'test action: CMD_CAPTURE ' . $swaks . " \\\n    --$option $invalidArg"
 	]);
 }
 else {
@@ -88,19 +99,27 @@ $testNum  = $startnum + 3;
 $testText = "$option, command line, no-option";
 saveTest($testNum, $testText, [
 	@standardLines, "title: $testText", '',
-	$swaks . " \\\n    --$option $validArg --no-$option"
+	'test action: CMD_CAPTURE ' . $swaks . " \\\n    --$option $validArg --no-$option"
 ]);
 
 #####################
 
 $testNum  = $startnum + 10;
 $testText = "$option, config, no arg";
-saveTest($testNum, $testText, [
-	@standardLines, "title: $testText", '',
-	"pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'$option'",
-	$swaks . " \\\n    --config %OUTDIR%/swaksrc-%TESTID%"
-]);
-
+if ($prompt) {
+	saveTest($testNum, $testText, [
+		@standardLines, "title: $testText", '',
+		"pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'$option'",
+		"auto: INTERACT '$swaks --config %OUTDIR%/swaksrc-%TESTID%' '$prompt' '$validArg'",
+	]);
+}
+else {
+	saveTest($testNum, $testText, [
+		@standardLines, "title: $testText", '',
+		"pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'$option'",
+		'test action: CMD_CAPTURE ' . $swaks . " \\\n    --config %OUTDIR%/swaksrc-%TESTID%"
+	]);
+}
 
 $testNum  = $startnum + 11;
 $testText = "$option, config, valid arg";
@@ -108,7 +127,7 @@ if ($validArg) {
 	saveTest($testNum, $testText, [
 		@standardLines, "title: $testText", '',
 		"pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'$option $validArg'",
-		$swaks . " \\\n    --config %OUTDIR%/swaksrc-%TESTID%"
+		'test action: CMD_CAPTURE ' . $swaks . " \\\n    --config %OUTDIR%/swaksrc-%TESTID%"
 	]);
 }
 else {
@@ -121,7 +140,7 @@ if ($invalidArg) {
 	saveTest($testNum, $testText, [
 		@standardLines, "title: $testText", '',
 		"pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'$option $invalidArg'",
-		$swaks . " \\\n    --config %OUTDIR%/swaksrc-%TESTID%"
+		'test action: CMD_CAPTURE ' . $swaks . " \\\n    --config %OUTDIR%/swaksrc-%TESTID%"
 	]);
 }
 else {
@@ -133,7 +152,7 @@ $testText = "$option, config, no-option";
 saveTest($testNum, $testText, [
 	@standardLines, "title: $testText", '',
 	"pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'$option $validArg\\nno-$option'",
-	$swaks . " \\\n    --config %OUTDIR%/swaksrc-%TESTID%"
+	'test action: CMD_CAPTURE ' . $swaks . " \\\n    --config %OUTDIR%/swaksrc-%TESTID%"
 ]);
 
 #####################
@@ -143,12 +162,20 @@ $varOption =~ s/-/_/g;
 
 $testNum  = $startnum + 20;
 $testText = "$option, env var, no arg";
-saveTest($testNum, $testText, [
-	@standardLines, "title: $testText", '',
-	"pre action: SET_ENV SWAKS_OPT_$varOption",
-	$swaks
-]);
-
+if ($prompt) {
+	saveTest($testNum, $testText, [
+		@standardLines, "title: $testText", '',
+		"pre action: SET_ENV SWAKS_OPT_$varOption",
+		"auto: INTERACT '$swaks' '$prompt' '$validArg'",
+	]);
+}
+else {
+	saveTest($testNum, $testText, [
+		@standardLines, "title: $testText", '',
+		"pre action: SET_ENV SWAKS_OPT_$varOption",
+		'test action: CMD_CAPTURE ' . $swaks
+	]);
+}
 
 $testNum  = $startnum + 21;
 $testText = "$option, env var, valid arg";
@@ -156,7 +183,7 @@ if ($validArg) {
 	saveTest($testNum, $testText, [
 		@standardLines, "title: $testText", '',
 		"pre action: SET_ENV SWAKS_OPT_$varOption $validArg",
-		$swaks
+		'test action: CMD_CAPTURE ' . $swaks
 	]);
 }
 else {
@@ -169,7 +196,7 @@ if ($invalidArg) {
 	saveTest($testNum, $testText, [
 		@standardLines, "title: $testText", '',
 		"pre action: SET_ENV SWAKS_OPT_$varOption $invalidArg",
-		$swaks
+		'test action: CMD_CAPTURE ' . $swaks
 	]);
 }
 else {
@@ -181,24 +208,32 @@ $testText = "$option, env var, no-option";
 saveTest($testNum, $testText, [
 	@standardLines, "title: $testText", '',
 	"pre action: SET_ENV SWAKS_OPT_$varOption $validArg",
-	$swaks . " --no-$option"
+	'test action: CMD_CAPTURE ' . $swaks . " --no-$option"
 ]);
 
 #########################
 
 $testNum  = $startnum + 30;
 $testText = "$option command line, no arg (-option)";
-saveTest($testNum, $testText, [
-	@standardLines, "title: $testText", '',
-	$swaks . " \\\n    -$option"
-]);
+if ($prompt) {
+	saveTest($testNum, $testText, [
+		@standardLines, "title: $testText", '',
+		"auto: INTERACT '$swaks -$option' '$prompt' '$validArg'",
+	]);
+}
+else {
+	saveTest($testNum, $testText, [
+		@standardLines, "title: $testText", '',
+		'test action: CMD_CAPTURE ' . $swaks . " \\\n    -$option"
+	]);
+}
 
 $testNum  = $startnum + 31;
 $testText = "$option, command line, valid arg (-option=)";
 if ($validArg) {
 	saveTest($testNum, $testText, [
 		@standardLines, "title: $testText", '',
-		$swaks . " \\\n    -$option=$validArg"
+		'test action: CMD_CAPTURE ' . $swaks . " \\\n    -$option=$validArg"
 	]);
 }
 else {
@@ -210,7 +245,7 @@ $testText = "$option, command line, valid arg (--option=)";
 if ($validArg) {
 	saveTest($testNum, $testText, [
 		@standardLines, "title: $testText", '',
-		$swaks . " \\\n    --$option=$validArg"
+		'test action: CMD_CAPTURE ' . $swaks . " \\\n    --$option=$validArg"
 	]);
 }
 else {

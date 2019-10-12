@@ -1753,7 +1753,7 @@ sub get_option_struct {
 		{ opts    => ['tls-get-peer-cert'],                                suffix => ':s',
 		  okey    => 'tls_get_peer_cert',                                  type   => 'scalar', },
 		# hostname to request in TLS SNI header
-		{ opts    => ['tls-sni-hostname'],                                 suffix => '=s',
+		{ opts    => ['tls-sni'],                                          suffix => '=s',
 		  okey    => 'tls_sni_hostname',                                   type   => 'scalar', },
 		# require verification of server certificate
 		{ opts    => ['tls-verify'],                                       suffix => '',
@@ -3305,6 +3305,7 @@ sub get_running_state {
 				"  local key           = $G::tls_key",
 				"  local cipher list   = $G::tls_cipher",
 				"  ca path             = $G::tls_ca_path",
+				"  sni string          = $G::tls_sni_hostname",
 				'  verify server cert  = ' . ($G::tls_verify ? 'TRUE' : 'FALSE'),
 				'  available protocols = ' . join(', ', @G::tls_supported_protocols),
 				'  requested protocols = ' . join(', ', @G::tls_protocols),
