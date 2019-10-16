@@ -98,7 +98,7 @@ sub teardown_link {
 
 sub open_link {
 	if ($G::link{type} eq 'socket-inet') {
-		ptrans(11, "Trying $G::link{server}:$G::link{port}...");
+		ptrans(11, 'Trying ' . $G::link{server} . ':' . $G::link{port} . '...');
 		$@ = "";
 
 		my @extra_options = ();
@@ -141,16 +141,16 @@ sub open_link {
 		}
 		ptrans(11, "Connected to $G::link{server}.");
 	} elsif ($G::link{type} eq 'socket-unix') {
-		ptrans(11, "Trying $G::link{sockfile}...");
+		ptrans(11, 'Trying ' . $G::link{sockfile} . '...');
 		$SIG{PIPE} = 'IGNORE';
 		$@ = "";
 		$G::link{sock} = IO::Socket::UNIX->new(Peer => $G::link{sockfile}, Timeout => $G::link{timeout});
 
 		if ($@) {
-			ptrans(12, "Error connecting to $G::link{sockfile}:\n\t$@");
+			ptrans(12, 'Error connecting to ' . $G::link{sockfile} . ":\n\t$@");
 			exit(2);
 		}
-		ptrans(11, "Connected to $G::link{sockfile}.");
+		ptrans(11, 'Connected to ' . $G::link{sockfile} . '.');
 	} elsif ($G::link{type} eq 'pipe') {
 		$SIG{PIPE} = 'IGNORE';
 		$SIG{CHLD} = 'IGNORE';
@@ -158,14 +158,14 @@ sub open_link {
 		eval{ open2($G::link{sock}{re}, $G::link{sock}{wr}, $G::link{process}); };
 
 		if ($@) {
-			ptrans(12, "Error connecting to $G::link{process}:\n\t$@");
+			ptrans(12, 'Error connecting to ' . $G::link{process} . ":\n\t$@");
 			exit(2);
 		}
 		select((select($G::link{sock}{wr}), $| = 1)[0]);
 		select((select($G::link{sock}{re}), $| = 1)[0]);
-		ptrans(11, "Connected to $G::link{process}.");
+		ptrans(11, 'Connected to ' . $G::link{process} . '.');
 	} else {
-		ptrans(12, "Unknown or unimplemented connection type $G::link{type}");
+		ptrans(12, 'Unknown or unimplemented connection type ' . $G::link{type});
 		exit(3);
 	}
 }
@@ -957,7 +957,7 @@ sub do_smtp_rcpt {
 	$G::smtp_rcpt_total = scalar(@a);
 
 	foreach my $addr (@a) {
-		transact(cxn_string => "RCPT TO:<$addr>", expect => '250', defer => 1,
+		transact(cxn_string => 'RCPT TO:<' . $addr . '>', expect => '250', defer => 1,
 		         fail_callback => \&smtp_rcpt_callback);
 	}
 
@@ -1072,7 +1072,7 @@ sub do_smtp_proxy {
 		if ($G::proxy{raw}) {
 			$send = "PROXY $G::proxy{raw}";
 		} else {
-			$send = "PROXY $G::proxy{attr}{family} $G::proxy{attr}{source} $G::proxy{attr}{dest} $G::proxy{attr}{source_port} $G::proxy{attr}{dest_port}";
+			$send = join(' ', 'PROXY', $G::proxy{attr}{family}, $G::proxy{attr}{source}, $G::proxy{attr}{dest}, $G::proxy{attr}{source_port}, $G::proxy{attr}{dest_port});
 		}
 	}
 
@@ -1974,8 +1974,8 @@ sub load_args {
 	my $skip_config       = 0;
 	my $config_is_default = 1;
 	foreach my $v (qw(SWAKS_HOME HOME LOGDIR)) {
-		if (exists($ENV{$v}) && length($ENV{$v}) && -f "$ENV{$v}/.swaksrc") {
-			$config_file = "$ENV{$v}/.swaksrc";
+		if (exists($ENV{$v}) && length($ENV{$v}) && -f $ENV{$v} . '/.swaksrc') {
+			$config_file = $ENV{$v} . '/.swaksrc';
 			last;
 		}
 	}
@@ -2010,7 +2010,7 @@ sub load_args {
 		my @configs = ('&DATA');
 		push(@configs, $config_file) if ($config_file);
 		foreach my $configf (@configs) {
-			if (open(C, "<$configf")) {
+			if (open(C, '<' . $configf)) {
 				# "#" in col 0 is a comment
 				while (defined(my $m = <C>)) {
 					next if ($m =~ m|^#|);
@@ -2021,7 +2021,7 @@ sub load_args {
 				close(C);
 			} elsif (!$config_is_default && $configf eq $config_file) {
 				# we only print an error if the config was specified explicitly
-				ptrans(12, "Config file $configf could not be opened ($!).  Exiting");
+				ptrans(12, 'Config file ' . $configf . ' could not be opened ($!).  Exiting');
 				exit(1);
 			}
 
@@ -2037,7 +2037,7 @@ sub load_args {
 	foreach my $v (sort keys %ENV) {
 		if ($v =~ m|^SWAKS_OPT_(.*)$|) {
 			my $tv = $1; $tv =~ s|_|-|g;
-			push(@ARGV, "--$tv");
+			push(@ARGV, '--' . $tv);
 			push(@ARGV, $ENV{$v}) if (length($ENV{$v}));
 		}
 	}
@@ -2078,7 +2078,8 @@ sub fetch_args {
 
 		if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
 			# rewrite '--header-Foo bar' into '--header "Foo: bar"'
-			$ARGV[$i] = "--header"; $ARGV[$i+1] = "$1: $ARGV[$i+1]";
+			$ARGV[$i]   = "--header";
+			$ARGV[$i+1] = $1 . ': ' . $ARGV[$i+1];
 		} elsif ($ARGV[$i] =~ /^-?-(no-(.*))$/) {
 			# allow --no-OPTION to remove any previous OPTION settings
 			my $whole_name = $1; my $opt_name = $2;
@@ -2093,7 +2094,7 @@ sub fetch_args {
 					redo RUNOPTS; # since we're messing with the list, redo this element
 				}
 			}
-			ptrans(12, "Unknown option $ARGV[$i], Exiting");
+			ptrans(12, 'Unknown option ' . $ARGV[$i] . ', Exiting');
 			exit(1);
 		}
 		elsif ($ARGV[$i] =~ /^-?-(attach.*)$/) {
@@ -2192,15 +2193,15 @@ sub reconstruct_options {
 				next if (ref($o->{$opt->{okey}}) ne 'ARRAY');
 				#next if (scalar(@{$o->{$opt->{okey}}}) == 0);
 				foreach my $sopt (@{$o->{$opt->{okey}}}) {
-					push(@c, "--$lopt", shquote($sopt));
+					push(@c, '--'.$lopt, shquote($sopt));
 				}
 			} elsif ($opt->{type} eq 'sub' && ref($o->{$opt->{okey}}) eq 'ARRAY') {
 				foreach my $sopt (@{$o->{$opt->{okey}}}) {
-					push(@c, "--$sopt->{name}", shquote($sopt->{value}));
+					push(@c, '--'.$sopt->{name}, shquote($sopt->{value}));
 				}
 				$already_seen{$opt->{okey}}++;
 			} else {
-				push(@c, "--$lopt");
+				push(@c, '--'.$lopt);
 				if (length($o->{$opt->{okey}}) > 0) {
 					# offer rudimenary protection against sending pw in email
 					if ($opt->{okey} eq 'auth_pass') {
@@ -2230,7 +2231,7 @@ sub process_args {
 	$G::trans_fh_ef = "STDERR";
 	if ($o->{output_file} && (!$o->{output_file_stderr} || !$o->{output_file_stdout})) {
 		if (!open(OUTFH, ">>$o->{output_file}")) {
-			ptrans(12, "Unable to open $o->{output_file} for writing");
+			ptrans(12, 'Unable to open ' . $o->{output_file} . ' for writing');
 			exit(1);
 		}
 		$G::trans_fh_oh = \*OUTFH;
@@ -2239,16 +2240,16 @@ sub process_args {
 		$G::trans_fh_ef = $o->{output_file};
 	}
 	if ($o->{output_file_stderr}) {
-		if (!open(OUTEFH, ">>$o->{output_file_stderr}")) {
-			ptrans(12, "Unable to open $o->{output_file_stderr} for writing");
+		if (!open(OUTEFH, '>>'.$o->{output_file_stderr})) {
+			ptrans(12, 'Unable to open ' . $o->{output_file_stderr} . ' for writing');
 			exit(1);
 		}
 		$G::trans_fh_eh = \*OUTEFH;
 		$G::trans_fh_ef = $o->{output_file_stderr};
 	}
 	if ($o->{output_file_stdout}) {
-		if (!open(OUTOFH, ">>$o->{output_file_stdout}")) {
-			ptrans(12, "Unable to open $o->{output_file_stdout} for writing");
+		if (!open(OUTOFH, '>>'.$o->{output_file_stdout})) {
+			ptrans(12, 'Unable to open ' . $o->{output_file_stdout} . ' for writing');
 			exit(1);
 		}
 		$G::trans_fh_oh = \*OUTOFH;
@@ -2937,19 +2938,19 @@ sub process_args {
 			$G::proxy{attr}{$attr} = uc($G::proxy{attr}{$attr});
 		}
 		if ($G::proxy{attr}{protocol} !~ /^(UNSPEC|STREAM|DGRAM)$/) {
-			ptrans(12, "unknown --proxy-protocol argument $G::proxy{attr}{protocol}");
+			ptrans(12, 'unknown --proxy-protocol argument ' . $G::proxy{attr}{protocol});
 			exit(35);
 		}
 		if ($G::proxy{attr}{command} !~ /^(LOCAL|PROXY)$/) {
-			ptrans(12, "unknown --proxy-command argument $G::proxy{attr}{command}");
+			ptrans(12, 'unknown --proxy-command argument ' . $G::proxy{attr}{command});
 			exit(35);
 		}
 		if ($G::proxy{version} == 2 && $G::proxy{attr}{family} !~ /^(AF_UNSPEC|AF_INET|AF_INET6|AF_UNIX)$/) {
-			ptrans(12, "unknown --proxy-family argument $G::proxy{attr}{family} for version 2");
+			ptrans(12, 'unknown --proxy-family argument ' . $G::proxy{attr}{family} . ' for version 2');
 			exit(35);
 		}
 		if ($G::proxy{version} == 1 && $G::proxy{attr}{family} !~ /^(TCP4|TCP6)$/) {
-			ptrans(12, "unknown --proxy-family argument $G::proxy{attr}{family} for version 1");
+			ptrans(12, 'unknown --proxy-family argument ' . $G::proxy{attr}{family} . ' for version 1');
 			exit(35);
 		}
 	}
@@ -3180,7 +3181,7 @@ sub get_running_state {
 		push(@parts, [
 			'App Info:',
 			"  X-Mailer = $p_name v$p_version jetmore.org/john/code/swaks/",
-			"  Cmd Line = $0 $G::cmdline",
+			'  Cmd Line = ' . $0 . ' ' . $G::cmdline,
 		]);
 	}
 
@@ -3277,13 +3278,13 @@ sub get_running_state {
 				push(@{$parts[-1]}, "  raw string  = $G::proxy{raw}");
 			} else {
 				push(@{$parts[-1]},
-					"  family      = $G::proxy{attr}{family}",
-					"  source      = $G::proxy{attr}{source}",
-					"  source port = $G::proxy{attr}{source_port}",
-					"  dest        = $G::proxy{attr}{dest}",
-					"  dest port   = $G::proxy{attr}{dest_port}",
-					"  protocol    = $G::proxy{attr}{protocol}",
-					"  command     = $G::proxy{attr}{command}",
+					'  family      = ' . $G::proxy{attr}{family},
+					'  source      = ' . $G::proxy{attr}{source},
+					'  source port = ' . $G::proxy{attr}{source_port},
+					'  dest        = ' . $G::proxy{attr}{dest},
+					'  dest port   = ' . $G::proxy{attr}{dest_port},
+					'  protocol    = ' . $G::proxy{attr}{protocol},
+					'  command     = ' . $G::proxy{attr}{command},
 				);
 			}
 		} else {
@@ -3448,7 +3449,7 @@ sub ext_usage {
 	if ($O{help}) {
 		require Config;
 		$ENV{PATH} .= ":" unless $ENV{PATH} eq "";
-		$ENV{PATH}  = "$ENV{PATH}$Config::Config{'installscript'}";
+		$ENV{PATH}  = $ENV{PATH} . $Config::Config{'installscript'};
 		$< = $> = 1 if ($> == 0 || $< == 0);
 		exec("perldoc", $0) || exit(1);
 		# make parser happy
