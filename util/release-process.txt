@@ -24,20 +24,21 @@ export SWAKSDIR=/Users/jetmore/Documents/git/swaks
 # open doc/versions.html and doc/index.html in a browser and make sure everything looks ok
 
 # Run the spell checker
-# Really would like to get custom dictionary working here that I could store in git
-# https://alexwlchan.net/2016/09/please-use-aspell/
+# aspell --personal to set a personal wordlist doesn't seem to work, but using the "default"
+# personal word list does.  So change where aspell looks for the default personal word list
+# setting $HOME
 # alias aspell=~/Documents/dev/bin/aspell
 
 # Can save changes directly:
-aspell check Changes
-aspell --mode perl check swaks
-aspell --mode html check doc/faq.html
-aspell --mode html check doc/index.html
-aspell check RELEASE/README.txt
-aspell check doc/recipes.pod
-aspell check doc/base.pod
-aspell check doc/installation.pod
-aspell check README.md
+HOME=$SWAKSDIR/util aspell check Changes
+HOME=$SWAKSDIR/util aspell --mode perl check swaks
+HOME=$SWAKSDIR/util aspell --mode html check doc/faq.html
+HOME=$SWAKSDIR/util aspell --mode html check doc/index.html
+HOME=$SWAKSDIR/util aspell check RELEASE/README.txt
+HOME=$SWAKSDIR/util aspell check doc/recipes.pod
+HOME=$SWAKSDIR/util aspell check doc/base.pod
+HOME=$SWAKSDIR/util aspell check doc/installation.pod
+HOME=$SWAKSDIR/util aspell --mode markdown check README.md
 
 # run the actual script (this preps some stuff, but this won't be the final release):
 $SWAKSDIR/util/gen-release.pl $RELEASE
