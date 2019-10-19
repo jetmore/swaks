@@ -1,10 +1,10 @@
 pre action: REMOVE_FILE %OUTDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stdout.2 %OUTDIR%/%TESTID%.stderr %OUTDIR%/%TESTID%.stderr.2
 
-test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --server ser.ver --helo host.example.com --from from@example.com \
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver --helo host1.nodns.test.swaks.net --from from@host1.nodns.test.swaks.net \
   --body "This is the plain text argument to --body" \
   --attach %TESTDIR%/body.html
 
-test action: CMD_CAPTURE:2 %SWAKS% --dump DATA --to user@example.com --server ser.ver --helo host.example.com --from from@example.com \
+test action: CMD_CAPTURE:2 %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver --helo host1.nodns.test.swaks.net --from from@host1.nodns.test.swaks.net \
   --attach-type text/plain \
   --attach-body "This is the plain text argument to --body" \
   --attach %TESTDIR%/body.html

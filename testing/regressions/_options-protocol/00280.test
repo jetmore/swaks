@@ -1,7 +1,7 @@
-# Generated Sat Jan  5 13:23:00 2019 by ./gen-tests.pl '-n' '250' '-o' 'ehlo' '-v' 'test-helo-string' '-i' '' '-p' 'Helo:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --to recip@example.com --from sender@example.net --server ser.ver'
+# Generated Sat Jan  5 13:23:00 2019 by ./gen-tests.pl '-n' '250' '-o' 'ehlo' '-v' 'test-helo-string' '-i' '' '-p' 'Helo:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --server ser.ver'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: ehlo command line, no arg (-option)
 
-auto: INTERACT '%SWAKS% --dump PROTOCOL --to recip@example.com --from sender@example.net --server ser.ver -ehlo' 'Helo:' 'test-helo-string'
+auto: INTERACT '%SWAKS% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --server ser.ver -ehlo' 'Helo:' 'test-helo-string'

@@ -98,15 +98,15 @@ sub teardown_link {
 
 sub open_link {
 	if ($G::link{type} eq 'socket-inet') {
-		ptrans(11, "Trying $G::link{server}:$G::link{port}...");
+		ptrans(11, 'Trying ' . $G::link{server} . ':' . $G::link{port} . '...');
 		$@ = "";
 
 		my @extra_options = ();
 		push(@extra_options, "LocalAddr", $G::link{lint})  if ($G::link{lint});
 		push(@extra_options, "LocalPort", $G::link{lport}) if ($G::link{lport});
 
-		# INET6 also support v4, so use it for everything if it's available.  That
-		# allows the module to handle A vs AAAA records on domain lookups where te
+		# INET6 also supports v4, so use it for everything if it's available.  That
+		# allows the module to handle A vs AAAA records on domain lookups where the
 		# user hasn't set a specific ip version to be used.  If INET6 isn't available
 		# and it's a domain that only has AAAA records, INET will just handle it like
 		# a bogus record and we just won't be able to connect
@@ -141,16 +141,16 @@ sub open_link {
 		}
 		ptrans(11, "Connected to $G::link{server}.");
 	} elsif ($G::link{type} eq 'socket-unix') {
-		ptrans(11, "Trying $G::link{sockfile}...");
+		ptrans(11, 'Trying ' . $G::link{sockfile} . '...');
 		$SIG{PIPE} = 'IGNORE';
 		$@ = "";
 		$G::link{sock} = IO::Socket::UNIX->new(Peer => $G::link{sockfile}, Timeout => $G::link{timeout});
 
 		if ($@) {
-			ptrans(12, "Error connecting to $G::link{sockfile}:\n\t$@");
+			ptrans(12, 'Error connecting to ' . $G::link{sockfile} . ":\n\t$@");
 			exit(2);
 		}
-		ptrans(11, "Connected to $G::link{sockfile}.");
+		ptrans(11, 'Connected to ' . $G::link{sockfile} . '.');
 	} elsif ($G::link{type} eq 'pipe') {
 		$SIG{PIPE} = 'IGNORE';
 		$SIG{CHLD} = 'IGNORE';
@@ -158,14 +158,14 @@ sub open_link {
 		eval{ open2($G::link{sock}{re}, $G::link{sock}{wr}, $G::link{process}); };
 
 		if ($@) {
-			ptrans(12, "Error connecting to $G::link{process}:\n\t$@");
+			ptrans(12, 'Error connecting to ' . $G::link{process} . ":\n\t$@");
 			exit(2);
 		}
 		select((select($G::link{sock}{wr}), $| = 1)[0]);
 		select((select($G::link{sock}{re}), $| = 1)[0]);
-		ptrans(11, "Connected to $G::link{process}.");
+		ptrans(11, 'Connected to ' . $G::link{process} . '.');
 	} else {
-		ptrans(12, "Unknown or unimplemented connection type $G::link{type}");
+		ptrans(12, 'Unknown or unimplemented connection type ' . $G::link{type});
 		exit(3);
 	}
 }
@@ -440,6 +440,14 @@ sub start_tls {
 	if (!($t{ssl} = Net::SSLeay::new($t{con}))) {
 		$t{res} = "new(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 		return(0);
+	}
+
+	if ($G::tls_sni_hostname) {
+		if (!Net::SSLeay::set_tlsext_host_name($t{ssl}, $G::tls_sni_hostname)) {
+			$t{res} = "Unable to set SNI hostname to $G::tls_sni_hostname: "
+			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+			return(0);
+		}
 	}
 
 	if ($G::link{type} eq 'pipe') {
@@ -949,7 +957,7 @@ sub do_smtp_rcpt {
 	$G::smtp_rcpt_total = scalar(@a);
 
 	foreach my $addr (@a) {
-		transact(cxn_string => "RCPT TO:<$addr>", expect => '250', defer => 1,
+		transact(cxn_string => 'RCPT TO:<' . $addr . '>', expect => '250', defer => 1,
 		         fail_callback => \&smtp_rcpt_callback);
 	}
 
@@ -1064,7 +1072,7 @@ sub do_smtp_proxy {
 		if ($G::proxy{raw}) {
 			$send = "PROXY $G::proxy{raw}";
 		} else {
-			$send = "PROXY $G::proxy{attr}{family} $G::proxy{attr}{source} $G::proxy{attr}{dest} $G::proxy{attr}{source_port} $G::proxy{attr}{dest_port}";
+			$send = join(' ', 'PROXY', $G::proxy{attr}{family}, $G::proxy{attr}{source}, $G::proxy{attr}{dest}, $G::proxy{attr}{source_port}, $G::proxy{attr}{dest_port});
 		}
 	}
 
@@ -1346,6 +1354,16 @@ sub unencode_smtp {
 	}
 }
 
+sub obtain_from_netrc {
+	return if !avail('netrc');
+	my $field = shift;
+	my $login = shift;
+	my $login =
+	  Net::Netrc->lookup( $G::link{server}, defined $login ? $login : () )
+	  or return;
+	$login->$field;
+}
+
 sub interact {
 	my $prompt     = shift;
 	my $regexp     = shift;
@@ -1601,6 +1619,7 @@ sub load_dependencies {
 		auth_ntlm       => { name => "AUTH NTLM",                req => ['Authen::NTLM']      },
 		auth_digest_md5 => { name => "AUTH DIGEST-MD5",          req => ['Authen::SASL']      },
 		dns             => { name => "MX Routing",               req => ['Net::DNS']          },
+		netrc           => { name => 'Netrc Credentials',        req => ['Net::Netrc']        },
 		tls             => { name => "TLS",                      req => ['Net::SSLeay']       },
 		pipe            => { name => "Pipe Transport",           req => ['IPC::Open2']        },
 		socket          => { name => "Socket Transport",         req => ['IO::Socket']        },
@@ -1733,6 +1752,9 @@ sub get_option_struct {
 		# save tls peer certificate
 		{ opts    => ['tls-get-peer-cert'],                                suffix => ':s',
 		  okey    => 'tls_get_peer_cert',                                  type   => 'scalar', },
+		# hostname to request in TLS SNI header
+		{ opts    => ['tls-sni'],                                          suffix => '=s',
+		  okey    => 'tls_sni_hostname',                                   type   => 'scalar', },
 		# require verification of server certificate
 		{ opts    => ['tls-verify'],                                       suffix => '',
 		  okey    => 'tls_verify',                                         type   => 'scalar', },
@@ -1952,8 +1974,8 @@ sub load_args {
 	my $skip_config       = 0;
 	my $config_is_default = 1;
 	foreach my $v (qw(SWAKS_HOME HOME LOGDIR)) {
-		if (exists($ENV{$v}) && length($ENV{$v}) && -f "$ENV{$v}/.swaksrc") {
-			$config_file = "$ENV{$v}/.swaksrc";
+		if (exists($ENV{$v}) && length($ENV{$v}) && -f $ENV{$v} . '/.swaksrc') {
+			$config_file = $ENV{$v} . '/.swaksrc';
 			last;
 		}
 	}
@@ -1988,7 +2010,7 @@ sub load_args {
 		my @configs = ('&DATA');
 		push(@configs, $config_file) if ($config_file);
 		foreach my $configf (@configs) {
-			if (open(C, "<$configf")) {
+			if (open(C, '<' . $configf)) {
 				# "#" in col 0 is a comment
 				while (defined(my $m = <C>)) {
 					next if ($m =~ m|^#|);
@@ -1999,7 +2021,7 @@ sub load_args {
 				close(C);
 			} elsif (!$config_is_default && $configf eq $config_file) {
 				# we only print an error if the config was specified explicitly
-				ptrans(12, "Config file $configf could not be opened ($!).  Exiting");
+				ptrans(12, 'Config file ' . $configf . ' could not be opened ($!).  Exiting');
 				exit(1);
 			}
 
@@ -2009,13 +2031,14 @@ sub load_args {
 		}
 	}
 
-	# OK, %ARGS contains all the settings from the config file.  No do it again
+	# OK, %ARGS contains all the settings from the config file.  Now do it again
 	# with SWAKS_OPT_* environment variables
 	@ARGV = ();
 	foreach my $v (sort keys %ENV) {
 		if ($v =~ m|^SWAKS_OPT_(.*)$|) {
 			my $tv = $1; $tv =~ s|_|-|g;
-			push(@ARGV, "--$tv", $ENV{$v});
+			push(@ARGV, '--' . $tv);
+			push(@ARGV, $ENV{$v}) if (length($ENV{$v}));
 		}
 	}
 	fetch_args(\%ARGS, $option_list) if (scalar(@ARGV));
@@ -2055,7 +2078,8 @@ sub fetch_args {
 
 		if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
 			# rewrite '--header-Foo bar' into '--header "Foo: bar"'
-			$ARGV[$i] = "--header"; $ARGV[$i+1] = "$1: $ARGV[$i+1]";
+			$ARGV[$i]   = "--header";
+			$ARGV[$i+1] = $1 . ': ' . $ARGV[$i+1];
 		} elsif ($ARGV[$i] =~ /^-?-(no-(.*))$/) {
 			# allow --no-OPTION to remove any previous OPTION settings
 			my $whole_name = $1; my $opt_name = $2;
@@ -2070,7 +2094,7 @@ sub fetch_args {
 					redo RUNOPTS; # since we're messing with the list, redo this element
 				}
 			}
-			ptrans(12, "Unknown option $ARGV[$i], Exiting");
+			ptrans(12, 'Unknown option ' . $ARGV[$i] . ', Exiting');
 			exit(1);
 		}
 		elsif ($ARGV[$i] =~ /^-?-(attach.*)$/) {
@@ -2169,15 +2193,15 @@ sub reconstruct_options {
 				next if (ref($o->{$opt->{okey}}) ne 'ARRAY');
 				#next if (scalar(@{$o->{$opt->{okey}}}) == 0);
 				foreach my $sopt (@{$o->{$opt->{okey}}}) {
-					push(@c, "--$lopt", shquote($sopt));
+					push(@c, '--'.$lopt, shquote($sopt));
 				}
 			} elsif ($opt->{type} eq 'sub' && ref($o->{$opt->{okey}}) eq 'ARRAY') {
 				foreach my $sopt (@{$o->{$opt->{okey}}}) {
-					push(@c, "--$sopt->{name}", shquote($sopt->{value}));
+					push(@c, '--'.$sopt->{name}, shquote($sopt->{value}));
 				}
 				$already_seen{$opt->{okey}}++;
 			} else {
-				push(@c, "--$lopt");
+				push(@c, '--'.$lopt);
 				if (length($o->{$opt->{okey}}) > 0) {
 					# offer rudimenary protection against sending pw in email
 					if ($opt->{okey} eq 'auth_pass') {
@@ -2207,7 +2231,7 @@ sub process_args {
 	$G::trans_fh_ef = "STDERR";
 	if ($o->{output_file} && (!$o->{output_file_stderr} || !$o->{output_file_stdout})) {
 		if (!open(OUTFH, ">>$o->{output_file}")) {
-			ptrans(12, "Unable to open $o->{output_file} for writing");
+			ptrans(12, 'Unable to open ' . $o->{output_file} . ' for writing');
 			exit(1);
 		}
 		$G::trans_fh_oh = \*OUTFH;
@@ -2216,16 +2240,16 @@ sub process_args {
 		$G::trans_fh_ef = $o->{output_file};
 	}
 	if ($o->{output_file_stderr}) {
-		if (!open(OUTEFH, ">>$o->{output_file_stderr}")) {
-			ptrans(12, "Unable to open $o->{output_file_stderr} for writing");
+		if (!open(OUTEFH, '>>'.$o->{output_file_stderr})) {
+			ptrans(12, 'Unable to open ' . $o->{output_file_stderr} . ' for writing');
 			exit(1);
 		}
 		$G::trans_fh_eh = \*OUTEFH;
 		$G::trans_fh_ef = $o->{output_file_stderr};
 	}
 	if ($o->{output_file_stdout}) {
-		if (!open(OUTOFH, ">>$o->{output_file_stdout}")) {
-			ptrans(12, "Unable to open $o->{output_file_stdout} for writing");
+		if (!open(OUTOFH, '>>'.$o->{output_file_stdout})) {
+			ptrans(12, 'Unable to open ' . $o->{output_file_stdout} . ' for writing');
 			exit(1);
 		}
 		$G::trans_fh_oh = \*OUTOFH;
@@ -2750,10 +2774,11 @@ sub process_args {
 				exit(10);
 			}
 		}
-		$G::tls_verify  = 1 if (defined($o->{tls_verify}));
-		$G::tls_cipher  = $o->{tls_cipher};
-		$G::tls_cert    = $o->{tls_cert};
-		$G::tls_key     = $o->{tls_key};
+		$G::tls_verify       = 1 if (defined($o->{tls_verify}));
+		$G::tls_sni_hostname = $o->{tls_sni_hostname};
+		$G::tls_cipher       = $o->{tls_cipher};
+		$G::tls_cert         = $o->{tls_cert};
+		$G::tls_key          = $o->{tls_key};
 		if (($G::tls_cert || $G::tls_key) && !($G::tls_cert && $G::tls_key)) {
 			ptrans(12, "--tls-cert and --tls-key require each other.  Exiting");
 			exit(1);
@@ -2913,19 +2938,19 @@ sub process_args {
 			$G::proxy{attr}{$attr} = uc($G::proxy{attr}{$attr});
 		}
 		if ($G::proxy{attr}{protocol} !~ /^(UNSPEC|STREAM|DGRAM)$/) {
-			ptrans(12, "unknown --proxy-protocol argument $G::proxy{attr}{protocol}");
+			ptrans(12, 'unknown --proxy-protocol argument ' . $G::proxy{attr}{protocol});
 			exit(35);
 		}
 		if ($G::proxy{attr}{command} !~ /^(LOCAL|PROXY)$/) {
-			ptrans(12, "unknown --proxy-command argument $G::proxy{attr}{command}");
+			ptrans(12, 'unknown --proxy-command argument ' . $G::proxy{attr}{command});
 			exit(35);
 		}
 		if ($G::proxy{version} == 2 && $G::proxy{attr}{family} !~ /^(AF_UNSPEC|AF_INET|AF_INET6|AF_UNIX)$/) {
-			ptrans(12, "unknown --proxy-family argument $G::proxy{attr}{family} for version 2");
+			ptrans(12, 'unknown --proxy-family argument ' . $G::proxy{attr}{family} . ' for version 2');
 			exit(35);
 		}
 		if ($G::proxy{version} == 1 && $G::proxy{attr}{family} !~ /^(TCP4|TCP6)$/) {
-			ptrans(12, "unknown --proxy-family argument $G::proxy{attr}{family} for version 1");
+			ptrans(12, 'unknown --proxy-family argument ' . $G::proxy{attr}{family} . ' for version 1');
 			exit(35);
 		}
 	}
@@ -3037,11 +3062,17 @@ sub process_args {
 					exit(10);
 				}
 			} else {
-				$n{a_user}   = $o->{auth_user} if (defined($o->{auth_user}));
+				$n{a_user} =
+				  defined $o->{auth_user}
+				  ? $o->{auth_user}
+				  : obtain_from_netrc('login');
 				$n{a_user} ||= interact("Username: ", 'SKIP');
 				$n{a_user}   = '' if ($n{a_user} eq '<>');
 
-				$n{a_pass}   = $o->{auth_pass} if (defined($o->{auth_pass}));
+				$n{a_pass} =
+				  defined $o->{auth_pass}
+				  ? $o->{auth_pass}
+				  : obtain_from_netrc( 'password', $n{a_user} );
 				$n{a_pass} ||= interact("Password: ", 'SKIP', 1);
 				$n{a_pass}   = '' if ($n{a_pass} eq '<>');
 
@@ -3150,7 +3181,7 @@ sub get_running_state {
 		push(@parts, [
 			'App Info:',
 			"  X-Mailer = $p_name v$p_version jetmore.org/john/code/swaks/",
-			"  Cmd Line = $0 $G::cmdline",
+			'  Cmd Line = ' . $0 . ' ' . $G::cmdline,
 		]);
 	}
 
@@ -3247,13 +3278,13 @@ sub get_running_state {
 				push(@{$parts[-1]}, "  raw string  = $G::proxy{raw}");
 			} else {
 				push(@{$parts[-1]},
-					"  family      = $G::proxy{attr}{family}",
-					"  source      = $G::proxy{attr}{source}",
-					"  source port = $G::proxy{attr}{source_port}",
-					"  dest        = $G::proxy{attr}{dest}",
-					"  dest port   = $G::proxy{attr}{dest_port}",
-					"  protocol    = $G::proxy{attr}{protocol}",
-					"  command     = $G::proxy{attr}{command}",
+					'  family      = ' . $G::proxy{attr}{family},
+					'  source      = ' . $G::proxy{attr}{source},
+					'  source port = ' . $G::proxy{attr}{source_port},
+					'  dest        = ' . $G::proxy{attr}{dest},
+					'  dest port   = ' . $G::proxy{attr}{dest_port},
+					'  protocol    = ' . $G::proxy{attr}{protocol},
+					'  command     = ' . $G::proxy{attr}{command},
 				);
 			}
 		} else {
@@ -3276,6 +3307,7 @@ sub get_running_state {
 				"  local key           = $G::tls_key",
 				"  local cipher list   = $G::tls_cipher",
 				"  ca path             = $G::tls_ca_path",
+				"  sni string          = $G::tls_sni_hostname",
 				'  verify server cert  = ' . ($G::tls_verify ? 'TRUE' : 'FALSE'),
 				'  available protocols = ' . join(', ', @G::tls_supported_protocols),
 				'  requested protocols = ' . join(', ', @G::tls_protocols),
@@ -3417,7 +3449,7 @@ sub ext_usage {
 	if ($O{help}) {
 		require Config;
 		$ENV{PATH} .= ":" unless $ENV{PATH} eq "";
-		$ENV{PATH}  = "$ENV{PATH}$Config::Config{'installscript'}";
+		$ENV{PATH}  = $ENV{PATH} . $Config::Config{'installscript'};
 		$< = $> = 1 if ($> == 0 || $< == 0);
 		exec("perldoc", $0) || exit(1);
 		# make parser happy

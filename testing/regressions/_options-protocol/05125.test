@@ -1,4 +1,4 @@
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
-test action: CMD_CAPTURE %SWAKS% --dump PROTOCOL --from sender@example.net --helo hstring --server ser.ver \
+test action: CMD_CAPTURE %SWAKS% --dump PROTOCOL --from sender@host2.nodns.test.swaks.net --helo hstring --server ser.ver \
     --quit-after AUTH

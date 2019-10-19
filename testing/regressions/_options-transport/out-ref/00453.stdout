@@ -1,7 +1,7 @@
 Transport Info:
   type            = socket-inet
   inet protocol   = any
-  server          = example.com
+  server          = host1.nodns.test.swaks.net
   port            = 25
   local interface = 
   local port      = 

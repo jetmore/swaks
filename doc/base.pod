@@ -19,7 +19,7 @@ Deliver a standard test email to user@example.com on port 25 of test-server.exam
 
 =back
 
-Deliver a standard test email, requiring CRAM-MD5 authentication as user me@example.com.  An "X-Test" header will be added to the email body.  The authentication password will be prompted for.
+Deliver a standard test email, requiring CRAM-MD5 authentication as user me@example.com.  An "X-Test" header will be added to the email body.  The authentication password will be prompted for if it cannot be obtained from your L<.netrc|Net::Netrc> file.
 
 =over 4
 
@@ -158,7 +158,7 @@ Options can be supplied via environment variables.  The variables are in the for
     $ SWAKS_OPT_from='fred@example.com'
     $ SWAKS_OPT_h_From='"Fred Example" <fred@example.com>'
 
-Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting SWAKS_OPT_server="" would cause Swaks to prompt the use for the server to which to connect at each invocation.
+Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting SWAKS_OPT_server="" would cause Swaks to prompt the user for the server to which to connect at each invocation.
 
 Because there is no inherent order in options provided by setting environment variables, the options are sorted before being processed.  This is not a great solution, but it at least defines the behavior, which would be otherwise undefined.  As an example, if both SWAKS_OPT_from and SWAKS_OPT_f were set, the value from SWAKS_OPT_from would be used, because it sorts after SWAKS_OPT_f.  Also as a result of not having an inherent order in environment processing, unsetting options with the "no-" prefix is unreliable.  It works if the option being turned off sorts before "no-", but fails if it sorts after. Because "no-" is primarily meant to operate between config types (for instance, unsetting from the command line an option that was set in a config file), this is not likely to be a problem.
 
@@ -418,7 +418,7 @@ Attempt to use STARTTLS if available, continue with normal transaction if TLS wa
 
 Attempt to use STARTTLS if available.  Proceed with transaction if TLS is negotiated successfully or STARTTLS not advertised.  If STARTTLS is advertised but TLS negotiations fail, treat as an error and abort transaction.  Due to the caveat noted above, this is a much saner option than --tls-optional.
 
-=item --tlsc, --tls-on-connect
+=item -tlsc, --tls-on-connect
 
 Initiate a TLS connection immediately on connection.  Following common convention, if this option is specified the default port changes from 25 to 465, though this can still be overridden with the --port option.
 
@@ -428,7 +428,7 @@ Specify which protocols to use (or not use) when negotiating TLS.  At the time o
 
 The specification string is a comma-delimited list of protocols that can be used or not used.  For instance 'tlsv1,tlsv1_1' will only succeed if one of those two protocols is available on both the client and the server.  Conversely, 'no_sslv2,no_sslv3' will attempt to negotiate any protocol except sslv2 and sslv3.  The two forms of specification cannot be mixed.
 
-=item -tls-cipher CIPHER_STRING
+=item --tls-cipher CIPHER_STRING
 
 The argument to this option is passed to the underlying OpenSSL library to set the list of acceptable ciphers to the be used for the connection.  The format of this string is opaque to Swaks and is defined in http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT.  A brief example would be --tls-cipher '3DES:+RSA'.
 
@@ -451,6 +451,10 @@ Provide a path to a file containing the local private key Swaks should use if TL
 =item --tls-get-peer-cert [/path/to/file]
 
 Get a copy of the TLS peer's certificate.  If no argument is given, it will be displayed to STDOUT.  If an argument is given it is assumed to be a filesystem path specifying where the certificate should be written.  The saved certificate can then be examined using standard tools such as the openssl command.  If a file is specified its contents will be overwritten.
+
+=item --tls-sni SERVERNAME
+
+Specify the Server Name Indication field to send when the TLS connection is initiated.
 
 =back
 
@@ -516,11 +520,11 @@ This option is a compromise between --auth and --auth-optional.  If no common au
 
 =item -au, --auth-user [username]
 
-Provide the username to be used for authentication, or prompt the user for it if no argument is provided.  The string E<lt>E<gt> can be supplied to mean an empty username.
+Provide the username to be used for authentication.  If no username is provided, indicate that Swaks should attempt to find the username via .netrc (requires the Net::Netrc module).  If no username is provided and cannot be found via .netrc,  the user will be prompted to provide one.  The string E<lt>E<gt> can be supplied to mean an empty username.
 
 =item -ap, --auth-password [password]
 
-Provide the password to be used for authentication, or prompt the user for it if no argument is provided.  The string E<lt>E<gt> can be supplied to mean an empty password.
+Provide the password to be used for authentication. If no password is provided, indicate that Swaks should attempt to find the password via .netrc (requires the Net::Netrc module).  If no password is provided and cannot be found via .netrc,  the user will be prompted to provide one.  The string E<lt>E<gt> can be supplied to mean an empty password.
 
 =item -ae, --auth-extra [KEYWORD=value[,...]]
 

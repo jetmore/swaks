@@ -1,10 +1,10 @@
 pre action: REMOVE_FILE %OUTDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stdout.2 %OUTDIR%/%TESTID%.stderr %OUTDIR%/%TESTID%.stderr.2
 
-test action: CMD_CAPTURE %SWAKS% --dump data --to user@example.com --server ser.ver \
+test action: CMD_CAPTURE %SWAKS% --dump data --to user@host1.nodns.test.swaks.net --server ser.ver \
   -f from-1 \
   --from from-2
 
-test action: CMD_CAPTURE:2 %SWAKS% --dump data --to user@example.com --server ser.ver \
+test action: CMD_CAPTURE:2 %SWAKS% --dump data --to user@host1.nodns.test.swaks.net --server ser.ver \
   --from from-1 \
   -f from-2
 

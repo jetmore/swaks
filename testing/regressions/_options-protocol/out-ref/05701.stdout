@@ -2,7 +2,7 @@ Protocol Info:
   protocol        = esmtp
   helo            = helo-string
   from            = jetmore@LOCAL_HOST_NAME
-  to              = recip@example.com
+  to              = recip@host1.nodns.test.swaks.net
   force getpwuid  = TRUE
   quit after      = 
   drop after      = 

@@ -1,0 +1,8 @@
+# Generated Sat Oct 12 08:39:36 2019 by ./gen-tests.pl '-n' '800' '-o' 'tls-sni' '-v' 'TLS_SNI_STRING' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --tls'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tls-sni, env var, no-option
+
+pre action: SET_ENV SWAKS_OPT_tls_sni TLS_SNI_STRING
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --tls --no-tls-sni

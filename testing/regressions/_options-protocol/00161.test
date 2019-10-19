@@ -1,9 +1,9 @@
-# Generated Sat Jan  5 13:17:52 2019 by ./gen-tests.pl '-n' '150' '-o' 'f' '-v' 'from@bar.com' '-i' '' '-p' 'From:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --to sender@example.com --server ser.ver'
+# Generated Sat Jan  5 13:17:52 2019 by ./gen-tests.pl '-n' '150' '-o' 'f' '-v' 'from@bar.com' '-i' '' '-p' 'From:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --to sender@host1.nodns.test.swaks.net --server ser.ver'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: f, config, valid arg
 
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'f from@bar.com'
-test action: CMD_CAPTURE %SWAKS% --dump PROTOCOL --to sender@example.com --server ser.ver \
+test action: CMD_CAPTURE %SWAKS% --dump PROTOCOL --to sender@host1.nodns.test.swaks.net --server ser.ver \
     --config %OUTDIR%/swaksrc-%TESTID%

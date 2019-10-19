@@ -42,7 +42,7 @@ testing
  54 - test "f"
  55 - test "-f"
  56 - test "--f"
- 57 - internal quoting is honored ("h-From: "Fred Example" <fred@example.com>")
+ 57 - internal quoting is honored ("h-From: "Fred Example" <fred@host1.nodns.test.swaks.net>")
  61 - no-info-hints ("set but no value" works
  62 - show-time-lapse="" (confirm that "set but no value" works)
  63 - show-time-lapse="i" (confirm that setting value works works)
@@ -63,7 +63,7 @@ testing
 0100 - test environment variable processing
  51 - from
  54 - f
- 57 - h-From: "Fred Example" <fred@example.com> (internal quoting is maintained)
+ 57 - h-From: "Fred Example" <fred@host1.nodns.test.swaks.net> (internal quoting is maintained)
  60 - local-port (test underscore)
  61 - no-info-hints="" (confirm that "set but no value" works)
  62 - show-time-lapse="" (confirm that "set but no value" works)
@@ -89,7 +89,7 @@ testing
  53 - test "--from"
  55 - test "-f"
  56 - test "--f"
- 57 - internal quoting is honored ("h-From: "Fred Example" <fred@example.com>")
+ 57 - internal quoting is honored ("h-From: "Fred Example" <fred@host1.nodns.test.swaks.net>")
  61 - "--no-info-hints" ("set but no argument" works)
  62 - "--show-time-lapse ''" (confirm that "set with argument, but argument is empty" works)
  63 - show-time-lapse="i" (confirm that setting value works works)

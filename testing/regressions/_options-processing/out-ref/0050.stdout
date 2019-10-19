@@ -1,8 +1,8 @@
 DATA Info:
   data = <<.
 Date: Wed, 03 Nov 1999 11:24:29 -0500
-To: CONFIG-recip@example.com
-From:       CONFIG-to@example.com - should be leading space
+To: CONFIG-recip@host1.nodns.test.swaks.net
+From:       CONFIG-to@host1.nodns.test.swaks.net - should be leading space
 Subject: CONFIG subject
 Message-Id: <19991103112429.047942@localhost>
 X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/

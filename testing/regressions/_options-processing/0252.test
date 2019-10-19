@@ -1,4 +1,4 @@
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
-test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --server ser.ver \
-  -from from-%TESTID%@example.com
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver \
+  -from from-%TESTID%@host1.nodns.test.swaks.net

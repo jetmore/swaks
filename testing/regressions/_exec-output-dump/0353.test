@@ -1,3 +1,3 @@
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
-test action: CMD_CAPTURE %SWAKS% --dump auth --to user@example.com --server ser.ver --helo host.example.com --from from@example.com --auth LOGIN,PLAIN --auth-user AUTHUSER --auth-password AUTHPASS --auth-hide-password CUSTOM_HIDE_STRING --auth-plaintext --auth-map AUTHTYPE=CRAM-MD5,TESTTYPE2=TESTTYPE2,AUTHTYPE=LOGIN --auth-extra dmd5-host=dmd5.example.com,realm=realm.example.org
+test action: CMD_CAPTURE %SWAKS% --dump auth --to user@host1.nodns.test.swaks.net --server ser.ver --helo host1.nodns.test.swaks.net --from from@host1.nodns.test.swaks.net --auth LOGIN,PLAIN --auth-user AUTHUSER --auth-password AUTHPASS --auth-hide-password CUSTOM_HIDE_STRING --auth-plaintext --auth-map AUTHTYPE=CRAM-MD5,TESTTYPE2=TESTTYPE2,AUTHTYPE=LOGIN --auth-extra dmd5-host=dmd5.nodns.test.swaks.net,realm=realm.nodns.test.swaks.net
