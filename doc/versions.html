@@ -12,9 +12,16 @@
         a:link { color: blue }
         a:visited { color: blue }
         a:active { color: navy }
+        pre { overflow-y: scroll }
+        code { font-size: 110% }
+        pre, code {
+            overflow-x: auto;
+            overflow-y: hidden; 
+            white-space: nowrap;
+        }
+        .container { max-width: 600px }
         .header { margin-top: 3% }
         .footer { margin-bottom: 3% }
-        code { font-size: 110% }
     </style>
 </head>
 <body>
@@ -22,7 +29,7 @@
 <div class="section header">
     <div class="container">
         <div class="row">
-            <a name="swaks"><h1>Swaks - Swiss Army Knife for SMTP</h1></a>
+            <a name="swaks"><h1><b>Swaks</b> - Swiss Army Knife for SMTP</h1></a>
             <span id="subheader">A scriptable, transaction-oriented SMTP test tool</span>
         </div>
         <hr/>

@@ -12,9 +12,15 @@
         a:link { color: blue }
         a:visited { color: blue }
         a:active { color: navy }
+        code { font-size: 120% }
+        pre, code {
+            overflow-x: auto;
+            overflow-y: hidden; 
+            white-space: nowrap;
+        }
+        .container { max-width: 600px }
         .header { margin-top: 3% }
         .footer { margin-bottom: 3% }
-        code { font-size: 120% }
     </style>
 </head>
 <body>
@@ -22,7 +28,7 @@
 <div class="section header">
     <div class="container">
         <div class="row">
-            <a name=swaks><h1>Swaks - Swiss Army Knife for SMTP</h1></a>
+            <a name="swaks"><h1><b>Swaks</b> - Swiss Army Knife for SMTP</h1></a>
             <span id="subheader">A scriptable, transaction-oriented SMTP test tool</span>
         </div>
         <hr/>
@@ -34,7 +40,7 @@
         <h4>Occasionally Asked Questions</h4>
         <p>
             These are questions that I occasionally get asked or I see pop up in a Google query string.<br/>
-            If you are trying to figure out something using Swaks, drop me a line at <a href=mailto:proj-swaks@jetmore.net>proj-swaks@jetmore.net</a>.  Swaks is a low-traffic project and I enjoy making it better, whether it's docs or code or just giving a hint in an email.
+            If you are trying to figure out something using Swaks, drop me a line at <a href="mailto:proj-swaks@jetmore.net">proj-swaks@jetmore.net</a>.  Swaks is a low-traffic project and I enjoy making it better, whether it's docs or code or just giving a hint in an email.
         </p>
         <p><a href="./index.html">return to main page</a></p>
     </div>
@@ -70,21 +76,21 @@
             <p>
                 Command line:
                 <pre><code>
-    swaks --to foo@example.net,bar@example.com
+swaks --to foo@example.net,bar@example.com
                 </code></pre>
             </p>
             <p>
                 Environment variable:
                 <pre><code>
-    SWAKS_OPT_to='foo@example.net,bar@example.com'
-    swaks
+SWAKS_OPT_to='foo@example.net,bar@example.com'
+swaks
                 </code></pre>
             </p>
             <p>
                 Config file:
                 <pre><code>
-    echo "--to foo@example.net,bar@example.com" >> .swaksrc
-    swaks --config .swaksrc
+echo "--to foo@example.net,bar@example.com" >> .swaksrc
+swaks --config .swaksrc
                 </code></pre>
             </pre>
             <p>
@@ -111,10 +117,10 @@
             <h5>How do I add a header?</h5>
             <p>Use the --add-header option:</p>
             <pre><code>
-    swaks --add-header "X-Test-Header: foo"
+swaks --add-header "X-Test-Header: foo"
             </code></pre>
             <p>
-                There are lots more examples in <a href=http://jetmore.org/john/code/swaks/latest/doc/ref.txt>the spec</a>, 
+                There are lots more examples in <a href="http://jetmore.org/john/code/swaks/latest/doc/ref.txt">the spec</a>, 
                 look for --header and --add-header for details and nuance about each.  
                 A quick rule of thumb though is that you want --header to overwrite a header that already exists in your test email, 
                 and you want --add-header to add a completely new header, even if that same header already exists in your test email.
@@ -173,7 +179,7 @@
                 --attach-type is optional, but setting it will help your MUA know what to do with the attachment:
             </p>
             <pre><code>
-    swaks --attach-type text/html --attach report.html
+swaks --attach-type text/html --attach report.html
             </code></pre>
             <p>
                 Another interpretation of this question is "How do I send email which has an HTML-encoded body".
@@ -181,7 +187,7 @@
                 of a MIME email as text/plain, so you have to "cheat" and add the MIME headers yourself.  The following should work:
             </p>
             <pre><code>
-    swaks --body report.html --add-header "MIME-Version: 1.0" --add-header "Content-Type: text/html"
+swaks --body report.html --add-header "MIME-Version: 1.0" --add-header "Content-Type: text/html"
             </code></pre>
             <p>
                 One potential issue with this path is that the contents of report.html won't be encoded as they would if it was processed
@@ -214,7 +220,7 @@
                 in the To: header (or, put another way, to BCC bb@example.com), the following would work:
             </p>
             <pre><code>
-    swaks --to aa@example.com,bb@example.com --header "To: aa@example.com"
+swaks --to aa@example.com,bb@example.com --header "To: aa@example.com"
             </code></pre>
         </div>
     </div>
