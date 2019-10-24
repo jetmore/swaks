@@ -871,3 +871,5 @@
 * 20191022 The "no-" option negating now works much better (previously was
            hit-or-miss on special option families like --attach*, --xclient*,
            and --header*.
+* 20191023 Ensure "main" choice defined first in each option's list of
+           aliases because the first item is used for errors.

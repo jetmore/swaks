@@ -1669,22 +1669,22 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_OPT,
 		  okey    => 'config_file',                                        type   => 'scalar', },
 		# envelope-(f)rom address
-		{ opts    => ['f', 'from'],                                        suffix => ':s',
+		{ opts    => ['from', 'f'],                                        suffix => ':s',
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'From: ',                                             match  => '^.*$',
 		  okey    => 'mail_from',                                          type   => 'scalar', },
 		# envelope-(t)o address
-		{ opts    => ['t', 'to'],                                          suffix => ':s',
+		{ opts    => ['to', 't'],                                          suffix => ':s',
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'To: ',                                               match  => '^.+$',
 		  okey    => 'mail_to',                                            type   => 'scalar', },
 		# (h)elo string
-		{ opts    => ['h', 'helo', 'ehlo', 'lhlo'],                        suffix => ':s',
+		{ opts    => ['helo', 'ehlo', 'lhlo', 'h'],                        suffix => ':s',
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'Helo: ',                                             match  => '^.*$',
 		  okey    => 'mail_helo',                                          type   => 'scalar', },
 		# (s)erver to use
-		{ opts    => ['s', 'server'],                                      suffix => ':s',
+		{ opts    => ['server', 's'],                                      suffix => ':s',
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'Server: ',                                           match  => '^.*$',
 		  okey    => 'mail_server',                                        type   => 'scalar', },
@@ -1701,7 +1701,7 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'copy_routing',                                       type   => 'scalar', },
 		# (p)ort to use
-		{ opts    => ['p', 'port'],                                        suffix => ':s',
+		{ opts    => ['port', 'p'],                                        suffix => ':s',
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'Port: ',                                             match  => '^\w+$',
 		  okey    => 'mail_port',                                          type   => 'scalar', },
@@ -1710,15 +1710,15 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'mail_protocol',                                      type   => 'scalar', },
 		# (d)ata portion ('\n' for newlines)
-		{ opts    => ['d', 'data'],                                        suffix => ':s',
+		{ opts    => ['data', 'd'],                                        suffix => ':s',
 		  cfgs    => OP_ARG_OPT, # we dynamically change this later
 		  okey    => 'mail_data',                                          type   => 'scalar', },
 		# use the --dump text as default body
-		{ opts    => ['dab', 'dump-as-body'],                              suffix => ':s',
+		{ opts    => ['dump-as-body', 'dab'],                              suffix => ':s',
 		  cfgs    => OP_ARG_OPT,
 		  okey    => 'dump_as_body',                                       type   => 'scalar', },
 		# implies --dump-as-body; forces raw passwords to be used
-		{ opts    => ['dabsp', 'dump-as-body-shows-password'],             suffix => '',
+		{ opts    => ['dump-as-body-shows-password', 'dabsp'],             suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'dab_sp',                                             type   => 'scalar', },
 		# timeout for each trans (def 30s)
@@ -1731,55 +1731,55 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'data_on_stdin',                                      type   => 'scalar', },
 		# (q)uit after
-		{ opts    => ['q', 'quit', 'quit-after'],                          suffix => '=s',
+		{ opts    => ['quit-after', 'quit', 'q'],                          suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'quit_after',                                         type   => 'scalar', },
 		# drop after (don't quit, just drop)
-		{ opts    => ['da', 'drop', 'drop-after'],                         suffix => '=s',
+		{ opts    => ['drop-after', 'drop', 'da'],                         suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'drop_after',                                         type   => 'scalar', },
 		# drop after send (between send and read)
-		{ opts    => ['das', 'drop-after-send'],                           suffix => '=s',
+		{ opts    => ['drop-after-send', 'das'],                           suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'drop_after_send',                                    type   => 'scalar', },
 		# do (n)ot print data portion
-		{ opts    => ['n', 'suppress-data'],                               suffix => '',
+		{ opts    => ['suppress-data', 'n'],                               suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'suppress_data',                                      type   => 'scalar', },
 		# force auth, exit if not supported
-		{ opts    => ['a', 'auth'],                                        suffix => ':s',
+		{ opts    => ['auth', 'a'],                                        suffix => ':s',
 		  cfgs    => OP_ARG_OPT,
 		  okey    => 'auth',                                               type   => 'scalar', },
 		# user for auth
-		{ opts    => ['au', 'auth-user'],                                  suffix => ':s',
+		{ opts    => ['auth-user', 'au'],                                  suffix => ':s',
 		  cfgs    => OP_ARG_OPT, # we dynamically change this later
 		  okey    => 'auth_user',                                          type   => 'scalar', },
 		# pass for auth
-		{ opts    => ['ap', 'auth-password'],                              suffix => ':s',
+		{ opts    => ['auth-password', 'ap'],                              suffix => ':s',
 		  cfgs    => OP_ARG_OPT, # we dynamically change this later
 		  okey    => 'auth_pass',                                          type   => 'scalar', },
 		# auth type map
-		{ opts    => ['am', 'auth-map'],                                   suffix => '=s',
+		{ opts    => ['auth-map', 'am'],                                   suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'auth_map',                                           type   => 'scalar', },
 		# extra, authenticator-specific options
-		{ opts    => ['ae', 'auth-extra'],                                 suffix => '=s',
+		{ opts    => ['auth-extra', 'ae'],                                 suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'auth_extra',                                         type   => 'scalar', },
 		# hide passwords when possible
-		{ opts    => ['ahp', 'auth-hide-password'],                        suffix => ':s',
+		{ opts    => ['auth-hide-password', 'ahp'],                        suffix => ':s',
 		  cfgs    => OP_ARG_OPT,
 		  okey    => 'auth_hidepw',                                        type   => 'scalar', },
 		# translate base64 strings
-		{ opts    => ['apt', 'auth-plaintext'],                            suffix => '',
+		{ opts    => ['auth-plaintext', 'apt'],                            suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'auth_showpt',                                        type   => 'scalar', },
 		# auth optional (ignore failure)
-		{ opts    => ['ao', 'auth-optional'],                              suffix => ':s',
+		{ opts    => ['auth-optional', 'ao'],                              suffix => ':s',
 		  cfgs    => OP_ARG_OPT,
 		  okey    => 'auth_optional',                                      type   => 'scalar', },
 		# req auth if avail
-		{ opts    => ['aos', 'auth-optional-strict'],                      suffix => ':s',
+		{ opts    => ['auth-optional-strict', 'aos'],                      suffix => ':s',
 		  cfgs    => OP_ARG_OPT,
 		  okey    => 'auth_optional_strict',                               type   => 'scalar', },
 		# report capabilties
@@ -1787,12 +1787,12 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'get_support',                                        type   => 'scalar', },
 		# local interface to use
-		{ opts    => ['li', 'local-interface'],                            suffix => ':s',
+		{ opts    => ['local-interface', 'li'],                            suffix => ':s',
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'Interface: ',                                        match  => '^.*$',
 		  okey    => 'lint',                                               type   => 'scalar', },
 		# local port
-		{ opts    => ['lp', 'local-port', 'lport'],                        suffix => ':s',
+		{ opts    => ['local-port', 'lport', 'lp'],                        suffix => ':s',
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'Local Port: ',                                       match  => '^\w+$',
 		  okey    => 'lport',                                              type   => 'scalar', },
@@ -1801,15 +1801,15 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'tls',                                                type   => 'scalar', },
 		# use tls if available
-		{ opts    => ['tlso', 'tls-optional'],                             suffix => '',
+		{ opts    => ['tls-optional', 'tlso'],                             suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'tls_optional',                                       type   => 'scalar', },
 		# req tls if avail
-		{ opts    => ['tlsos', 'tls-optional-strict'],                     suffix => '',
+		{ opts    => ['tls-optional-strict', 'tlsos'],                     suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'tls_optional_strict',                                type   => 'scalar', },
 		# use tls if available
-		{ opts    => ['tlsc', 'tls-on-connect'],                           suffix => '',
+		{ opts    => ['tls-on-connect', 'tlsc'],                           suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'tls_on_connect',                                     type   => 'scalar', },
 		# local cert to present to server
@@ -1821,7 +1821,7 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'tls_key',                                            type   => 'scalar', },
 		# tls protocol to use
-		{ opts    => ['tlsp', 'tls-protocol'],                             suffix => '=s',
+		{ opts    => ['tls-protocol', 'tlsp'],                             suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'tls_protocol',                                       type   => 'scalar', },
 		# tls cipher to use
@@ -1845,52 +1845,52 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'tls_ca_path',                                        type   => 'scalar', },
 		# suppress output to varying degrees
-		{ opts    => ['S', 'silent'],                                      suffix => ':i',
+		{ opts    => ['silent', 'S'],                                      suffix => ':i',
 		  cfgs    => OP_ARG_OPT,
 		  callout => \&process_opt_silent,
 		  okey    => 'silent',                                             type   => 'scalar', },
 		# Don't strip From_ line from DATA
-		{ opts    => ['nsf', 'no-strip-from'],                             suffix => '',
+		{ opts    => ['no-strip-from', 'nsf'],                             suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'no_strip_from',                                      type   => 'scalar', },
 		# Don't show send/receive hints (legacy)
-		{ opts    => ['nth', 'no-hints'],                                  suffix => '',
+		{ opts    => ['no-hints', 'nth'],                                  suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'no_hints',                                           type   => 'scalar', },
 		# Don't show transaction hints
-		{ opts    => ['nsh', 'no-send-hints'],                             suffix => '',
+		{ opts    => ['no-send-hints', 'nsh'],                             suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'no_hints_send',                                      type   => 'scalar', },
 		# Don't show transaction hints
-		{ opts    => ['nrh', 'no-receive-hints'],                          suffix => '',
+		{ opts    => ['no-receive-hints', 'nrh'],                          suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'no_hints_recv',                                      type   => 'scalar', },
 		# Don't show transaction hints
-		{ opts    => ['nih', 'no-info-hints'],                             suffix => '',
+		{ opts    => ['no-info-hints', 'nih'],                             suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'no_hints_info',                                      type   => 'scalar', },
 		# Don't show reception lines
-		{ opts    => ['hr', 'hide-receive'],                               suffix => '',
+		{ opts    => ['hide-receive', 'hr'],                               suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'hide_receive',                                       type   => 'scalar', },
 		# Don't show sending lines
-		{ opts    => ['hs', 'hide-send'],                                  suffix => '',
+		{ opts    => ['hide-send', 'hs'],                                  suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'hide_send',                                          type   => 'scalar', },
 		# Don't echo input on potentially sensitive prompts
-		{ opts    => ['pp', 'protect-prompt'],                             suffix => '',
+		{ opts    => ['protect-prompt', 'pp'],                             suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'protect_prompt',                                     type   => 'scalar', },
 		# Don't show any swaks-generated, non-error informational lines
-		{ opts    => ['hi', 'hide-informational'],                         suffix => '',
+		{ opts    => ['hide-informational', 'hi'],                         suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'hide_informational',                                 type   => 'scalar', },
 		# Don't send any output to the terminal
-		{ opts    => ['ha', 'hide-all'],                                   suffix => '',
+		{ opts    => ['hide-all', 'ha'],                                   suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'hide_all',                                           type   => 'scalar', },
 		# print lapse for send/recv
-		{ opts    => ['stl', 'show-time-lapse'],                           suffix => ':s',
+		{ opts    => ['show-time-lapse', 'stl'],                           suffix => ':s',
 		  cfgs    => OP_ARG_OPT,
 		  okey    => 'show_time_lapse',                                    type   => 'scalar', },
 		# print version and exit
@@ -1902,15 +1902,15 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'help',                                               type   => 'scalar', },
 		# don't touch the data
-		{ opts    => ['ndf', 'no-data-fixup'],                             suffix => '',
+		{ opts    => ['no-data-fixup', 'ndf'],                             suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'no_data_fixup',                                      type   => 'scalar', },
 		# show dumps of the raw read/written text
-		{ opts    => ['raw', 'show-raw-text'],                             suffix => '',
+		{ opts    => ['show-raw-text', 'raw'],                             suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'show_raw_text',                                      type   => 'scalar', },
 		# specify file to write to
-		{ opts    => ['output-file', 'output'],                            suffix => '=s',
+		{ opts    => ['output', 'output-file'],                            suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'output_file',                                        type   => 'scalar', },
 		# specify file to write to
@@ -2360,12 +2360,7 @@ sub reconstruct_options {
 		foreach my $okey (@{$o->{accums}{$opt->{akey}}}) {
 			$indexer{$okey} ||= 0;
 			my $optStruct     = $o->{values}{$okey}[$indexer{$okey}];
-
-			# Ideally we could rely on the first opt name in the list being the "primary" option,
-			# but we can't right now and I don't want to alter the option list.  For now just grab
-			# the longest option available as the primary
-			# my $lopt = (sort { length($b) <=> length($a) } (@{$opt->{opts}}))[0];
-			my $lopt = (sort { length($b) <=> length($a) } (@{$o->{cfgs}{$okey}{opts}}))[0];
+			my $lopt          = $o->{cfgs}{$okey}{opts}[0];
 
 			push(@c, '--'.$lopt);
 			if (length($optStruct->{arg})) {
