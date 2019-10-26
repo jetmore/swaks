@@ -873,3 +873,7 @@
            and --header*.
 * 20191023 Ensure "main" choice defined first in each option's list of
            aliases because the first item is used for errors.
+* 20191026 Deprecate -g option.  Change current implementation so it is
+           rewritten to `--data -` before option processing. Any occurrence
+           of `--data` will cause -g to be discarded. "no-" prefix will not
+           negate.

@@ -1711,7 +1711,8 @@ sub get_option_struct {
 		  okey    => 'mail_protocol',                                      type   => 'scalar', },
 		# (d)ata portion ('\n' for newlines)
 		{ opts    => ['data', 'd'],                                        suffix => ':s',
-		  cfgs    => OP_ARG_OPT, # we dynamically change this later
+		  cfgs    => OP_ARG_REQ|OP_PROMPT,
+		  prompt  => 'Data: ',                                             match  => '^.*$',
 		  okey    => 'mail_data',                                          type   => 'scalar', },
 		# use the --dump text as default body
 		{ opts    => ['dump-as-body', 'dab'],                              suffix => ':s',
@@ -1726,10 +1727,6 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'Timeout: ',                                          match  => '^\d+[hHmMsS]?$',
 		  okey    => 'timeout',                                            type   => 'scalar', },
-		# (g)et data on stdin
-		{ opts    => ['g'],                                                suffix => '',
-		  cfgs    => OP_ARG_NONE,
-		  okey    => 'data_on_stdin',                                      type   => 'scalar', },
 		# (q)uit after
 		{ opts    => ['quit-after', 'quit', 'q'],                          suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
@@ -2257,6 +2254,21 @@ sub fetch_args {
 			splice(@ARGV, $i+1, 0, $2);
 		}
 
+		# -g is not really necessary.  It is now deprecated. During the deprecation window, make
+		# it a straight-up alias to `--data -`.  If has already appeared, just ignore -g.  If
+		# --data has not appeared, change -g into `--data -`.
+		if ($ARGV[$i] =~ /^-?-g$/) {
+			if (scalar(grep(/^-?-data$/, @ARGV)) || check_arg('mail_data', $r)) {
+				# if --data appears in the current stream or has already appeared in a previous stream, ignore -g
+				splice(@ARGV, $i, 1); # remove the current index from @ARGV
+				redo(RUNOPTS);        # since there's now a new value at $i, redo this iteration of the loop
+			}
+			else {
+				# if we haven't seen --data yet, change -g into `--data -`
+				splice(@ARGV, $i, 1, '--data', '-');
+			}
+		}
+
 		if ($ARGV[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
 			# rewrite '--header-Foo bar' into '--header "Foo: bar"'
 			$ARGV[$i]   = "--header";
@@ -2388,6 +2400,19 @@ sub get_accum {
 	}
 
 	return($userOpts->{accums}{$accum_key});
+}
+
+# I might change this interface later, but I want a way to check whether the user provided the option
+# without actually processing it.
+sub check_arg {
+	my $opt      = shift;
+	my $userOpts = shift;
+
+	if (exists($userOpts->{values}{$opt}) && scalar(@{$userOpts->{values}{$opt}})) {
+		return(1);
+	}
+
+	return(0);
 }
 
 # there was a ton of repeated, boiler plate code in process_args.  Attempt to abstract it out to get_arg
@@ -2912,27 +2937,16 @@ sub process_args {
 	$body =~ s|%SWAKS_DEFAULT_MIMETYTPE%|application/octet-stream|g;
 
 	# SMTP DATA
-	# a '-' arg to -d is the same as setting -g
-	my $data_on_stdin = get_arg('data_on_stdin', $o);
-	if (defined(my $mail_data_t = get_arg('mail_data', $o))) {
-		if ($mail_data_t eq '-') {
-			$data_on_stdin = 1;
-		}
-		if (!$data_on_stdin) {
-			my $cfg = { cfgs => OP_ARG_REQ|OP_PROMPT, prompt  => 'Data: ', match  => '^.*$', okey => 'mail_data', akey => 'mail_data' };
-			$n{data} = $mail_data_t || get_arg('mail_data', $o, $cfg);
-		}
-	}
-	$n{data} ||= 'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
-	            "Message-Id: <%MESSAGEID%>\n" .
-	            "X-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/".'\n' .
-	            ($bound ? 'MIME-Version: 1.0\nContent-Type: ' . $main_content_type . '; boundary="' . $bound. '"\n' : '') .
-	            '%NEW_HEADERS%' . # newline will be added in replacement if it exists
-	            '\n' .
-	            '%BODY%\n';
-	# The -g option trumps all other methods of getting the data
+	$n{data} = get_arg('mail_data', $o) ||
+               'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
+	           "Message-Id: <%MESSAGEID%>\n" .
+	           "X-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/".'\n' .
+	           ($bound ? 'MIME-Version: 1.0\nContent-Type: ' . $main_content_type . '; boundary="' . $bound. '"\n' : '') .
+	           '%NEW_HEADERS%' . # newline will be added in replacement if it exists
+	           '\n' .
+	           '%BODY%\n';
 # WCSXXXFIXME - this file reading code should be pushed into get_arg
-	if ($data_on_stdin) {
+	if ($n{data} eq '-') {
 		$n{data} = join('', <STDIN>);
 	} elsif ($n{data} !~ m/\\n|\n|%NEWLINE%/) {
 		# if it doesn't have any newlines assume it's a file. Fail if we can't open.

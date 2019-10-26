@@ -1,0 +1,8 @@
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: -g ignored if --data present in previous option level
+
+pre action: SET_ENV SWAKS_OPT_data 'this is the%NEWLINE%correct body'
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" \
+    -g
