@@ -1711,7 +1711,7 @@ sub get_option_struct {
 		  okey    => 'mail_protocol',                                      type   => 'scalar', },
 		# (d)ata portion ('\n' for newlines)
 		{ opts    => ['data', 'd'],                                        suffix => ':s',
-		  cfgs    => OP_ARG_REQ|OP_PROMPT,
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT|OP_FROM_FILE,
 		  prompt  => 'Data: ',                                             match  => '^.*$',
 		  okey    => 'mail_data',                                          type   => 'scalar', },
 		# use the --dump text as default body
@@ -1930,7 +1930,7 @@ sub get_option_struct {
 		  okey    => 'socket',                                             type   => 'scalar', },
 		# the content of the body of the DATA
 		{ opts    => ['body'],                                             suffix => ':s',
-		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT|OP_FROM_FILE,
 		  prompt  => 'Body: ',                                             match  => '.+',
 		  okey    => 'body_822',                                           type   => 'scalar', },
 		# A file to attach
@@ -1943,11 +1943,11 @@ sub get_option_struct {
 		  okey    => 'attach_type',       akey => 'attach_accum',          type   => 'list', },
 		# A file to attach
 		{ opts    => ['attach'],                                           suffix => ':s',
-		  cfgs    => OP_ARG_REQ,
+		  cfgs    => OP_ARG_REQ|OP_FROM_FILE,
 		  okey    => 'attach_attach',     akey => 'attach_accum',          type   => 'list', },
 		# A file to attach
 		{ opts    => ['attach-body'],                                      suffix => ':s',
-		  cfgs    => OP_ARG_REQ,
+		  cfgs    => OP_ARG_REQ|OP_FROM_FILE,
 		  okey    => 'attach_body',       akey => 'attach_accum',          type   => 'list', },
 		# replacement for %NEW_HEADERS% DATA token
 		{ opts    => ['add-header', 'ah'],                                 suffix => ':s',
@@ -2415,6 +2415,22 @@ sub check_arg {
 	return(0);
 }
 
+# get the next value for $opt without doing any processing or popping it off of the list.
+sub peek_arg {
+	my $opt       = shift; # this should correspond to an okey from the @G::raw_option_data array
+	my $userOpts  = shift; # all options we got from the command line
+
+	if (!exists($userOpts->{values}{$opt})) {
+		return(undef());
+	}
+
+	if (!scalar(@{$userOpts->{values}{$opt}})) {
+		return(undef());
+	}
+
+	return($userOpts->{values}{$opt}[0]{arg});
+}
+
 # there was a ton of repeated, boiler plate code in process_args.  Attempt to abstract it out to get_arg
 sub get_arg {
 	my $opt       = shift; # this should correspond to an okey from the @G::raw_option_data array
@@ -2491,6 +2507,67 @@ sub get_arg {
 			else {
 				ptrans(12, "Option processing error: option $argExt->{opt} specified with no argument");
 				exit(1);
+			}
+
+			# OP_FROM_FILE means that the above options might have resolved into '-' or @filename.  If so, return the actual
+			# data contained in STDIN/@filename
+			if ($optConfig->{cfgs} & OP_FROM_FILE) {
+				if ($return eq '-') {
+					if (defined($G::stdin)) {
+						# multiple options can specify stdin, but we can only read it once.  If anyone has
+						# already read stdin, provide the saved value here
+						$return = $G::stdin;
+					}
+					else {
+						$return   = join('', <STDIN>);
+						$G::stdin = $return;
+					}
+				}
+				elsif ($return =~ /^\@\@/) {
+					# if the argument starts with \@\@, we take that to mean that the user wants a literal value that starts
+					# with an @.  The first @ is just an indicator, so strip it off before continuing
+					$return =~ s/^\@//;
+				}
+				elsif ($return =~ /^\@/) {
+					# a single @ means it's a filename.  Open it and use the contents as the return value
+					$return =~ s/^\@//;
+					if (!open(F, "<$return")) {
+						ptrans(12, "Option processing error: file $return not openable for option $argExt->{opt} ($!)");
+						exit(1);
+					}
+					$return = join('', <F>);
+					close(F);
+				}
+
+				{ # WCSXXXFIXME - reimplement all the deprecated behavior here in one place so it's easy to remove later
+					# if --data and single line, try to open it, error otherwise
+					# if !--data and is openable file, try to open and read, otherwise just use it as literal data
+					if ($argExt->{opt} eq 'data') {
+						# the old rule for --data was that anything that didn't have a newline in it would be treated
+						# as a file, and we would error if we couldn't open it. That would prevent us from sending
+						# typoed filenames as the data of messages
+						if ($return !~ m/\\n|\n|%NEWLINE%/) {
+						# WCSXXXFIXME deprecation warning here
+							if (!open(F, "<$return")) {
+								ptrans(12, "$argExt->{opt} option appears to be a file but is not openable: $return ($!)");
+								exit(1);
+							}
+							$return = join('', <F>);
+							close(F);
+						}
+					}
+					elsif (open(F, "<$return")) {
+						# WCSXXXFIXME deprecation warning here
+						# the old rule for any other file option (--attach, --attach-body, --body) was that
+						# if it was openable, we would use the contents of the file, otherwise we would
+						# use the string itself
+						# if (!exists($part->{name}) && $type ne 'body') {
+						# 	($part->{name}) = $part->{body} =~ m|/?([^/]+)$|;
+						# }
+						$return = join('', <F>);
+						close(F);
+					}
+				}
 			}
 		}
 	}
@@ -2817,20 +2894,10 @@ sub process_args {
 	my $bound             = '';
 	my $main_content_type = 'multipart/mixed';
 	my $stdin             = undef;
-# WCSXXXFIXME - this "'-' means stdin" should be an option structure cfg
 	if (defined(my $body_822_t = get_arg('body_822', $o))) {
-		# the --body option is the entire 822 body and trumps and other options
+		# the --body option is the entire 822 body and trumps any other options
 		# that mess with the body
-		if ($body_822_t eq '-') {
-			$stdin = join('', <STDIN>);
-			$body  = $stdin;
-		} else {
-			$body = $body_822_t;
-		}
-		if (open(I, "<$body")) {
-			$body = join('', <I>);
-			close(I);
-		}
+		$body = $body_822_t;
 	}
 	my $attach_accum = get_accum('attach_accum', $o);
 	if (scalar(@$attach_accum)) {
@@ -2857,11 +2924,18 @@ sub process_args {
 				$mime_type = '%SWAKS_DEFAULT_MIMETYTPE%'; # after each body, reset the default mime type
 			}
 			elsif ($part eq 'attach_attach') {
-				push(@{$parts{rest}}, { body => get_arg($part, $o), type => $mime_type });
+				my $name  = peek_arg($part, $o);
+				my $tpart = { body => get_arg($part, $o), type => $mime_type };
 				if (defined($next_name)) {
-					$parts{rest}[-1]{name} = $next_name;
-					$next_name             = undef();
+					$tpart->{name} = $next_name;
+					$next_name     = undef();
 				}
+				elsif ($name ne '-' && $name !~ /^\@[^\@]/ && $name ne $tpart->{body} && -f $name) {
+					# name will have the unprocessed arg.  If we think it came from a file, use the filename for
+					# the attachment name.  Not super happy with this logic, try to improve in the future
+					($tpart->{name}) = $name =~ m|/?([^/]+)$|;
+				}
+				push(@{$parts{rest}}, $tpart);
 			} else {
 				ptrans(12, "Error processing attach args, unknown type $part when processing attachment options");
 				exit(1);
@@ -2871,27 +2945,6 @@ sub process_args {
 		# if no body parts were set via --attach-body, set a text/plain body to $body
 		if (!scalar(@{$parts{body}})) {
 			push(@{$parts{body}}, { body => $body, type => 'text/plain' });
-		}
-
-		# now loop through and reconcile stdin/file contents
-# WCSXXXFIXME - - should be implemented as a get_arg option
-		foreach my $type ('body', 'rest') {
-			foreach my $part (@{$parts{$type}}) {
-				if ($part->{body} eq '-') {
-					if ($stdin) {
-						$part->{body} = $stdin;
-					} else {
-						$part->{body} = join('', <STDIN>);
-						$stdin        = $part->{body};
-					}
-				} elsif (open(I, "<$part->{body}")) {
-					if (!exists($part->{name}) && $type ne 'body') {
-						($part->{name}) = $part->{body} =~ m|/?([^/]+)$|;
-					}
-					$part->{body} = join('', <I>);
-					close(I);
-				}
-			}
 		}
 
 		$body = '';
@@ -2945,18 +2998,6 @@ sub process_args {
 	           '%NEW_HEADERS%' . # newline will be added in replacement if it exists
 	           '\n' .
 	           '%BODY%\n';
-# WCSXXXFIXME - this file reading code should be pushed into get_arg
-	if ($n{data} eq '-') {
-		$n{data} = join('', <STDIN>);
-	} elsif ($n{data} !~ m/\\n|\n|%NEWLINE%/) {
-		# if it doesn't have any newlines assume it's a file. Fail if we can't open.
-		if (!open(F, "<$n{data}")) {
-			ptrans(12, "data option appears to be a file but is not openable: $n{data} ($!)");
-			exit(1);
-		}
-		$n{data} = join('', <F>);
-		close(F);
-	}
 	if (!get_arg('no_data_fixup', $o)) {
 		$n{data}            =~ s/%BODY%/$body/g;
 		$n{data}            =~ s/\\n/\r\n/g;

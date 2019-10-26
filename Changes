@@ -870,10 +870,13 @@
            times.  If that's needed, see the --xclient option.
 * 20191022 The "no-" option negating now works much better (previously was
            hit-or-miss on special option families like --attach*, --xclient*,
-           and --header*.
+           and --header*).
 * 20191023 Ensure "main" choice defined first in each option's list of
            aliases because the first item is used for errors.
 * 20191026 Deprecate -g option.  Change current implementation so it is
            rewritten to `--data -` before option processing. Any occurrence
            of `--data` will cause -g to be discarded. "no-" prefix will not
            negate.
+* 20191026 Update --data, --body, --attach-body, and --attach so that a
+           leading '@' forces the argument to be a filename. Deprecate
+           previous "if it happens to be an openable file" behavior
