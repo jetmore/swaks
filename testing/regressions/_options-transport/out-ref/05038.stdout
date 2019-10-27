@@ -4,5 +4,5 @@ Transport Info:
   server          = ser ver
   port            = 25
   local interface = ::1
-  local port      = telnet
+  local port      = 23
   copy routing    = FALSE

@@ -204,7 +204,7 @@ Use argument as the local interface for the outgoing SMTP connection, or prompt 
 
 =item -lp, --local-port, --lport [port]
 
-Specify the outgoing port to originate the transaction from.  If this option is not specified the system will pick an ephemeral port.  Note that regular users cannot specify some ports.
+Specify the outgoing port to originate the transaction from.  The argument can be a service name (as retrieved by getservbyname(3)) or a port number.  If this option is not specified the system will pick an ephemeral port.  Note that regular users cannot specify some ports.
 
 =item --copy-routing [domain]
 

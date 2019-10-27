@@ -2,6 +2,8 @@
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
-title: lport, command line, no arg
+title: lport, config, invalid arg
 
-auto: INTERACT '%SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver" --lport' 'Local Port:' '9999'
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'lport BADSERVICENAME'
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%

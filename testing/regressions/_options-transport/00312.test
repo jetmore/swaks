@@ -2,7 +2,8 @@
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
-title: local-port, env var, valid arg
+title: local-port, config, invalid arg
 
-pre action: SET_ENV SWAKS_OPT_local_port 9999
-test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'local-port BADSERVICENAME'
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver" \
+    --config %OUTDIR%/swaksrc-%TESTID%
