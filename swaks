@@ -2800,6 +2800,15 @@ sub process_args {
 
 	# local interface and port
 	($G::link{lint},$G::link{lport}) = parse_server(get_arg('lint', $o), get_arg('lport', $o));
+	if ($G::link{lport} && $G::link{lport} !~ /^\d+$/) {
+		if (my $port = getservbyname($G::link{lport}, 'tcp')) {
+			$G::link{lport} = $port;
+		}
+		else {
+			ptrans(12, "unable to resolve service name $G::link{lport} into a port, exiting");
+			exit(1);
+		}
+	}
 
 	# SMTP helo/ehlo
 	if (!($n{helo} = get_arg('mail_helo', $o))) {

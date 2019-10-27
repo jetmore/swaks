@@ -880,3 +880,4 @@
 * 20191026 Update --data, --body, --attach-body, and --attach so that a
            leading '@' forces the argument to be a filename. Deprecate
            previous "if it happens to be an openable file" behavior
+* 20191027 Do service name resolution on --local-port if non-numeric
