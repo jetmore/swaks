@@ -351,18 +351,19 @@
   # 1381 no-strip-from, command line, valid arg (-option=)
   # 1382 no-strip-from, command line, valid arg (--option=)
 01400 --g
+  # note that "no-" processing was removed for this option and the option as a whole is now deprecated
   1400 g, command line, no arg
   # 1401 g, command line, valid arg
   # 1402 g, command line, invalid arg
-  1403 g, command line, no-option
+#  1403 g, command line, no-option
   1410 g, config, no arg
   # 1411 g, config, valid arg
   # 1412 g, config, invalid arg
-  1413 g, config, no-option
+#  1413 g, config, no-option
   1420 g, env var, no arg
   # 1421 g, env var, valid arg
   # 1422 g, env var, invalid arg
-  1423 g, env var, no-option
+#  1423 g, env var, no-option
   1430 g command line, no arg (-option)
   # 1431 g, command line, valid arg (-option=)
   # 1432 g, command line, valid arg (--option=)
@@ -381,10 +382,25 @@
     9 data, quoting already-quoted leading dots
     10 data, quoting trailing dot
     11 data, - reads from STDIN
+    12 --no-data-fixup actually works (prevents data from being rewritten
+    13 -g ignored if --data present in same option level (before)
+    14 -g ignored if --data present in same option level (after)
+    15 -g ignored if --data present in previous option level
+    16 -g overwritten if --data present in later option level
+    17 -g removal doesn't disturb --header-Foo processing when it appears immediately following
+    18 -g rewrite doesn't disturb --header-Foo processing when it appears immediately following
+    19 -g removal doesn't distrub --opt=foo processing when it appears immediately following
+    20 -g rewrite doesn't distrub --opt=foo processing when it appears immediately following
+    21 data, @existent-file works
+    22 data, @non-existstent-file works
+    23 data, @@non-file works
 05100 --body
     0 - works inline
     1 - '-' reads from stdin
     2 - works from file
+    3 body, @existent-file works
+    4 body, @non-existstent-file works
+    5 body, @@non-file works
 05200 - headers
     1 - --add-header adds unique
     2 - --add-header adds duplicate
@@ -437,10 +453,16 @@
     0 - works inline
     1 - '-' reads from stdin
     2 - works from file
+    3 attach, @existent-file works
+    4 attach, @non-existstent-file works
+    5 attach, @@non-file works
 05400 --attach
     0 - works inline
     1 - '-' reads from stdin
     2 - works from file
+    3 attach-body, @existent-file works
+    4 attach-body, @non-existstent-file works
+    5 attach-body, @@non-file works
 05500 - body, attach interplay
     0 - baseline. Use --body to set different body value
     1 - --attach argument

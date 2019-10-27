@@ -6,5 +6,3 @@ title: attach-type, config, no arg
 
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'attach-type'
 test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --config %OUTDIR%/swaksrc-%TESTID% --attach "CUSTOM ATTACH"
-
-skip: weird/undefined behavior

@@ -263,6 +263,14 @@
   832 tls-sni, command line, valid arg (--option=)
 
 
+
+
+
+
+05000 misc
+  0 --tls-cert without --tls-key is an error
+  1 --tls-key without --tls-cert is an error
+
 ./gen-tests.pl \
     -n 800 \
     -o tls-sni \

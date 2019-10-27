@@ -14,7 +14,7 @@ Content-Type: text/plain
 
 This is a test mailing
 ------=_MIME_BOUNDARY_000_99999
-Content-Type: custom/mimetype
+Content-Type: application/octet-stream
 Content-Disposition: attachment
 Content-Transfer-Encoding: BASE64
 

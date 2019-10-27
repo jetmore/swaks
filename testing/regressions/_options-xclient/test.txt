@@ -225,11 +225,12 @@
 
 
 05000 - misc
-  000 same --xclient-* option given multiple times - SKIP
+  000 same --xclient-* option given multiple times
   001 --xclient-* options get merged together
   002 --xclient-* options coexist with --xclient
-  003 --xclient-delim interact with --xclient-*
-
+  003 --xclient-addr not used multiple times if specificed multiple times
+  004 --xclient-delim interact with --xclient-*
+  005 --xclient can be specified multipl times with unique contents
 
 
 

@@ -694,9 +694,11 @@ Use argument as the entire contents of DATA.
 
 If no argument is provided, user will be prompted to supply value.
 
-If the argument '-' is provided the data will be read from STDIN with no prompt (same as -g).
+If the argument '-' is provided the data will be read from STDIN with no prompt.
 
-If the argument does not contain any literal (0x0a) or representative (0x5c, 0x6e or %NEWLINE%) newline characters, it will be treated as a filename.  If the file is open-able, the contents of the file will be used as the data portion.  If the file cannot be opened, Swaks will error and exit.
+If the argument starts with '@' it will be treated as a filename.  If you would like to pass in an argument that starts with '@' and isn't a filename, prefix the argument with an additional '@'.  For example, @file.txt will force processing of file.txt.  @@data will use the string '@data'.
+
+If the argument does not contain any literal (0x0a) or representative (0x5c, 0x6e or %NEWLINE%) newline characters, it will be treated as a filename.  If the file is open-able, the contents of the file will be used as the data portion.  If the file cannot be opened, Swaks will error and exit.  The entire behavior described in this paragraph is deprecated and will be removed in a future release.  Instead use a leading '@' to explicitly set that the argument is a filename.
 
 Any other argument will be used as the DATA contents.
 
@@ -750,7 +752,9 @@ Cause --dump-as-body to include plaintext passwords.  This option is not recomme
 
 =item --body [body-specification]
 
-Specify the body of the email.  The default is "This is a test mailing".  If no argument to --body is given, prompt to supply one interactively.  If '-' is supplied, the body will be read from standard input.  If any other text is provided and the text represents an open-able file, the content of that file is used as the body.  If it does not represent an open-able file, the text itself is used as the body.
+Specify the body of the email.  The default is "This is a test mailing".  If no argument to --body is given, prompt to supply one interactively.  If '-' is supplied, the body will be read from standard input.  Arguments beginning with '@' will be treated as filenames containing the body data to use (see --data for more detail).
+
+If, after the above processing, the argument represents an open-able file, the content of that file is used as the body.  This is deprecated behavior and will be removed in a future release.  Instead use a leading '@' to explicitly set that the argument is a filename.
 
 If the message is forced to MIME format (see --attach) "--body 'body text'" is the same as "--attach-type text/plain --attach-body 'body text'".  See --attach-body for details on creating a multipart/alternative body.
 
@@ -782,11 +786,11 @@ The option can either be specified multiple times or a single time with multiple
 
 =item --header [header-and-data], --h-Header [data]
 
-These options allow a way to change headers that already exist in the DATA.  '--header "Subject: foo"' and '--h-Subject foo' are equivalent.  If the header does not already exist in the data then this argument behaves identically to --add-header.  However, if the header already exists it is replaced with the one specified.
+These options allow a way to change headers that already exist in the DATA.  '--header "Subject: foo"' and '--h-Subject foo' are equivalent.  If the header does not already exist in the data then this argument behaves identically to --add-header.  However, if the header already exists it is replaced with the one specified.  Negating the version of this option with the header name in the option (eg '--no-header-Subject') will remove all previously processed --header options, not just the ones used for 'Subject'.
 
 =item -g
 
-If specified, Swaks will read the DATA value for the mail from STDIN.  This is equivalent to "--data -".  If there is a From_ line in the email, it will be removed (but see -nsf option).  Useful for delivering real message (stored in files) instead of using example messages.
+This option is a direct alias to '--data -' (read DATA from STDIN).  It is totally secondary to --data.  Any occurrance of --data will cause -g to be ignored.  This option cannot be negated with the 'no-' prefix.  This option is deprecated and will be removed in a future version of Swaks.
 
 =item --no-data-fixup, -ndf
 

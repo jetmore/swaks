@@ -6,5 +6,3 @@ title: attach-type, env var, no arg
 
 pre action: SET_ENV SWAKS_OPT_attach_type
 test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"  --attach "CUSTOM ATTACH"
-
-skip: weird/undefined behavior

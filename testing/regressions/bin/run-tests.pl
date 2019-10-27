@@ -198,8 +198,9 @@ sub runResult {
 						INTERACT:
 						while (1) {
 							print "Test $tokens->{'%TESTDIR%'}/$tokens->{'%TESTID%'} is about to fail.\n",
-							      "DIFF:  $args[0], $args[1]\n",
-							      ($testObj->{title} ? "TITLE: $testObj->{title}\n" : ''),
+							      "DIFF:   $args[0], $args[1]\n",
+							      ($testObj->{title} ? "TITLE:  $testObj->{title}\n" : ''),
+							      "ACTION: ", $testObj->{'test action'}[0], "\n",
 							      "(i)gnore, review (d)iff, (r)erun test, (s)kip test, (a)ccept new results, (q)uit: ";
 
 							# read a single character w/o requiring user to hit enter
