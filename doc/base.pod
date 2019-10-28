@@ -790,7 +790,7 @@ These options allow a way to change headers that already exist in the DATA.  '--
 
 =item -g
 
-This option is a direct alias to '--data -' (read DATA from STDIN).  It is totally secondary to --data.  Any occurrance of --data will cause -g to be ignored.  This option cannot be negated with the 'no-' prefix.  This option is deprecated and will be removed in a future version of Swaks.
+This option is a direct alias to '--data -' (read DATA from STDIN).  It is totally secondary to --data.  Any occurrence of --data will cause -g to be ignored.  This option cannot be negated with the 'no-' prefix.  This option is deprecated and will be removed in a future version of Swaks.
 
 =item --no-data-fixup, -ndf
 
@@ -941,6 +941,26 @@ Display this help information and exit.
 =item --version
 
 Display version information and exit.
+
+=back
+
+=head1 DEPRECATIONS
+
+The following features are deprecated and will be removed in a future version of Swaks
+
+=over 4
+
+=item -g option
+
+Will be removed no sooner than (ONE YEAR FROM NEXT RELEASE).
+
+The -g option is currently a less-good alias to '--data -'.  Any uses of -g should be able to be directly migrated to '--data -' instead.
+
+=item auto-filename detection
+
+Will be removed no sooner than (ONE YEAR FROM NEXT RELEASE).
+
+The --data, --body, --attach, and --attach-body options currently will attempt to distinguish between an argument that is the actual value to use vs. an argument that represents a file containing the data to use.  This behavior has been superseded by prefixing an argument to these options with '@' to explicitly indicate that the argument indicates a file.  Any uses of providing a filename to one of these options should be moved to using '@' to indicate a filename is being used.
 
 =back
 

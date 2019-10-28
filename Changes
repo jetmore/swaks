@@ -882,3 +882,5 @@
            previous "if it happens to be an openable file" behavior
 * 20191027 Do service name resolution on --local-port if non-numeric
 * 20191028 Fix bug setting filename in attachments when '@' prefix used
+* 20191028 Add deprecation warning system.  Warnings in code and a table
+           of deprecated functionality and removal dates in documentation.
