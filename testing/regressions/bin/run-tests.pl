@@ -201,7 +201,7 @@ sub runResult {
 							      "DIFF:   $args[0], $args[1]\n",
 							      ($testObj->{title} ? "TITLE:  $testObj->{title}\n" : ''),
 							      "ACTION: ", $testObj->{'test action'}[0], "\n",
-							      "(i)gnore, review (d)iff, (r)erun test, (s)kip test, (a)ccept new results, (q)uit: ";
+							      "(i)gnore, review (d)iff, (e)dit test, (r)erun test, (s)kip test, (a)ccept new results, (q)uit: ";
 
 							# read a single character w/o requiring user to hit enter
 							ReadMode 'cbreak';
@@ -217,6 +217,12 @@ sub runResult {
 								debug('exec', "$ENV{'PAGER'} $diffFile");
 								system($ENV{'PAGER'}, $diffFile);
 								next INTERACT;
+							}
+							elsif ($input eq 'e') {
+								my $editor = $ENV{'SWAKS_EDITOR'} || $ENV{'VISUAL'} || $ENV{'EDITOR'};
+								debug('exec', "$editor $tokens->{'%TESTDIR%'}/$tokens->{'%TESTID%'}.test");
+								system($editor, "$tokens->{'%TESTDIR%'}/$tokens->{'%TESTID%'}.test");
+								redo TEST_EXECUTION;
 							}
 							elsif ($input eq 'r') {
 								redo TEST_EXECUTION;

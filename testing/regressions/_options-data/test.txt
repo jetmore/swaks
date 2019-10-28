@@ -456,7 +456,7 @@
     3 attach, @existent-file works
     4 attach, @non-existstent-file works
     5 attach, @@non-file works
-05400 --attach
+05400 --attach-body
     0 - works inline
     1 - '-' reads from stdin
     2 - works from file

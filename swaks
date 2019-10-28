@@ -2939,10 +2939,14 @@ sub process_args {
 					$tpart->{name} = $next_name;
 					$next_name     = undef();
 				}
-				elsif ($name ne '-' && $name !~ /^\@[^\@]/ && $name ne $tpart->{body} && -f $name) {
-					# name will have the unprocessed arg.  If we think it came from a file, use the filename for
-					# the attachment name.  Not super happy with this logic, try to improve in the future
-					($tpart->{name}) = $name =~ m|/?([^/]+)$|;
+				else {
+					my $filename = $name;
+					$filename =~ s/^\@//;
+					if ($name ne '-' && $filename !~ /^\@/ && $name ne $tpart->{body} && -f $filename) {
+						# name will have the unprocessed arg.  If we think it came from a file, use the filename for
+						# the attachment name.  Not super happy with this logic, try to improve in the future
+						($tpart->{name}) = $name =~ m|/?([^/]+)$|;
+					}
 				}
 				push(@{$parts{rest}}, $tpart);
 			} else {
