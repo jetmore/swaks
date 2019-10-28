@@ -10,7 +10,13 @@ export SWAKSDIR=/Users/jetmore/Documents/git/swaks
 # We will be releasing what's in the develop branch
 # create a branch from develop named release/$RELEASE
 
+# review deprecations
+  - base.pod.  Make sure new deprecations are present.  Update the "not before" date
+  - remove code/docs/tests for any functionality that has reached its not-before date
+  - add Changes entry for any removed functionality
+
 # Update Changes, add a release entry
+
 
 # Generate a skeleton of the announce blog post.  Don't publish it yet, but you should
 # draft and save it so you can have the URL for the following docs
