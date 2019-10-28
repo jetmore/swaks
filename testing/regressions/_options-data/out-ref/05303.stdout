@@ -14,8 +14,9 @@ Content-Type: text/plain
 
 This is a test mailing
 ------=_MIME_BOUNDARY_000_99999
-Content-Type: application/octet-stream
-Content-Disposition: attachment
+Content-Type: application/octet-stream; name="body.txt"
+Content-Description: body.txt
+Content-Disposition: attachment; filename="body.txt"
 Content-Transfer-Encoding: BASE64
 
 dGhpcyBpcyB0aGUgYm9keSBpbmNsdWRlZCBmcm9tIGJvZHkudHh0Cg==

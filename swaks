@@ -520,6 +520,12 @@ sub start_tls {
 	return($t{active});
 }
 
+sub deprecate {
+	my $message = shift;
+
+	ptrans(12, "DEPRECATION WARNING: $message");
+}
+
 sub ptrans {
 	my $c = shift;  # transaction flag
 	my $m = shift;  # message to print
@@ -1659,6 +1665,7 @@ sub get_option_struct {
 		OP_ARG_NONE    => 0x04, # option does not take any argument (will return boolean)
 		OP_FROM_PROMPT => 0x08, # option prompts for an argument if none provided
 		OP_FROM_FILE   => 0x10, # option treats arg of '-' to mean 'read from stdin' (no prompt)
+		OP_DEPRECATED  => 0x20, # This option is deprecated
 	};
 
 	@G::raw_option_data = (
@@ -2100,6 +2107,11 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'PROXY dest_port: ',                                  match  => '^.+$',
 		  okey    => 'proxy_dest_port',                                    type   => 'scalar', },
+
+		# this option serve no purpose other than testing the deprecation system
+		{ opts    => ['trigger-deprecation'],                              suffix => ':s',
+		  cfgs    => OP_ARG_REQ|OP_DEPRECATED,
+		  okey    => 'trigger_deprecation',                                type   => 'scalar', },
 	);
 
 	return(\@G::raw_option_data);
@@ -2258,6 +2270,7 @@ sub fetch_args {
 		# it a straight-up alias to `--data -`.  If has already appeared, just ignore -g.  If
 		# --data has not appeared, change -g into `--data -`.
 		if ($ARGV[$i] =~ /^-?-g$/) {
+			deprecate('The -g option is deprecated and will be removed. Please use \'--data -\' instead.');
 			if (scalar(grep(/^-?-data$/, @ARGV)) || check_arg('mail_data', $r)) {
 				# if --data appears in the current stream or has already appeared in a previous stream, ignore -g
 				splice(@ARGV, $i, 1); # remove the current index from @ARGV
@@ -2324,6 +2337,10 @@ sub store_option {
 	my $type       = $cfg_struct->{type}; # scalar or list
 
 	# print "store_options called -> $cfg_struct, $opt_struct, $opt_name, $opt_value, $accum_key, $opt_key, $type\n";
+
+	if ($cfg_struct->{cfgs} & OP_DEPRECATED) {
+		deprecate("Option --$opt_name will be removed in the future.  Please see documentation for more information.");
+	}
 
 	# 'accum' stores lists of the order they were received in
 	$opt_struct->{accums}{$accum_key} ||= [];
@@ -2539,7 +2556,8 @@ sub get_arg {
 					close(F);
 				}
 
-				{ # WCSXXXFIXME - reimplement all the deprecated behavior here in one place so it's easy to remove later
+				{
+					# All of the functionality in this bare block is deprecated, remove the whole thing later.
 					# if --data and single line, try to open it, error otherwise
 					# if !--data and is openable file, try to open and read, otherwise just use it as literal data
 					if ($argExt->{opt} eq 'data') {
@@ -2547,7 +2565,8 @@ sub get_arg {
 						# as a file, and we would error if we couldn't open it. That would prevent us from sending
 						# typoed filenames as the data of messages
 						if ($return !~ m/\\n|\n|%NEWLINE%/) {
-						# WCSXXXFIXME deprecation warning here
+							deprecate('Inferring a filename from the argument to --' . $argExt->{opt} .
+							          ' will be removed in the future.  Prefix filenames with \'@\' instead.');
 							if (!open(F, "<$return")) {
 								ptrans(12, "$argExt->{opt} option appears to be a file but is not openable: $return ($!)");
 								exit(1);
@@ -2557,13 +2576,11 @@ sub get_arg {
 						}
 					}
 					elsif (open(F, "<$return")) {
-						# WCSXXXFIXME deprecation warning here
 						# the old rule for any other file option (--attach, --attach-body, --body) was that
 						# if it was openable, we would use the contents of the file, otherwise we would
 						# use the string itself
-						# if (!exists($part->{name}) && $type ne 'body') {
-						# 	($part->{name}) = $part->{body} =~ m|/?([^/]+)$|;
-						# }
+						deprecate('Inferring a filename from the argument to --' . $argExt->{opt} .
+						          ' will be removed in the future.  Prefix filenames with \'@\' instead.');
 						$return = join('', <F>);
 						close(F);
 					}
@@ -2939,10 +2956,14 @@ sub process_args {
 					$tpart->{name} = $next_name;
 					$next_name     = undef();
 				}
-				elsif ($name ne '-' && $name !~ /^\@[^\@]/ && $name ne $tpart->{body} && -f $name) {
-					# name will have the unprocessed arg.  If we think it came from a file, use the filename for
-					# the attachment name.  Not super happy with this logic, try to improve in the future
-					($tpart->{name}) = $name =~ m|/?([^/]+)$|;
+				else {
+					my $filename = $name;
+					$filename =~ s/^\@//;
+					if ($name ne '-' && $filename !~ /^\@/ && $name ne $tpart->{body} && -f $filename) {
+						# name will have the unprocessed arg.  If we think it came from a file, use the filename for
+						# the attachment name.  Not super happy with this logic, try to improve in the future
+						($tpart->{name}) = $name =~ m|/?([^/]+)$|;
+					}
 				}
 				push(@{$parts{rest}}, $tpart);
 			} else {
