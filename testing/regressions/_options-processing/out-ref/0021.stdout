@@ -1,6 +1,6 @@
 App Info:
   X-Mailer = swaks v99999999.9 jetmore.org/john/code/swaks/
-  Cmd Line = %SWAKS_COMMAND% --config '/path/to/OUTDIR/swaksrc-0021' --to 'user@host1.nodns.test.swaks.net' --server 'ser.ver' --no-data-fixup '1' --dump 'APP,TRANSPORT'
+  Cmd Line = %SWAKS_COMMAND% --config '/path/to/OUTDIR/swaksrc-0021' --to 'user@host1.nodns.test.swaks.net' --server 'ser.ver' --no-data-fixup --dump 'APP,TRANSPORT'
 
 Transport Info:
   type            = socket-inet

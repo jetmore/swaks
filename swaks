@@ -2405,7 +2405,7 @@ sub reconstruct_options {
 			my $lopt          = $o->{cfgs}{$okey}{opts}[0];
 
 			push(@c, '--'.$lopt);
-			if (length($optStruct->{arg})) {
+			if (length($optStruct->{arg}) && !($o->{cfgs}{$okey}{cfgs} & OP_ARG_NONE)) {
 				if ($okey eq 'auth_pass') {
 					push(@c, shquote('%RAW_PASSWORD_STRING%'));
 				}

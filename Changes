@@ -888,3 +888,5 @@
            ARGV for each call.
 * 20191111 Check to see if there are any entries left in the option list
            after each stage of option processing and error if so.
+* 20191111 Rework the command line reconstruction so that options that
+           don't take an argument do not include one in the reconstuction.
