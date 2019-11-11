@@ -4,6 +4,6 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: xclient-before-starttls, config, no-option
 
-pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'xclient-before-starttls \nno-xclient-before-starttls'
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'xclient-before-starttls\nno-xclient-before-starttls'
 test action: CMD_CAPTURE %SWAKS% --dump XCLIENT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --xclient-port 26 \
     --config %OUTDIR%/swaksrc-%TESTID%

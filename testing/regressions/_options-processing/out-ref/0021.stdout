@@ -1,0 +1,12 @@
+App Info:
+  X-Mailer = swaks v99999999.9 jetmore.org/john/code/swaks/
+  Cmd Line = %SWAKS_COMMAND% --config '/path/to/OUTDIR/swaksrc-0021' --to 'user@host1.nodns.test.swaks.net' --server 'ser.ver' --no-data-fixup --dump 'APP,TRANSPORT'
+
+Transport Info:
+  type            = socket-inet
+  inet protocol   = any
+  server          = ser.ver
+  port            = 25
+  local interface = 
+  local port      = 
+  copy routing    = FALSE
