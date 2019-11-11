@@ -331,7 +331,7 @@ This option is similar to --drop-after, but instead of dropping the connection a
 
 =item --timeout [time]
 
-Use argument as the SMTP transaction timeout, or prompt user if no argument given.  Argument can either be a pure digit, which will be interpreted as seconds, or can have a specifier s or m (5s = 5 seconds, 3m = 180 seconds).  As a special case, 0 means don't timeout the transactions.  Default value is 30s.
+Use argument as the SMTP transaction timeout, or prompt user if no argument given.  Argument can either be a pure digit, which will be interpreted as seconds, or can have a specifier s, m, or h (5s = 5 seconds, 3m = 180 seconds, 1h = 3600 seconds).  As a special case, 0 means don't timeout the transactions.  Default value is 30s.
 
 =item --protocol [protocol]
 

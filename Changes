@@ -890,3 +890,6 @@
            after each stage of option processing and error if so.
 * 20191111 Rework the command line reconstruction so that options that
            don't take an argument do not include one in the reconstuction.
+* 20191111 Unexpected argument format for --timeout now errors and exits
+           instead of silently using default timeout.
+* 20191111 Document that --timeout argument can use 'h' as a modifier.

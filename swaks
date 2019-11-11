@@ -1611,8 +1611,9 @@ sub test_support {
 sub time_to_seconds {
 	my $t = shift;
 
-	if ($t !~ /^(\d+)([hms])?/i) {
-		return(30); # error condition - just use default value
+	if ($t !~ /^(\d+)([hms])?$/i) {
+		ptrans(12, 'Unknown timeout format \'' . $t . '\'');
+		exit(1);
 	} else {
 		my $r = $1;
 		my $u = lc($2);
