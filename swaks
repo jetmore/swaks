@@ -2222,6 +2222,7 @@ sub load_args {
 			# OK, all that work to load @fakeARGV with values from the config file.  Now
 			# we just need to process it.  (don't call if nothing set in @fakeARGV)
 			fetch_args(\%ARGS, $option_list, \@fakeARGV) if (scalar(@fakeARGV));
+			check_opt_processing(\@fakeARGV, 'Config file ' . $configf);
 		}
 	}
 
@@ -2236,11 +2237,29 @@ sub load_args {
 		}
 	}
 	fetch_args(\%ARGS, $option_list, \@fakeARGV) if (scalar(@fakeARGV));
+	check_opt_processing(\@fakeARGV, 'environment');
 
 	# and now, after all of that, process the actual cmdline args
 	fetch_args(\%ARGS, $option_list, \@ARGV) if (scalar(@ARGV));
+	check_opt_processing(\@ARGV, 'command line');
 
 	return(\%ARGS);
+}
+
+# if there's anything left in the fake argv after Getopts processed it, it's an error.  There's nothing
+# that can be passed in to swaks that isn't an option or an argument to an option, all of which Getopt
+# should consume.  So if there's anything left, the user did something weird.  Just let them know and
+# error instead of letting them think their ignored stuff is working.
+sub check_opt_processing {
+	my $argv_local  = shift;
+	my $option_type = shift;
+
+	if (scalar(@$argv_local)) {
+		ptrans(12, 'Data left in option list when processing  ' . $option_type . ' (' .
+		           join(', ', map { "'$_'" } (@$argv_local)) .
+		           ').  Exiting');
+		exit(1);
+	}
 }
 
 sub fetch_args {

@@ -4,6 +4,6 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: apt, config, no-option
 
-pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'apt \nno-apt'
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'apt\nno-apt'
 test action: CMD_CAPTURE %SWAKS% --dump AUTH --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --au USER --ap PASS \
     --config %OUTDIR%/swaksrc-%TESTID%

@@ -4,6 +4,6 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: auth-plaintext, config, no-option
 
-pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'auth-plaintext \nno-auth-plaintext'
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'auth-plaintext\nno-auth-plaintext'
 test action: CMD_CAPTURE %SWAKS% --dump AUTH --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --au USER --ap PASS \
     --config %OUTDIR%/swaksrc-%TESTID%

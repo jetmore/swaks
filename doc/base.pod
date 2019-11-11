@@ -111,6 +111,8 @@ A message's body is the portion of its DATA section following the first blank li
 
 To prevent potential confusion in this document a flag to Swaks is always referred to as an "option".  If the option takes additional data, that additional data is referred to as an argument to the option.  For example, "--from fred@example.com" might be provided to Swaks on the command line, with "--from" being the option and "fred@example.com" being --from's argument.
 
+Options arguments are the only way to provide information to Swaks.  If Swaks finds data during option processing that is neither an option nor an option's argument, it will error and exit.  For instance, if "--no-data-fixup 1" were found on the command line, this would result in an error because --no-data-fixup does not take an argument and therefore Swaks would no know what to do with '1'.
+
 Options can be given to Swaks in three ways.  They can be specified in a configuration file, in environment variables, and on the command line.  Depending on the specific option and whether an argument is given to it, Swaks may prompt the user for the argument.
 
 When Swaks evaluates its options, it first looks for a configuration file (either in a default location or specified with --config).  Then it evaluates any options in environment variables.  Finally, it evaluates command line options.  At each round of processing, any options set earlier will be overridden.  Additionally, any option can be prefixed with "no-" to cause Swaks to forget that the variable had previously been set (either in an earlier round, or earlier in the same round).  This capability is necessary because many options treat defined-but-no-argument differently than not-defined.
@@ -131,8 +133,11 @@ A set of "portable" defaults can also be created by adding options to the end of
 
 If configuration files have not been explicitly turned off, the __END__ config is always read.  Only one other configuration file will ever be used per single invocation of Swaks, even if multiple configuration files are specified.  If the __END__ config and another config are to be read, the __END__ config will be processed first.  Specifying the --config option with no argument turns off the processing of both the __END__ config and any actual config files.
 
-In a configuration file lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to Swaks, with the leading dash or dashes optional.  Everything after a option line's first space is assumed to be the option's argument and is not shell processed.  Therefore, quoting is usually unneeded and will be included literally in the argument.  Here is an example of the contents of a configuration file:
+In a configuration file lines beginning with a hash (#) are ignored.  All other lines are assumed to be an option to Swaks, with the leading dash or dashes optional.  Everything after a option line's first space is assumed to be the option's argument and is not shell processed.  Therefore, quoting is usually unneeded and will be included literally in the argument.
 
+There is a subtle difference between providing an option with no argument and providing an option with an empty argument.  If an option line does not have a space, the entire line is treated as an option and there is no argument.  If the line ends in a single space, it will be processed as an option with an empty argument.  So, "apt" will be treated as "--apt", but "apt " will be treated as "--apt ''".
+
+Here is an example of the contents of a configuration file:
 
     # always use this sender, no matter server or logged in user
     --from fred@example.com

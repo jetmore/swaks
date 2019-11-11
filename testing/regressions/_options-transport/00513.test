@@ -4,6 +4,6 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: 4, config, no-option
 
-pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'4 \nno-4'
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'4\nno-4'
 test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver" \
     --config %OUTDIR%/swaksrc-%TESTID%

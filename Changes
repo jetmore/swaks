@@ -886,3 +886,5 @@
            of deprecated functionality and removal dates in documentation.
 * 20191111 Switch Getopt processing to an arbitrary list instead of  changing
            ARGV for each call.
+* 20191111 Check to see if there are any entries left in the option list
+           after each stage of option processing and error if so.

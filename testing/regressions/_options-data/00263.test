@@ -4,6 +4,6 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: dump-as-body-shows-password, config, no-option
 
-pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'dump-as-body-shows-password \nno-dump-as-body-shows-password'
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'dump-as-body-shows-password\nno-dump-as-body-shows-password'
 test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --au auth_user --ap auth_pass --dab AUTH \
     --config %OUTDIR%/swaksrc-%TESTID%

@@ -4,6 +4,6 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: pipeline, config, no-option
 
-pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'pipeline \nno-pipeline'
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'pipeline\nno-pipeline'
 test action: CMD_CAPTURE %SWAKS% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo helo-string --server ser.ver \
     --config %OUTDIR%/swaksrc-%TESTID%
