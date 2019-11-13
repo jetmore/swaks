@@ -889,7 +889,13 @@
 * 20191111 Check to see if there are any entries left in the option list
            after each stage of option processing and error if so.
 * 20191111 Rework the command line reconstruction so that options that
-           don't take an argument do not include one in the reconstuction.
+           don't take an argument do not include one in the reconstruction.
 * 20191111 Unexpected argument format for --timeout now errors and exits
            instead of silently using default timeout.
 * 20191111 Document that --timeout argument can use 'h' as a modifier.
+* 20191111 Docs: Reorganize Terms and Conventions, add Option/Arg/[]/<>.
+* 20191112 Docs: Be consistent in how <> and [] are used in argument docs.
+* 20191113 Docs: Define option types and assign to every option.
+* 20191113 Docs: General typo and consistency fixes.
+* 20191122 Docs: Establish project standards for POD formatting and
+           make first pass at applying.
