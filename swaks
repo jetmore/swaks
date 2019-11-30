@@ -714,6 +714,12 @@ sub do_smtp_auth {
 				$auth_attempted = 1;
 			}
 		}
+		foreach my $type (@{$G::auth_map_t{'GSSAPI'}}) {
+			if ($btype eq $type) {
+				return(0) if (do_smtp_auth_gssapi($au, $ap, $type));
+				$auth_attempted = 1;
+			}
+		}
 		foreach my $type (@{$G::auth_map_t{'NTLM'}}) {
 			if ($btype eq $type) {
 				return(0) if (do_smtp_auth_ntlm($au, $ap, $type));
@@ -735,6 +741,104 @@ sub do_smtp_auth {
 	}
 
 	return $auth_attempted ? 4 : 2;
+}
+
+sub do_smtp_auth_gssapi {
+	my $u  = shift; # auth user
+	my $p  = shift; # auth password
+	my $as = shift; # auth string
+	my $ro = '';    # will store smtp output
+	my $ri = '';    # will store smtp input
+	my $c  = '';    # will store Authen::SASL status
+	my $e  = '';    # will store Authen::SASL errors
+	my @gssapi_uri = ();
+
+	if (exists($G::auth_extras{"GSS-SERV-TYPE"})) {
+		$gssapi_uri[0] = $G::auth_extras{"GSS-SERV-TYPE"};
+	} else {
+		$gssapi_uri[0] = 'smtp';
+	}
+	if (exists($G::auth_extras{"GSS-HOST"})) {
+		$gssapi_uri[1] = $G::auth_extras{"GSS-HOST"};
+	} else {
+		if ($G::link{type} eq 'socket-inet') {
+			$gssapi_uri[1] = $G::link{server};
+		} else {
+			# our local FQDN is the most sensible choice here, unlike in DIGEST-MD5
+			$gssapi_uri[1] = get_fqdn(hostname());
+		}
+	}
+
+	my $callbacks = { user => $u, pass => $p };
+	my $sasl = Authen::SASL->new(
+		debug     => 0,
+		mechanism => 'GSSAPI',
+		callback  => $callbacks,
+	);
+	my $sasl_client = $sasl->client_new(@gssapi_uri);
+	my $sasl_challenge;
+	my $sasl_response;
+
+	# RFC 4752 (SASL GSSAPI) specifically defines Kerberos 5 and not any
+	# other GSS-API mech. The mechanism always produces an initial client
+	# response.
+
+	$sasl_response = $sasl_client->client_start();
+	if (!length($sasl_response)) {
+		$c = $sasl_client->code();
+		$e = $sasl_client->error();
+		ptrans('12', "Error received from Authen::SASL sub-system (client_start): [$c] $e");
+		return(0);
+	}
+
+	# RFC 4954 (SMTP SASL) allows the initial response to optionally be
+	# part of AUTH if it fits in a SMTP line (i.e. maximum 738 byte raw
+	# response). If IR not sent, the server must produce an empty "334 ".
+
+	$ro = "AUTH $as ".eb64($sasl_response);
+	if (length($ro) > 998) {
+		# Too long for IR; use the normal mechanism. Expect empty challenge.
+		$ro = "AUTH $as";
+		do_smtp_gen($ro, '334', \$ri, '', '', $G::auth_showpt ? \&unencode_smtp : '')
+			|| return(0);
+		$ri =~ s/^....//;
+		if (length($ri) > 0) {
+			ptrans('12', "Cancelling SASL exchange, unexpected data from server");
+			return(0);
+		}
+		$ro = eb64($sasl_response);
+	}
+	# Otherwise carry the IR into the loop.
+
+	while (1) {
+		do_smtp_gen($ro, qr/(334|235)/, \$ri, '',
+		                 $G::auth_showpt ? "$sasl_response" : '',
+		                 $G::auth_showpt ? \&unencode_smtp : '')
+			|| return(0);
+
+		if (!$sasl_client->need_step()) {
+			# Authentication finished.
+			last;
+		} elsif ($ri =~ /^235 /) {
+			# Authentication finished, but Authen::SASL::Perl's need_step() is buggy
+			# (its Perl/GSSAPI.pm never calls "set_success()"), so we have to guess.
+			# The loop could be simplified into 'while need_step' if that were fixed.
+			if (ref($sasl_client) eq "Authen::SASL::Perl::GSSAPI") {
+				ptrans('12', "SASL: assuming no more steps!");
+			}
+			last;
+		} elsif ($ri =~ /^334 /) {
+			$ri =~ s/^....//;
+			$sasl_challenge = db64($ri);
+			($sasl_response) = $sasl_client->client_step($sasl_challenge);
+			$ro = eb64($sasl_response);
+		} else {
+			return(0);
+		}
+	}
+
+	return(0) if ($sasl_client->code() != 0);
+	return(1);
 }
 
 sub do_smtp_auth_ntlm {
@@ -1636,6 +1740,8 @@ sub load_dependencies {
 		                                                         req => []                    },
 		auth_cram_md5   => { name => "AUTH CRAM-MD5",            req => ['Digest::MD5']       },
 		auth_cram_sha1  => { name => "AUTH CRAM-SHA1",           req => ['Digest::SHA']       },
+		auth_gssapi     => { name => "AUTH GSSAPI",              req => ['Authen::SASL',
+		                                                                 'GSSAPI']            },
 		auth_ntlm       => { name => "AUTH NTLM",                req => ['Authen::NTLM']      },
 		auth_digest_md5 => { name => "AUTH DIGEST-MD5",          req => ['Authen::SASL']      },
 		dns             => { name => "MX Routing",               req => ['Net::DNS']          },
@@ -3362,7 +3468,7 @@ sub process_args {
 
 		# handle the --auth-map options plus our default mappings
 		foreach (split(/\s*,\s*/, get_arg('auth_map', $o)),"PLAIN=PLAIN","LOGIN=LOGIN",
-		                          "CRAM-MD5=CRAM-MD5","DIGEST-MD5=DIGEST-MD5",
+		                          "CRAM-MD5=CRAM-MD5","DIGEST-MD5=DIGEST-MD5","GSSAPI=GSSAPI",
 		                          "CRAM-SHA1=CRAM-SHA1","NTLM=NTLM","SPA=NTLM","MSN=NTLM")
 		{
 			if (/^([^=]+)=(.+)$/) {
@@ -3419,6 +3525,8 @@ sub process_args {
 					ptrans(12, avail_str("auth_cram_md5"))   if ($auth_t ne 'ANY');
 				} elsif ($G::auth_map_f{$type} eq 'CRAM-SHA1'  && !avail("auth_cram_sha1")) {
 					ptrans(12, avail_str("auth_cram_sha1"))  if ($auth_t ne 'ANY');
+				} elsif ($G::auth_map_f{$type} eq 'GSSAPI'     && !avail("auth_gssapi")) {
+					ptrans(12, avail_str("auth_gssapi"))     if ($auth_t ne 'ANY');
 				} elsif ($G::auth_map_f{$type} eq 'NTLM'       && !avail("auth_ntlm")) {
 					ptrans(12, avail_str("auth_ntlm"))       if ($auth_t ne 'ANY');
 				} elsif ($G::auth_map_f{$type} eq 'DIGEST-MD5' && !avail("auth_digest_md5")) {
@@ -3770,6 +3878,14 @@ sub get_date_string {
 			                      POSIX::strftime("%Y %H:%M:%S %z", @l));
 	}
 	return($G::date_string);
+}
+
+sub get_fqdn {
+	my $h = shift;
+
+	my @r = gethostbyname($h);
+
+	return $r[0] // $h;
 }
 
 # partially Cribbed from "Programming Perl" and MIME::Base64 v2.12
