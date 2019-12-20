@@ -815,7 +815,7 @@ It is legal for C<-> (C<STDIN>) to be specified as an argument multiple times (o
 
 =item --attach-body [<body-specification>]
 
-This is a variation on C<--attach> that is specifically for the body part of the email.  It behaves identically to C<--attach> in that it takes the same arguments and forces the creation of a MIME message.  However, it is different in that the argument will always be the first MIME part in the message, no matter where in option processing order it is encountered.  Additionally, C<--attach-body> options stack to allow creation of multipart/alternative bodies.  For example, C<--attach-type text/plain --attach 'plain text body' --attach-type text/html --attach 'html body'> would create a multipart/alternative message body. (Arg-Required, From-File)
+This is a variation on C<--attach> that is specifically for the body part of the email.  It behaves identically to C<--attach> in that it takes the same arguments and forces the creation of a MIME message.  However, it is different in that the argument will always be the first MIME part in the message, no matter where in option processing order it is encountered.  Additionally, C<--attach-body> options stack to allow creation of multipart/alternative bodies.  For example, C<--attach-type text/plain --attach-body 'plain text body' --attach-type text/html --attach-body 'html body'> would create a multipart/alternative message body. (Arg-Required, From-File)
 
 =item --attach-type <mime-type>
 
