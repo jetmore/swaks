@@ -1,53 +1,78 @@
-<html><head><title>Swaks - Swiss Army Knife for SMTP</title>
-<style type="text/css">
-a:link { color: blue }
-a:visited { color: blue }
-a:active { color: navy }
-body {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 13px;
-    font-style: normal;
-    font-variant: normal;
-    font-weight: normal;
-    line-height: 1.7em;
-}
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Swaks - Swiss Army Knife for SMTP</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" /> <!-- https://cdnjs.com/libraries/skeleton -->
+    <style type="text/css">
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif }
+        #subheader { font-size: 120% }
+        #rss { font-size: 70% }
+        a:link { color: blue }
+        a:visited { color: blue }
+        a:active { color: navy }
+        pre { overflow-y: scroll }
+        code { font-size: 110% }
+        pre, code {
+            overflow-x: auto;
+            overflow-y: hidden; 
+            white-space: nowrap;
+        }
+        .container { max-width: 600px }
+        .header { margin-top: 3% }
+        .footer { margin-bottom: 3% }
+    </style>
 </head>
 <body>
-<table width=100% height=100%><tr><td valign=middle align=center>
-<table cellpadding=3 border=0 width=600>
-<tr><td align=center>
-<a name=swaks>
-<font size=+3><B>Swaks</B> - Swiss Army Knife for SMTP</font>
-</a>
-<br>
-<font size=-1>A scriptable, transaction-oriented SMTP test tool</font>
-</td></tr><tr><td>
-<P><hr><P>
-<!--
-<tr><td><hr></td></tr>
-<tr><td align=center>
-<a href=index.html>Main</a> :: <a href=about.html>About</a> :: <a href=download.html>Download</a> :: <a href=docs.html>Documentation</a> :: <a href=contact.html>Interact</a>
-</td></tr>
--->
-<font size=+1><B>Versions</B></font>
-<P>
-This page lists every official release of Swaks, from newest to oldest.  All releases include that version's Changes, and newer releases also include a change summary.
-<P>
-<a href=index.html>return to main page</a>
-<P><hr><P>
-</tr></td></table>
 
+<div class="section header">
+    <div class="container">
+        <div class="row">
+            <a name="swaks"><h1><b>Swaks</b> - Swiss Army Knife for SMTP</h1></a>
+            <span id="subheader">A scriptable, transaction-oriented SMTP test tool</span>
+        </div>
+        <hr/>
+    </div>
+</div>
 
+<div class="container">
+    <div class="row">
+        <!--
+        <p>
+        <a href="index.html">Main</a> :: 
+        <a href="about.html">About</a> :: 
+        <a href="download.html">Download</a> :: 
+        <a href="docs.html">Documentation</a> :: 
+        <a href="contact.html">Interact</a>
+        </p>
+        -->
+    </div>
+    <div class="row">
+        <b>Versions</b>
+        <p>
+          This page lists every official release of Swaks, from newest to oldest.  All releases include that version's Changes, 
+          and newer releases also include a change summary.
+        </p>
+        <p><a href="./index.html">return to main page</a></p>
+    </div>
+    <hr/>
 
-<table cellpadding=3 border=0 width=600>
-<tr>
-<td valign=top><font size=-1><b>20190914.0</b></font></td>
-<td><font size=-1>
-<B>Links:</b> <a href=files/swaks-20190914.0.tar.gz>Distribution</a>, <a href=files/swaks-20190914.0/swaks>script only</a>, <a href=files/swaks-20190914.0/doc/ref.txt>version docs</a>
-<P>
-<B>Change Summary:</B><BR>
-<pre>
+    <div class="row">
+        <div class="two columns">
+            <b>20190914.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20190914.0.tar.gz">distribution</a>,
+                <a href="./files/swaks-20190914.0/swaks"">script only</a>,
+                <a href="./files/swaks-20190914.0/doc/ref.txt">version docs</a>
+            </p>
+            <p>
+                <b>Change Summary:</b>
+            </p>
+            <pre><code>
 New Features:
   * Source is now available on github.com/jetmore/swaks
   * Added --body-attach option to allow more granularity in setting body
@@ -78,9 +103,11 @@ Notable Bugs Fixed:
   * -S is now a distinct option from -s, as documented
   * Fix bug preventing the --option=arg option format from being
     unusable with --header and --attach* options
-</pre>
-<B>Changelog:</B><BR>
-<pre>
+            </code></pre>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20181110 --add-header documentation was still referencing a single-char,
            no longer valid, replacement token. Replace with the correct token.
 * 20181110 Doc fix for default body - %SWAKS_VERSION% missing trailing char.
@@ -152,16 +179,25 @@ Notable Bugs Fixed:
 * 20190817 Remove re-prompting for port when an invalid service name was
            supplied. Just error and exit instead
 > 20190914 released 20190914.0
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v20181104.0</b></font></td>
-<td><font size=-1>
-<B>Links:</b> <a href=files/swaks-20181104.0.tar.gz>Distribution</a>, <a href=files/swaks-20181104.0/swaks>script only</a>, <a href=files/swaks-20181104.0/doc/ref.txt>version docs</a>
-<P>
-<B>Change Summary:</B><BR>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>v20181104.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20181104.0.tar.gz">distribution</a>,
+                <a href="./files/swaks-20181104.0/swaks"">script only</a>,
+                <a href="./files/swaks-20181104.0/doc/ref.txt">version docs</a>
+            </p>
+            <p>
+                <b>Change Summary:</b>
+            </p>
+            <pre><code>
 New Features:
   * Added --dump-mail option.
   * Added --xclient-delim, --xclient-destaddr, --xclient-destport,
@@ -185,9 +221,11 @@ Notable Bugs Fixed:
   * Fixed two bugs which prevented interactions between --dump,
     --auth-hide-password, --dump-as-body, and --dump-as-body-shows-password
     from producing consistent output.
-</pre>
-<B>Changelog:</B><BR>
-<pre>
+            </code></pre>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20170106 Fix typos in base.pod (reported by Andreas Metzler/Debian)
 * 20170307 Fix spelling, grammar, and phrasing issues in base.pod, faq.html,
            and index.html
@@ -256,16 +294,25 @@ Notable Bugs Fixed:
 * 20181104 Rename LICENSE and README to have .txt extension
 * 20181104 Update release tooling after development environment changes
 > 20181104 released 20181104.0
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v20170101.0</b></font></td>
-<td><font size=-1>
-<B>Links:</b> <a href=files/swaks-20170101.0.tar.gz>Distribution</a>, <a href=files/swaks-20170101.0/swaks>script only</a>, <a href=files/swaks-20170101.0/doc/ref.txt>version docs</a>
-<P>
-<B>Change Summary:</B><BR>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>v20170101.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20170101.0.tar.gz">distribution</a>,
+                <a href="./files/swaks-20170101.0/swaks"">script only</a>,
+                <a href="./files/swaks-20170101.0/doc/ref.txt">version docs</a>
+            </p>
+            <p>
+                <b>Change Summary:</b>
+            </p>
+            <pre><code>
 New Features:
   * Added Per-Recipient Data Response (PRDR) support
     (see https://tools.ietf.org/html/draft-hall-prdr-00).
@@ -278,9 +325,11 @@ Notable Changes:
   * Default DATA template now includes a Message-Id: header.
 Notable Bugs Fixed:
   * Fixed incorrect range on XCLIENT rfc1891/xtext encoding.
-</pre>
-<B>Changelog:</B><BR>
-<pre>
+            </code></pre>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20130422 Fixed typo in man page ("test" -> "text"), reported by
            Graeme Hewson.
 * 20130906 Fixed some POD formatting errors. Exit code formatting reported by
@@ -311,16 +360,25 @@ Notable Bugs Fixed:
 * 20170101 Removed some cruft from do_smtp_gen (noticed by accident)
 * 20170101 Removed unneeded extra functionality added to transact() for
            PRDR implementation (functionality already existed)
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v20130209.0</b></font></td>
-<td><font size=-1>
-<B>Links:</b> <a href=files/swaks-20130209.0.tar.gz>Distribution</a>, <a href=files/swaks-20130209.0/swaks>script only</a>, <a href=files/swaks-20130209.0/doc/ref.txt>version docs</a>
-<P>
-<B>Change Summary:</B><BR>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>v20130209.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20130209.0.tar.gz">distribution</a>,
+                <a href="./files/swaks-20130209.0/swaks"">script only</a>,
+                <a href="./files/swaks-20130209.0/doc/ref.txt">version docs</a>
+            </p>
+            <p>
+                <b>Change Summary:</b>
+            </p>
+            <pre><code>
 New Features:
   * Support for the XCLIENT SMTP extension
     (see http://www.postfix.org/XCLIENT_README.html)
@@ -356,9 +414,11 @@ Notable Bugs Fixed
   * Swaks could fail to handle the end of a TLS session over a pipe transport
     when the server has closed the connection but Swaks is expecting to read
     more data
-</pre>
-<B>Changelog:</B><BR>
-<pre>
+            </code></pre>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20120330 add --tls-get-peer-cert to --dump output
 * 20120330 add --tls-cert and --tls-key options to allow swaks to use
            certs for its half of the session.  debian bug 497654,
@@ -429,16 +489,25 @@ Notable Bugs Fixed
            the server returns an improper rspauth.  swaks would understand
            that auth failed, but later than it should have (reported by
            Erwan Legrand)
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v20120320.0</b></font></td>
-<td><font size=-1>
-<B>Links:</b> <a href=files/swaks-20120320.0.tar.gz>Distribution</a>, <a href=files/swaks-20120320.0/swaks>script only</a>, <a href=files/swaks-20120320.0/doc/ref.txt>version docs</a>
-<P>
-<B>Change Summary:</B><BR>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>v20120320.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20120320.0.tar.gz">distribution</a>,
+                <a href="./files/swaks-20120320.0/swaks"">script only</a>,
+                <a href="./files/swaks-20120320.0/doc/ref.txt">version docs</a>
+            </p>
+            <p>
+                <b>Change Summary:</b>
+            </p>
+            <pre><code>
 New Features:
   * IPv6 support
   * -4 and -6 options to force IPv4 or IPv6.
@@ -461,9 +530,11 @@ Notable Bugs Fixed
     success response, or a plaintext failure.  Previously in that
     situation swaks did not handle the case of the plaintext error and
     the --auth-plaintext option well, resulting in confusing output.
-</pre>
-<B>Changelog:</B><BR>
-<pre>
+            </code></pre>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20120101 typo fix in docs (rep. Andreas Metzler)
 * 20120101 changed the indent formatting so all the examples are at a
            consistent indent.
@@ -508,16 +579,25 @@ Notable Bugs Fixed
            noted that plaintext passwords can be shown i --dump output.
 * 20120320 Small patch to handle (-6 not set, --server IPv6, ipv6 not
            available) gracefully. Report from and patch by Ulrich Zehl.
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v20111230.0</b></font></td>
-<td><font size=-1>
-<B>Links:</b> <a href=files/swaks-20111230.0.tar.gz>Distribution</a>, <a href=files/swaks-20111230.0/swaks>script only</a>, <a href=files/swaks-20111230.0/doc/ref.txt>version docs</a>
-<P>
-<B>Change Summary:</B><BR>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>v20111230.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20111230.0.tar.gz">distribution</a>,
+                <a href="./files/swaks-20111230.0/swaks"">script only</a>,
+                <a href="./files/swaks-20111230.0/doc/ref.txt">version docs</a>
+            </p>
+            <p>
+                <b>Change Summary:</b>
+            </p>
+            <pre><code>
 New Features:
   * Added --output-file family of options to capture some or all output
     without requiring shell redirection
@@ -557,9 +637,11 @@ Notable Bugs Fixed
   * Previous release contained a regression in which TLS responses sent in
     multiple packets were not processed correctly.
     (reported by Peter J. Holzer)
-</pre>
-<B>Changelog:</B><BR>
-<pre>
+            </code></pre>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20100212 fixed doc typo
 * 20100215 added recipes.pod to repo and added vrfy and fswaks recipes
 * 20101217 added and documented the --output-file* options
@@ -636,16 +718,25 @@ Notable Bugs Fixed
 * 20111229 Change indent from 2-space to 1-tab, use 120-char width where it
            makes sense.
 * 20111229 address some -w output related to the DIGEST-MD5 rewrite
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v20100211.0</b></font></td>
-<td><font size=-1>
-<B>Links:</b> <a href=files/swaks-20100211.0.tar.gz>Distribution</a>, <a href=files/swaks-20100211.0/swaks>script only</a>, <a href=files/swaks-20100211.0/doc/ref.txt>version docs</a>
-<P>
-<B>Change Summary:</B><BR>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>v20100211.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20100211.0.tar.gz">distribution</a>,
+                <a href="./files/swaks-20100211.0/swaks"">script only</a>,
+                <a href="./files/swaks-20100211.0/doc/ref.txt">version docs</a>
+            </p>
+            <p>
+                <b>Change Summary:</b>
+            </p>
+            <pre><code>
 * Completely rewritten documentation.  Designed to sort options by
   broad category to make finding options easier
 * New configuration system.  Allow default .swaksrc, custom config
@@ -659,9 +750,11 @@ Notable Bugs Fixed
 * New option --tls-get-peer-cert
 * New option --attach-name
 * Many bugs fixes and other minor tweaks
-</pre>
-<B>Changelog:</B><BR>
-<pre>
+            </code></pre>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20061227 20061218 in --h-Header construct, allow trailing colon and
            allow single dash in addition to double (previously a colon
            in the arg name resulted in double colon in header and
@@ -767,13 +860,23 @@ Notable Bugs Fixed
 * 20100211 fixed interaction bug between POD/__END__/&DATA
 * 20100211 working on release engineering
 * 20100211 moved to swaks.org, redid website
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v<a href=files/swaks-20061116.0>20061116.0</a></b></font></td>
-<td><font size=-1>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20061116.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20061116.0">script only</a>
+            </p>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20060622 Updated FSF address in GPL notice
 * 20060623 added url to CONTACT section of docs
 * 20060718 20050625 added --protocol option.  'esmtp' is default with
@@ -841,13 +944,23 @@ Notable Bugs Fixed
 * 20061115 documented rfc3848 --protocol options and behaviours
 * 20061115 20060806 fixed bug where From: was prompted for on some -q
            types that don't require it, too (Helo: too)
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v<a href=files/swaks-20060621.0>20060621.0</a></b></font></td>
-<td><font size=-1>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20060621.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20060621.0">script only</a>
+            </p>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20060121 updated copyright to 2006
 * 20060121 fiddled w/ --dump output, trying to get every possible
            option displayed (for test suite)
@@ -903,25 +1016,45 @@ Notable Bugs Fixed
 * 20060526 added and document --add-header option (debian bug 366317)
 * 20060621 added comments to top of code about viewing docs
 * 20060621 added note at top and in docs about update email address
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v<a href=files/swaks-20050709.1>20050709.1</a></b></font></td>
-<td><font size=-1>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20050709.1</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20050709.1">script only</a>
+            </p>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20050629 fixed bug where latent $@ errors caused socket connections
            to seem to fail (run --socket on a server w/o Net::DNS)
 * 20050709 fixed bug where TLS multiline responses were broken if
            sent in multiple packets (reported by
            charlieb.budge.apana.org.au)
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v<a href=files/swaks-20050625.8>20050625.8</a></b></font></td>
-<td><font size=-1>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20050625.8</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20050625.8">script only</a>
+            </p>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20050625 fixed bug in do_smtp_tls where it ignored timeout on
            on STARTTLS call
 * 20050625 fixed bug where <> not correctly handled for user/pass
@@ -940,13 +1073,23 @@ Notable Bugs Fixed
            either -a not also used or some arg not supplied)
 * 20050625 20050605 added --socket option to allow smtp over
            unix domain socket
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v<a href=files/swaks-20050605.3>20050605.3</a></b></font></td>
-<td><font size=-1>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20050605.3</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20050605.3">script only</a>
+            </p>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20050605 updated copyright dates
 * 20050605 20050510 added OS test on getpwuid to allow running on
            Win32, spent some time evaluating capabilities (reported
@@ -954,25 +1097,45 @@ Notable Bugs Fixed
 * 20050605 added portability section to documentation
 * 20060605 20040909 the line ending translation was very slow for
            large files.  fixed.
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v<a href=files/swaks-20040404.1>20040404.1</a></b></font></td>
-<td><font size=-1>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20040404.1</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20040404.1">script only</a>
+            </p>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20040404 added --no-data-fixup option to allow a literal DATA
            value to be passed in
 * 20040404 by default, translate all bare newlines to CRLF.  Fixed
            Debian bug 241368
 * 20040404 updated copyright dates
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v<a href=files/swaks-20040128.1>20040128.1</a></b></font></td>
-<td><font size=-1>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20040128.1</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20040128.1">script only</a>
+            </p>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20031226 hostname verification broke FROM and HELO options in -l
            file.  fixed.
 * 20040115 fixed some badly formatted POD
@@ -989,13 +1152,23 @@ Notable Bugs Fixed
            (everything before rcpt) and server is otherwise specified,
            don't require a to address. (sugg. ametzler)
 * 20040128 reworked a split to quell a perl -w gripe
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v<a href=files/swaks-20031218.0>20031218.0</a></b></font></td>
-<td><font size=-1>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20031218.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20031218.0">script only</a>
+            </p>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20031212 added --tls-on-connect option to support smtps (suggested
            by Benjamin Ritcey &lt;exim#ritcey.com&gt;)
 * 20031212 -tlsc implementation uncovered deficiencies in error
@@ -1009,13 +1182,23 @@ Notable Bugs Fixed
 * 20031218 reworked local hostname determination.  hostname() almost
            never fails but gethostbyname can, use first results if
            second call fails.
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v<a href=files/swaks-20031211.2>20031211.2</a></b></font></td>
-<td><font size=-1>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20031211.2</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20031211.2">script only</a>
+            </p>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20031211 the subscripting in the date routine was incorrect, failed
            to compile on older perls
 * 20031211 removed -U and -F options from the perldoc call for --help.
@@ -1024,13 +1207,23 @@ Notable Bugs Fixed
            that case and printed a more informative message
 * 20031211 duh.  if --help run as root, just change to uid 1 before
            running perldoc.  no fuss no muss
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v<a href=files/swaks-20031210.0>20031210.0</a></b></font></td>
-<td><font size=-1>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20031210.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20031210.0">script only</a>
+            </p>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20031201 changed name from vmail to swaks (SWiss Army Knife Smtp)
 * 20031201 changed copyright/license to GPL
 * 20031207 changed %D body token to be compliant for an RFC Date: header
@@ -1045,13 +1238,23 @@ Notable Bugs Fixed
            makes much more sense in a timeout situation
 * 20031210 implemented automatic routing of RFC821 decimal domain
            literals (user@#16909060).
-</pre>
-</td></tr>
-<tr><td align=center colspan=2><hr width=25%></td></tr>
-<tr>
-<td valign=top><font size=-1><b>v<a href=files/vmail.20031111.0>20031111.0</a></b></font></td>
-<td><font size=-1>
-<pre>
+            </code></pre>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20031111.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/vmail.20031111.0">script only</a>
+            </p>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
 * 20011219 initial implementation
 * 20011220 added ability to specify pieces to be prompted for
            interactively. trumps both file and CL args (-i)
@@ -1215,14 +1418,20 @@ Notable Bugs Fixed
            general streamlining
 * 20031108 missed a piece in implementing DIGEST-MD5 (missed checking
            for Authen::DigestMD5)
-</pre>
-</font></td></tr>
-</table>
+            </code></pre>
+        </div>
+    </div>
 
+</div> <!-- end of content container -->
 
-<table cellpadding=3 border=0 width=600>
-<tr><td align=center>
-<font size=-2><a href=/john/>www.jetmore.org/john</a>/<a href=/john/code/>code</a>/<a href=/john/code/swaks/>swaks</a></font>/<font size=+1>versions.html</font>
-</td></tr>
-</table>
-</td></tr></table></body></html>
+<div class="section footer">
+    <div class="container">
+        <div class="row">
+            <hr/>
+            <p><a href="/john/">www.jetmore.org/john</a> / <a href="/john/code/">code</a> / <a href="/john/code/swaks/">swaks</a> / <b>versions</b></p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
