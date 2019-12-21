@@ -900,3 +900,9 @@
 * 20191122 Docs: Establish project standards for POD formatting and
            make first pass at applying.
 * 20191220 Docs: Fix incorrect example used in --attach-body definition.
+* 20191221 Docs: merge OpossumPetya's web page changes, use better web
+           practices and make mobile friendly
+* 20200118 Docs: misc web page changes. tweak pre font size to prevent
+           scrolling, remove stray quotes, remove the news section from index
+           add announcement to versions, link to both plaintext and
+           rendered docs, etc
