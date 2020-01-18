@@ -15,8 +15,9 @@
         code { font-size: 120% }
         pre, code {
             overflow-x: auto;
-            overflow-y: hidden; 
+            overflow-y: hidden;
             white-space: nowrap;
+            font-size: 90%;
         }
         .container { max-width: 600px }
         .header { margin-top: 3% }
@@ -100,10 +101,10 @@ swaks --config .swaksrc
                 which is probably not what you want.
             </p>
             <p>
-                There is one additional consideration here.  Since Swaks is oriented around a single SMTP-session per invocation, 
-                it will only ever connect to a single server, even if multiple recipients are specified.  
-                In the example above, both emails will be delivered to the MX server for example.com 
-                (since, as documented, the mail routing for the last domain in the list is used).  
+                There is one additional consideration here.  Since Swaks is oriented around a single SMTP-session per invocation,
+                it will only ever connect to a single server, even if multiple recipients are specified.
+                In the example above, both emails will be delivered to the MX server for example.com
+                (since, as documented, the mail routing for the last domain in the list is used).
                 This may or may not work, depending on the configuration of email server you are testing.
             </p>
         </div>
@@ -120,9 +121,9 @@ swaks --config .swaksrc
 swaks --add-header "X-Test-Header: foo"
             </code></pre>
             <p>
-                There are lots more examples in <a href="http://jetmore.org/john/code/swaks/latest/doc/ref.txt">the spec</a>, 
-                look for --header and --add-header for details and nuance about each.  
-                A quick rule of thumb though is that you want --header to overwrite a header that already exists in your test email, 
+                There are lots more examples in <a href="http://jetmore.org/john/code/swaks/latest/doc/ref.txt">the spec</a>,
+                look for --header and --add-header for details and nuance about each.
+                A quick rule of thumb though is that you want --header to overwrite a header that already exists in your test email,
                 and you want --add-header to add a completely new header, even if that same header already exists in your test email.
             </p>
         </div>
@@ -135,12 +136,12 @@ swaks --add-header "X-Test-Header: foo"
         <div class="ten columns">
             <h5>How do I install on Mac OS X?</h5>
             <p>
-                Copy and paste or right-click, save-as works great for me.  If you prefer a package manager, 
+                Copy and paste or right-click, save-as works great for me.  If you prefer a package manager,
                 both <a href="http://www.macports.org/">MacPorts</a> and <a href="http://brew.sh/">Homebrew</a> provide Swaks.
             </p>
         </div>
     </div>
-    
+
     <div class="row">
         <div class="two columns">
             <b><a name="install_windows">Install on Windows</a></b>
@@ -148,13 +149,13 @@ swaks --add-header "X-Test-Header: foo"
         <div class="ten columns">
             <h5>How do I install on Windows?</h5>
             <p>
-                Swaks has been tested much less on Windows than Mac OS X or Linux (or even Solaris, Swaks' birth-OS), 
-                but it has worked when I tested it.  I installed ActiveState Perl, saved the latest version of Swaks as swaks.pl, 
+                Swaks has been tested much less on Windows than Mac OS X or Linux (or even Solaris, Swaks' birth-OS),
+                but it has worked when I tested it.  I installed ActiveState Perl, saved the latest version of Swaks as swaks.pl,
                 and used ppm to install Perl modules.  It worked fine for me, but if you are having specific issues let me know.
             </p>
         </div>
     </div>
-    
+
     <div class="row">
         <div class="two columns">
             <b><a name="send_html_email">HTML Email</a></b>
@@ -162,19 +163,19 @@ swaks --add-header "X-Test-Header: foo"
         <div class="ten columns">
             <h5>How do I send HTML email?</h5>
             <p>
-                This really depends on what you want to do.  At its base, Swaks is agnostic about what it sends in its DATA section, 
-                so you can craft whatever email you want and use it as the DATA of the message using the --data option.  
-                This is the best route for testing, where you usually have a fixed set of test cases to run, or you want 
-                to run the same command many times.  If you don't know what a raw email looks like, send yourself an email to a Gmail account 
-                and select "Show Original".  The entire text file is the format that the --data option expects 
+                This really depends on what you want to do.  At its base, Swaks is agnostic about what it sends in its DATA section,
+                so you can craft whatever email you want and use it as the DATA of the message using the --data option.
+                This is the best route for testing, where you usually have a fixed set of test cases to run, or you want
+                to run the same command many times.  If you don't know what a raw email looks like, send yourself an email to a Gmail account
+                and select "Show Original".  The entire text file is the format that the --data option expects
                 (though it will probably be more complicated and have more headers than you need)
             </p>
             <p>
-                On the other hand, if you're trying to do something like use Swaks to send an email copy of a nightly HTML file, 
+                On the other hand, if you're trying to do something like use Swaks to send an email copy of a nightly HTML file,
                 and you want the file to show up correctly in your MUA, Swaks does have a couple of helper options.
             </p>
             <p>
-                First, if you want the HTML file to be an attachment that can be openable or savable from your MUA, 
+                First, if you want the HTML file to be an attachment that can be openable or savable from your MUA,
                 you want the --attach option.  For instance, the following command will attach the file report.html.
                 --attach-type is optional, but setting it will help your MUA know what to do with the attachment:
             </p>
@@ -183,7 +184,7 @@ swaks --attach-type text/html --attach report.html
             </code></pre>
             <p>
                 Another interpretation of this question is "How do I send email which has an HTML-encoded body".
-                This means sending an email that your MUA will display as HTML.  Swaks always treats the "body" portion 
+                This means sending an email that your MUA will display as HTML.  Swaks always treats the "body" portion
                 of a MIME email as text/plain, so you have to "cheat" and add the MIME headers yourself.  The following should work:
             </p>
             <pre><code>
@@ -196,7 +197,7 @@ swaks --body report.html --add-header "MIME-Version: 1.0" --add-header "Content-
             </p>
         </div>
     </div>
-        
+
     <div class="row">
         <div class="two columns">
             <b><a name="bcc">BCC</a></b>
@@ -216,7 +217,7 @@ swaks --body report.html --add-header "MIME-Version: 1.0" --add-header "Content-
                 <li>Therefore, to "BCC" someone is the same as specifying them in the --to recipients, but specifying a To: header that does not include them.</li>
             </ol>
             <p>
-                So, to send a message to aa@example.com and bb@example.com, but only include aa@example.com 
+                So, to send a message to aa@example.com and bb@example.com, but only include aa@example.com
                 in the To: header (or, put another way, to BCC bb@example.com), the following would work:
             </p>
             <pre><code>
@@ -224,7 +225,7 @@ swaks --to aa@example.com,bb@example.com --header "To: aa@example.com"
             </code></pre>
         </div>
     </div>
-    
+
     <div class="row">
         <div class="two columns">
             <b><a name="support_ipv6">IPv6 Support</a></b>
