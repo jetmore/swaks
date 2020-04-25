@@ -906,3 +906,6 @@
            scrolling, remove stray quotes, remove the news section from index
            add announcement to versions, link to both plaintext and
            rendered docs, etc
+* 20200425 Fix strange issue where GMT offset could oscillate on days of DST
+           transition.  Time::Local is no longer used and POSIX is now
+           required (#17, deb bug 955798)
