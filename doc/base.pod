@@ -765,7 +765,7 @@ Replaced with the envelope-recipient(s).
 
 =item %DATE%
 
-Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module L<Time::Local> for timezone calculations.  If this module is unavailable the date string will be in GMT.
+Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module L<POSIX> for timezone calculations.  If this module is unavailable the date string will be in GMT.
 
 =item %MESSAGEID%
 
