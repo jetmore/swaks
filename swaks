@@ -112,34 +112,47 @@ sub open_link {
 		push(@extra_options, "LocalAddr", $G::link{lint})  if ($G::link{lint});
 		push(@extra_options, "LocalPort", $G::link{lport}) if ($G::link{lport});
 
-		# INET6 also supports v4, so use it for everything if it's available.  That
-		# allows the module to handle A vs AAAA records on domain lookups where the
-		# user hasn't set a specific ip version to be used.  If INET6 isn't available
-		# and it's a domain that only has AAAA records, INET will just handle it like
-		# a bogus record and we just won't be able to connect
-		if (avail("ipv6")) {
-			if ($G::link{force_ipv6}) {
-				push(@extra_options, "Domain", Socket::AF_INET6() );
-			} elsif ($G::link{force_ipv4}) {
-				push(@extra_options, "Domain", Socket::AF_INET() );
-			}
+        if (avail('socks') && $G::socks{use}) {
+			ptrans(11, 'Connecting via SOCKS ' . $G::socks{host} . ':' . $G::socks{port});
+            $G::link{sock} = IO::Socket::Socks->new(
+                ProxyAddr    => $G::socks{host},
+                ProxyPort    => $G::socks{port},
+                SocksResolve => $G::socks{version},
+                ConnectAddr  => $G::link{server},
+                ConnectPort  => $G::link{port},
+                Timeout      => $G::link{timeout},
+                @extra_options
+            );
+        } else {
+            # INET6 also supports v4, so use it for everything if it's available.  That
+            # allows the module to handle A vs AAAA records on domain lookups where the
+            # user hasn't set a specific ip version to be used.  If INET6 isn't available
+            # and it's a domain that only has AAAA records, INET will just handle it like
+            # a bogus record and we just won't be able to connect
+            if (avail("ipv6")) {
+                if ($G::link{force_ipv6}) {
+                    push(@extra_options, "Domain", Socket::AF_INET6() );
+                } elsif ($G::link{force_ipv4}) {
+                    push(@extra_options, "Domain", Socket::AF_INET() );
+                }
 
-			$G::link{sock} = IO::Socket::INET6->new(
-				PeerAddr  => $G::link{server},
-				PeerPort  => $G::link{port},
-				Proto     => 'tcp',
-				Timeout   => $G::link{timeout},
-				@extra_options
-			);
-		} else {
-			$G::link{sock} = IO::Socket::INET->new(
-				PeerAddr  => $G::link{server},
-				PeerPort  => $G::link{port},
-				Proto     => 'tcp',
-				Timeout   => $G::link{timeout},
-				@extra_options
-			);
-		}
+                $G::link{sock} = IO::Socket::INET6->new(
+                    PeerAddr  => $G::link{server},
+                    PeerPort  => $G::link{port},
+                    Proto     => 'tcp',
+                    Timeout   => $G::link{timeout},
+                    @extra_options
+                );
+            } else {
+                $G::link{sock} = IO::Socket::INET->new(
+                    PeerAddr  => $G::link{server},
+                    PeerPort  => $G::link{port},
+                    Proto     => 'tcp',
+                    Timeout   => $G::link{timeout},
+                    @extra_options
+                );
+            }
+        }
 
 		if ($@) {
 			ptrans(12, "Error connecting" . ($G::link{lint} ? " $G::link{lint}" : '') .
@@ -1640,6 +1653,7 @@ sub load_dependencies {
 		tls             => { name => "TLS",                      req => ['Net::SSLeay']       },
 		pipe            => { name => "Pipe Transport",           req => ['IPC::Open2']        },
 		socket          => { name => "Socket Transport",         req => ['IO::Socket']        },
+		socks           => { name => "SOCKS Transport",          req => ['IO::Socket::Socks'] },
 		ipv6            => { name => "IPv6",                     req => ['IO::Socket::INET6'] },
 		date_manip      => { name => "Date Manipulation",        req => ['POSIX']             },
 		hostname        => { name => "Local Hostname Detection", req => ['Sys::Hostname']     },
@@ -2108,6 +2122,23 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'PROXY dest_port: ',                                  match  => '^.+$',
 		  okey    => 'proxy_dest_port',                                    type   => 'scalar', },
+
+        # SOCKS Proxy
+        # socks proxy host
+		{ opts    => ['socks-host'],                                       suffix => ':s',
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
+		  prompt  => 'SOCKS host: ',                                       match  => '^.+$',
+		  okey    => 'socks_host',                                         type   => 'scalar', },
+        # socks proxy port
+		{ opts    => ['socks-port'],                                       suffix => ':s',
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
+		  prompt  => 'SOCKS port: ',                                       match  => '^[0-9]+$',
+		  okey    => 'socks_port',                                         type   => 'scalar', },
+        # socks proxy version
+		{ opts    => ['socks-version'],                                    suffix => ':s',
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
+		  prompt  => 'SOCKS version: ',                                    match  => '^[4|5]$',
+		  okey    => 'socks_version',                                      type   => 'scalar', },
 
 		# this option serve no purpose other than testing the deprecation system
 		{ opts    => ['trigger-deprecation'],                              suffix => ':s',
@@ -3329,6 +3360,14 @@ sub process_args {
 			exit(35);
 		}
 	}
+
+    $G::socks{use} = 0;
+	if (get_arg('socks_host', $o)) {
+        $G::socks{use} = 1;
+        $G::socks{host} = get_arg('socks_host', $o);
+        $G::socks{port} = defined(get_arg('socks_port', $o)) ? get_arg('socks_port', $o) : 1080;
+        $G::socks{version} = defined(get_arg('socks_version', $o)) ? get_arg('socks_version', $o) : 5;
+    }
 
 	# Handle AUTH options
 	# auth_optional => 0 - no.     Auth must be advertised and must succeed, else error.
