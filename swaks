@@ -301,6 +301,10 @@ sub sendmail {
 		ptrans(12, "Host did not advertise PRDR support");
 		do_smtp_quit(1, 30);
 	}
+	if ($result == 2) {
+		ptrans(12, "Host did not advertise SMTPUTF8 support");
+		do_smtp_quit(1, 31);
+	}
 	do_smtp_drop()     if ($G::drop_after eq 'mail');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'mail');
 
@@ -925,6 +929,8 @@ sub do_smtp_helo {
 				} elsif ($l =~ /^PIPELINING$/) {
 					$e->{PIPELINING} = 1;
 					$G::pipeline_adv = 1;
+				} elsif ($l =~ /^SMTPUTF8$/) {
+					$e->{SMTPUTF8} = 1;
 				} elsif ($l =~ /^PRDR$/) {
 					$e->{PRDR} = 1;
 				}
@@ -949,6 +955,14 @@ sub do_smtp_mail {
 			return(1); # PRDR was required but was not advertised.  Return error and let caller handle it
 		} else {
 			$m .= " PRDR";
+		}
+	}
+
+	if ($G::smtputf8) {
+		if (!$e->{SMTPUTF8}) {
+			return(2); # SMTPUTF8 was required but was not advertised.  Return error and let caller handle it
+		} else {
+			$m .= " SMTPUTF8";
 		}
 	}
 
@@ -1981,6 +1995,10 @@ sub get_option_struct {
 		{ opts    => ['prdr'],                                             suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'prdr',                                               type   => 'scalar', },
+		# attempt SMTPUTF8
+		{ opts    => ['smtputf8'],                                         suffix => '',
+		  cfgs    => OP_ARG_NONE,
+		  okey    => 'smtputf8',                                           type   => 'scalar', },
 		# use getpwuid building -f
 		{ opts    => ['force-getpwuid'],                                   suffix => '',
 		  cfgs    => OP_ARG_NONE,
@@ -2691,6 +2709,7 @@ sub process_args {
 	$G::protect_prompt     = get_arg('protect_prompt', $o);
 	$G::pipeline           = get_arg('pipeline', $o);
 	$G::prdr               = get_arg('prdr', $o);
+	$G::smtputf8           = get_arg('smtputf8', $o);
 	$G::silent             = get_arg('silent', $o) || 0;
 
 	if (defined(my $dump_args = get_arg('dump_args', $o))) {
@@ -3619,6 +3638,7 @@ sub get_running_state {
 			"  timeout         = $G::link{timeout}",
 			'  pipeline        = ' . ($G::pipeline    ? 'TRUE' : 'FALSE'),
 			'  prdr            = ' . ($G::prdr        ? 'TRUE' : 'FALSE'),
+			'  smtputf8        = ' . ($G::smtputf8    ? 'TRUE' : 'FALSE'),
 		]);
 	}
 
