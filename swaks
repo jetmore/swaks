@@ -240,10 +240,6 @@ sub sendmail {
 	do_smtp_drop()     if ($G::drop_after eq 'tls');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 
-	if (!$G::xclient{before_tls}) {
-		xclient_try($helo, $ehlo);
-	}
-
 	#if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
 	if ($G::link{tls}{active} && !$G::tls_on_connect) {
 		# According to RFC3207, we need to forget state info and re-EHLO here
@@ -254,6 +250,10 @@ sub sendmail {
 	do_smtp_drop()     if ($G::drop_after_send eq 'helo'); # haaaack.  Need to use first-helo for this. Just quit here to prevent the mail from being delivered
 	do_smtp_drop()     if ($G::drop_after eq 'helo');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
+
+	if (!$G::xclient{before_tls}) {
+		xclient_try($helo, $ehlo);
+	}
 
 	# handle auth here if user has requested it
 	if ($a_type) {
