@@ -909,3 +909,4 @@
 * 20200425 Fix strange issue where GMT offset could oscillate on days of DST
            transition.  Time::Local is no longer used and POSIX is now
            required (#17, deb bug 955798)
+* 20200801 Update copyright year to 2020
