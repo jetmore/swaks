@@ -20,6 +20,10 @@ Thumbs.db
 *.log
 *.lock
 
+*.csr
+*.key
+*.crt
+
 # sublime project files
 *.sublime-project
 *.sublime-workspace

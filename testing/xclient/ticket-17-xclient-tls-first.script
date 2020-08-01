@@ -1,0 +1,39 @@
+# expected to run with
+# ./smtp-server.pl -p 8026 ../xclient/ticket-17-xclient-tls-first.script
+# ./swaks -s 127.0.0.1:8026 --to foo@example.com --xclient-addr '12.13.123.0' --tls
+
+# expected behavior is EHLO -> STARTTLS -> EHLO -> XCLIENT -> EHLO
+# (as reported in ticket, is doing EHLO -> STARTTLS -> XCLIENT -> EHLO -> EHLO
+
+include("$Bin/scripts/part-banner-standard.txt");
+
+include("$Bin/scripts/part-ehlo-all.txt");
+
+## stuff above here is standard
+
+# reads the starttls requests, starts it, then reads and responds to re-ehlo
+include("$Bin/scripts/part-starttls-basic.txt");
+
+# reads xclient command, re-prints the banner, and reads and response to re-ehlo
+include("$Bin/scripts/part-xclient-basic.txt");
+
+
+
+
+
+
+
+
+## stuff below here is standard
+
+include("$Bin/scripts/part-mail-basic.txt");
+
+# single recipient
+include("$Bin/scripts/part-rcpt-basic.txt");
+
+# DATA command and the actual body
+include("$Bin/scripts/part-data.txt");
+
+# receive the QUIT and acknowledge it
+include("$Bin/scripts/part-close.txt");
+

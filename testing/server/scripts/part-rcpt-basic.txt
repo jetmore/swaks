@@ -1,0 +1,3 @@
+# include this multiple times from scripts for multiple recipients
+get_line(); # RCPT
+send_line("250 Accepted");
