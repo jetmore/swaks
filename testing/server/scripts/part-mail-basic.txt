@@ -1,0 +1,2 @@
+get_line(); # MAIL
+send_line("250 Accepted");

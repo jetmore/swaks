@@ -1,0 +1,3 @@
+get_line(); # EHLO
+send_line("250-SERVER Hello Server [1.1.1.1]");
+send_line("250 HELP");

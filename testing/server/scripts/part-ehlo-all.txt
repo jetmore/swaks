@@ -1,0 +1,16 @@
+# advertize everything possible
+get_line(); # EHLO
+send_line("250-SERVER Hello Server [1.1.1.1]");
+send_line("250-STARTTLS");
+send_line("250-PIPELINING");
+send_line("250-XCLIENT ADDR NAME PORT PROTO DESTADDR DESTPORT HELO LOGIN REVERSE-NAME");
+send_line("250-PRDR");
+send_line("250-AUTH CRAM-MD5");
+send_line("250-AUTH CRAM-SHA1");
+send_line("250-AUTH PLAIN");
+send_line("250-AUTH LOGIN");
+send_line("250-AUTH NTLM");
+send_line("250-AUTH DIGEST-MD5");
+send_line("250-AUTH=login");
+send_line("250 HELP");
+
