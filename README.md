@@ -13,6 +13,8 @@ The official project page is <https://jetmore.org/john/code/swaks/>.
 
 The latest version of Swaks is **20190914.0** ([announcement][release_announce]), which can be downloaded as a [package][release_package] or a [standalone script][release_script].
 
+See the [installation page][installation_page] for details on installing in multiple environments.
+
 There is also a [versions page][versions_page] which lists every released version of Swaks, complete with changelogs and download links.
 
 ## Documentation
@@ -41,6 +43,7 @@ Feedback and meaningful questions about how to use Swaks are welcome. However, s
 [john_jetmore]: https://jetmore.org/john/
 [plain_doc]: https://jetmore.org/john/code/swaks/latest/doc/ref.txt
 [versions_page]: https://jetmore.org/john/code/swaks/versions.html
+[installation_page]: https://jetmore.org/john/code/swaks/installation.html
 [license]: https://choosealicense.com/licenses/gpl-2.0/
 [oaq]: https://jetmore.org/john/code/swaks/faq.html
 [twitter]: https://twitter.com/SwaksSMTP

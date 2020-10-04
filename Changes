@@ -917,4 +917,6 @@
            need to be changed for a release.
 * 20201004 Fix wording and example around html body on faq.html (#14)
 * 20201004 Add '@' in attach examples to prevent deprecation warnings
+* 20201004 Convert installation.pod to installation.html, link to it from
+           index.html and README.md, and flesh it out. (#7)
 
