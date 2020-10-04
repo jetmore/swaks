@@ -180,20 +180,17 @@ swaks --add-header "X-Test-Header: foo"
                 --attach-type is optional, but setting it will help your MUA know what to do with the attachment:
             </p>
             <pre><code>
-swaks --attach-type text/html --attach report.html
+swaks --attach-type text/html --attach @report.html
             </code></pre>
             <p>
                 Another interpretation of this question is "How do I send email which has an HTML-encoded body".
-                This means sending an email that your MUA will display as HTML.  Swaks always treats the "body" portion
-                of a MIME email as text/plain, so you have to "cheat" and add the MIME headers yourself.  The following should work:
+                This means sending an email that your MUA will display as HTML.  The following should work.
             </p>
             <pre><code>
-swaks --body report.html --add-header "MIME-Version: 1.0" --add-header "Content-Type: text/html"
+swaks --attach-type text/html --attach-body @report.html
             </code></pre>
             <p>
-                One potential issue with this path is that the contents of report.html won't be encoded as they would if it was processed
-                using --attach.  Whether this will be an issue or not depends on the contents of the file,
-                the mail server(s) used to handle the mail, and the MUA used to view the mail.
+                See the documentation for --attach-body for more information.
             </p>
         </div>
     </div>

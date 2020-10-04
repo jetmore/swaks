@@ -915,3 +915,6 @@
            234db829dc6e6d45fe4da5f2bef075828ebc0ac7 (#22). Move to reference-
            style markdown links to make it easier to identify links that
            need to be changed for a release.
+* 20201004 Fix wording and example around html body on faq.html (#14)
+* 20201004 Add '@' in attach examples to prevent deprecation warnings
+
