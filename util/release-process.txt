@@ -27,6 +27,8 @@ export SWAKSDIR=/Users/jetmore/Documents/git/swaks
 
 # update doc/versions.html
 
+# update doc/installation.html (fix the links in the direct-download examples to include the latest version)
+
 # open doc/versions.html and doc/index.html in a browser and make sure everything looks ok
 
 # Run the spell checker
@@ -40,10 +42,10 @@ HOME=$SWAKSDIR/util aspell check Changes
 HOME=$SWAKSDIR/util aspell --mode perl check swaks
 HOME=$SWAKSDIR/util aspell --mode html check doc/faq.html
 HOME=$SWAKSDIR/util aspell --mode html check doc/index.html
+HOME=$SWAKSDIR/util aspell --mode html check doc/installation.html
 HOME=$SWAKSDIR/util aspell check RELEASE/README.txt
 HOME=$SWAKSDIR/util aspell check doc/recipes.pod
 HOME=$SWAKSDIR/util aspell check doc/base.pod
-HOME=$SWAKSDIR/util aspell check doc/installation.pod
 HOME=$SWAKSDIR/util aspell --mode markdown check README.md
 
 # run the actual script (this preps some stuff, but this won't be the final release):
@@ -74,6 +76,7 @@ ssh ftp.jetmore.org /bin/ln -s files/swaks-$RELEASE.tar.gz /home/jetmore/jetmore
 scp doc/index.html ftp.jetmore.org:jetmore.org/john/code/swaks/index.html
 scp doc/versions.html ftp.jetmore.org:jetmore.org/john/code/swaks/versions.html
 scp doc/faq.html ftp.jetmore.org:jetmore.org/john/code/swaks/faq.html
+scp doc/installation.html ftp.jetmore.org:jetmore.org/john/code/swaks/installation.html
 
 # tag the release and merge the release branch into master
 git fetch

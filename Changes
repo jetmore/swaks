@@ -911,3 +911,12 @@
            required (#17, deb bug 955798)
 * 20200801 Update copyright year to 2020
 * 20200801 Fix bug which broke XCLIENT and STARTTLS used together (#21)
+* 20201004 Update README.md to reflect changes from
+           234db829dc6e6d45fe4da5f2bef075828ebc0ac7 (#22). Move to reference-
+           style markdown links to make it easier to identify links that
+           need to be changed for a release.
+* 20201004 Fix wording and example around html body on faq.html (#14)
+* 20201004 Add '@' in attach examples to prevent deprecation warnings
+* 20201004 Convert installation.pod to installation.html, link to it from
+           index.html and README.md, and flesh it out. (#7)
+

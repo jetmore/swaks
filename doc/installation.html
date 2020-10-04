@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Swaks - Swiss Army Knife for SMTP</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" /> <!-- https://cdnjs.com/libraries/skeleton -->
+    <style type="text/css">
+        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif }
+        #subheader { font-size: 120% }
+        #rss { font-size: 70% }
+        a:link { color: blue }
+        a:visited { color: blue }
+        a:active { color: navy }
+        pre { overflow-y: scroll }
+        code { font-size: 110% }
+        pre, code {
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            font-size: 90%;
+        }
+        .container { max-width: 600px }
+        .header { margin-top: 3% }
+        .footer { margin-bottom: 3% }
+    </style>
+</head>
+<body>
+
+<div class="section header">
+    <div class="container">
+        <div class="row">
+            <a name="swaks"><h1><b>Swaks</b> - Swiss Army Knife for SMTP</h1></a>
+            <span id="subheader">A scriptable, transaction-oriented SMTP test tool</span>
+        </div>
+        <hr/>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <h4>Installation</h4>
+        <p>
+          This page lists various ways to install Swaks.  Swaks is written in pure Perl.  As such, its installation is very easy - just download
+          the script from the web, save it as a file, mark it executable (if needed by your operating system), and then run it.  Swaks is also
+          available as a package on pretty much every operating system.  None of the operating system packages are maintained by the Swaks project,
+          so any issues should be opened against packaging project.  Unless you are an experienced system administrator (and often even if you are),
+          installing via your operating system distribution will likely be the easiest way to install Swaks.
+        </p>
+        <p>
+          Please feel free to suggest new platforms which you know package Swaks, via email or pull request.
+        </p>
+        <p><a href="./index.html">return to main page</a></p>
+    </div>
+    <hr/>
+    <div class="row">
+        <h5>Supported by the Swaks project</h5>
+        <p>
+          These two methods are the officially-supported way of downloading Swaks.  These should work natively on any Unix-like system (Linux, BSD, Solaris, Mac OS X).
+        </p>
+        <h6>Unpackaged</h6>
+        <p>
+          This method just downloads the script itself.  No documentation is included.
+        </p>
+        <pre><code>
+curl -O https://jetmore.org/john/code/swaks/files/swaks-20190914.0/swaks
+chmod 755 ./swaks
+        </code></pre>
+        <h6>Packaged</h6>
+        <p>
+          This method downloads the release package, which includes documentation.
+        </p>
+        <pre><code>
+curl -O https://jetmore.org/john/code/swaks/files/swaks-20190914.0.tar.gz
+tar -xvzf swaks-20190914.0.tar.gz
+chmod 755 ./swaks-20190914.0/swaks
+        </code></pre>
+    </div>
+    <div class="row">
+        <h5>macOS / Mac OS X</h5>
+        <ul>
+          <li><a href='https://formulae.brew.sh/formula/swaks'>Homebrew</a> - <code>brew install swaks</code></li>
+          <li><a href='https://ports.macports.org/port/swaks/summary'>MacPorts</a> - <code>port install swaks</code></li>
+        </ul>
+    </div>
+    <div class="row">
+        <h5>Linux</h5>
+        <ul>
+          <li><a href='https://packages.debian.org/swaks'>Debian</a> - <code>sudo apt-get install swaks</code></li>
+          <li><a href='https://packages.ubuntu.com/swaks'>Ubuntu</a> - <code>sudo apt-get install swaks</code></li>
+          <li><a href='https://src.fedoraproject.org/rpms/swaks'>Fedora</a> - <code>sudo dnf install swaks</code></li>
+          <li><a href='https://www.archlinux.org/packages/community/any/swaks/'>Arch</a> - <code>sudo pacman -S jq</code></li>
+        </ul>
+    </div>
+    <div class="row">
+        <h5>Linux</h5>
+        <ul>
+          <li><a href='https://packages.debian.org/swaks'>Debian</a> - <code>sudo apt-get install swaks</code></li>
+          <li><a href='https://packages.ubuntu.com/swaks'>Ubuntu</a> - <code>sudo apt-get install swaks</code></li>
+          <li><a href='https://src.fedoraproject.org/rpms/swaks'>Fedora</a> - <code>sudo dnf install swaks</code></li>
+          <li><a href='https://www.archlinux.org/packages/community/any/swaks/'>Arch</a> - <code>sudo pacman -S swaks</code></li>
+        </ul>
+    </div>
+    <div class="row">
+        <h5>BSD</h5>
+        <ul>
+          <li><a href='https://svnweb.freebsd.org/ports/head/mail/swaks/'>FreeBSD</a> - <code>pkg install swaks</code></li>
+          <li><a href='https://ftp.netbsd.org/pub/pkgsrc/current/pkgsrc/mail/swaks/README.html'>NetBSD</a> - <code>pkg_add swaks</code></li>
+          <li><a href='https://openports.se/mail/swaks'>OpenBSD</a> - <code>pkg_add swaks</code></li>
+        </ul>
+    </div>
+    <div class="row">
+        <h5>Windows</h5>
+        <p>
+          There's no packaged version in Windows.  The easiest way to install in Windows is to follow the Unpackaged method
+          above, but saving the link from a web browser instead of using curl.  Keep in mind that a working Perl will
+          need to be installed (<a hfref='http://strawberryperl.com/'>Strawberry Perl</a> and
+          <a href='https://www.activestate.com/products/perl/'>ActiveState Perl</a> both work)
+        </p>
+    </div>
+
+
+</div> <!-- end of content container -->
+
+<div class="section footer">
+    <div class="container">
+        <div class="row">
+            <hr/>
+            <p><a href="/john/">www.jetmore.org/john</a> / <a href="/john/code/">code</a> / <a href="/john/code/swaks/">swaks</a> / <b>installation</b></p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
+
