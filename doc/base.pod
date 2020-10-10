@@ -997,13 +997,13 @@ The following features are deprecated and will be removed in a future version of
 
 =item -g option
 
-Will be removed no sooner than (ONE YEAR FROM NEXT RELEASE).
+Will be removed no sooner than November 1, 2021.
 
 The -g option is currently a less-good alias to C<--data ->.  Any uses of C<-g> should be able to be directly migrated to C<--data -> instead.
 
 =item auto-filename detection
 
-Will be removed no sooner than (ONE YEAR FROM NEXT RELEASE).
+Will be removed no sooner than November 1, 2021.
 
 The C<--data>, C<--body>, C<--attach>, and C<--attach-body> options currently will attempt to distinguish between an argument that is the actual value to use vs. an argument that represents a file containing the data to use.  This behavior has been superseded by prefixing an argument to these options with C<@> to explicitly indicate that the argument indicates a file.  Any uses of providing a filename to one of these options should be moved to using C<@> to indicate a filename is being used.
 

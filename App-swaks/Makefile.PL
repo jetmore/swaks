@@ -4,7 +4,7 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     NAME              => 'App::swaks',
-    VERSION           => '20190914.0',
+    VERSION           => '20201010.0',
     ABSTRACT          => 'Swiss Army Knife for SMTP testing',
     AUTHOR            => 'John Jetmore <jj33@pobox.com>',
     LICENSE           => 'gpl',
