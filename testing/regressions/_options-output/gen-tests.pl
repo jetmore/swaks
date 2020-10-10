@@ -37,10 +37,10 @@ my @standardLines = (
 );
 
 # test 1350
-# my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver"';
+# my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"';
 
 # all other tests
-my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@example.com --from recip@example.com --server "ser ver"';
+my $swaks = 'test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"';
 
 my $testNum;
 my $testText;

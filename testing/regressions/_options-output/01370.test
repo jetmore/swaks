@@ -3,4 +3,4 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 title: dump, env var, no arg
 
 pre action: SET_ENV SWAKS_OPT_dump
-test action: CMD_CAPTURE %SWAKS% --to user@example.com --from recip@example.com --helo test-helo --server "ser ver"
+test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo test-helo --server "ser ver"

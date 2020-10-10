@@ -1,15 +1,15 @@
 DATA Info:
   data = <<.
 Date: Wed, 03 Nov 1999 11:24:29 -0500
-To: user@example.com
-From: recip@example.com
+To: user@host1.nodns.test.swaks.net
+From: recip@host1.nodns.test.swaks.net
 Subject: test Wed, 03 Nov 1999 11:24:29 -0500
 Message-Id: <19991103112429.047942@localhost>
 X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
 
 App Info:
   X-Mailer = swaks v99999999.9 jetmore.org/john/code/swaks/
-  Cmd Line = %SWAKS_COMMAND% --config '/path/to/OUTDIR/swaksrc-00110' --from 'recip@example.com' --to 'user@example.com' --helo 'hserver' --server 'ser.ver' --dump-as-body --auth-user 'auth_user' --auth-password 'PROVIDED_BUT_REMOVED' --dump 'DATA'
+  Cmd Line = %SWAKS_COMMAND% --config '/path/to/OUTDIR/swaksrc-00110' --from 'recip@host1.nodns.test.swaks.net' --to 'user@host1.nodns.test.swaks.net' --helo 'hserver' --server 'ser.ver' --dump-as-body --auth-user 'auth_user' --auth-password 'PROVIDED_BUT_REMOVED' --dump 'DATA'
 
 Output Info:
   show_time_lapse    = FALSE
@@ -40,8 +40,8 @@ Transport Info:
 Protocol Info:
   protocol        = esmtp
   helo            = hserver
-  from            = recip@example.com
-  to              = user@example.com
+  from            = recip@host1.nodns.test.swaks.net
+  to              = user@host1.nodns.test.swaks.net
   force getpwuid  = FALSE
   quit after      = 
   drop after      = 

@@ -225,11 +225,12 @@
 
 
 05000 - misc
-  000 same --xclient-* option given multiple times - SKIP
+  000 same --xclient-* option given multiple times
   001 --xclient-* options get merged together
   002 --xclient-* options coexist with --xclient
-  003 --xclient-delim interact with --xclient-*
-
+  003 --xclient-addr not used multiple times if specificed multiple times
+  004 --xclient-delim interact with --xclient-*
+  005 --xclient can be specified multipl times with unique contents
 
 
 
@@ -246,11 +247,11 @@
     -i 'foo' \
     -d . \
     -r \
-    -s '%SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --xclient-port 26'
+    -s '%SWAKS% --dump XCLIENT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --xclient-port 26'
 
     -p 'XCLIENT string:' \
 #    \
-#    -s '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"  --proxy-family AF_UNIX --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-version 2'
+#    -s '%SWAKS% --dump PROXY --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"  --proxy-family AF_UNIX --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-version 2'
 
 
 

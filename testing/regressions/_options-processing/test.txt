@@ -35,6 +35,8 @@ testing
  18 - DATA works when none of SWAKS_DIR/HOME/LOGDIR are defined
  19 - --config + DATA work when none of SWAKS_DIR/HOME/LOGDIR are defined
  20 - --config inside of a config file is a NOP
+ 21 - no spaces equates to no argument
+ 22 - trailing space equates to an empty argument
  50 - quoting is not required. If quoted, quotes will be taken as data. leading spaces (after first) are included
  51 - test "from"
  52 - test "-from"
@@ -42,7 +44,7 @@ testing
  54 - test "f"
  55 - test "-f"
  56 - test "--f"
- 57 - internal quoting is honored ("h-From: "Fred Example" <fred@example.com>")
+ 57 - internal quoting is honored ("h-From: "Fred Example" <fred@host1.nodns.test.swaks.net>")
  61 - no-info-hints ("set but no value" works
  62 - show-time-lapse="" (confirm that "set but no value" works)
  63 - show-time-lapse="i" (confirm that setting value works works)
@@ -58,12 +60,16 @@ testing
  75 - --local-port --no-local-port (confirm no- works w/ an option that sorts before "no-", with arg)
  76 - --no-info-hints --no-no-info-hints (no- works w/ no- arguments)
  77 - --6 --no-6 --6 (confirm that the no- can be overridden)
+ #78 - non-opt/arg data is error (mid options) (not valid with config files)
+ #79 - non-opt/arg data is error (end of options) (not valid with config files)
+ 80 - non-opt/arg data that looks like an argument to an option that doesn't take one is an error
+
 
 
 0100 - test environment variable processing
  51 - from
  54 - f
- 57 - h-From: "Fred Example" <fred@example.com> (internal quoting is maintained)
+ 57 - h-From: "Fred Example" <fred@host1.nodns.test.swaks.net> (internal quoting is maintained)
  60 - local-port (test underscore)
  61 - no-info-hints="" (confirm that "set but no value" works)
  62 - show-time-lapse="" (confirm that "set but no value" works)
@@ -82,6 +88,9 @@ testing
  75 - --local-port --no-local-port (confirm no- works w/ an option that sorts before "no-", with arg)
  76 - --no-info-hints --no-no-info-hints (no- works w/ no- arguments)
  #77 - --6 --no-6 --6 (confirm that the no- can be overridden) (this can't be done w/ env vars, leaving off)
+ #78 - non-opt/arg data is error (mid options) (not relevant with environment variables)
+ #79 - non-opt/arg data is error (end of options) (not relevant with environment variables)
+ #80 - non-opt/arg data that looks like an argument to an option that doesn't take one is an error (not relevant with environment variables)
 
 
 0200 - test command line processing
@@ -89,7 +98,7 @@ testing
  53 - test "--from"
  55 - test "-f"
  56 - test "--f"
- 57 - internal quoting is honored ("h-From: "Fred Example" <fred@example.com>")
+ 57 - internal quoting is honored ("h-From: "Fred Example" <fred@host1.nodns.test.swaks.net>")
  61 - "--no-info-hints" ("set but no argument" works)
  62 - "--show-time-lapse ''" (confirm that "set with argument, but argument is empty" works)
  63 - show-time-lapse="i" (confirm that setting value works works)
@@ -105,6 +114,9 @@ testing
  75 - --local-port --no-local-port (confirm no- works w/ an option that sorts before "no-", with arg)
  76 - --no-info-hints --no-no-info-hints (no- works w/ no- arguments)
  77 - --6 --no-6 --6 (confirm that the no- can be overridden)
+ 78 - non-opt/arg data is error (mid options)
+ 79 - non-opt/arg data is error (end of options)
+ 80 - non-opt/arg data that looks like an argument to an option that doesn't take one is an error
 
 0300 - test option processing cross-type interactions
  0 - --config only honored first time it's seen across any config type (--config trumps (SWAKS_OPT_config + SWAKS_HOME/.swaksrc:config))

@@ -1,8 +1,8 @@
-# Generated Tue Dec 25 19:02:43 2018 by ./gen-tests.pl '-n' '400' '-o' 'lp' '-v' '9999' '-i' '' '-p' 'Local Port:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver"'
+# Generated Sun Oct 27 09:10:54 2019 by ./gen-tests.pl '-n' '400' '-o' 'lp' '-v' '9999' '-i' 'BADSERVICENAME' '-p' 'Local Port:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: lp, env var, no arg
 
 pre action: SET_ENV SWAKS_OPT_lp
-auto: INTERACT '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver"' 'Local Port:' '9999'
+auto: INTERACT '%SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"' 'Local Port:' '9999'

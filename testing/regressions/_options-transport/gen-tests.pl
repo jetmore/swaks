@@ -49,7 +49,7 @@ if (!$option) {
 }
 
 if (!$swaks) {
-	$swaks = '%SWAKS% --dump PROXY --to user@example.com --from recip@example.com --server "ser ver"';
+	$swaks = '%SWAKS% --dump PROXY --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"';
 }
 
 printf "%05d --$option\n", $startnum;

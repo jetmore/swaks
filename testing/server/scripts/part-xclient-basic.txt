@@ -1,0 +1,3 @@
+get_line(); # XCLIENT
+include("$Bin/scripts/part-banner-standard.txt");
+include("$Bin/scripts/part-ehlo-all.txt");

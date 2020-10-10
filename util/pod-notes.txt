@@ -1,0 +1,41 @@
+the POD can be finicky, start tracking issues I've addressed or decisions I've made here so I don't have to keep relearning them
+
+
+
+There are a couple of tools that can provide feedback on the state of the POD:
+
+# these are all ways to possibly report errors in our pod
+pod2text base.pod >/dev/null
+podchecker -warnings -warnings base.pod
+pod2man --center=SWAKS --section=1 base.pod >/dev/null
+
+# should write a script which runs the above and also does some custom checking for the enforcement of our own rules and make it a part of
+# the release process (or maybe I should make it part of the test suite)
+
+Specific points:
+
+The exit codes are proceeded by Z<> because of an issue where a numbered list is only legal if it starts with a 1.  This is a silly rule but it's
+unlikely to be changed (https://rt.cpan.org/Public/Bug/Display.html?id=84626).  See commit log for be5c646e420d68ea88e5ad344792b2157300030f which
+has a ton of background.
+
+
+
+Guidelines:
+
+In general, I will leave  <, >, | and / unquoted unless they generate an error in my testing or someone reports an error (at which point I will encode them and record in this file why they are encoded).  They aren't currently generating an error and they are easier to read and write when working with the POD.  It might be nice to change some of the currently encoded ones back to unencoded.  Do so and see if anything reports an error.  Also go back through commit logs and see if we can determine why they were made.  If there was a good reason, leave it (and see if the reason applies to other code).
+
+F<filename> - any string that unabiguously refers to a file should have this (see .swaksrc)
+
+C<code> - definitely should use this in some places.  Go through the doc and add it, come up with a guideline for when to use
+ - actual code snippets (strings of command line options)
+ - references to individual command line options
+ - references to environment variables
+
+L<name> - definit cases for using this
+ - reference to a perl module (L<Net::Ping>)
+ - man pages? L<crontab(5)>
+ - web sites L<http://www.perl.org/>
+ - internal references.  Would be awesome if we could link to options, but I'm not sure we can since it would be the thing in =item, and we have multiple
+   options and args in the option =items.  But I think we could still link to the =head and section head -item.  Think about it
+
+

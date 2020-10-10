@@ -3,7 +3,7 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID% \
   string:'body "CONFIG body - should appear in quotes"\n' \
   string:'h-Subject: CONFIG subject\n' \
-  string:'to CONFIG-recip@example.com\n' \
-  string:'from       CONFIG-to@example.com - should be leading space\n'
+  string:'to CONFIG-recip@host1.nodns.test.swaks.net\n' \
+  string:'from       CONFIG-to@host1.nodns.test.swaks.net - should be leading space\n'
 
 test action: CMD_CAPTURE %SWAKS% --dump DATA --server ser.ver --config %OUTDIR%/swaksrc-%TESTID%

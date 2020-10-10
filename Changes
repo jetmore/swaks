@@ -72,13 +72,13 @@
 * 20030414 laid groundwork for adding TLS (option processing)
 * 20030415 added basic TLS support w/ Net::SSLeay
 * 20030424 allow null sender (-f NULLNULL)
-* 20030826 allow mult recips in form to,to,to (if server is undef,
-           uses DNS for domain of last recip in list)
+* 20030826 allow multiple recipients in form to,to,to (if server is undef,
+           uses DNS for domain of last recipient in list)
 * 20031008 add -to option to allow timeout to be specified in seconds
            on command line. (defaults to 30s)
 * 20031008 fixed bug where alarm was not reset after
 * 20031008 allow TIMEOUT to be specified in -l file
-* 20031008 changed so you can specify in time format (hms).  This
+* 20031008 changed so you can specify in time format (h,m,s).  This
            allows you to use 0s to mean no timeout
 * 20031008 adjusted Getopt::Long to have case-sensitive single
            char options, but insensitive long opts.  It also turns
@@ -116,7 +116,7 @@
            exists, otherwise add trailing dot.  Quote all other dots
 * 20031010 added framework for release (--help, --version), initial
            population of help framework
-* 20031014 changed timeout CLA from -to to -timeout to avoid confusion
+* 20031014 changed timeout option from -to to -timeout to avoid confusion
 * 20031014 added longer alternatives to most options (that is, -ao
            can also be specified as --auth-optional
 * 20031016 typo - changed --supress-data to --suppress-data
@@ -279,7 +279,7 @@
 * 20060201 added --force-getpwuid option to force old method of
            looking up $< to generate sender local part
 * 20060201 20050810 fixed stupid inefficiency where both do_smtp_rcpt()
-           and caller of do_smtp_rcpt() are handling comma-delim
+           and caller of do_smtp_rcpt() are handling comma-delimited
            recipient list.
 * 20060210 20060131 change --pipe to use open2().  This causes child
            stderr not to be handled by swaks - user can redirect
@@ -291,7 +291,7 @@
            swaks did not handle the remote end closing its
            connection unexpectedly.  Fixed transaction routines
            to detect and handle properly.
-* 20060221 with io handling on broken connections working better,
+* 20060221 with IO handling on broken connections working better,
            remove the CHLD and PIPE signal handlers so --pipe behaves
            more like sockets
 * 20060221 misc code tidying
@@ -335,7 +335,7 @@
            implementations change.  added avail() and avail_err(),
            test_support(), removed load_modules(), try_load().  Also
            some speed gains because program now only loads modules
-           needed for specific invocation - previously preloaded
+           needed for specific invocation - previously pre-loaded
            every available module, regardless of need.
 * 20060804 moved all other modules to conditionally load, as needed.
            This is IO::Socket, IPC::Open2, Time::Local,
@@ -353,7 +353,7 @@
            of use in encoding mime bodies.  Add in feature.
 * 20060804 fixed get_date_string() to return a true GMT string, not
            the local time w/ a GMT stamp if date_manip unavailable
-* 20060804 redid the REQ docs to reflect current requirements
+* 20060804 redid the requirements docs to reflect current requirements
            and behaviors.
 * 20060817 redid --support/avail() again to support concept of
            optional (optimizing) modules for full disclosure in output
@@ -409,7 +409,8 @@
            only DIGEST-MD5 sends a blank line as part of the protocol.)
 * 20070906 added framework for --auth-optional-strict, needs tweaking
            and docs still
-* 20070914 finished --auth-optional-strict impl incl test frame
+* 20070914 finished --auth-optional-strict implementation, including
+           test frame
 * 20070920 implemented --tls-option-strict
 > 20070920 released 20070920.0-dev to haraldme.gmail.com
 * 20070921 rearranged dependency processing for code readability
@@ -431,7 +432,7 @@
            changed option/arg split to be a single space - leading
            space on arg is preserved if present.
            changed so that dash(es) on option names are optional.
-* 20071220 changed the env var namespace from SWAKS_ARG_ to
+* 20071220 changed the environment variable namespace from SWAKS_ARG_ to
            SWAKS_OPT_.  fixed to replace _ w/ - in var names.
 * 20071220 Added banner as synonym for CONNECT
            CONNECT behavior that closes the connection without
@@ -452,7 +453,7 @@
            options which already begin with "no-"
 * 20080104 fixed very obscure bug which caused crash if _no_ option
            processing was done (introduced sometime during the
-           introduction of env/conf file opts I think)
+           introduction of environment/config file options I think)
 * 20080104 if --data has no newlines and represents an openable file,
            use the contents of the file as the DATA
 * 20080208 20071221 added recognition of :port suffix to --server
@@ -521,8 +522,8 @@
 * 20111128 Fix option processing so that "no-" prefixed options wipe out
            the same option when presented in the same context.  Previously
            --no-timeout on command line would erase a timeout set by a
-           config option or env variable, but would not erase --timeout
-           given earlier on the same command line.
+           config option or environment variable, but would not erase
+           --timeout given earlier on the same command line.
 * 20111130 Changed the DIGEST-MD5 back end from Authen::DigestMD5 to
            Authen::SASL.  Authen::DigestMD5 had some blatant protocol
            bugs and swaks did a poor job of supporting DIGEST-MD5
@@ -536,7 +537,7 @@
            20060309's r115.  Regression reported by Peter J. Holzer along
            with suggested fix.
 * 20111202 re-implemented reading of server responses in non-TLS, non-pipe
-           sessions in terms of recv rather than as a standard filehandle
+           sessions in terms of receive rather than as a standard filehandle
            operation (<>) to make it closer to the TLS's read and to allow
            a more in-depth view of what's being sent on the wire.
 * 20111202 implemented the -raw/--show-raw-text option to print a hex dump
@@ -635,8 +636,8 @@
 * 20120404 added xtext encoding for the xclient options
 > 20120405 released 20120405.0-dev to Kevin San Diego and Kurt Anderson
            (submitters of independent XCLIENT patches) for comment
-* 20120407 fix bug w/ xclient impl, using just --xclient didn't cause
-           XCLIENT to be sent
+* 20120407 fix bug with xclient implementation, using just --xclient didn't
+           cause XCLIENT to be sent
 * 20120410 typo fixes and clarifications for XCLIENT docs
 * 20120529 Added some more error checking in TLS code, breadcrumbs to the
            existing errors (spurred by Debian bug 675009, though the
@@ -655,8 +656,8 @@
 * 20120531 Added --tls-cipher option to set preferred ciphers list
 * 20120601 Added --tls-verify option
 * 20120624 If TLS is attempted but failed, just exit, don't attempt to
-           send quit because we don't know what state the cxn is in.  This
-           will likely cause problems with tls-optional connections,
+           send quit because we don't know what state the connection is in.
+           This will likely cause problems with tls-optional connections,
            documenting the concern there.
 * 20120624 Added --tls-ca-path option to specify alternate certs for use in
            verification
@@ -671,7 +672,7 @@
 * 20120803 Implemented new --no-send-hints, --no-receive-hints, and
            --no-info-hints options (mostly so I could can copy certs from
            the output of --tls-get-peer-cert).
-* 20120805 Fixed bug in TLS and pipe recv code when server has closed
+* 20120805 Fixed bug in TLS and pipe receive code when server has closed
            connection but swaks is expecting data to be present
 * 20120805 Fixed bug causing swaks to "double-quit" when a rejected MAIL of
            RCPT was sent _AND_ a --quit MAIL or --quit RCPT was used _AND_
@@ -852,3 +853,71 @@
            supplied. Just error and exit instead
 * 20191005 Fixed typos in base.pod and recipes.pod
 > 20191006 released 20190914.0
+* 20191008 Added skeleton of installation doc (missingcharacter)
+* 20191009 Added .netrc support (fany)
+* 20191012 Added --tls-sni option (lightsey)
+* 20191012 Fix bug which treated `SWAKS_OPT_foo=` as `--foo ''` instead of
+           `--foo`.  This affected error handling for options which
+           required args.
+* 20191019 Reimplementation of option processing fixed lots of missed edge
+           cases, especially options which were documented to require an
+           argument but didn't error if none was provided (--add-header,
+           --header, --attach, --attach-type, --attach-body, possibly others)
+* 20191021 The --xclient-name, -addr, etc options can now only be provided
+           once per call. Multiple uses of one of these options will result
+           in only the last one being used.  Previously these options could
+           be set multiple times to send the same xclient attribute multiple
+           times.  If that's needed, see the --xclient option.
+* 20191022 The "no-" option negating now works much better (previously was
+           hit-or-miss on special option families like --attach*, --xclient*,
+           and --header*).
+* 20191023 Ensure "main" choice defined first in each option's list of
+           aliases because the first item is used for errors.
+* 20191026 Deprecate -g option.  Change current implementation so it is
+           rewritten to `--data -` before option processing. Any occurrence
+           of `--data` will cause -g to be discarded. "no-" prefix will not
+           negate.
+* 20191026 Update --data, --body, --attach-body, and --attach so that a
+           leading '@' forces the argument to be a filename. Deprecate
+           previous "if it happens to be an openable file" behavior
+* 20191027 Do service name resolution on --local-port if non-numeric
+* 20191028 Fix bug setting filename in attachments when '@' prefix used
+* 20191028 Add deprecation warning system.  Warnings in code and a table
+           of deprecated functionality and removal dates in documentation.
+* 20191111 Switch Getopt to process an arbitrary list instead of manipulating
+           ARGV for each call.
+* 20191111 Check to see if there are any entries left in the option list
+           after each stage of option processing and error if so.
+* 20191111 Rework the command line reconstruction so that options that
+           don't take an argument do not include one in the reconstruction.
+* 20191111 Unexpected argument format for --timeout now errors and exits
+           instead of silently using default timeout.
+* 20191111 Document that --timeout argument can use 'h' as a modifier.
+* 20191111 Docs: Reorganize Terms and Conventions, add Option/Arg/[]/<>.
+* 20191112 Docs: Be consistent in how <> and [] are used in argument docs.
+* 20191113 Docs: Define option types and assign to every option.
+* 20191113 Docs: General typo and consistency fixes.
+* 20191122 Docs: Establish project standards for POD formatting and
+           make first pass at applying.
+* 20191220 Docs: Fix incorrect example used in --attach-body definition.
+* 20191221 Docs: merge OpossumPetya's web page changes, use better web
+           practices and make mobile friendly
+* 20200118 Docs: misc web page changes. tweak pre font size to prevent
+           scrolling, remove stray quotes, remove the news section from index
+           add announcement to versions, link to both plaintext and
+           rendered docs, etc
+* 20200425 Fix strange issue where GMT offset could oscillate on days of DST
+           transition.  Time::Local is no longer used and POSIX is now
+           required (#17, deb bug 955798)
+* 20200801 Update copyright year to 2020
+* 20200801 Fix bug which broke XCLIENT and STARTTLS used together (#21)
+* 20201004 Update README.md to reflect changes from
+           234db829dc6e6d45fe4da5f2bef075828ebc0ac7 (#22). Move to reference-
+           style markdown links to make it easier to identify links that
+           need to be changed for a release.
+* 20201004 Fix wording and example around html body on faq.html (#14)
+* 20201004 Add '@' in attach examples to prevent deprecation warnings
+* 20201004 Convert installation.pod to installation.html, link to it from
+           index.html and README.md, and flesh it out. (#7)
+* 20201010 Package App::swaks-20190914.0 for CPAN distribution (#23)
+> 20201010 released 20201010.0

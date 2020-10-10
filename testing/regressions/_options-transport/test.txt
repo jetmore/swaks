@@ -99,15 +99,15 @@
 00300 --local-port
   300 local-port, command line, no arg
   301 local-port, command line, valid arg
-  # 302 local-port, command line, invalid arg
+  302 local-port, command line, invalid arg
   303 local-port, command line, no-option
   310 local-port, config, no arg
   311 local-port, config, valid arg
-  # 312 local-port, config, invalid arg
+  312 local-port, config, invalid arg
   313 local-port, config, no-option
   320 local-port, env var, no arg
   321 local-port, env var, valid arg
-  # 322 local-port, env var, invalid arg
+  322 local-port, env var, invalid arg
   323 local-port, env var, no-option
   330 local-port command line, no arg (-option)
   331 local-port, command line, valid arg (-option=)
@@ -115,15 +115,15 @@
 00350 --lport
   350 lport, command line, no arg
   351 lport, command line, valid arg
-  # 352 lport, command line, invalid arg
+  352 lport, command line, invalid arg
   353 lport, command line, no-option
   360 lport, config, no arg
   361 lport, config, valid arg
-  # 362 lport, config, invalid arg
+  362 lport, config, invalid arg
   363 lport, config, no-option
   370 lport, env var, no arg
   371 lport, env var, valid arg
-  # 372 lport, env var, invalid arg
+  372 lport, env var, invalid arg
   373 lport, env var, no-option
   380 lport command line, no arg (-option)
   381 lport, command line, valid arg (-option=)
@@ -131,15 +131,15 @@
 00400 --lp
   400 lp, command line, no arg
   401 lp, command line, valid arg
-  # 402 lp, command line, invalid arg
+  402 lp, command line, invalid arg
   403 lp, command line, no-option
   410 lp, config, no arg
   411 lp, config, valid arg
-  # 412 lp, config, invalid arg
+  412 lp, config, invalid arg
   413 lp, config, no-option
   420 lp, env var, no arg
   421 lp, env var, valid arg
-  # 422 lp, env var, invalid arg
+  422 lp, env var, invalid arg
   423 lp, env var, no-option
   430 lp command line, no arg (-option)
   431 lp, command line, valid arg (-option=)
@@ -163,15 +163,15 @@
 00500 --4
   500 4, command line, no arg
   # 501 4, command line, valid arg
-  502 4, command line, invalid arg
+  # 502 4, command line, invalid arg
   503 4, command line, no-option
   510 4, config, no arg
   # 511 4, config, valid arg
-  512 4, config, invalid arg
+  # 512 4, config, invalid arg
   513 4, config, no-option
   520 4, env var, no arg
   # 521 4, env var, valid arg
-  522 4, env var, invalid arg
+  # 522 4, env var, invalid arg
   523 4, env var, no-option
   530 4 command line, no arg (-option)
   # 531 4, command line, valid arg (-option=)
@@ -179,15 +179,15 @@
 00550 --6
   550 6, command line, no arg
   # 551 6, command line, valid arg
-  552 6, command line, invalid arg
+  # 552 6, command line, invalid arg
   553 6, command line, no-option
   560 6, config, no arg
   # 561 6, config, valid arg
-  562 6, config, invalid arg
+  # 562 6, config, invalid arg
   563 6, config, no-option
   570 6, env var, no arg
   # 571 6, env var, valid arg
-  572 6, env var, invalid arg
+  # 572 6, env var, invalid arg
   573 6, env var, no-option
   580 6 command line, no arg (-option)
   # 581 6, command line, valid arg (-option=)
@@ -271,7 +271,7 @@
     -p 'Pipe:' \
     -d . \
     -r \
-    -s '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com'
+    -s '%SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net'
 
  --server "ser ver"
 

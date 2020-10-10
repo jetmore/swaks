@@ -1,8 +1,8 @@
-# Generated Tue Dec 25 19:02:05 2018 by ./gen-tests.pl '-n' '300' '-o' 'local-port' '-v' '9999' '-i' '' '-p' 'Local Port:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver"'
+# Generated Sun Oct 27 09:04:58 2019 by ./gen-tests.pl '-n' '300' '-o' 'local-port' '-v' '9999' '-i' 'BADSERVICENAME' '-p' 'Local Port:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: local-port, command line, valid arg (-option=)
 
-test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com --server "ser ver" \
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver" \
     -local-port=9999

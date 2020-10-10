@@ -1,1 +1,2 @@
+*** DEPRECATION WARNING: Inferring a filename from the argument to --data will be removed in the future.  Prefix filenames with '@' instead.
 *** data option appears to be a file but is not openable: /path/to/bogus/file (No such file or directory)

@@ -3,4 +3,4 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 pre action: SET_ENV SWAKS_HOME --UNSET--
 pre action: SET_ENV HOME --UNSET--
 pre action: SET_ENV LOGDIR --UNSET--
-test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --server ser.ver --config %TESTDIR%/swaksrc-config-1
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser.ver --config %TESTDIR%/swaksrc-config-1

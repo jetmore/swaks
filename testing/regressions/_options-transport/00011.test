@@ -1,9 +1,9 @@
-# Generated Tue Dec 25 18:19:04 2018 by ./gen-tests.pl '-n' '0' '-o' 'server' '-v' 'TESTSERVER' '-i' '' '-p' 'Server:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com'
+# Generated Tue Dec 25 18:19:04 2018 by ./gen-tests.pl '-n' '0' '-o' 'server' '-v' 'TESTSERVER' '-i' '' '-p' 'Server:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: server, config, valid arg
 
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'server TESTSERVER'
-test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@example.com --from recip@example.com \
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net \
     --config %OUTDIR%/swaksrc-%TESTID%

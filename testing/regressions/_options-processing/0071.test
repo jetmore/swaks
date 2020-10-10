@@ -1,9 +1,9 @@
 pre action: REMOVE_FILE %OUTDIR%/%TESTID%.stdout %OUTDIR%/%TESTID%.stdout.2 %OUTDIR%/%TESTID%.stderr %OUTDIR%/%TESTID%.stderr.2
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID%-1 string:'f from-1\nfrom from-2\n'
-test action: CMD_CAPTURE %SWAKS% --dump data --to user@example.com --server ser.ver --config %OUTDIR%/swaksrc-%TESTID%-1
+test action: CMD_CAPTURE %SWAKS% --dump data --to user@host1.nodns.test.swaks.net --server ser.ver --config %OUTDIR%/swaksrc-%TESTID%-1
 
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID%-2 string:'from from-1\nf from-2\n'
-test action: CMD_CAPTURE:2 %SWAKS% --dump data --to user@example.com --server ser.ver --config %OUTDIR%/swaksrc-%TESTID%-2
+test action: CMD_CAPTURE:2 %SWAKS% --dump data --to user@host1.nodns.test.swaks.net --server ser.ver --config %OUTDIR%/swaksrc-%TESTID%-2
 
 test action: MUNGE file:%OUTDIR%/%TESTID%.stdout munge_standard
 test action: MUNGE file:%OUTDIR%/%TESTID%.stdout.2 munge_standard

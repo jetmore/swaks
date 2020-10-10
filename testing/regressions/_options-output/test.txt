@@ -560,3 +560,7 @@ grep -h Generated *.test | sort | uniq
 That leaves the 4->9 slot for an expansion of the standard tests
 and leaves 30-49 for weird tests
 
+
+05000
+  0 --trigger-deprecation triggers a deprecation warning
+

@@ -1,4 +1,4 @@
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
-pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:"--f CONFIG-from@example.net"
-test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --server ser.ver --config %OUTDIR%/swaksrc-%TESTID%
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:"--f CONFIG-from@host2.nodns.test.swaks.net"
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver --config %OUTDIR%/swaksrc-%TESTID%

@@ -5,4 +5,4 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 title: xclient, config, no arg
 
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'xclient'
-auto: INTERACT '%SWAKS% --dump XCLIENT --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --config %OUTDIR%/swaksrc-%TESTID%' 'XCLIENT string:' 'REVERSE_NAME=testname PORT=25'
+auto: INTERACT '%SWAKS% --dump XCLIENT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --config %OUTDIR%/swaksrc-%TESTID%' 'XCLIENT string:' 'REVERSE_NAME=testname PORT=25'

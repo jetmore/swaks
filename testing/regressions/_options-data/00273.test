@@ -1,8 +1,8 @@
-# Generated Sat Jul 13 10:36:15 2019 by ./gen-tests.pl '-n' '250' '-o' 'dump-as-body-shows-password' '-v' '' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au auth_user --ap auth_pass --dab AUTH'
+# Generated Sat Jul 13 10:36:15 2019 by ./gen-tests.pl '-n' '250' '-o' 'dump-as-body-shows-password' '-v' '' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --au auth_user --ap auth_pass --dab AUTH'
 
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: dump-as-body-shows-password, env var, no-option
 
 pre action: SET_ENV SWAKS_OPT_dump_as_body_shows_password ''
-test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@example.com --from recip@example.com --helo hserver --server "ser.ver" --au auth_user --ap auth_pass --dab AUTH --no-dump-as-body-shows-password
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --au auth_user --ap auth_pass --dab AUTH --no-dump-as-body-shows-password

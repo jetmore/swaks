@@ -1,0 +1,6 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: non-opt/arg data that looks like an argument to an option that doesn't take one is an error
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'no-data-fixup non-opt-arg-data\n'
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --server ser.ver --config %OUTDIR%/swaksrc-%TESTID%

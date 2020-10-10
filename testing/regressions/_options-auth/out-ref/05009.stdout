@@ -1,0 +1,16 @@
+spawn %SWAKS_COMMAND% --dump AUTH --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server host1.nodns.test.swaks.net --auth --auth-user CMDLINE-USER
+Password: PROMPT-PASSWORD
+Authentication Info:
+  auth           = required
+  username       = 'CMDLINE-USER'
+  password       = 'PROMPT-PASSWORD'
+  show plaintext = FALSE
+  hide password  = FALSE
+  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, PLAIN
+  extras         = 
+  type map       = CRAM-MD5 = CRAM-MD5
+                   CRAM-SHA1 = CRAM-SHA1
+                   DIGEST-MD5 = DIGEST-MD5
+                   LOGIN = LOGIN
+                   NTLM = NTLM, SPA, MSN
+                   PLAIN = PLAIN
