@@ -6,6 +6,7 @@ to manually update the "Change Summary" section of RELEASE/README.txt.
 # Choose a release
 export RELEASE=20190914.0
 export SWAKSDIR=/Users/jetmore/Documents/git/swaks
+export BUILDDIR=$SWAKSDIR/tmp
 
 # We will be releasing what's in the develop branch
 # create a branch from develop named release/$RELEASE
@@ -23,11 +24,17 @@ export SWAKSDIR=/Users/jetmore/Documents/git/swaks
 
 # update README.md
 
+# update App-swaks/Changes (in general this will only ever be "repackaging of version blah blah blah".  Only thing else would be changes specifically related to packaging)
+
+# update App-swaks/Makefile.PL (version)
+
+# update App-swaks/README (version and copyright year)
+
 # update doc/index.html
 
 # update doc/versions.html
 
-# update doc/installation.html (fix the links in the direct-download examples to include the latest version)
+# update doc/installation.html (fix the links in the direct-download examples to include the latest version, also the link to App::swaks)
 
 # open doc/versions.html and doc/index.html in a browser and make sure everything looks ok
 
@@ -46,6 +53,8 @@ HOME=$SWAKSDIR/util aspell --mode html check doc/installation.html
 HOME=$SWAKSDIR/util aspell check RELEASE/README.txt
 HOME=$SWAKSDIR/util aspell check doc/recipes.pod
 HOME=$SWAKSDIR/util aspell check doc/base.pod
+HOME=$SWAKSDIR/util aspell check App-swaks/Changes
+HOME=$SWAKSDIR/util aspell check App-swaks/README
 HOME=$SWAKSDIR/util aspell --mode markdown check README.md
 
 # run the actual script (this preps some stuff, but this won't be the final release):
@@ -56,11 +65,19 @@ $SWAKSDIR/util/gen-release.pl $RELEASE
 aspell check RELEASE/README.txt
 
 # Create the release gz and post on the website
-mv RELEASE swaks-$RELEASE
-COPYFILE_DISABLE=1 tar -cvzf swaks-$RELEASE.tar.gz --exclude '._*' swaks-$RELEASE
-mv swaks-$RELEASE RELEASE
-scp swaks-$RELEASE.tar.gz ftp.jetmore.org:jetmore.org/john/code/swaks/files
-rm swaks-$RELEASE.tar.gz
+# this tar command is for macos.  linux would not need the env variable and would use --transform instead of -s
+/bin/rm $BUILDDIR/swaks-$RELEASE.tar.gz
+COPYFILE_DISABLE=1 tar -cvzf $BUILDDIR/swaks-$RELEASE.tar.gz -s/^RELEASE/swaks-$RELEASE/ --exclude '._*' RELEASE
+scp $BUILDDIR/swaks-$RELEASE.tar.gz ftp.jetmore.org:jetmore.org/john/code/swaks/files
+
+# Build the perl distribution
+cd $SWAKSDIR/App-swaks
+perl Makefile.PL
+make dist
+/bin/mv App-swaks-$RELEASE.tar.gz $BUILDDIR/
+make distclean
+# we rebuild these each time and already store a "release" copy in RELEASE, no reason to store them here too
+/bin/rm swaks LICENSE
 
 # unpack files on the server and set up the "latest" link
 ssh ftp.jetmore.org /bin/tar -xzvf jetmore.org/john/code/swaks/files/swaks-$RELEASE.tar.gz -C jetmore.org/john/code/swaks/files
@@ -92,6 +109,12 @@ git checkout develop
 git pull
 git merge --no-ff release/v$RELEASE
 git push
+
+### publish the perl package to cpan
+# requires `cpan install CPAN::Uploader`
+# `perl -MConfig -e 'Config::config_vars(qw(prefix));'` for probable install location
+# see https://metacpan.org/pod/distribution/CPAN-Uploader/bin/cpan-upload for format of .pause
+/usr/local/Cellar/perl/5.32.0/bin/cpan-upload --config $BUILDDIR/.pause $BUILDDIR/App-swaks-$RELEASE.tar.gz
 
 ###
 # To this point we're published but we haven't told anyone yet.  Start sending actual announcements:
