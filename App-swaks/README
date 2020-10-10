@@ -1,0 +1,45 @@
+App-swaks version 20190914.0
+======================
+
+App::swaks is a perl package which distributes the Swaks SMTP test
+tool.  There's no real reason for this to be a perl package except
+that it offers easy installation via cpan tooling on operating systems
+which don't already package Swaks.
+
+To learn more about Swaks visit the project homepage at
+https://www.jetmore.org/john/code/swaks which has contact links,
+documentation, git repo, etc.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make install
+
+DEPENDENCIES
+
+Swaks requires no other modules for its base functionality.
+However, additional modules may be required for enhanced
+functionality.  Run `swaks --support` to see what additional
+modules may be desired.
+
+COPYRIGHT AND LICENCE
+
+Copyright (c) 2003-2008,2010-2020 John Jetmore <jj33@pobox.com>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+

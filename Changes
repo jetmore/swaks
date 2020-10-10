@@ -919,4 +919,4 @@
 * 20201004 Add '@' in attach examples to prevent deprecation warnings
 * 20201004 Convert installation.pod to installation.html, link to it from
            index.html and README.md, and flesh it out. (#7)
-
+* 20201010 Package and release App::swaks-20190914.0 for cpan distribution
