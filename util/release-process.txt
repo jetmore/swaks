@@ -9,7 +9,7 @@ export SWAKSDIR=/Users/jetmore/Documents/git/swaks
 export BUILDDIR=$SWAKSDIR/tmp
 
 # We will be releasing what's in the develop branch
-# create a branch from develop named release/$RELEASE
+# create a branch from develop named release/v$RELEASE
 
 # review deprecations
   - base.pod.  Make sure new deprecations are present.  Update the "not before" date
@@ -124,17 +124,17 @@ git push
 # publish the draft blog post
 
 # send twitter notification
-# Swaks release 20190914.0 available (mostly bug fixes, source now available on github) :: https://www.jetmore.org/john/blog/2019/09/swaks-release-20190914-0-available/ :: Share and Enjoy!
+# Swaks release 20201010.0 available :: https://www.jetmore.org/john/blog/2020/10/swaks-release-20201010-0-available/ :: Share and Enjoy!
 
 
 # send email to those who have requested it
 g3: egrep -v '^#' ~/Documents/programming/swaks/NOTIFY  | egrep -v '^$'
 
 ######
-Subject: Swaks 20190914.0 released
+Subject: Swaks 20201010.0 released
 
 A new version of Swaks is available for download.  Please visit
-https://www.jetmore.org/john/blog/2019/09/swaks-release-20190914-0-available/
+https://www.jetmore.org/john/blog/2020/10/swaks-release-20201010-0-available/
 for links and details.
 
 --John
@@ -150,7 +150,7 @@ these updates please respond to this email and ask to be removed.
 
 Prepare for future development:
  - release branch can be deleted
- - rebasein-progress branches on new develop
+ - rebase in-progress branches on new develop
 
 
 
