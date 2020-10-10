@@ -11,7 +11,7 @@ The official project page is <https://jetmore.org/john/code/swaks/>.
 
 ## Download
 
-The latest version of Swaks is **20190914.0** ([announcement][release_announce]), which can be downloaded as a [package][release_package] or a [standalone script][release_script].
+The latest version of Swaks is **20201010.0** ([announcement][release_announce]), which can be downloaded as a [package][release_package] or a [standalone script][release_script].
 
 See the [installation page][installation_page] for details on installing in multiple environments.
 
@@ -52,7 +52,7 @@ Feedback and meaningful questions about how to use Swaks are welcome. However, s
 [issues]: https://github.com/jetmore/swaks/issues
 [blog]: https://www.jetmore.org/john/blog/c/swaks/
 [blog_rss]: https://www.jetmore.org/john/blog/c/swaks/feed/
-[release_announce]: https://www.jetmore.org/john/blog/2019/09/swaks-release-20190914-0-available/
-[release_package]: https://jetmore.org/john/code/swaks/files/swaks-20190914.0.tar.gz
-[release_script]: https://jetmore.org/john/code/swaks/files/swaks-20190914.0/swaks
-[rendered_doc]: https://github.com/jetmore/swaks/blob/v20190914.0/doc/base.pod
+[release_announce]: https://www.jetmore.org/john/blog/2020/10/swaks-release-20201010-0-available/
+[release_package]: https://jetmore.org/john/code/swaks/files/swaks-20201010.0.tar.gz
+[release_script]: https://jetmore.org/john/code/swaks/files/swaks-20201010.0/swaks
+[rendered_doc]: https://github.com/jetmore/swaks/blob/v20201010.0/doc/base.pod

@@ -4,7 +4,7 @@ to manually update the "Change Summary" section of RELEASE/README.txt.
 
 
 # Choose a release
-export RELEASE=20190914.0
+export RELEASE=20201010.0
 export SWAKSDIR=/Users/jetmore/Documents/git/swaks
 export BUILDDIR=$SWAKSDIR/tmp
 
@@ -21,6 +21,7 @@ export BUILDDIR=$SWAKSDIR/tmp
 
 # Generate a skeleton of the announce blog post.  Don't publish it yet, but you should
 # draft and save it so you can have the URL for the following docs
+https://www.jetmore.org/john/blog/2020/10/swaks-release-20201010-0-available/
 
 # update README.md
 
@@ -36,7 +37,7 @@ export BUILDDIR=$SWAKSDIR/tmp
 
 # update doc/installation.html (fix the links in the direct-download examples to include the latest version, also the link to App::swaks)
 
-# open doc/versions.html and doc/index.html in a browser and make sure everything looks ok
+# open doc/versions.html, doc/index.html, and installation.html in a browser and make sure everything looks ok
 
 # Run the spell checker
 # aspell --personal to set a personal wordlist doesn't seem to work, but using the "default"
@@ -62,7 +63,7 @@ $SWAKSDIR/util/gen-release.pl $RELEASE
 
 # review RELEASE/README.txt and update with detailed changes and high-level overview of release
 
-aspell check RELEASE/README.txt
+HOME=$SWAKSDIR/util aspell check RELEASE/README.txt
 
 # Create the release gz and post on the website
 # this tar command is for macos.  linux would not need the env variable and would use --transform instead of -s
@@ -95,6 +96,12 @@ scp doc/versions.html ftp.jetmore.org:jetmore.org/john/code/swaks/versions.html
 scp doc/faq.html ftp.jetmore.org:jetmore.org/john/code/swaks/faq.html
 scp doc/installation.html ftp.jetmore.org:jetmore.org/john/code/swaks/installation.html
 
+### publish the perl package to cpan
+# requires `cpan install CPAN::Uploader`
+# `perl -MConfig -e 'Config::config_vars(qw(prefix));'` for probable install location
+# see https://metacpan.org/pod/distribution/CPAN-Uploader/bin/cpan-upload for format of .pause
+/usr/local/Cellar/perl/5.32.0/bin/cpan-upload --config $BUILDDIR/.pause $BUILDDIR/App-swaks-$RELEASE.tar.gz
+
 # tag the release and merge the release branch into master
 git fetch
 git checkout master
@@ -110,11 +117,6 @@ git pull
 git merge --no-ff release/v$RELEASE
 git push
 
-### publish the perl package to cpan
-# requires `cpan install CPAN::Uploader`
-# `perl -MConfig -e 'Config::config_vars(qw(prefix));'` for probable install location
-# see https://metacpan.org/pod/distribution/CPAN-Uploader/bin/cpan-upload for format of .pause
-/usr/local/Cellar/perl/5.32.0/bin/cpan-upload --config $BUILDDIR/.pause $BUILDDIR/App-swaks-$RELEASE.tar.gz
 
 ###
 # To this point we're published but we haven't told anyone yet.  Start sending actual announcements:

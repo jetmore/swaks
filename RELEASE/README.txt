@@ -14,13 +14,15 @@ missing functionality, and how to get that functionality.  Example output:
 
     === AUTH CRAM-MD5 supported
     === AUTH CRAM-SHA1 supported
-    *** AUTH DIGEST-MD5 not available: requires Authen::SASL
+    === AUTH DIGEST-MD5 supported
     *** AUTH NTLM not available: requires Authen::NTLM
     === Basic AUTH supported
     === Date Manipulation supported
     === High Resolution Timing supported
+    === IPv6 supported
     === Local Hostname Detection supported
     === MX Routing supported
+    === Netrc Credentials supported
     === Pipe Transport supported
     === Socket Transport supported
     === TLS supported
@@ -32,10 +34,12 @@ Check the following files
     README.txt
         This file.  Contains install notes, references to other
         files, and major changes for this release
-    doc/Changes.txt
-        All changes to Swaks
     doc/ref.txt
         The text version of the --help output
+    doc/Changes.txt
+        All changes to Swaks
+    doc/installation.txt
+        Notes on installing Swaks
     doc/recipes.txt
         Hints, tips, tricks that don't fit in the reference
 
@@ -86,34 +90,29 @@ A full copy of this license should be available in the LICENSE.txt file.
 ------------------------------
 Change Summary
 ------------------------------
-v20190914.0
+v20201010
   New Features:
-    * Source is now available on github.com/jetmore/swaks
-    * Added --body-attach option to allow more granularity in setting body
-      information
-    * Added 'data' and 'dot' as valid --drop-after-send and
-      --drop-after arguments
-    * Added %NEWLINE% as a new --data token
+    * Added .netrc support
+    * Added --tls-sni option
+    * Swaks is now available on CPAN as App::swaks
+    * Swaks will now print errors if deprecated functionality is used
   Notable Changes:
-    * Options provided via environment variable are now sorted before
-      processing to provide a deterministic processing order
-    * Option bundling is no longer enabled.  This fixes several option
-      processing oddities, like "-foobar" being interpreted as
-      "-f oobar"
-    * If the arg to --data looks like a file but is not openable, error
-      and exit instead of using it the file name as the raw data value
-    * Remove interactive prompts for --helo and --from when hostname cannot
-      be determined internally, just error  and exit instead. If the user
-      was not expecting an interactive experience, don't start one
-    * Remove re-prompting for port when an invalid service name was supplied,
-      just error and exit instead.  If the user was not expecting an
-      interactive experience, don't start one
+    * Automatic file detection is deprecated.  Previously, if an argument to
+      --data, --body, --attach-body, and --attach resolved to an openable file,
+      the contents of that file would be used as the actual argument.  Now the
+      proper way to do this is to place '@' in front of the argument to
+      state explicitly that the argument contents are in a file.
+    * If any of the --xclient-* family of options (--xclient-name,
+      --xclient-addr, etc) is provided more than once, only the last option
+      provided will be used. See --xclient option if you need to simulate
+      the previous behavior
+    * -g option is now deprecated
+    * Time::Local is no longer used and POSIX is now listed as a required
+      module
   Notable Bugs Fixed:
-    * Handle malformed headers more gracefully in header replacement
-    * Fix bug causing the processing of options  prefixed with the negating
-      "no-" to work unreliably
-    * --version and --help should work even if they aren't the very
-      first option
-    * -S is now a distinct option from -s, as documented
-    * Fix bug preventing the --option=arg option format from being
-      unusable with --header and --attach* options
+    * Fix for subtle issue related to environment variable options.  Affected
+      error handling for options which required args.
+    * Fix issue preventing XCLIENT and STARTTLS from working together
+      properly (#21)
+    * Fix issue which could cause generated date header to oscillate on
+      the day of DST transition (#17, deb bug 955798)

@@ -39,17 +39,6 @@
 
 <div class="container">
     <div class="row">
-        <!--
-        <p>
-        <a href="index.html">Main</a> ::
-        <a href="about.html">About</a> ::
-        <a href="download.html">Download</a> ::
-        <a href="docs.html">Documentation</a> ::
-        <a href="contact.html">Interact</a>
-        </p>
-        -->
-    </div>
-    <div class="row">
         <h4>Versions</h4>
         <p>
           This page lists every official release of Swaks, from newest to oldest.  All releases include that version's Changes,
@@ -58,6 +47,125 @@
         <p><a href="./index.html">return to main page</a></p>
     </div>
     <hr/>
+
+    <div class="row">
+        <div class="two columns">
+            <b>20201010.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20201010.0.tar.gz">distribution</a>,
+                <a href="./files/swaks-20201010.0/swaks">script only</a>,
+                <a href="./files/swaks-20201010.0/doc/ref.txt">version docs</a> (<a href="https://github.com/jetmore/swaks/blob/v20201010.0/doc/base.pod">rendered</a>),
+                <a href="https://www.jetmore.org/john/blog/2020/10/swaks-release-20201010-0-available/">announcement</a>
+            </p>
+            <p>
+                <b>Change Summary:</b>
+            </p>
+            <pre><code>
+New Features:
+  * Added .netrc support
+  * Added --tls-sni option
+  * Swaks is now available on CPAN as App::swaks
+  * Swaks will now print errors if deprecated functionality is used
+Notable Changes:
+  * Automatic file detection is deprecated.  Previously, if an argument to
+    --data, --body, --attach-body, and --attach resolved to an openable file,
+    the contents of that file would be used as the actual argument.  Now the
+    proper way to do this is to place '@' in front of the argument to
+    state explicitly that the argument contents are in a file.
+  * If any of the --xclient-* family of options (--xclient-name,
+    --xclient-addr, etc) is provided more than once, only the last option
+    provided will be used. See --xclient option if you need to simulate
+    the previous behavior
+  * -g option is now deprecated
+  * Time::Local is no longer used and POSIX is now listed as a required
+    module
+Notable Bugs Fixed:
+  * Fix for subtle issue related to environment variable options.  Affected
+    error handling for options which required args.
+  * Fix issue preventing XCLIENT and STARTTLS from working together
+    properly (#21)
+  * Fix issue which could cause generated date header to oscillate on
+    the day of DST transition (#17, deb bug 955798)
+            </code></pre>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
+* 20191008 Added skeleton of installation doc (missingcharacter)
+* 20191009 Added .netrc support (fany)
+* 20191012 Added --tls-sni option (lightsey)
+* 20191012 Fix bug which treated `SWAKS_OPT_foo=` as `--foo ''` instead of
+           `--foo`.  This affected error handling for options which
+           required args.
+* 20191019 Reimplementation of option processing fixed lots of missed edge
+           cases, especially options which were documented to require an
+           argument but didn't error if none was provided (--add-header,
+           --header, --attach, --attach-type, --attach-body, possibly others)
+* 20191021 The --xclient-name, -addr, etc options can now only be provided
+           once per call. Multiple uses of one of these options will result
+           in only the last one being used.  Previously these options could
+           be set multiple times to send the same xclient attribute multiple
+           times.  If that's needed, see the --xclient option.
+* 20191022 The "no-" option negating now works much better (previously was
+           hit-or-miss on special option families like --attach*, --xclient*,
+           and --header*).
+* 20191023 Ensure "main" choice defined first in each option's list of
+           aliases because the first item is used for errors.
+* 20191026 Deprecate -g option.  Change current implementation so it is
+           rewritten to `--data -` before option processing. Any occurrence
+           of `--data` will cause -g to be discarded. "no-" prefix will not
+           negate.
+* 20191026 Update --data, --body, --attach-body, and --attach so that a
+           leading '@' forces the argument to be a filename. Deprecate
+           previous "if it happens to be an openable file" behavior
+* 20191027 Do service name resolution on --local-port if non-numeric
+* 20191028 Fix bug setting filename in attachments when '@' prefix used
+* 20191028 Add deprecation warning system.  Warnings in code and a table
+           of deprecated functionality and removal dates in documentation.
+* 20191111 Switch Getopt to process an arbitrary list instead of manipulating
+           ARGV for each call.
+* 20191111 Check to see if there are any entries left in the option list
+           after each stage of option processing and error if so.
+* 20191111 Rework the command line reconstruction so that options that
+           don't take an argument do not include one in the reconstruction.
+* 20191111 Unexpected argument format for --timeout now errors and exits
+           instead of silently using default timeout.
+* 20191111 Document that --timeout argument can use 'h' as a modifier.
+* 20191111 Docs: Reorganize Terms and Conventions, add Option/Arg/[]/<>.
+* 20191112 Docs: Be consistent in how <> and [] are used in argument docs.
+* 20191113 Docs: Define option types and assign to every option.
+* 20191113 Docs: General typo and consistency fixes.
+* 20191122 Docs: Establish project standards for POD formatting and
+           make first pass at applying.
+* 20191220 Docs: Fix incorrect example used in --attach-body definition.
+* 20191221 Docs: merge OpossumPetya's web page changes, use better web
+           practices and make mobile friendly
+* 20200118 Docs: misc web page changes. tweak pre font size to prevent
+           scrolling, remove stray quotes, remove the news section from index
+           add announcement to versions, link to both plaintext and
+           rendered docs, etc
+* 20200425 Fix strange issue where GMT offset could oscillate on days of DST
+           transition.  Time::Local is no longer used and POSIX is now
+           required (#17, deb bug 955798)
+* 20200801 Update copyright year to 2020
+* 20200801 Fix bug which broke XCLIENT and STARTTLS used together (#21)
+* 20201004 Update README.md to reflect changes from
+           234db829dc6e6d45fe4da5f2bef075828ebc0ac7 (#22). Move to reference-
+           style markdown links to make it easier to identify links that
+           need to be changed for a release.
+* 20201004 Fix wording and example around html body on faq.html (#14)
+* 20201004 Add '@' in attach examples to prevent deprecation warnings
+* 20201004 Convert installation.pod to installation.html, link to it from
+           index.html and README.md, and flesh it out. (#7)
+* 20201010 Package App::swaks-20190914.0 for CPAN distribution (#23)
+> 20201010 released 20201010.0
+            </code></pre>
+        </div>
+    </div>
+
 
     <div class="row">
         <div class="two columns">
