@@ -921,3 +921,4 @@
            index.html and README.md, and flesh it out. (#7)
 * 20201010 Package App::swaks-20190914.0 for CPAN distribution (#23)
 > 20201010 released 20201010.0
+* 20201011 Fix test scripts to munge copyright date
