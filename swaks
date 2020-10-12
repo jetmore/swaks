@@ -3754,7 +3754,11 @@ sub get_date_string {
 		                          $l[5]+1900, $l[2], $l[1], $l[0],
 		                          0);
 	} else {
+		# Temporarily change locale to force english strings in date as mandated by RFC
+		no strict 'subs';
+		POSIX::setlocale(POSIX::LC_ALL, 'C');
 		$G::date_string = POSIX::strftime("%a, %d %b %Y %H:%M:%S %z", localtime($et));
+		POSIX::setlocale(POSIX::LC_ALL, '');
 	}
 	return($G::date_string);
 }

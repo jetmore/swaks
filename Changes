@@ -922,3 +922,5 @@
 * 20201010 Package App::swaks-20190914.0 for CPAN distribution (#23)
 > 20201010 released 20201010.0
 * 20201011 Fix test scripts to munge copyright date
+* 20201012 Fix date string - should always be in English, not localized
+           (introduced in 434f494abcc3558c73efc0e57a4338adeb402253)
