@@ -664,6 +664,14 @@ sub munge_local_hostname {
 	munge_general($lines, $consider, $tokens->{'global'}{'%HOSTNAME%'}, 'LOCAL_HOST_NAME');
 }
 
+sub munge_copyright {
+	my $lines    = shift;
+	my $consider = shift || '.?';
+
+	munge_general($lines, $consider, 'Copyright \(c\) 2003-2008,2010-\d\d\d\d John Jetmore <jj33\@pobox\.com>',
+		'Copyright (c) 2003-2008,2010-YEAR John Jetmore <jj33@pobox.com>');
+}
+
 # this is just a convenience so I can add new munges without having to manually apply them to all test files
 sub munge_standard {
 	my $lines    = shift;
@@ -676,4 +684,5 @@ sub munge_standard {
 	munge_mime_boundaries($lines);
 	munge_paths($lines);
 	munge_local_hostname($lines);
+	munge_copyright($lines);
 }

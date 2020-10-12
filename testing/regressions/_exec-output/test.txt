@@ -2,3 +2,4 @@ I'm not convinced this is how I want these tests laid out, but it's better to ha
 
 
 0050 - confirm that --dump-mail generates expected output
+0060 - confirm that even non-english-locale emails generate english date strings
