@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+export TEST_SWAKS=../../swaks
+export PERL5LIB=lib/authen-ntlm-local
+
+# this can be really convenient when you have a ton of small changes to accept.  Don't have to (q)uit out of less
+#export PAGER=cat
+
+exec $*

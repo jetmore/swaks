@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # - example usage (run every test under _options-data):
 #  - TEST_SWAKS=../../swaks bin/run-tests.pl _options-data
@@ -214,8 +214,23 @@ sub runResult {
 								last INTERACT;
 							}
 							elsif ($input eq 'd') {
-								debug('exec', "$ENV{'PAGER'} $diffFile");
-								system($ENV{'PAGER'}, $diffFile);
+								my @cmds = ('cat');
+								if (length($ENV{'PAGER'})) {
+									unshift(@cmds, $ENV{'PAGER'});
+								}
+								else {
+									print "WARNING: consider setting PAGER environment variable\n";
+								}
+
+								CMD:
+								foreach my $cmd (@cmds) {
+									debug('exec', "$cmd $diffFile");
+									if (system($cmd, $diffFile) == -1) {
+										print "ERROR: unable to execute '$cmd $diffFile': $!\n";
+										next CMD;
+									}
+									last CMD;
+								}
 								next INTERACT;
 							}
 							elsif ($input eq 'e') {
@@ -239,6 +254,9 @@ sub runResult {
 							}
 							elsif ($input eq 'q') {
 								exit;
+							}
+							else {
+								print "ERROR: unknown option '$input'\n";
 							}
 						}
 					}
@@ -672,6 +690,25 @@ sub munge_copyright {
 		'Copyright (c) 2003-2008,2010-YEAR John Jetmore <jj33@pobox.com>');
 }
 
+sub munge_tls_available_protocols {
+	my $lines = shift;
+	my $consider = shift || '.?';
+
+	# make sure we have at least one TLSv1 family protocol, and if we do, replace with a generic string.
+	# if we don't replace it, it won't match and will cause investigation, which is good since why aren't there any
+	# tls protocols?
+	munge_general($lines, $consider, 'available protocols = .*TLSv1.*', 'available protocols = TLS_PROTOCOL_LIST');
+}
+
+sub munge_open2_failure {
+	my $lines = shift;
+
+	# macOS and Debian's open2 have different error formats, munge them to be the same
+	# macOS: open2: exec of /foo/bar failed at %SWAKS_COMMAND% line 165.
+	# Debian: open2: exec of /foo/bar failed: No such file or directory at %SWAKS_COMMAND% line 165.
+	munge_general($lines, 'open2: exec of', 'failed: No such file or directory at', 'failed at');
+}
+
 # this is just a convenience so I can add new munges without having to manually apply them to all test files
 sub munge_standard {
 	my $lines    = shift;
@@ -685,4 +722,6 @@ sub munge_standard {
 	munge_paths($lines);
 	munge_local_hostname($lines);
 	munge_copyright($lines);
+	munge_tls_available_protocols($lines);
+	munge_open2_failure($lines);
 }

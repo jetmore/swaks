@@ -929,3 +929,5 @@
            processing overhaul in a46b929 #26
 * 20201014 Add newline echo after entering password with --protect-prompt
 > 20201014 released 20201014.0
+* 20201016 Document and improve automated testing to make it easier for
+           new users to run in new environments

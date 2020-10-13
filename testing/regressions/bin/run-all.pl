@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # run all defined tests in headless mode
 
@@ -23,7 +23,12 @@ opendir(D, $home) || die "Couldn't opendir $home: $!\n";
 my @tests = grep /^_/, readdir(D);
 closedir(D);
 
-my $file = "$home/var/results." . time();
+my $vard = "$home/var";
+if (!-d $vard) {
+	mkdir($vard) || die "Couldn't make $vard: $!\n";
+}
+
+my $file = "$vard/results." . time();
 
 if ($opts->{errors}) {
 	opendir(DIR, "$home/var") || die "Couldn't opendir $home/var\n";
