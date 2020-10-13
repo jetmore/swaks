@@ -3746,23 +3746,28 @@ sub get_username {
 sub get_date_string {
 	return($G::date_string) if (length($G::date_string) > 0);
 
-	my $et = time();
+	my $et          = time();
+	my @month_names = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+	my @day_names   = qw(Sun Mon Tue Wed Thu Fri Sat);
 
 	if (!avail("date_manip")) {
 		ptrans(12, avail_str("date_manip").".  Date strings will be in GMT");
 		my @l = gmtime($et);
 		$G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
-		                          (qw(Sun Mon Tue Wed Thu Fri Sat))[$l[6]],
+		                          $day_names[$l[6]],
 		                          $l[3],
-		                          (qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec))[$l[4]],
+		                          $month_names[$l[4]],
 		                          $l[5]+1900, $l[2], $l[1], $l[0],
 		                          0);
 	} else {
-		# Temporarily change locale to force english strings in date as mandated by RFC
-		no strict 'subs';
-		POSIX::setlocale(POSIX::LC_ALL, 'C');
-		$G::date_string = POSIX::strftime("%a, %d %b %Y %H:%M:%S %z", localtime($et));
-		POSIX::setlocale(POSIX::LC_ALL, '');
+		# this is convoluted because %a (week day name) and %b (month name) are localized, but per RFC they should be in English. Since
+		# un-localizing didn't work on every system I tested, jump through hoops here to not use those fields at all.
+		my @l = localtime($et);
+		$G::date_string = sprintf("%s, %s %s %s",
+			                      $day_names[POSIX::strftime("%w", @l)],
+			                      POSIX::strftime("%d", @l),
+			                      $month_names[POSIX::strftime("%m", @l) - 1],
+			                      POSIX::strftime("%Y %H:%M:%S %z", @l));
 	}
 	return($G::date_string);
 }
