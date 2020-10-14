@@ -50,6 +50,52 @@
 
     <div class="row">
         <div class="two columns">
+            <b>20201014.0</b>
+        </div>
+        <div class="ten columns">
+            <p>
+                <b>Links:</b>
+                <a href="./files/swaks-20201014.0.tar.gz">distribution</a>,
+                <a href="./files/swaks-20201014.0/swaks">script only</a>,
+                <a href="./files/swaks-20201014.0/doc/ref.txt">version docs</a> (<a href="https://github.com/jetmore/swaks/blob/v20201014.0/doc/base.pod">rendered</a>),
+                <a href="https://www.jetmore.org/john/blog/2020/10/swaks-release-20201014-0-available/">announcement</a>
+            </p>
+            <p>
+                <b>Change Summary:</b>
+            </p>
+            <pre><code>
+New Features:
+  * None
+Notable Changes:
+  * None
+Notable Bugs Fixed:
+  * Last release introduced a bug where Date: headers were localized, which
+    is against RFC.  Further, that localization then broke character rendering
+    in some locales.  A new fix for the original issue (#17) was put in place,
+    which no longer localizes the Date: header and fixes the newly introduced
+    rendering issue (#25)
+  * Last release introduced a bug which prevented --protect-prompt from
+    working.  This is now fixed (#26)
+            </code></pre>
+            <p>
+                <b>Changelog:</b>
+            </p>
+            <pre><code>
+* 20201011 Fix test scripts to munge copyright date
+* 20201012 Fix date string - should always be in English, not localized
+           (introduced in 434f494abcc3558c73efc0e57a4338adeb402253)
+* 20201013 But actually fix the date string this time. Also fix #25
+* 20201014 Fix --protect-prompt. Not implemented correctly after option
+           processing overhaul in a46b929 #26
+* 20201014 Add newline echo after entering password with --protect-prompt
+> 20201014 released 20201014.0
+            </code></pre>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="two columns">
             <b>20201010.0</b>
         </div>
         <div class="ten columns">
