@@ -196,6 +196,13 @@ OPTION PROCESSING
         starting with an "@", use two "@" symbols. The first will be
         stripped.
 
+    Sensitive
+        If an option marked Sensitive attempts to prompt the user for an
+        argument and the "--protect-prompt" option is set, Swaks will
+        attempt to mask the user input from being echoed on the terminal.
+        Swaks tries to mask the input in several ways, but if none of them
+        work program flow will continue with unmasked input.
+
     Deprecated
         An option labeled Deprecated has been officially deprecated and will
         be removed in a future release. See the "DEPRECATIONS" section of
@@ -837,7 +844,7 @@ AUTHENTICATION
         via .netrc (requires the Net::Netrc module). If no password is
         provided and cannot be found via .netrc, the user will be prompted
         to provide one. The string "<>" can be supplied to mean an empty
-        password. (Arg-Required, From-Prompt)
+        password. (Arg-Required, From-Prompt, Sensitive)
 
     -ae, --auth-extra <key-value-pair>[,<key-value-pair>[,...]]
         Some of the authentication types allow extra information to be
@@ -1394,8 +1401,10 @@ OUTPUT OPTIONS
 
     -pp, --protect-prompt
         Don't echo user input on prompts that are potentially sensitive
-        (right now only authentication password). See also
-        "--auth-hide-password". (Arg-None)
+        (right now only authentication password). Very specifically, any
+        option which is marked 'Sensitive' and eventually prompts for an
+        argument will do its best to mask that argument from being echoed.
+        See also "--auth-hide-password". (Arg-None)
 
     -hr, --hide-receive
         Don't display lines sent from the remote server being received by

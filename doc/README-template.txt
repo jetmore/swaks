@@ -38,8 +38,6 @@ Check the following files
         The text version of the --help output
     doc/Changes.txt
         All changes to Swaks
-    doc/installation.txt
-        Notes on installing Swaks
     doc/recipes.txt
         Hints, tips, tricks that don't fit in the reference
 

@@ -1,0 +1,27 @@
+# stuff I haven't figure out how to automate yet
+
+#########
+# Actually send a mail.  Prove that basic smtp, auth, and tls are working
+source tmp/.relay
+RELEASE/swaks \
+  --to proj-swaks@jetmore.net \
+  --from proj-swaks@jetmore.net \
+  --tlsc \
+  --server $SERVER \
+  --auth-user $AU \
+  --auth-password $AP
+
+#########
+# test --protect-prompt
+
+# 1) no --protect-prompt
+# enter "foo" as username, "bar" as prompt
+# both should echo the correct string to terminal
+# in output, confirm correct username and password
+RELEASE/swaks --to foo --dump AUTH --auth
+
+# 2) --protect-prompt
+# enter "foo" as username, "bar" as prompt
+# username (bar) should echo correct string, password (bar) should echo '***'
+# in output, confirm correct username and password
+RELEASE/swaks --to foo --dump AUTH --auth --protect-prompt

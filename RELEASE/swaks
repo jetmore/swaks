@@ -13,7 +13,7 @@ use strict;
 
 $|            = 1;
 my($p_name)   = $0 =~ m|/?([^/]+)$|;
-my $p_version = build_version("20201010.0", '$Id$');
+my $p_version = build_version("20201014.0", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
         Copyright (c) 2003-2008,2010-2020 John Jetmore <jj33@pobox.com>
@@ -1408,6 +1408,7 @@ sub interact {
 					#local $SIG{INT} = sub { ReadMode('restore'); };
 					chomp($response = <STDIN>);
 					ReadMode('restore');
+					print "\n";
 				} else {
 					$G::interact_method ||= "default";
 					chomp($response = <STDIN>);
@@ -1431,6 +1432,7 @@ sub interact {
 						}
 					}
 					ReadMode('restore');
+					print "\n";
 					$response = join('', @resp);
 				} elsif ($G::interact_method eq "unix-stty" || (!$G::interact_method && open(STTY, "stty -a |"))) {
 					$G::interact_method ||= "unix-stty";
@@ -1438,6 +1440,7 @@ sub interact {
 					system('stty', '-echo');
 					chomp($response = <STDIN>);
 					system('stty', 'echo');
+					print "\n";
 				} else {
 					$G::interact_method ||= "default";
 					chomp($response = <STDIN>);
@@ -1667,6 +1670,7 @@ sub get_option_struct {
 		OP_FROM_PROMPT => 0x08, # option prompts for an argument if none provided
 		OP_FROM_FILE   => 0x10, # option treats arg of '-' to mean 'read from stdin' (no prompt)
 		OP_DEPRECATED  => 0x20, # This option is deprecated
+		OP_SENSITIVE   => 0x40, # indicates that if prompted for, the argument should be masked (see --protect-prompt)
 	};
 
 	@G::raw_option_data = (
@@ -1761,7 +1765,7 @@ sub get_option_struct {
 		  okey    => 'auth_user',                                          type   => 'scalar', },
 		# pass for auth
 		{ opts    => ['auth-password', 'ap'],                              suffix => ':s',
-		  cfgs    => OP_ARG_OPT, # we dynamically change this later
+		  cfgs    => OP_ARG_OPT|OP_SENSITIVE, # we dynamically change this later
 		  okey    => 'auth_pass',                                          type   => 'scalar', },
 		# auth type map
 		{ opts    => ['auth-map', 'am'],                                   suffix => '=s',
@@ -2532,7 +2536,7 @@ sub get_arg {
 					ptrans(12, "Internal option processing error: option $argExt->{opt} missing required match key (this is a swaks bug)");
 					exit(1);
 				}
-				$return = interact($optConfig->{prompt}, $optConfig->{match});
+				$return = interact($optConfig->{prompt}, $optConfig->{match}, $optConfig->{cfgs} & OP_SENSITIVE);
 			}
 			# No arg, no request to prompt - this is an error since we're requiring an arg
 			else {
@@ -3444,7 +3448,7 @@ sub process_args {
 
 				$auth_pass_t ||= obtain_from_netrc('password', $n{a_user});
 				if (!$auth_pass_t) {
-					my $cfg = { cfgs => OP_ARG_REQ|OP_FROM_PROMPT, prompt  => 'Password: ', match  => 'SKIP', okey => 'auth_pass', akey => 'auth_pass' };
+					my $cfg = { cfgs => OP_ARG_REQ|OP_FROM_PROMPT|OP_SENSITIVE, prompt  => 'Password: ', match  => 'SKIP', okey => 'auth_pass', akey => 'auth_pass' };
 					$auth_pass_t = get_arg('auth_pass', $o, $cfg, 1);
 				}
 				$n{a_pass} = $auth_pass_t eq '<>' ? '' : $auth_pass_t;
@@ -3742,19 +3746,28 @@ sub get_username {
 sub get_date_string {
 	return($G::date_string) if (length($G::date_string) > 0);
 
-	my $et = time();
+	my $et          = time();
+	my @month_names = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+	my @day_names   = qw(Sun Mon Tue Wed Thu Fri Sat);
 
 	if (!avail("date_manip")) {
 		ptrans(12, avail_str("date_manip").".  Date strings will be in GMT");
 		my @l = gmtime($et);
 		$G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
-		                          (qw(Sun Mon Tue Wed Thu Fri Sat))[$l[6]],
+		                          $day_names[$l[6]],
 		                          $l[3],
-		                          (qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec))[$l[4]],
+		                          $month_names[$l[4]],
 		                          $l[5]+1900, $l[2], $l[1], $l[0],
 		                          0);
 	} else {
-		$G::date_string = POSIX::strftime("%a, %d %b %Y %H:%M:%S %z", localtime($et));
+		# this is convoluted because %a (week day name) and %b (month name) are localized, but per RFC they should be in English. Since
+		# un-localizing didn't work on every system I tested, jump through hoops here to not use those fields at all.
+		my @l = localtime($et);
+		$G::date_string = sprintf("%s, %s %s %s",
+			                      $day_names[POSIX::strftime("%w", @l)],
+			                      POSIX::strftime("%d", @l),
+			                      $month_names[POSIX::strftime("%m", @l) - 1],
+			                      POSIX::strftime("%Y %H:%M:%S %z", @l));
 	}
 	return($G::date_string);
 }
@@ -3980,6 +3993,10 @@ An option labeled with From-File will handle arguments as files in certain situa
 If the initial argument is C<->, the final argument is the contents of C<STDIN>.  Multiple options can all specify C<STDIN>, but the same content will be used for each of them.
 
 If the initial argument is prefixed with C<@>, the argument will be treated as a path to a file.  The file will be opened and the contents will be used as the final argument.  If the contents of the file can't be read, Swaks will exit.  To specify a literal value starting with an C<@>, use two C<@> symbols.  The first will be stripped.
+
+=item Sensitive
+
+If an option marked Sensitive attempts to prompt the user for an argument and the C<--protect-prompt> option is set, Swaks will attempt to mask the user input from being echoed on the terminal.  Swaks tries to mask the input in several ways, but if none of them work program flow will continue with unmasked input.
 
 =item Deprecated
 
@@ -4397,7 +4414,7 @@ Provide the username to be used for authentication.  If no username is provided,
 
 =item -ap, --auth-password [<password>]
 
-Provide the password to be used for authentication. If no password is provided, indicate that Swaks should attempt to find the password via F<.netrc> (requires the L<Net::Netrc> module).  If no password is provided and cannot be found via F<.netrc>,  the user will be prompted to provide one.  The string C<< <> >> can be supplied to mean an empty password. (Arg-Required, From-Prompt)
+Provide the password to be used for authentication. If no password is provided, indicate that Swaks should attempt to find the password via F<.netrc> (requires the L<Net::Netrc> module).  If no password is provided and cannot be found via F<.netrc>,  the user will be prompted to provide one.  The string C<< <> >> can be supplied to mean an empty password. (Arg-Required, From-Prompt, Sensitive)
 
 =item -ae, --auth-extra <key-value-pair>[,<key-value-pair>[,...]]
 
@@ -4771,7 +4788,7 @@ These options allow the user to send output to files instead of C<STDOUT>/C<STDE
 
 =item -pp, --protect-prompt
 
-Don't echo user input on prompts that are potentially sensitive (right now only authentication password).  See also C<--auth-hide-password>. (Arg-None)
+Don't echo user input on prompts that are potentially sensitive (right now only authentication password).  Very specifically, any option which is marked 'Sensitive' and eventually prompts for an argument will do its best to mask that argument from being echoed.  See also C<--auth-hide-password>. (Arg-None)
 
 =item -hr, --hide-receive
 

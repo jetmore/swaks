@@ -155,6 +155,10 @@ If the initial argument is C<->, the final argument is the contents of C<STDIN>.
 
 If the initial argument is prefixed with C<@>, the argument will be treated as a path to a file.  The file will be opened and the contents will be used as the final argument.  If the contents of the file can't be read, Swaks will exit.  To specify a literal value starting with an C<@>, use two C<@> symbols.  The first will be stripped.
 
+=item Sensitive
+
+If an option marked Sensitive attempts to prompt the user for an argument and the C<--protect-prompt> option is set, Swaks will attempt to mask the user input from being echoed on the terminal.  Swaks tries to mask the input in several ways, but if none of them work program flow will continue with unmasked input.
+
 =item Deprecated
 
 An option labeled Deprecated has been officially deprecated and will be removed in a future release.  See the L</DEPRECATIONS> section of this documentation for details about the deprecations.
@@ -571,7 +575,7 @@ Provide the username to be used for authentication.  If no username is provided,
 
 =item -ap, --auth-password [<password>]
 
-Provide the password to be used for authentication. If no password is provided, indicate that Swaks should attempt to find the password via F<.netrc> (requires the L<Net::Netrc> module).  If no password is provided and cannot be found via F<.netrc>,  the user will be prompted to provide one.  The string C<< <> >> can be supplied to mean an empty password. (Arg-Required, From-Prompt)
+Provide the password to be used for authentication. If no password is provided, indicate that Swaks should attempt to find the password via F<.netrc> (requires the L<Net::Netrc> module).  If no password is provided and cannot be found via F<.netrc>,  the user will be prompted to provide one.  The string C<< <> >> can be supplied to mean an empty password. (Arg-Required, From-Prompt, Sensitive)
 
 =item -ae, --auth-extra <key-value-pair>[,<key-value-pair>[,...]]
 
@@ -945,7 +949,7 @@ These options allow the user to send output to files instead of C<STDOUT>/C<STDE
 
 =item -pp, --protect-prompt
 
-Don't echo user input on prompts that are potentially sensitive (right now only authentication password).  See also C<--auth-hide-password>. (Arg-None)
+Don't echo user input on prompts that are potentially sensitive (right now only authentication password).  Very specifically, any option which is marked 'Sensitive' and eventually prompts for an argument will do its best to mask that argument from being echoed.  See also C<--auth-hide-password>. (Arg-None)
 
 =item -hr, --hide-receive
 
