@@ -18,6 +18,14 @@ export BUILDDIR=$SWAKSDIR/tmp
 
 # Update Changes, add a release entry
 
+# run automated testing
+## run all tests non-interactively
+TEST_SWAKS=../../swaks bin/run-all.pl
+## rerun any failed tests in interactive mode
+TEST_SWAKS=../../swaks bin/run-all.pl --errors
+
+# run manual testing
+## see steps in testing/MANUAL.txt
 
 # Generate a skeleton of the announce blog post.  Don't publish it yet, but you should
 # draft and save it so you can have the URL for the following docs
