@@ -928,3 +928,4 @@
 * 20201014 Fix --protect-prompt. Not implemented correctly after option
            processing overhaul in a46b929 #26
 * 20201014 Add newline echo after entering password with --protect-prompt
+> 20201014 released 20201014.0

@@ -38,8 +38,6 @@ Check the following files
         The text version of the --help output
     doc/Changes.txt
         All changes to Swaks
-    doc/installation.txt
-        Notes on installing Swaks
     doc/recipes.txt
         Hints, tips, tricks that don't fit in the reference
 
@@ -90,29 +88,16 @@ A full copy of this license should be available in the LICENSE.txt file.
 ------------------------------
 Change Summary
 ------------------------------
-v20201010
+v20201014.0
   New Features:
-    * Added .netrc support
-    * Added --tls-sni option
-    * Swaks is now available on CPAN as App::swaks
-    * Swaks will now print errors if deprecated functionality is used
+    * None
   Notable Changes:
-    * Automatic file detection is deprecated.  Previously, if an argument to
-      --data, --body, --attach-body, and --attach resolved to an openable file,
-      the contents of that file would be used as the actual argument.  Now the
-      proper way to do this is to place '@' in front of the argument to
-      state explicitly that the argument contents are in a file.
-    * If any of the --xclient-* family of options (--xclient-name,
-      --xclient-addr, etc) is provided more than once, only the last option
-      provided will be used. See --xclient option if you need to simulate
-      the previous behavior
-    * -g option is now deprecated
-    * Time::Local is no longer used and POSIX is now listed as a required
-      module
+    * None
   Notable Bugs Fixed:
-    * Fix for subtle issue related to environment variable options.  Affected
-      error handling for options which required args.
-    * Fix issue preventing XCLIENT and STARTTLS from working together
-      properly (#21)
-    * Fix issue which could cause generated date header to oscillate on
-      the day of DST transition (#17, deb bug 955798)
+    * Last release introduced a bug where Date: headers were localized, which
+      is against RFC.  Further, that localization then broke character rendering
+      in some locales.  A new fix for the original issue (#17) was put in place,
+      which no longer localizes the Date: header and fixes the newly introduced
+      rendering issue (#25)
+    * Last release introduced a bug which prevented --protect-prompt from
+      working.  This is now fixed (#26)
