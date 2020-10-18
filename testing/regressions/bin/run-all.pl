@@ -14,7 +14,7 @@ use FindBin qw($Bin);
 use Getopt::Long;
 
 my $opts = {};
-GetOptions($opts, 'errors|e!') || die "Couldn't understand options\n";
+GetOptions($opts, 'errors|e!', 'winnow|w!') || die "Couldn't understand options\n";
 
 my $home     = "$Bin/..";
 my $runTests = "$home/bin/run-tests.pl";
@@ -28,15 +28,16 @@ if (!-d $vard) {
 	mkdir($vard) || die "Couldn't make $vard: $!\n";
 }
 
-my $file = "$vard/results." . time();
+my $nextfile = "$vard/results." . time();
+my $prevfile;
 
-if ($opts->{errors}) {
+if ($opts->{errors} || $opts->{winnow}) {
 	opendir(DIR, "$home/var") || die "Couldn't opendir $home/var\n";
-	$file = (sort(grep(/^results./, readdir(DIR))))[-1]; # get the newest file
+	my $file = (sort(grep(/^results./, readdir(DIR))))[-1]; # get the newest file
 	closedir(DIR);
 
 	if ($file) {
-		$file = "$home/var/$file";
+		$prevfile = "$home/var/$file";
 	}
 	else {
 		die "Unable to find a var/results.* file to use for previous errors\n";
@@ -45,9 +46,12 @@ if ($opts->{errors}) {
 
 foreach my $test (sort @tests) {
 	if ($opts->{errors}) {
-		system($runTests, '--errors', '--infile', $file, $test);
+		system($runTests, '--errors', '--infile', $prevfile, $test);
+	}
+	elsif ($opts->{winnow}) {
+		system($runTests, '--errors', '--infile', $prevfile, '--outfile', $nextfile, '--headless', $test);
 	}
 	else {
-		system($runTests, '--headless', '--outfile', $file, $test);
+		system($runTests, '--headless', '--outfile', $nextfile, $test);
 	}
 }

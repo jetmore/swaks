@@ -39,17 +39,24 @@ examples:
 # make sure the local environment is suitable for running the test script
 TEST_SWAKS=../../swaks PERL5LIB=lib/authen-ntlm-local bin/check-env.pl
 
+
+
 # run entire _options-auth suite
 TEST_SWAKS=../../swaks PERL5LIB=lib/authen-ntlm-local bin/run-tests.pl _options-auth
 
 # run just one test from _options-auth suite
 TEST_SWAKS=../../swaks PERL5LIB=lib/authen-ntlm-local bin/run-tests.pl _options-auth 00300
 
+
+
 # run every test unattended, leaving a record of results
 TEST_SWAKS=../../swaks PERL5LIB=lib/authen-ntlm-local bin/run-all.pl
 
 # run only failed tests from the previous run-all.pl run
 TEST_SWAKS=../../swaks PERL5LIB=lib/authen-ntlm-local bin/run-all.pl --errors
+
+# do another headless run - run headless and record results again, but only run tests that failed in previous tests (like --errors in headless mode)
+TEST_SWAKS=../../swaks PERL5LIB=lib/authen-ntlm-local bin/run-all.pl --winnow
 
 # all the same examples as above, but using runenv to set the environment:
 
@@ -58,3 +65,4 @@ bin/runenv bin/run-tests.pl _options-auth
 bin/runenv bin/run-tests.pl _options-auth 00300
 bin/runenv bin/run-all.pl
 bin/runenv bin/run-all.pl --errors
+bin/runenv bin/run-all.pl --winnow
