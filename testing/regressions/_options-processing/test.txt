@@ -1,4 +1,4 @@
-This suite is designed to test the actual setting of options.  It's not designed to fles the options themselves, just that they
+This suite is designed to test the actual setting of options.  It's not designed to flex the options themselves, just that they
 are being passed into the script in a consistent way.  I expect this to be a very big test suite
 
 (config file options) + (env var options) + (command line options)
@@ -91,7 +91,7 @@ testing
  #78 - non-opt/arg data is error (mid options) (not relevant with environment variables)
  #79 - non-opt/arg data is error (end of options) (not relevant with environment variables)
  #80 - non-opt/arg data that looks like an argument to an option that doesn't take one is an error (not relevant with environment variables)
-
+ 81 - Make sure that "<>" in an environment variable is treated as "set but empty"
 
 0200 - test command line processing
  52 - test "-from"

@@ -412,6 +412,7 @@
     15 - --header works with spaces in header name (dupe)
     16 - no colon in header line
     17 - first line of data looks like a continuation header
+    18 - embedding header name in environment variable results in error on Windows
 05250 - regression tests for multi-line headers
   251 header replacement SINGLE-LINE, SINGLE-HEADER FIRST
   252 header replacement SINGLE-LINE, SINGLE-HEADER MIDDLE

@@ -370,8 +370,9 @@ sub runAction {
 			delete($ENV{$args[0]});
 		}
 		else {
-			# print STDERR "SET_ENV $args[0] - setting ENV{$args[0]} to $args[1]\n";
-			$ENV{$args[0]} = $args[1];
+			my $tv = ($^O eq 'MSWin32' && !$args[1]) ? '<>' : $args[1];
+			# print STDERR "SET_ENV $args[0] - setting ENV{$args[0]} to $tv\n";
+			$ENV{$args[0]} = $tv;
 		}
 	}
 	elsif ($verb eq 'MERGE') {

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # use 'swaks --help' to view documentation for this program
 #
@@ -10,9 +10,13 @@
 #       Twitter: http://www.twitter.com/SwaksSMTP
 
 use strict;
+use File::Spec::Functions qw(splitdir);
+
+binmode(STDOUT);
+binmode(STDERR);
 
 $|            = 1;
-my($p_name)   = $0 =~ m|/?([^/]+)$|;
+my($p_name)   = (splitdir($0))[-1] =~ m|^(.+?)(\.pl)?$|;
 my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
@@ -2236,9 +2240,19 @@ sub load_args {
 	@fakeARGV = ();
 	foreach my $v (sort keys %ENV) {
 		if ($v =~ m|^SWAKS_OPT_(.*)$|) {
-			my $tv = $1; $tv =~ s|_|-|g;
+			my $tv =  $1;
+			my $ta =  $ENV{$v};
+			$tv    =~ s|_|-|g;
+			$tv    =  lc($tv) if ($^O eq 'MSWin32');
+			$ta    =  '' if ($ta eq '<>');
+
+			if ($^O eq 'MSWin32' && $tv =~ /^(no-)?h(?:eader)?-/) {
+				ptrans(12, 'Embedding header names in environment variable names is not supported on Windows. Exiting');
+				exit(1);
+			}
+
 			push(@fakeARGV, '--' . $tv);
-			push(@fakeARGV, $ENV{$v}) if (length($ENV{$v}));
+			push(@fakeARGV, $ta) if (length($ta));
 		}
 	}
 	fetch_args(\%ARGS, $option_list, \@fakeARGV) if (scalar(@fakeARGV));
@@ -3733,14 +3747,18 @@ sub get_running_state {
 
 sub get_username {
 	my $force_getpwuid = shift;
+	my $fallback       = '';
 	if ($^O eq 'MSWin32') {
 		require Win32;
-		return Win32::LoginName();
+		$fallback = Win32::LoginName();
+	}
+	else {
+		$fallback = (getpwuid($<))[0];
 	}
 	if ($force_getpwuid) {
-		return (getpwuid($<))[0];
+		return $fallback;
 	}
-	return $ENV{LOGNAME} || (getpwuid($<))[0];
+	return $ENV{LOGNAME} || $fallback;
 }
 
 sub get_date_string {
@@ -3750,8 +3768,9 @@ sub get_date_string {
 	my @month_names = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 	my @day_names   = qw(Sun Mon Tue Wed Thu Fri Sat);
 
-	if (!avail("date_manip")) {
-		ptrans(12, avail_str("date_manip").".  Date strings will be in GMT");
+	# Windows has POSIX::strftime but not %z.  Consider adding POSIX::strftime::GNU as an alternate option for date_manip in future
+	# but for now just force to UTC if %z doesn't appear to work
+	if (!avail("date_manip") || POSIX::strftime("%z", localtime($et)) !~ /\d\d\d\d$/) {
 		my @l = gmtime($et);
 		$G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
 		                          $day_names[$l[6]],
