@@ -1,10 +1,28 @@
 #!/usr/bin/env perl
 
-if (length($ENV{'PAGER'}) && findpath($ENV{'PAGER'})) {
-	print "ok  PAGER ($ENV{'PAGER'})\n";
+use strict;
+
+my @paths = ();
+my $pathVarDelim = ':';
+my $filePathDelim = '/';
+my $filePathDelimRe = quotemeta($filePathDelim);
+if ($ENV{PATH} =~ /^[A-Z]:\\/) {
+	$pathVarDelim = ';';
+	$filePathDelim = '\\';
+	$filePathDelimRe = quotemeta($filePathDelim);
 }
-else {
-	print "NOK Your PAGER environment variable is empty or doesn't point to a valid command.  Setting it to a valid pager is not required but can make viewing diffs much easier\n";
+foreach my $dir ((split(/$pathVarDelim/, $ENV{PATH}))) {
+	$dir =~ s|$filePathDelimRe$||g;
+	push(@paths, $dir);
+}
+
+if ($^O ne 'MSWin32') {
+	if (length($ENV{'PAGER'}) && findpath($ENV{'PAGER'})) {
+		print "ok  PAGER ($ENV{'PAGER'})\n";
+	}
+	else {
+		print "NOK Your PAGER environment variable is empty or doesn't point to a valid command.  Setting it to a valid pager is not required but can make viewing diffs much easier\n";
+	}
 }
 
 if (my $perl = findpath('perl')) {
@@ -12,6 +30,13 @@ if (my $perl = findpath('perl')) {
 }
 else {
 	print "NOK perl must be installed and in your path\n";
+}
+
+if (checkmod('Capture::Tiny')) {
+	print "ok  Capture::Tiny\n";
+}
+else {
+	print "NOK Capture::Tiny perl module must be installed\n";
 }
 
 my $swaksScript;
@@ -32,11 +57,13 @@ else {
 	print "NOK swaks not found in either TEST_SWAKS or PATH\n";
 }
 
-if (my $expect = findpath('expect')) {
-	print "ok  expect ($expect)\n";
-}
-else {
-	print "NOK expect must be installed and in your path\n";
+if ($^O ne 'MSWin32') {
+	if (my $expect = findpath('expect')) {
+		print "ok  expect ($expect)\n";
+	}
+	else {
+		print "NOK expect must be installed and in your path\n";
+	}
 }
 
 if (my $perldoc = findpath('perldoc')) {
@@ -62,19 +89,37 @@ else {
 	print "NOK Can't check swaks --support since no valid swaks was found\n";
 }
 
-
-
 exit;
 
 sub findpath {
 	my $find = shift;
-	return $find if ($find =~ m|/| && -f $find && -x _);
 
-	foreach my $dir ((split(':', $ENV{PATH}))) {
-		$dir =~ s|/$||g;
-		return "$dir/$find" if (-f "$dir/$find" && -x _);
+	foreach my $dir (@paths) {
+		foreach my $suff ('', '.pl', '.exe', '.bat') {
+			if ($find =~ '/' && $filePathDelim ne '/') {
+				$find =~ s|/|$filePathDelim|g;
+			}
+
+			my $candidate = $find . $suff;
+			return $candidate if ($candidate =~ m|$filePathDelimRe| && -f $candidate);
+
+			$candidate = $dir . $filePathDelim . $candidate;
+			return "$candidate" if (-f $candidate && -x _);
+		}
 	}
 
 	return '';
 }
 
+sub checkmod {
+	my $module = shift;
+
+	open(P, "|perl") || die "checkmod can't open pipe to perl: $!\n";
+	print P "eval(\"use $module;\");\n";
+	print P 'if ($@) { exit 1; } else { exit 0; }', "\n";
+	if (!close(P)) {
+		return(0);
+	}
+
+	return(1);
+}

@@ -932,3 +932,5 @@
 * 20201016 Testing: Document and improve automated testing to make it easier
            for new users to run in new environments
 * 20201018 Testing: Add --winnow to run-all.pl
+* 20201106 Testing: Extensive changes to allow test tools to run on Windows
+           cmd.exe

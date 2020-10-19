@@ -44,14 +44,48 @@ if ($opts->{errors} || $opts->{winnow}) {
 	}
 }
 
+my %runResults = ();
 foreach my $test (sort @tests) {
+	my @testCmd = ();
 	if ($opts->{errors}) {
-		system($runTests, '--errors', '--infile', $prevfile, $test);
+		@testCmd = ('--errors', '--infile', $prevfile);
 	}
 	elsif ($opts->{winnow}) {
-		system($runTests, '--errors', '--infile', $prevfile, '--outfile', $nextfile, '--headless', $test);
+		@testCmd = ('--errors', '--infile', $prevfile, '--headless', '--outfile', $nextfile);
 	}
 	else {
-		system($runTests, '--headless', '--outfile', $nextfile, $test);
+		@testCmd = (                                   '--headless', '--outfile', $nextfile);
 	}
+	@testCmd = ($runTests, @testCmd, $test);
+	system(@testCmd);
+	$runResults{$test} = $? >> 8;
 }
+
+if (!$opts->{errors}) {
+	my $testCount = 0;
+	my $results   = {};
+
+	open(I, "<$nextfile") || die "Couldn't read $nextfile: $!\n";
+	while (my $line = <I>) {
+		$testCount++;
+		if ($line =~ /^\S+: ([A-Za-z]+)/) {
+			$results->{$1}++;
+		}
+		else {
+			print "no match: $line";
+		}
+	}
+
+	print "\n";
+	print "===============\n";
+	my $testSuiteFailures = join(', ', grep { $runResults{$_} != 0; } (keys(%runResults)));
+	if ($testSuiteFailures) {
+		print "TEST SUITE FAILURES (likely not recorded below): $testSuiteFailures\n";
+		print "===============\n";
+	}
+	foreach my $type (sort keys %$results) {
+		printf "%5s: %d\n", $type, $results->{$type};
+	}
+	print "Total: $testCount\n";
+}
+

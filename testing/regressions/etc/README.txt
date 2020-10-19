@@ -1,20 +1,25 @@
 
 run-tests.pl - run a suite of tests
-run-all.pl - run all tests from all suites (or, with --errors, only errors from previous run)
+run-all.pl   - run all tests from all suites (or, with --errors, only errors from previous run)
 check-env.pl - make sure the environment is suitable for executing the tests (see environment/tooling below for requirements)
-runenv - convenience script which sets TEST_SWAKS and PERL5LIB before executing the actual test script.  The version
-         checked in to version control has the most-common values.  It can be edited locally to test different values, but
-         different values should not be committed.
+runenv       - convenience script which sets TEST_SWAKS and PERL5LIB before executing the actual test script.  The version
+               checked in to version control has the most-common values.  It can be edited locally to test different values, but
+               different values should not be committed.
+runenv.bat   - same as runenv, but specific to Windows.
 
 --
 
 
 
 environment/tooling:
-	PAGER environment variable should be set to make displaying of diffs most usefull (can just set it to 'less')
+	PAGER environment variable should be set to make displaying of diffs most useful (can just set it to 'less')
+		- except on Windows, see below
 	swaks must be in your path.  If TEST_SWAKS environment variable is set, it will be used instead of looking in PATH
+		- on Windows, swaks _must_ be named swaks.pl
 	perl must be in your path.
+	the Capture::Tiny perl module needs to be installed
 	expect is needed in the current PATH (apt-get install expect, brew install expect, etc)
+		- except on Windows, see below
 	perldoc needs to be in the path and usable (apt-get install perl-doc)
 	all "optional" perl modules must be installed to run the test suite. (see Authen::NTLM note below)
 
@@ -31,6 +36,23 @@ PERL5LIB:
 export PERL5LIB=lib/authen-ntlm-local
 
 This will load a fake version of the module that will make swaks happy for the purposes of testing
+
+--
+
+Windows
+
+At the moment, no interactive tests are run.  They currently require expect which seems to be a bear to install on
+Windows.  All tests with INTERACTIVE in them are set to skip by run-tests.pl
+
+PAGER can be set if there's a useable pager, but because it's not obvious which pager to use (more and type are both CMD.exe builtins),
+check-env.pl won't complain if it's not set on Windows
+
+Swaks must end in .pl
+
+I ran the following getting my test environment set up.  It's unclear if it's actually needed
+	assoc .pl=PerlScript
+	ftype PerlScript=C:\Strawberry\perl\bin\perl.exe "%1" %*
+	setx PATHEXT %PATHEXT%;.pl
 
 --
 
@@ -66,3 +88,11 @@ bin/runenv bin/run-tests.pl _options-auth 00300
 bin/runenv bin/run-all.pl
 bin/runenv bin/run-all.pl --errors
 bin/runenv bin/run-all.pl --winnow
+
+# all the same examples, but on windows:
+bin\runenv bin\check-env.pl
+bin\runenv bin\run-tests.pl _options-auth
+bin\runenv bin\run-tests.pl _options-auth 00300
+bin\runenv bin\run-all.pl
+bin\runenv bin\run-all.pl --errors
+bin\runenv bin\run-all.pl --winnow
