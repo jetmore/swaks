@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # use 'swaks --help' to view documentation for this program
 #
@@ -10,9 +10,14 @@
 #       Twitter: http://www.twitter.com/SwaksSMTP
 
 use strict;
+use Pod::Usage;
+use File::Spec::Functions qw(splitdir);
+
+binmode(STDOUT);
+binmode(STDERR);
 
 $|            = 1;
-my($p_name)   = $0 =~ m|/?([^/]+)$|;
+my($p_name)   = (splitdir($0))[-1] =~ m|^(.+?)(\.pl)?$|;
 my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
@@ -38,8 +43,7 @@ my %O = %{ load_args() };
 
 # before we do anything else, check for --help and --version
 if (get_arg('help', \%O)) {
-	ext_usage();
-	exit;
+	pod2usage(-verbose => 2, -exit => 0);
 }
 if (get_arg('version', \%O)) {
 	print "$p_name version $p_version\n\n$p_cp\n";
@@ -2236,9 +2240,19 @@ sub load_args {
 	@fakeARGV = ();
 	foreach my $v (sort keys %ENV) {
 		if ($v =~ m|^SWAKS_OPT_(.*)$|) {
-			my $tv = $1; $tv =~ s|_|-|g;
+			my $tv =  $1;
+			my $ta =  $ENV{$v};
+			$tv    =~ s|_|-|g;
+			$tv    =  lc($tv) if ($^O eq 'MSWin32');
+			$ta    =  '' if ($ta eq '<>');
+
+			if ($^O eq 'MSWin32' && $tv =~ /^(no-)?h(?:eader)?-/) {
+				ptrans(12, 'Embedding header names in environment variable names is not supported on Windows. Exiting');
+				exit(1);
+			}
+
 			push(@fakeARGV, '--' . $tv);
-			push(@fakeARGV, $ENV{$v}) if (length($ENV{$v}));
+			push(@fakeARGV, $ta) if (length($ta));
 		}
 	}
 	fetch_args(\%ARGS, $option_list, \@fakeARGV) if (scalar(@fakeARGV));
@@ -2582,7 +2596,7 @@ sub get_arg {
 						# the old rule for --data was that anything that didn't have a newline in it would be treated
 						# as a file, and we would error if we couldn't open it. That would prevent us from sending
 						# typoed filenames as the data of messages
-						if ($return !~ m/\\n|\n|%NEWLINE%/) {
+						if ($return !~ m/\\n|\n|$G::tokens->{NEWLINE}{regexp}/) {
 							deprecate('Inferring a filename from the argument to --' . $argExt->{opt} .
 							          ' will be removed in the future.  Prefix filenames with \'@\' instead.');
 							if (!open(F, "<$return")) {
@@ -2644,6 +2658,17 @@ sub process_args {
 	my $o     = shift; # This is the args we got from command line
 	my %n     = ();    # This is the hash we will return w/ the fixed-up args
 	my $a     = get_option_struct(); # defining information for all options
+
+	$G::tokens = {
+		NEWLINE       => { regexp => '(%|\.\.)NEWLINE\1',       literal => '%NEWLINE%',       },
+		FROM_ADDRESS  => { regexp => '(%|\.\.)FROM_ADDRESS\1',  literal => '%FROM_ADDRESS%',  },
+		TO_ADDRESS    => { regexp => '(%|\.\.)TO_ADDRESS\1',    literal => '%TO_ADDRESS%',    },
+		MESSAGEID     => { regexp => '(%|\.\.)MESSAGEID\1',     literal => '%MESSAGEID%',     },
+		SWAKS_VERSION => { regexp => '(%|\.\.)SWAKS_VERSION\1', literal => '%SWAKS_VERSION%', },
+		DATE          => { regexp => '(%|\.\.)DATE\1',          literal => '%DATE%',          },
+		BODY          => { regexp => '(%|\.\.)BODY\1',          literal => '%BODY%',          },
+		NEW_HEADERS   => { regexp => '(%|\.\.)NEW_HEADERS\1',   literal => '%NEW_HEADERS%',   },
+	};
 
 	# handle the output file handles early so they can be used for errors
 	# we don't need to keep track of the actual files but it will make debugging
@@ -3047,7 +3072,8 @@ sub process_args {
 	           '\n' .
 	           '%BODY%\n';
 	if (!get_arg('no_data_fixup', $o)) {
-		$n{data}            =~ s/%BODY%/$body/g;
+		# $n{data}            =~ s/%BODY%/$body/g;
+		$n{data}            =~ s/$G::tokens->{BODY}{regexp}/$body/g;
 		$n{data}            =~ s/\\n/\r\n/g;
 		my $addHeader_accum =  get_accum('add_header', $o);
 		my $addHeaderOpt    =  [];
@@ -3124,9 +3150,9 @@ sub process_args {
 		}
 
 		# if there are new headers, add them as appropriate
-		if ($newHeader =~ /%NEW_HEADERS%/) {
+		if ($newHeader =~ /$G::tokens->{NEW_HEADERS}{regexp}/) {
 			$n{add_header} = join("\r\n", @{$addHeaderOpt}) . "\r\n" if (@{$addHeaderOpt});
-			$newHeader     =~ s/%NEW_HEADERS%/$n{add_header}/g;
+			$newHeader     =~ s/$G::tokens->{NEW_HEADERS}{regexp}/$n{add_header}/g;
 		} elsif (scalar(@{$addHeaderOpt})) {
 			foreach my $line (@{$addHeaderOpt}) {
 				$newHeader .= $line . "\r\n";
@@ -3136,12 +3162,12 @@ sub process_args {
 		# Now re-assemble our data by adding the headers back on to the front
 		$n{data} = $newHeader . "\r\n" . $n{data};
 
-		$n{data} =~ s/\\n|%NEWLINE%/\r\n/g;
-		$n{data} =~ s/%FROM_ADDRESS%/$n{from}/g;
-		$n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
-		$n{data} =~ s/%MESSAGEID%/get_messageid()/ge;
-		$n{data} =~ s/%SWAKS_VERSION%/$p_version/g;
-		$n{data} =~ s/%DATE%/get_date_string()/ge;
+		$n{data} =~ s/\\n|$G::tokens->{NEWLINE}{regexp}/\r\n/g;
+		$n{data} =~ s/$G::tokens->{FROM_ADDRESS}{regexp}/$n{from}/g;
+		$n{data} =~ s/$G::tokens->{TO_ADDRESS}{regexp}/$n{to}/g;
+		$n{data} =~ s/$G::tokens->{MESSAGEID}{regexp}/get_messageid()/ge;
+		$n{data} =~ s/$G::tokens->{SWAKS_VERSION}{regexp}/$p_version/g;
+		$n{data} =~ s/$G::tokens->{DATE}{regexp}/get_date_string()/ge;
 		$n{data} =~ s/^From [^\n]*\n// if (!get_arg('no_strip_from', $o));
 		$n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
 		$n{data} =~ s/\n\./\n../g;         # quote any other leading dots
@@ -3733,14 +3759,18 @@ sub get_running_state {
 
 sub get_username {
 	my $force_getpwuid = shift;
+	my $fallback       = '';
 	if ($^O eq 'MSWin32') {
 		require Win32;
-		return Win32::LoginName();
+		$fallback = Win32::LoginName();
+	}
+	else {
+		$fallback = (getpwuid($<))[0];
 	}
 	if ($force_getpwuid) {
-		return (getpwuid($<))[0];
+		return $fallback;
 	}
-	return $ENV{LOGNAME} || (getpwuid($<))[0];
+	return $ENV{LOGNAME} || $fallback;
 }
 
 sub get_date_string {
@@ -3750,8 +3780,9 @@ sub get_date_string {
 	my @month_names = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 	my @day_names   = qw(Sun Mon Tue Wed Thu Fri Sat);
 
-	if (!avail("date_manip")) {
-		ptrans(12, avail_str("date_manip").".  Date strings will be in GMT");
+	# Windows has POSIX::strftime but not %z.  Consider adding POSIX::strftime::GNU as an alternate option for date_manip in future
+	# but for now just force to UTC if %z doesn't appear to work
+	if (!avail("date_manip") || POSIX::strftime("%z", localtime($et)) !~ /\d\d\d\d$/) {
 		my @l = gmtime($et);
 		$G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
 		                          $day_names[$l[6]],
@@ -3825,15 +3856,12 @@ sub build_version {
 	}
 }
 
-sub ext_usage {
-	require Config;
-	$ENV{PATH} .= ":" unless $ENV{PATH} eq "";
-	$ENV{PATH}  = $ENV{PATH} . $Config::Config{'installscript'};
-	$< = $> = 1 if ($> == 0 || $< == 0);
-	exec("perldoc", $0) || exit(1);
-	# make parser happy
-	%Config::Config = ();
+### This is the end of released code
 
-	exit(0);
-}
+=pod
 
+=head1 DESCRIPTION
+
+This is a version of swaks from version control
+
+=cut

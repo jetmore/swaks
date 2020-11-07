@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 foreach my $dir (@ARGV) {
 	opendir(D, $dir) || die "couldn't opendir $dir: $!\n";

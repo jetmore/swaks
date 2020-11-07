@@ -7,5 +7,5 @@ TLS / Encryption Info:
   ca path             = 
   sni string          = 
   verify server cert  = FALSE
-  available protocols = SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2
+  available protocols = TLS_PROTOCOL_LIST
   requested protocols = 

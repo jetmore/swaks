@@ -2,14 +2,18 @@ blank lines and commented (w/ #) lines are skipped
 continuation lines work (lines that end in '\' are combined with the following line
 
 Tokens:
-	%SWAKS%   - will be replaced with the path to swaks. If $TEST_SWAKS is defined it will be used for %SWAKS%
-	%TESTID%  - The current test ID.  This is defined as the filename, minus the .test extension.  Almost always (and preferably) numeric,
-	            it is possible to use alpha chars if there's some reason.
-	%TESTDIR% - the path to the base of the currently running test suite
-	%OUTDIR%  - the path to dynamic files (output of swaks from the test run, dynamically-generated configs, etc). By convention, this
-	            directory will not be versioned.  defined as %TESTDIR%/out-dyn
-	%REFDIR%  - the path to static reference files.  These are the "blessed" output of the command, used as a reference to make sure a given
-	            execution is producing the correct results.  Contents will be versioned.  defined as %TESTDIR%/out-ref
+	%SWAKS%        - will be replaced with the path to swaks. If $TEST_SWAKS is defined it will be used for %SWAKS%
+	%TESTID%       - The current test ID.  This is defined as the filename, minus the .test extension.  Almost always (and preferably) numeric,
+	                 it is possible to use alpha chars if there's some reason.
+	%TESTDIR%      - the path to the base of the currently running test suite
+	%OUTDIR%       - the path to dynamic files (output of swaks from the test run, dynamically-generated configs, etc). By convention, this
+	                 directory will not be versioned.  defined as %TESTDIR%/out-dyn
+	%REFDIR%       - the path to static reference files.  These are the "blessed" output of the command, used as a reference to make sure a given
+	                 execution is producing the correct results.  Contents will be versioned.  defined as %TESTDIR%/out-ref
+	%QUOTE_SINGLE% - will be replaced with a single-quote (') after the line is split into its component parts but before the line
+	                 is considered for evaluation.  This is a way to avoid using backslashes for quoting complex lines, which is
+	                 especially useful on Windows, where the backslash is also used for paths.
+	%QUOTE_DOUBLE% - equivalent to %QUOTE_SINGLE%, but will be replaced with a double-quote (").
 
 Line definition:
 	type: ARGUMENTS
@@ -46,6 +50,21 @@ Test execution order:
 	test result - next any "test results"s are processed.  They are processed in the order encountered in the file
 	            (note that though it's designed to process multiple, it only works for one right now)
 
+
+Conditional execution:
+	Any line can have a string matching IFOS=[OSSTRING] or IFOS!=[OSSTRING].  [OSSTRING] is in the format returned
+	by $^O by perl.  If the line matches the pattern but not the condition, the line will be discarded entirely.
+	If the line matches the pattern and the condition, the matching pattern is removed and the line is processed normally.
+	This can be used to perform platform specific tests.  For instance, locale strings are different between Linux
+	and Windows, which can be accounted for like so:
+
+		pre action: IFOS=MSWin32 SET_ENV LC_ALL Czech
+		pre action: IFOS!=MSWin32 SET_ENV LC_ALL cs_CZ.UTF-8
+
+	The entire test can be skipped in the same way using the skip command:
+
+		skip: IFOS=MSWin32 Test is not applicable for Windows
+		skip: IFOS!=MSWin32 Test is only applicable for Windows
 
 
 auto actions
@@ -96,6 +115,9 @@ Action verbs:
 	CREATE_FILE FILE
 		touch a file (but only if FILE does not already exist). mostly useful for making sure test files exist even if there's
 		an execution error that prevents them from being created (prevents diff from barfing)
+
+	DEFINE TOKEN VALUE
+		defines a value for TOKEN than can be used in other commands
 
 	SET_ENV VAR CONTENTS
 	SET_ENV VAR "--UNSET--"

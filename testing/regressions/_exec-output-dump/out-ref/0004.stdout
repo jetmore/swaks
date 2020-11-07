@@ -1,7 +1,7 @@
 === AUTH CRAM-MD5 supported
 === AUTH CRAM-SHA1 supported
 === AUTH DIGEST-MD5 supported
-*** AUTH NTLM not available: requires Authen::NTLM
+=== AUTH NTLM supported
 === Basic AUTH supported
 === Date Manipulation supported
 === High Resolution Timing supported
@@ -83,7 +83,7 @@ TLS / Encryption Info:
   ca path             = 
   sni string          = 
   verify server cert  = FALSE
-  available protocols = SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2
+  available protocols = TLS_PROTOCOL_LIST
   requested protocols = 
 
 Authentication Info:
@@ -92,7 +92,7 @@ Authentication Info:
   password       = 'pass'
   show plaintext = FALSE
   hide password  = FALSE
-  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, PLAIN
+  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, MSN, NTLM, PLAIN, SPA
   extras         = 
   type map       = CRAM-MD5 = CRAM-MD5
                    CRAM-SHA1 = CRAM-SHA1

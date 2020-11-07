@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # run all defined tests in headless mode
 
@@ -14,7 +14,7 @@ use FindBin qw($Bin);
 use Getopt::Long;
 
 my $opts = {};
-GetOptions($opts, 'errors|e!') || die "Couldn't understand options\n";
+GetOptions($opts, 'errors|e!', 'winnow|w!') || die "Couldn't understand options\n";
 
 my $home     = "$Bin/..";
 my $runTests = "$home/bin/run-tests.pl";
@@ -23,26 +23,69 @@ opendir(D, $home) || die "Couldn't opendir $home: $!\n";
 my @tests = grep /^_/, readdir(D);
 closedir(D);
 
-my $file = "$home/var/results." . time();
+my $vard = "$home/var";
+if (!-d $vard) {
+	mkdir($vard) || die "Couldn't make $vard: $!\n";
+}
 
-if ($opts->{errors}) {
+my $nextfile = "$vard/results." . time();
+my $prevfile;
+
+if ($opts->{errors} || $opts->{winnow}) {
 	opendir(DIR, "$home/var") || die "Couldn't opendir $home/var\n";
-	$file = (sort(grep(/^results./, readdir(DIR))))[-1]; # get the newest file
+	my $file = (sort(grep(/^results./, readdir(DIR))))[-1]; # get the newest file
 	closedir(DIR);
 
 	if ($file) {
-		$file = "$home/var/$file";
+		$prevfile = "$home/var/$file";
 	}
 	else {
 		die "Unable to find a var/results.* file to use for previous errors\n";
 	}
 }
 
+my %runResults = ();
 foreach my $test (sort @tests) {
+	my @testCmd = ();
 	if ($opts->{errors}) {
-		system($runTests, '--errors', '--infile', $file, $test);
+		@testCmd = ('--errors', '--infile', $prevfile);
+	}
+	elsif ($opts->{winnow}) {
+		@testCmd = ('--errors', '--infile', $prevfile, '--headless', '--outfile', $nextfile);
 	}
 	else {
-		system($runTests, '--headless', '--outfile', $file, $test);
+		@testCmd = (                                   '--headless', '--outfile', $nextfile);
 	}
+	@testCmd = ($runTests, @testCmd, $test);
+	system(@testCmd);
+	$runResults{$test} = $? >> 8;
 }
+
+if (!$opts->{errors}) {
+	my $testCount = 0;
+	my $results   = {};
+
+	open(I, "<$nextfile") || die "Couldn't read $nextfile: $!\n";
+	while (my $line = <I>) {
+		$testCount++;
+		if ($line =~ /^\S+: ([A-Za-z]+)/) {
+			$results->{$1}++;
+		}
+		else {
+			print "no match: $line";
+		}
+	}
+
+	print "\n";
+	print "===============\n";
+	my $testSuiteFailures = join(', ', grep { $runResults{$_} != 0; } (keys(%runResults)));
+	if ($testSuiteFailures) {
+		print "TEST SUITE FAILURES (likely not recorded below): $testSuiteFailures\n";
+		print "===============\n";
+	}
+	foreach my $type (sort keys %$results) {
+		printf "%5s: %d\n", $type, $results->{$type};
+	}
+	print "Total: $testCount\n";
+}
+

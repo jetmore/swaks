@@ -2,3 +2,5 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver \
   --header-From: '"Fred Example" <fred-%TESTID%@host1.nodns.test.swaks.net>'
+
+skip: IFOS=MSWin32 This test does not currently work on Windows

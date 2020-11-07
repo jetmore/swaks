@@ -209,7 +209,7 @@ Options can be supplied via environment variables.  The variables are in the for
     $ SWAKS_OPT_from='fred@example.com'
     $ SWAKS_OPT_h_From='"Fred Example" <fred@example.com>'
 
-Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting <SWAKS_OPT_server=""> would cause Swaks to prompt the user for the server to which to connect at each invocation.
+Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting <SWAKS_OPT_server=""> would cause Swaks to prompt the user for the server to which to connect at each invocation.  On Windows, it is not possible to set empty environment variables.  The behavior can be simulated by setting the environment variable to C<< <> >> instead.  Additionally, embedding the header name in the header option via environment variable is not allowed on Windows (eg C<SWAKS_OPT_header_Foo=bar> will result in an error, but C<SWAKS_OPT_header="Foo: bar"> will work.)
 
 Because there is no inherent order in options provided by setting environment variables, the options are sorted before being processed.  This is not a great solution, but it at least defines the behavior, which would be otherwise undefined.  As an example, if both C<$SWAKS_OPT_from> and C<$SWAKS_OPT_f> were set, the value from C<$SWAKS_OPT_from> would be used, because it sorts after C<$SWAKS_OPT_f>.  Also as a result of not having an inherent order in environment processing, unsetting options with the C<no-> prefix is unreliable.  It works if the option being turned off sorts before C<no->, but fails if it sorts after. Because C<no-> is primarily meant to operate between config types (for instance, unsetting from the command line an option that was set in a config file), this is not likely to be a problem.
 
@@ -309,7 +309,7 @@ There is no default value for this option.  If no recipients are provided via an
 
 =item -f, --from [<email-address>]
 
-Use argument as envelope-sender for email, or prompt user if no argument specified.  The string C<< <> >> can be supplied to mean the null sender.  If user does not specify a sender address a default value is used.  The domain-part of the default sender is a best guess at the fully-qualified domain name of the local host.  The method of determining the local-part varies.  On Windows, C<Win32::LoginName()> is used.  On UNIX-ish platforms, the C<$LOGNAME> environment variable is used if it is set.  Otherwise L<getpwuid(3)> is used.  See also C<--force-getpwuid>.  If Swaks cannot determine a local hostname and the sender address is needed for the transaction, Swaks will error and exit.  In this case, a valid string must be provided via this option. (Arg-Required, From-Prompt)
+Use argument as envelope-sender for email, or prompt user if no argument specified.  The string C<< <> >> can be supplied to mean the null sender.  If user does not specify a sender address a default value is used.  The domain-part of the default sender is a best guess at the fully-qualified domain name of the local host.  The method of determining the local-part varies.  If the C<$LOGNAME> environment variable is set, it will be used as the local-part.  Otherwise the value from C<Win32::LoginName()> will be used on Windows and L<getpwuid(3)> on UNIX-ish platforms.  See also C<--force-getpwuid>.  If Swaks cannot determine a local hostname and the sender address is needed for the transaction, Swaks will error and exit.  In this case, a valid string must be provided via this option. (Arg-Required, From-Prompt)
 
 =item --ehlo, --lhlo, -h, --helo [<helo-string>]
 
@@ -445,7 +445,7 @@ If the server supports it, attempt Per-Recipient Data Response (PRDR) (L<https:/
 
 =item --force-getpwuid
 
-Tell Swaks to use the getpwuid method of finding the default sender local-part instead of trying C<$LOGNAME> first. (Arg-None)
+Tell Swaks to use the system-default method of determining the current user's username for the default sender local-part instead of trying C<$LOGNAME> first.  Despite the UNIX-ish-specific option name, this option also works on Windows. (Arg-None)
 
 =back
 
@@ -759,35 +759,35 @@ Very basic token parsing is performed on the DATA portion.  The following table 
 
 =over 4
 
-=item %FROM_ADDRESS%
+=item %FROM_ADDRESS%, ..FROM_ADDRESS..
 
 Replaced with the envelope-sender.
 
-=item %TO_ADDRESS%
+=item %TO_ADDRESS%, ..TO_ADDRESS..
 
 Replaced with the envelope-recipient(s).
 
-=item %DATE%
+=item %DATE%, ..DATE..
 
-Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module L<POSIX> for timezone calculations.  If this module is unavailable the date string will be in GMT.
+Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module L<POSIX> for timezone calculations.  If this module is unavailable or the current environment doesn't support the %z strftime format token (as on Windows) the date string will be in GMT.
 
-=item %MESSAGEID%
+=item %MESSAGEID%, ..MESSAGEID..
 
 Replaced with a message ID string suitable for use in a Message-Id header.  The value for this token will remain consistent for the life of the process.
 
-=item %SWAKS_VERSION%
+=item %SWAKS_VERSION%, ..SWAKS_VERSION..
 
 Replaced with the version of the currently-running Swaks process.
 
-=item %NEW_HEADERS%
+=item %NEW_HEADERS%, ..NEW_HEADERS..
 
 Replaced with the contents of the C<--add-header> option.  If C<--add-header> is not specified this token is simply removed.
 
-=item %BODY%
+=item %BODY%, ..BODY..
 
 Replaced with the value specified by the C<--body> option.  See C<--body> for default.
 
-=item %NEWLINE%
+=item %NEWLINE%, ..BODY..
 
 Replaced with carriage return, newline (0x0d, 0x0a).  This is identical to using C<\n> (0x5c, 0x6e), but doesn't have the escaping concerns that the backslash can cause on the newline.
 
@@ -837,7 +837,7 @@ The option can either be specified multiple times or a single time with multiple
 
 =item --header <header-and-data>, --h-<header> <data>
 
-These options allow a way to change headers that already exist in the DATA.  C<--header 'Subject: foo'> and C<--h-Subject foo> are equivalent.  If the header does not already exist in the data then this argument behaves identically to C<--add-header>.  However, if the header already exists it is replaced with the one specified.  Negating the version of this option with the header name in the option (eg C<--no-header-Subject>) will remove all previously processed C<--header> options, not just the ones used for 'Subject'. (Arg-Required)
+These options allow a way to change headers that already exist in the DATA.  C<--header 'Subject: foo'> and C<--h-Subject foo> are equivalent.  If the header does not already exist in the data then this argument behaves identically to C<--add-header>.  However, if the header already exists it is replaced with the one specified.  Negating the version of this option with the header name in the option (eg C<--no-header-Subject>) will remove all previously processed C<--header> options, not just the ones used for 'Subject'. Embedding the header name in the option via environment variable is not supported on Windows and will result in an error. (Arg-Required)
 
 =item -g
 
@@ -969,7 +969,7 @@ Do not display any content to the terminal. (Arg-None)
 
 =item -S, --silent [ 1 | 2 | 3 ]
 
-Cause Swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.  C<--silent> affects most output but not all.  For instance, C<--help>, C<--version>, C<--dump>, and C<--dump-mail> are not affected. (Arg-Optional)
+Cause Swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.  C<--silent> affects most output but not all.  For instance, C<--help>, C<--version>, C<--dump>, and C<--dump-mail> are not affected.  For historical reasons, -S is not settable via environment variable on Windows, use SWAKS_OPT_silent instead. (Arg-Optional)
 
 =item --support
 
@@ -1021,7 +1021,7 @@ The C<--data>, C<--body>, C<--attach>, and C<--attach-body> options currently wi
 
 This program was primarily intended for use on UNIX-like operating systems, and it should work on any reasonable version thereof.  It has been developed and tested on Solaris, Linux, and Mac OS X and is feature complete on all of these.
 
-This program is known to demonstrate basic functionality on Windows using ActiveState's Perl.  It has not been fully tested.  Known to work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5 auth types.  Unknown is any TLS functionality and the NTLM/SPA and DIGEST-MD5 auth types.
+This program is known to demonstrate basic functionality on Windows using Strawberry Perl.  In all documentation, unless otherwise noted, "Windows" refers to running Swaks via CMD.exe, not WSL or cygwin.  It has not been fully tested, but known to work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5 auth types.  Unknown is any TLS functionality and the NTLM/SPA and DIGEST-MD5 auth types.  Some functionality is known to be limited on Windows, including inability to embed header name in environment variables (see L</"CONFIGURATION ENVIRONMENT VARIABLES"> and C<--header>), inability to generate a local-timezone date string (see C<%DATE%> token under C<--data>), inability to use C<-S> option as an environment variable (see C<--silent>), and inability to have a "set but empty" value in an environment variable (see L</"CONFIGURATION ENVIRONMENT VARIABLES"> for workaround).
 
 Because this program should work anywhere Perl works, I would appreciate knowing about any new operating systems you've thoroughly used Swaks on as well as any problems encountered on a new OS.
 

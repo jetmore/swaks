@@ -929,3 +929,27 @@
            processing overhaul in a46b929 #26
 * 20201014 Add newline echo after entering password with --protect-prompt
 > 20201014 released 20201014.0
+* 20201016 Testing: Document and improve automated testing to make it easier
+           for new users to run in new environments
+* 20201018 Change script interpreter line to use /usr/bin/env for portability
+* 20201018 Testing: Add --winnow to run-all.pl
+* 20201030 Fix date generation by confirming environment's strftime supports
+           %z format token.  Windows supports strftime but not %z.
+* 20201030 Windows: use binmode on STDERR/STDOUT to prevent line ending
+           translation.
+* 20201031 Windows: Fix setting options via environment variable  (this fix
+           now means that -S is not supported on Windows)
+* 20201031 Windows: Explicitly revoke support for providing header names
+           embedded in environment variable names (%SWAKS_OPT_header_From%
+           will result in an error)
+* 20201031 Allow a value of '<>' in an environment variable to mean empty
+           string.  Usable everywhere, but needed on Windows since it doesn't
+           support set-but-empty environment variables.
+* 20201101 Windows: Allow LOGNAME environment variable to override default
+           email sender
+* 20201101 Change the generation of help text from a manual perldoc call to
+           Pod::Usage
+* 20201106 Testing: Extensive changes to allow test tools to run on Windows
+           cmd.exe
+* 20201107 Add ..TOKEN.. form of tokens to more-easily allow tokens to be
+           specified from Windows command line.
