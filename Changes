@@ -947,5 +947,7 @@
            support set-but-empty environment variables.
 * 20201101 Windows: Allow LOGNAME environment variable to override default
            email sender
+* 20201101 Change the generation of help text from a manual perldoc call to
+           Pod::Usage
 * 20201106 Testing: Extensive changes to allow test tools to run on Windows
            cmd.exe

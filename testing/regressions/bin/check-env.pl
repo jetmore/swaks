@@ -66,12 +66,13 @@ if ($^O ne 'MSWin32') {
 	}
 }
 
-if (my $perldoc = findpath('perldoc')) {
-	print "ok  perldoc ($perldoc)\n";
-}
-else {
-	print "NOK perldoc must be installed and in your path\n";
-}
+# I believe this is no longer needed after switch to Pod::Usage
+# if (my $perldoc = findpath('perldoc')) {
+# 	print "ok  perldoc ($perldoc)\n";
+# }
+# else {
+# 	print "NOK perldoc must be installed and in your path\n";
+# }
 
 if ($swaksScript) {
 	my $support = `$swaksScript --support 2>&1`;

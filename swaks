@@ -10,6 +10,7 @@
 #       Twitter: http://www.twitter.com/SwaksSMTP
 
 use strict;
+use Pod::Usage;
 use File::Spec::Functions qw(splitdir);
 
 binmode(STDOUT);
@@ -42,8 +43,7 @@ my %O = %{ load_args() };
 
 # before we do anything else, check for --help and --version
 if (get_arg('help', \%O)) {
-	ext_usage();
-	exit;
+	pod2usage(-verbose => 2, -exit => 0);
 }
 if (get_arg('version', \%O)) {
 	print "$p_name version $p_version\n\n$p_cp\n";
@@ -3844,15 +3844,12 @@ sub build_version {
 	}
 }
 
-sub ext_usage {
-	require Config;
-	$ENV{PATH} .= ":" unless $ENV{PATH} eq "";
-	$ENV{PATH}  = $ENV{PATH} . $Config::Config{'installscript'};
-	$< = $> = 1 if ($> == 0 || $< == 0);
-	exec("perldoc", $0) || exit(1);
-	# make parser happy
-	%Config::Config = ();
+### This is the end of released code
 
-	exit(0);
-}
+=pod
 
+=head1 DESCRIPTION
+
+This is a version of swaks from version control
+
+=cut

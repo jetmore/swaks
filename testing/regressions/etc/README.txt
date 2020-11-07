@@ -20,7 +20,6 @@ environment/tooling:
 	the Capture::Tiny perl module needs to be installed
 	expect is needed in the current PATH (apt-get install expect, brew install expect, etc)
 		- except on Windows, see below
-	perldoc needs to be in the path and usable (apt-get install perl-doc)
 	all "optional" perl modules must be installed to run the test suite. (see Authen::NTLM note below)
 
 
