@@ -2596,7 +2596,7 @@ sub get_arg {
 						# the old rule for --data was that anything that didn't have a newline in it would be treated
 						# as a file, and we would error if we couldn't open it. That would prevent us from sending
 						# typoed filenames as the data of messages
-						if ($return !~ m/\\n|\n|%NEWLINE%/) {
+						if ($return !~ m/\\n|\n|$G::tokens->{NEWLINE}{regexp}/) {
 							deprecate('Inferring a filename from the argument to --' . $argExt->{opt} .
 							          ' will be removed in the future.  Prefix filenames with \'@\' instead.');
 							if (!open(F, "<$return")) {
@@ -2658,6 +2658,17 @@ sub process_args {
 	my $o     = shift; # This is the args we got from command line
 	my %n     = ();    # This is the hash we will return w/ the fixed-up args
 	my $a     = get_option_struct(); # defining information for all options
+
+	$G::tokens = {
+		NEWLINE       => { regexp => '(%|\.\.)NEWLINE\1',       literal => '%NEWLINE%',       },
+		FROM_ADDRESS  => { regexp => '(%|\.\.)FROM_ADDRESS\1',  literal => '%FROM_ADDRESS%',  },
+		TO_ADDRESS    => { regexp => '(%|\.\.)TO_ADDRESS\1',    literal => '%TO_ADDRESS%',    },
+		MESSAGEID     => { regexp => '(%|\.\.)MESSAGEID\1',     literal => '%MESSAGEID%',     },
+		SWAKS_VERSION => { regexp => '(%|\.\.)SWAKS_VERSION\1', literal => '%SWAKS_VERSION%', },
+		DATE          => { regexp => '(%|\.\.)DATE\1',          literal => '%DATE%',          },
+		BODY          => { regexp => '(%|\.\.)BODY\1',          literal => '%BODY%',          },
+		NEW_HEADERS   => { regexp => '(%|\.\.)NEW_HEADERS\1',   literal => '%NEW_HEADERS%',   },
+	};
 
 	# handle the output file handles early so they can be used for errors
 	# we don't need to keep track of the actual files but it will make debugging
@@ -3061,7 +3072,8 @@ sub process_args {
 	           '\n' .
 	           '%BODY%\n';
 	if (!get_arg('no_data_fixup', $o)) {
-		$n{data}            =~ s/%BODY%/$body/g;
+		# $n{data}            =~ s/%BODY%/$body/g;
+		$n{data}            =~ s/$G::tokens->{BODY}{regexp}/$body/g;
 		$n{data}            =~ s/\\n/\r\n/g;
 		my $addHeader_accum =  get_accum('add_header', $o);
 		my $addHeaderOpt    =  [];
@@ -3138,9 +3150,9 @@ sub process_args {
 		}
 
 		# if there are new headers, add them as appropriate
-		if ($newHeader =~ /%NEW_HEADERS%/) {
+		if ($newHeader =~ /$G::tokens->{NEW_HEADERS}{regexp}/) {
 			$n{add_header} = join("\r\n", @{$addHeaderOpt}) . "\r\n" if (@{$addHeaderOpt});
-			$newHeader     =~ s/%NEW_HEADERS%/$n{add_header}/g;
+			$newHeader     =~ s/$G::tokens->{NEW_HEADERS}{regexp}/$n{add_header}/g;
 		} elsif (scalar(@{$addHeaderOpt})) {
 			foreach my $line (@{$addHeaderOpt}) {
 				$newHeader .= $line . "\r\n";
@@ -3150,12 +3162,12 @@ sub process_args {
 		# Now re-assemble our data by adding the headers back on to the front
 		$n{data} = $newHeader . "\r\n" . $n{data};
 
-		$n{data} =~ s/\\n|%NEWLINE%/\r\n/g;
-		$n{data} =~ s/%FROM_ADDRESS%/$n{from}/g;
-		$n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
-		$n{data} =~ s/%MESSAGEID%/get_messageid()/ge;
-		$n{data} =~ s/%SWAKS_VERSION%/$p_version/g;
-		$n{data} =~ s/%DATE%/get_date_string()/ge;
+		$n{data} =~ s/\\n|$G::tokens->{NEWLINE}{regexp}/\r\n/g;
+		$n{data} =~ s/$G::tokens->{FROM_ADDRESS}{regexp}/$n{from}/g;
+		$n{data} =~ s/$G::tokens->{TO_ADDRESS}{regexp}/$n{to}/g;
+		$n{data} =~ s/$G::tokens->{MESSAGEID}{regexp}/get_messageid()/ge;
+		$n{data} =~ s/$G::tokens->{SWAKS_VERSION}{regexp}/$p_version/g;
+		$n{data} =~ s/$G::tokens->{DATE}{regexp}/get_date_string()/ge;
 		$n{data} =~ s/^From [^\n]*\n// if (!get_arg('no_strip_from', $o));
 		$n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
 		$n{data} =~ s/\n\./\n../g;         # quote any other leading dots

@@ -951,3 +951,5 @@
            Pod::Usage
 * 20201106 Testing: Extensive changes to allow test tools to run on Windows
            cmd.exe
+* 20201107 Add ..TOKEN.. form of tokens to more-easily allow tokens to be
+           specified from Windows command line.

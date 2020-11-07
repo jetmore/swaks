@@ -759,35 +759,35 @@ Very basic token parsing is performed on the DATA portion.  The following table 
 
 =over 4
 
-=item %FROM_ADDRESS%
+=item %FROM_ADDRESS%, ..FROM_ADDRESS..
 
 Replaced with the envelope-sender.
 
-=item %TO_ADDRESS%
+=item %TO_ADDRESS%, ..TO_ADDRESS..
 
 Replaced with the envelope-recipient(s).
 
-=item %DATE%
+=item %DATE%, ..DATE..
 
 Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module L<POSIX> for timezone calculations.  If this module is unavailable or the current environment doesn't support the %z strftime format token (as on Windows) the date string will be in GMT.
 
-=item %MESSAGEID%
+=item %MESSAGEID%, ..MESSAGEID..
 
 Replaced with a message ID string suitable for use in a Message-Id header.  The value for this token will remain consistent for the life of the process.
 
-=item %SWAKS_VERSION%
+=item %SWAKS_VERSION%, ..SWAKS_VERSION..
 
 Replaced with the version of the currently-running Swaks process.
 
-=item %NEW_HEADERS%
+=item %NEW_HEADERS%, ..NEW_HEADERS..
 
 Replaced with the contents of the C<--add-header> option.  If C<--add-header> is not specified this token is simply removed.
 
-=item %BODY%
+=item %BODY%, ..BODY..
 
 Replaced with the value specified by the C<--body> option.  See C<--body> for default.
 
-=item %NEWLINE%
+=item %NEWLINE%, ..BODY..
 
 Replaced with carriage return, newline (0x0d, 0x0a).  This is identical to using C<\n> (0x5c, 0x6e), but doesn't have the escaping concerns that the backslash can cause on the newline.
 
