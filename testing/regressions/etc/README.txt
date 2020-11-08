@@ -18,6 +18,7 @@ environment/tooling:
 		- on Windows, swaks _must_ be named swaks.pl
 	perl must be in your path.
 	the Capture::Tiny perl module needs to be installed
+	the Text::Diff perl module needs to be installed
 	expect is needed in the current PATH (apt-get install expect, brew install expect, etc)
 		- except on Windows, see below
 	all "optional" perl modules must be installed to run the test suite. (see Authen::NTLM note below)

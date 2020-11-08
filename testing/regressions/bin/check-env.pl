@@ -39,6 +39,13 @@ else {
 	print "NOK Capture::Tiny perl module must be installed\n";
 }
 
+if (checkmod('Text::Diff')) {
+	print "ok  Text::Diff\n";
+}
+else {
+	print "NOK Text::Diff perl module must be installed\n";
+}
+
 my $swaksScript;
 if (length($ENV{'TEST_SWAKS'})) {
 	if (my $swaks = findpath($ENV{'TEST_SWAKS'})) {
