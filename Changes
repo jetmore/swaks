@@ -953,3 +953,6 @@
            cmd.exe
 * 20201107 Add ..TOKEN.. form of tokens to more-easily allow tokens to be
            specified from Windows command line.
+* 20201116 Previously changed %DATE% to %MESSAGE_ID% in some tests to protect
+           against accidental expansion on Windows.  Change back to ..DATE..
+           now that it's an option.
