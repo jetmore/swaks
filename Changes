@@ -958,3 +958,4 @@
            now that it's an option.
 * 20201126 Add tools for visualizing errors caused by line ending issues
 * 20201126 Rework interactive tests and enable on Windows
+* 20201126 Turn releases back on and add release for v20201024.0 (#13)

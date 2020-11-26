@@ -135,11 +135,20 @@ git push
 ###
 # To this point we're published but we haven't told anyone yet.  Start sending actual announcements:
 
-# publish the draft blog post
+## publish the draft blog post
 
-# send twitter notification
+## send twitter notification
 # Swaks release 20201014.0 available :: https://www.jetmore.org/john/blog/2020/10/swaks-release-20201014-0-available/ :: Share and Enjoy!
 
+## publish github release
+- click "Releases" in side bar
+- click "Draft new release"
+- click "Tags"
+- choose correct tag (latest - hit elipse on far right, choose "Create release")
+  - Title: v20201014.0
+  - Description - the summary description from the releae readme and the versions page (change to MD - bold the headers, make sure preview looks ok)
+  - attach the main swaks tar.gz and the cpan tar.gz
+- click "Publish relrease"
 
 # send email to those who have requested it
 g3: egrep -v '^#' ~/Documents/programming/swaks/NOTIFY  | egrep -v '^$'
