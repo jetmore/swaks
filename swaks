@@ -2681,7 +2681,7 @@ sub process_args {
 	my $output_file_stderr = get_arg('output_file_stderr', $o) || $output_file;
 	my $output_file_stdout = get_arg('output_file_stdout', $o) || $output_file;
 	if ($output_file_stderr) {
-		if (!open(OUTEFH, '>>'.$output_file_stderr)) {
+		if (!open(OUTEFH, '>'.$output_file_stderr)) {
 			ptrans(12, 'Unable to open ' . $output_file_stderr . ' for writing');
 			exit(1);
 		}
@@ -2693,7 +2693,7 @@ sub process_args {
 		$G::trans_fh_of = $G::trans_fh_ef;
 	}
 	elsif ($output_file_stdout) {
-		if (!open(OUTOFH, '>>'.$output_file_stdout)) {
+		if (!open(OUTOFH, '>'.$output_file_stdout)) {
 			ptrans(12, 'Unable to open ' . $output_file_stdout . ' for writing');
 			exit(1);
 		}
