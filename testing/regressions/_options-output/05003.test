@@ -1,0 +1,9 @@
+# Generated Mon Dec 10 21:59:43 2018 by ./gen-tests.pl '.' '1550' 'output-file' '%OUTDIR%/%TESTID%.out' '/foo/bar/baz.t'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.out
+
+title: output-file-stderr truncates existing file
+
+test action: MERGE %OUTDIR%/%TESTID%.out string:'This is some already existing text\n'
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver" \
+    --output-file-stderr %OUTDIR%/%TESTID%.out
