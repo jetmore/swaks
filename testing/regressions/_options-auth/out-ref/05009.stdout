@@ -1,6 +1,4 @@
-spawn %SWAKS_COMMAND% --dump AUTH --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server host1.nodns.test.swaks.net --auth --auth-user CMDLINE-USER
-Password: PROMPT-PASSWORD
-Authentication Info:
+Password: Authentication Info:
   auth           = required
   username       = 'CMDLINE-USER'
   password       = 'PROMPT-PASSWORD'

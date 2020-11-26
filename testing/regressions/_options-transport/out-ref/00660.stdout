@@ -1,5 +1,3 @@
-spawn %SWAKS_COMMAND% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --config /path/to/OUTDIR/swaksrc-00660
-Pipe: /path/to/command
-Transport Info:
+Pipe: Transport Info:
   type            = pipe
   process         = /path/to/command

@@ -379,7 +379,7 @@ sub runAction {
 		my $stdinFile  = (grep(/^STDIN:/, @args))[0];
 		@args          = grep(!/^STDIN:/, @args);
 
-		$stdinFile =~ s/^STDIN://g;
+		$stdinFile =~ s/^STDIN://;
 		captureOutput(\@args, $stdoutFile, $stderrFile, $stdinFile);
 	}
 	elsif ($verb eq 'DEFINE') {
@@ -597,23 +597,35 @@ sub readTestFile {
 					map { push(@{$obj->{'test result'}}, "COMPARE_FILE " . catfile('%REFDIR%', $_) .' ' . catfile('%OUTDIR%', $_)); } (@filesSorted);
 				}
 				elsif ($type eq 'INTERACT') {
-					if ($^O eq 'MSWin32') {
-						$obj->{'skip'} ||= "INTERACTive testing not currently supported on windows";
-					}
-					my $file     = catfile('%OUTDIR%', '%TESTID%.expect');
-					push(@{$obj->{'pre action'}}, "REMOVE_FILE $file");
-
-					my $cmd       = shift(@files);
-					my $expectStr = "MERGE $file string:'spawn $cmd\\n' ";
+					# my $infile = catfile('%OUTDIR%', '%TESTID%.stdin');
+					# push(@{$obj->{'pre action'}}, "REMOVE_FILE $infile");
+					my $stdin = "STDIN:LITERAL:";
+					my $cmd   = shift(@files);
 					while (scalar(@files)) {
 						my $expect   = shift(@files);
 						my $response = shift(@files);
-						$expectStr  .= "string:'expect \"$expect\"\\n' string:'send -- \"$response\\r\"\\n' ";
+						$stdin .= "$response\\n";
 					}
-					$expectStr .= "string:'interact\\n'";
+					unshift(@{$obj->{'test action'}}, "CMD_CAPTURE $cmd '$stdin'");
 
-					push(@{$obj->{'pre action'}}, $expectStr);
-					unshift(@{$obj->{'test action'}}, "CMD_CAPTURE expect $file");
+
+					# if ($^O eq 'MSWin32') {
+					# 	$obj->{'skip'} ||= "INTERACTive testing not currently supported on windows";
+					# }
+					# my $file     = catfile('%OUTDIR%', '%TESTID%.expect');
+					# push(@{$obj->{'pre action'}}, "REMOVE_FILE $file");
+
+					# my $cmd       = shift(@files);
+					# my $expectStr = "MERGE $file string:'spawn $cmd\\n' ";
+					# while (scalar(@files)) {
+					# 	my $expect   = shift(@files);
+					# 	my $response = shift(@files);
+					# 	$expectStr  .= "string:'expect \"$expect\"\\n' string:'send -- \"$response\\r\"\\n' ";
+					# }
+					# $expectStr .= "string:'interact\\n'";
+
+					# push(@{$obj->{'pre action'}}, $expectStr);
+					# unshift(@{$obj->{'test action'}}, "CMD_CAPTURE expect $file");
 				}
 				else {
 					die "unknown 'auto' type $type\n";
@@ -647,9 +659,15 @@ sub captureOutput {
 
 	my $stdin = '';
 	if ($inFile) {
-		open(I, "<$inFile") || die "Can't open inFile $inFile for reading: $!\n";
-		$stdin = join('', <I>);
-		close(I);
+		if ($inFile =~ s/^LITERAL://) {
+			$stdin = $inFile;
+			$stdin =~ s/\\n/\n/g;
+		}
+		else {
+			open(I, "<$inFile") || die "Can't open inFile $inFile for reading: $!\n";
+			$stdin = join('', <I>);
+			close(I);
+		}
 	}
 
 	my($stdout, $stderr, @rest) = Capture::Tiny::capture {

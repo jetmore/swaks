@@ -110,7 +110,8 @@ Action verbs:
 		same as CMD but stdout and stderr will be automatically captured to %OUTDIR%/%TESTID%.stdout and .stderr. Because these
 		file paths are static, this is really only usable once per test run. Room for improvement there...
 		Note that if the execute string contains a component that looks like STDIN:/path/to/file.txt, the executed command will
-		have its STDIN attached to /path/to/file.txt
+		have its STDIN attached to /path/to/file.txt.  Similarly, "STDIN:LITERAL:some\ntext\n" will send "some\ntext\n" to
+		the executed command's STDIN, with the '\'+'n' characters replaces with real newlines.
 
 	CREATE_FILE FILE
 		touch a file (but only if FILE does not already exist). mostly useful for making sure test files exist even if there's

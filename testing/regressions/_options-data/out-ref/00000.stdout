@@ -1,10 +1,8 @@
-spawn %SWAKS_COMMAND% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server ser.ver --d
-Data: Date: C%DATE%%NEWLINE%%NEWLINE%C%BODY%
-DATA Info:
+Data: DATA Info:
   data = <<.
-Date: CWed, 03 Nov 1999 11:24:29 -0500
-
-CThis is a test mailing
-
-
+Date: CWed, 03 Nov 1999 11:24:29 -0500
+
+CThis is a test mailing
+
+
 .

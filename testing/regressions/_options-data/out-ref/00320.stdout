@@ -1,15 +1,13 @@
-spawn %SWAKS_COMMAND% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server ser.ver
-Body: CUSTOM BODY
-DATA Info:
+Body: DATA Info:
   data = <<.
-Date: Wed, 03 Nov 1999 11:24:29 -0500
-To: user@host1.nodns.test.swaks.net
-From: recip@host1.nodns.test.swaks.net
-Subject: test Wed, 03 Nov 1999 11:24:29 -0500
-Message-Id: <19991103112429.047942@localhost>
-X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
-
-CUSTOM BODY
-
-
+Date: Wed, 03 Nov 1999 11:24:29 -0500
+To: user@host1.nodns.test.swaks.net
+From: recip@host1.nodns.test.swaks.net
+Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+Message-Id: <19991103112429.047942@localhost>
+X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+
+CUSTOM BODY
+
+
 .

@@ -1,6 +1,4 @@
-spawn %SWAKS_COMMAND% --dump PROTOCOL --to sender@host1.nodns.test.swaks.net --server ser.ver --config /path/to/OUTDIR/swaksrc-00110
-From: from@bar.com
-Protocol Info:
+From: Protocol Info:
   protocol        = esmtp
   helo            = LOCAL_HOST_NAME
   from            = from@bar.com

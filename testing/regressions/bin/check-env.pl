@@ -32,18 +32,13 @@ else {
 	print "NOK perl must be installed and in your path\n";
 }
 
-if (checkmod('Capture::Tiny')) {
-	print "ok  Capture::Tiny\n";
-}
-else {
-	print "NOK Capture::Tiny perl module must be installed\n";
-}
-
-if (checkmod('Text::Diff')) {
-	print "ok  Text::Diff\n";
-}
-else {
-	print "NOK Text::Diff perl module must be installed\n";
+foreach my $module ('Capture::Tiny', 'Text::Diff') {
+	if (checkmod($module)) {
+		print "ok  $module\n";
+	}
+	else {
+		print "NOK $module perl module must be installed\n";
+	}
 }
 
 my $swaksScript;
@@ -62,15 +57,6 @@ elsif (my $swaks = findpath('swaks')) {
 }
 else {
 	print "NOK swaks not found in either TEST_SWAKS or PATH\n";
-}
-
-if ($^O ne 'MSWin32') {
-	if (my $expect = findpath('expect')) {
-		print "ok  expect ($expect)\n";
-	}
-	else {
-		print "NOK expect must be installed and in your path\n";
-	}
 }
 
 # I believe this is no longer needed after switch to Pod::Usage

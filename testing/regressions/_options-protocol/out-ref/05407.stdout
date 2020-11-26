@@ -1,7 +1,4 @@
-spawn %SWAKS_COMMAND% --dump AUTH,TLS,TRANSPORT,PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo hstring --server ser.ver --protocol esmtpsa
-Username: test-username
-Password: test-password
-Transport Info:
+Username: Password: Transport Info:
   type            = socket-inet
   inet protocol   = any
   server          = ser.ver

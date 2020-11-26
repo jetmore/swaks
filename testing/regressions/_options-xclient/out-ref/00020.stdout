@@ -1,6 +1,4 @@
-spawn %SWAKS_COMMAND% --dump XCLIENT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server ser.ver
-XCLIENT addr: 1.1.1.1
-XCLIENT Info:
+XCLIENT addr: XCLIENT Info:
   xclient         = required
   no_verify       = FALSE
   before starttls = FALSE

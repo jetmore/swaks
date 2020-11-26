@@ -1,6 +1,4 @@
-spawn %SWAKS_COMMAND% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser ver
-Interface: 9.9.9.9
-Transport Info:
+Interface: Transport Info:
   type            = socket-inet
   inet protocol   = any
   server          = ser ver
