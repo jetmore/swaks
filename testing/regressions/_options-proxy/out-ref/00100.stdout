@@ -1,6 +1,4 @@
-spawn %SWAKS_COMMAND% --dump PROXY --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser ver --proxy-source 9.9.9.9 --proxy-source-port 9999 --proxy-dest 8.8.8.8 --proxy-dest-port 8888 --proxy-family
-PROXY family: TCP4
-PROXY Info:
+PROXY family: PROXY Info:
   proxy       = yes
   version     = 1
   family      = TCP4

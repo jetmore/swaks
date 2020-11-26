@@ -179,6 +179,46 @@ sub saveResult {
 	}
 }
 
+sub genDiffs {
+	my $baseDiffFile = shift;
+	my $refFile      = shift;
+	my $dynFile      = shift;
+	my $leDiffFile   = $baseDiffFile . '.showle';
+	my $noleDiffFile = $baseDiffFile . '.nole';
+
+	unlink($baseDiffFile, $leDiffFile, $noleDiffFile);
+
+	my $diff = Text::Diff::diff($refFile, $dynFile, { STYLE => 'Unified' });
+
+	if (!$diff) {
+		return;
+	}
+
+	open(O, ">$baseDiffFile") || die "Can't write to $baseDiffFile: $!\n";
+	print O $diff;
+	close(O);
+
+	$diff =~ s|\r|\\r|g;
+	$diff =~ s|\n|\\n\n|g;
+	open(O, ">$leDiffFile") || die "Can't write to $leDiffFile: $!\n";
+	print O $diff;
+	close(O);
+
+	open(I, "<$refFile");
+	my $refData = join('', <I>);
+	close(I);
+	open(I, "<$dynFile");
+	my $dynData = join('', <I>);
+	close(I);
+
+	$refData =~ s|\r||g;
+	$dynData =~ s|\r||g;
+
+	open(O, ">$noleDiffFile") || die "Can't write to $noleDiffFile: $!\n";
+	print O Text::Diff::diff(\$refData, \$dynData, { STYLE => 'Unified' });
+	close(O);
+}
+
 
 sub runResult {
 	my $testObj = shift;
@@ -198,14 +238,9 @@ sub runResult {
 			if (-f $args[0] && -f $args[1]) {
 				my $diffFile     = catfile($tokens->{'%OUTDIR%'}, (splitpath($args[0]))[2] . '.diff');
 				unlink($diffFile);
+				genDiffs($diffFile, $args[0], $args[1]);
 
-				my $diff = Text::Diff::diff($args[0], $args[1], { STYLE => 'Unified' });
-				if ($diff) {
-					# my $diffFile = $tokens->{'%OUTDIR%'} . '/' . $tokens->{'%TESTID%'} . '.diff';
-					open(O, ">$diffFile") || die "Can't write to $diffFile: $!\n";
-					print O $diff;
-					close(O);
-
+				if (-e $diffFile) {
 					if (!$opts->{'headless'}) {
 						INTERACT:
 						while (1) {
@@ -213,7 +248,7 @@ sub runResult {
 							      "DIFF:   $args[0], $args[1]\n",
 							      ($testObj->{title} ? "TITLE:  $testObj->{title}\n" : ''),
 							      "ACTION: ", $testObj->{'test action'}[0], "\n",
-							      "(i)gnore, review (d)iff, (e)dit test, (r)erun test, (s)kip test, (a)ccept new results, (q)uit: ";
+							      "(i)gnore file, review (d)iff ((w)ith or with(o)ut line endings), (e)dit test, (r)erun test, (s)kip test, (a)ccept new results, (q)uit: ";
 
 							# read a single character w/o requiring user to hit enter
 							ReadMode 'cbreak';
@@ -225,7 +260,11 @@ sub runResult {
 								# ignore is to ignore this specific file failure
 								last INTERACT;
 							}
-							elsif ($input eq 'd') {
+							elsif ($input eq 'd' || $input eq 'w' || $input eq 'o') {
+								my $showFile = $diffFile;
+								$showFile = "$diffFile.showle" if ($input eq 'w');
+								$showFile = "$diffFile.nole" if ($input eq 'o');
+
 								my @cmds = ('intcat');
 								if (length($ENV{'PAGER'})) {
 									unshift(@cmds, $ENV{'PAGER'});
@@ -237,16 +276,16 @@ sub runResult {
 								CMD:
 								foreach my $cmd (@cmds) {
 									if ($cmd eq 'intcat') {
-										open(I, $diffFile) || print "ERROR: unable to open $diffFile: $!\n";
+										open(I, $showFile) || print "ERROR: unable to open $showFile: $!\n";
 										while (<I>) {
 											print;
 										}
 										close(I);
 									}
 									else {
-										debug('exec', "$cmd $diffFile");
-										if (system($cmd, $diffFile) == -1) {
-											print "ERROR: unable to execute '$cmd $diffFile': $!\n";
+										debug('exec', "$cmd $showFile");
+										if (system($cmd, $showFile) == -1) {
+											print "ERROR: unable to execute '$cmd $showFile': $!\n";
 											next CMD;
 										}
 										last CMD;
@@ -340,7 +379,7 @@ sub runAction {
 		my $stdinFile  = (grep(/^STDIN:/, @args))[0];
 		@args          = grep(!/^STDIN:/, @args);
 
-		$stdinFile =~ s/^STDIN://g;
+		$stdinFile =~ s/^STDIN://;
 		captureOutput(\@args, $stdoutFile, $stderrFile, $stdinFile);
 	}
 	elsif ($verb eq 'DEFINE') {
@@ -558,23 +597,35 @@ sub readTestFile {
 					map { push(@{$obj->{'test result'}}, "COMPARE_FILE " . catfile('%REFDIR%', $_) .' ' . catfile('%OUTDIR%', $_)); } (@filesSorted);
 				}
 				elsif ($type eq 'INTERACT') {
-					if ($^O eq 'MSWin32') {
-						$obj->{'skip'} ||= "INTERACTive testing not currently supported on windows";
-					}
-					my $file     = catfile('%OUTDIR%', '%TESTID%.expect');
-					push(@{$obj->{'pre action'}}, "REMOVE_FILE $file");
-
-					my $cmd       = shift(@files);
-					my $expectStr = "MERGE $file string:'spawn $cmd\\n' ";
+					# my $infile = catfile('%OUTDIR%', '%TESTID%.stdin');
+					# push(@{$obj->{'pre action'}}, "REMOVE_FILE $infile");
+					my $stdin = "STDIN:LITERAL:";
+					my $cmd   = shift(@files);
 					while (scalar(@files)) {
 						my $expect   = shift(@files);
 						my $response = shift(@files);
-						$expectStr  .= "string:'expect \"$expect\"\\n' string:'send -- \"$response\\r\"\\n' ";
+						$stdin .= "$response\\n";
 					}
-					$expectStr .= "string:'interact\\n'";
+					unshift(@{$obj->{'test action'}}, "CMD_CAPTURE $cmd '$stdin'");
 
-					push(@{$obj->{'pre action'}}, $expectStr);
-					unshift(@{$obj->{'test action'}}, "CMD_CAPTURE expect $file");
+
+					# if ($^O eq 'MSWin32') {
+					# 	$obj->{'skip'} ||= "INTERACTive testing not currently supported on windows";
+					# }
+					# my $file     = catfile('%OUTDIR%', '%TESTID%.expect');
+					# push(@{$obj->{'pre action'}}, "REMOVE_FILE $file");
+
+					# my $cmd       = shift(@files);
+					# my $expectStr = "MERGE $file string:'spawn $cmd\\n' ";
+					# while (scalar(@files)) {
+					# 	my $expect   = shift(@files);
+					# 	my $response = shift(@files);
+					# 	$expectStr  .= "string:'expect \"$expect\"\\n' string:'send -- \"$response\\r\"\\n' ";
+					# }
+					# $expectStr .= "string:'interact\\n'";
+
+					# push(@{$obj->{'pre action'}}, $expectStr);
+					# unshift(@{$obj->{'test action'}}, "CMD_CAPTURE expect $file");
 				}
 				else {
 					die "unknown 'auto' type $type\n";
@@ -608,9 +659,15 @@ sub captureOutput {
 
 	my $stdin = '';
 	if ($inFile) {
-		open(I, "<$inFile") || die "Can't open inFile $inFile for reading: $!\n";
-		$stdin = join('', <I>);
-		close(I);
+		if ($inFile =~ s/^LITERAL://) {
+			$stdin = $inFile;
+			$stdin =~ s/\\n/\n/g;
+		}
+		else {
+			open(I, "<$inFile") || die "Can't open inFile $inFile for reading: $!\n";
+			$stdin = join('', <I>);
+			close(I);
+		}
 	}
 
 	my($stdout, $stderr, @rest) = Capture::Tiny::capture {

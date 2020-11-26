@@ -5,4 +5,4 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 title: data, config, no arg
 
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'data'
-auto: INTERACT '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --config %OUTDIR%/swaksrc-%TESTID%' 'Data:' 'Date: C%DATE%%NEWLINE%%NEWLINE%C%BODY%'
+auto: INTERACT '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --config %OUTDIR%/swaksrc-%TESTID%' 'Data:' 'Date: C..DATE..%NEWLINE%%NEWLINE%C%BODY%'

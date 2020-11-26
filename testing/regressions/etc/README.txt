@@ -19,11 +19,7 @@ environment/tooling:
 	perl must be in your path.
 	the Capture::Tiny perl module needs to be installed
 	the Text::Diff perl module needs to be installed
-	expect is needed in the current PATH (apt-get install expect, brew install expect, etc)
-		- except on Windows, see below
 	all "optional" perl modules must be installed to run the test suite. (see Authen::NTLM note below)
-
-
 
 --
 
@@ -40,9 +36,6 @@ This will load a fake version of the module that will make swaks happy for the p
 --
 
 Windows
-
-At the moment, no interactive tests are run.  They currently require expect which seems to be a bear to install on
-Windows.  All tests with INTERACTIVE in them are set to skip by run-tests.pl
 
 PAGER can be set if there's a useable pager, but because it's not obvious which pager to use (more and type are both CMD.exe builtins),
 check-env.pl won't complain if it's not set on Windows

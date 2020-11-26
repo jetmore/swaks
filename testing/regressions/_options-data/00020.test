@@ -5,4 +5,4 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 title: d, env var, no arg
 
 pre action: SET_ENV SWAKS_OPT_d
-auto: INTERACT '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"' 'Data:' 'Date: C%DATE%%NEWLINE%%NEWLINE%C%BODY%'
+auto: INTERACT '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"' 'Data:' 'Date: C..DATE..%NEWLINE%%NEWLINE%C%BODY%'

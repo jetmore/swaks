@@ -1,6 +1,4 @@
-spawn %SWAKS_COMMAND% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo helo-string --server ser.ver --config /path/to/OUTDIR/swaksrc-00560
-Timeout: 444
-Protocol Info:
+Timeout: Protocol Info:
   protocol        = esmtp
   helo            = helo-string
   from            = sender@host2.nodns.test.swaks.net
