@@ -260,7 +260,9 @@
   043 -6                       --local-interface <ipv4> fails
   044 --server <ipv4>          --local-interface <ipv6> fails
   045 --server <ipv6>          --local-interface <ipv4> fails
-
+-
+  050 --server ip:port1 --port port2 -- port2 wins
+  051 --local-interface ip:port1 --local-port port2 -- port2 wins
 
 
 ./gen-tests.pl \

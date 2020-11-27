@@ -961,3 +961,5 @@
 * 20201126 Turn releases back on and add release for v20201024.0 (#13)
 * 20201126 --output-file (and -stdout and -stderr) now truncate the output
            file if it already existed.
+* 20201126 --port and --local-port should override a port set in --server or
+           --local-port.
