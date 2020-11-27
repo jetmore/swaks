@@ -3543,30 +3543,35 @@ sub encode_mime_part {
 }
 
 sub parse_server {
-	my $server = shift;
-	my $port   = shift;
+	my $server       = shift;
+	my $port         = shift;
+	my $returnServer = $server;
+	my $returnPort   = $port;
 
 	if ($server =~ m|^\[([^\]]+)\]:(.*)$|) {
 		# [1.2.3.4]:25
 		# [hostname]:25
 		# [1:2::3]:25
-		return($1, $2);
+		$returnServer = $1;
+		$returnPort   = $2;
 	} elsif ($server =~ m|^([^:]+):([^:]+)$|) {
 		# 1.2.3.4:25
 		# hostname:25
-		return($1, $2);
+		$returnServer = $1;
+		$returnPort   = $2;
 	} elsif ($server =~ m|^\[?([^/\]]*)\]?/(\w+)$|) {
 		# 1.2.3.4/25   [1.2.3.4]/25
 		# hostname/25  [hostname]/25
 		# 1:2::3/25    [1:2::3]/25
-		return($1, $2);
+		$returnServer = $1;
+		$returnPort   = $2;
 	} elsif ($server =~ m|^\[([^\]]+)\]$|) {
 		# [1.2.3.4]
 		# [hostname]
 		# [1:2::3]
-		return($1, $port);
+		$returnServer = $1;
 	}
-	return($server, $port);
+	return($returnServer, length($port) ? $port : $returnPort);
 }
 
 sub get_running_state {

@@ -243,7 +243,7 @@ IPv6 is supported when the L<IO::Socket::INET6> module is present.
 
 =item -s, --server [<target-server>[:<port>]]
 
-Explicitly tell Swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the L<Net::DNS> module.  If L<Net::DNS> is not available Swaks will attempt to connect to localhost to deliver.  The target port can optionally be set here.  Supported formats for this include SERVER:PORT (supporting names and IPv4 addresses); [SERVER]:PORT and SERVER/PORT (supporting names, IPv4 and IPv6 addresses).  See also C<--copy-routing>. (Arg-Required, From-Prompt)
+Explicitly tell Swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the L<Net::DNS> module.  If L<Net::DNS> is not available Swaks will attempt to connect to localhost to deliver.  The target port can optionally be set here.  Supported formats for this include SERVER:PORT (supporting names and IPv4 addresses); [SERVER]:PORT and SERVER/PORT (supporting names, IPv4 and IPv6 addresses).  A port set via this option will only be used if the C<--port> option is not used.  See also C<--copy-routing>. (Arg-Required, From-Prompt)
 
 =item -p, --port [<port>]
 
@@ -251,7 +251,7 @@ Specify which TCP port on the target is to be used, or prompt if no argument is 
 
 =item -li, --local-interface [<local-interface>[:<port>]]
 
-Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose the local interface.  See C<--server> for additional comments on :<port> format. (Arg-Required, From-Prompt)
+Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose the local interface.  See C<--server> for additional comments on :<port> format.  A port set via this option will only be used if the C<--port> option is not used. (Arg-Required, From-Prompt)
 
 =item -lp, --local-port, --lport [<port>]
 
