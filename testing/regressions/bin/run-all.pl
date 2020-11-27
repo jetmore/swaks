@@ -16,11 +16,13 @@ use Getopt::Long;
 my $opts = {};
 GetOptions($opts, 'errors|e!', 'winnow|w!') || die "Couldn't understand options\n";
 
+my $pattern = shift || '^_';
+
 my $home     = "$Bin/..";
 my $runTests = "$home/bin/run-tests.pl";
 
 opendir(D, $home) || die "Couldn't opendir $home: $!\n";
-my @tests = grep /^_/, readdir(D);
+my @tests = grep /$pattern/, readdir(D);
 closedir(D);
 
 my $vard = "$home/var";

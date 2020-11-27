@@ -15,7 +15,7 @@ use File::Copy qw();
 use File::Spec::Functions qw(:ALL);
 use FindBin qw($Bin);
 use Getopt::Long;
-# use IPC::Open3;
+use Proc::Background;
 use Sys::Hostname;
 use Term::ReadKey;
 use Text::ParseWords;
@@ -36,7 +36,9 @@ $testDir    =~ canonpath($testDir); # remove trailing slashes
 my $testRe  =  shift || '.'; # pattern to match test IDs against. Allows to run subset of tests by specifying, eg, '005.'
 my $outDir  =  catfile($testDir, "out-dyn");
 my $refDir  =  catfile($testDir, "out-ref");
+my $certDir =  catfile($Bin, '..', '..', 'certs');
 
+my @forks        = ();
 my $customTokens = {};
 my $tokens       = {
 	'global' => {
@@ -44,6 +46,7 @@ my $tokens       = {
 		'%TESTDIR%'  => $testDir,
 		'%OUTDIR%'   => $outDir,
 		'%REFDIR%'   => $refDir,
+		'%CERTDIR%'  => $certDir,
 		'%HOSTNAME%' => get_hostname(),
 		'%USERNAME%' => get_username(),
 	},
@@ -54,6 +57,12 @@ if ($ENV{TEST_SWAKS}) {
 		$ENV{TEST_SWAKS} = rel2abs($ENV{TEST_SWAKS});
 	}
 	$tokens->{'global'}{'%SWAKS%'} = $ENV{TEST_SWAKS};
+}
+if ($ENV{TEST_SERVER}) {
+	if ($ENV{TEST_SERVER} =~ m|[/\\]|) {
+		$ENV{TEST_SERVER} = rel2abs($ENV{TEST_SERVER});
+	}
+	$tokens->{'global'}{'%TEST_SERVER%'} = $ENV{TEST_SERVER};
 }
 
 if (!-d $testDir) {
@@ -120,6 +129,7 @@ sub runTest {
 	my $outDir    = shift;
 	my $obj       = shift;
 	my $allTokens = {};
+	@forks        = ();
 
 	# set local tokens (currently only %TESTID% can be set)
 	$tokens->{'local'} = { '%TESTID%' => $obj->{'id'} }; # reset the local tokens and set id to the test ID
@@ -164,6 +174,10 @@ sub runTest {
 		my $failed = runResult($obj, $allTokens, $obj->{'test result'});
 		my $result = "$testDir/$obj->{id}: " . ($failed ? "FAIL ($failed)" : 'PASS');
 		saveResult($result);
+	}
+
+	foreach my $proc (@forks) {
+		$proc->die();
 	}
 }
 
@@ -382,6 +396,16 @@ sub runAction {
 		$stdinFile =~ s/^STDIN://;
 		captureOutput(\@args, $stdoutFile, $stderrFile, $stdinFile);
 	}
+	elsif ($verb eq 'FORK') {
+		$args[0] =~ s|/|\\|g if ($^O eq 'MSWin32');
+		debug('FORK', join('; ', @args));
+		debug('exec', join(' ', map { "'$_'" } @args));
+		my $proc = Proc::Background->new(@args);
+		if (!$proc->alive()) {
+			die "Unable to FORK @args: $!($@)\n";
+		}
+		push(@forks, $proc);
+	}
 	elsif ($verb eq 'DEFINE') {
 		debug('DEFINE', join('; ', @args));
 		$customTokens->{$args[0]} = $args[1];
@@ -475,6 +499,7 @@ sub runAction {
 				}
 			}
 			munge_general(\@lines, '.?', quotemeta($tokens->{'%SWAKS%'}), '%SWAKS_COMMAND%');
+			munge_general(\@lines, '.?', quotemeta($tokens->{'%TEST_SERVER%'}), '%TEST_SERVER%');
 
 			open(O, ">$file") || die "Couldn't write to $file: $!\n";
 			print O join('', @lines);
@@ -863,14 +888,27 @@ sub munge_open2_failure {
 	munge_general($lines, 'open2: exec of', 'line \d+', 'line ###');
 }
 
+sub munge_tls_cipher {
+	my $lines = shift;
+
+	munge_general($lines, 'TLS started with cipher', 'TLS started with cipher .*', 'TLS started with cipher VERSION:CIPHER:BITS');
+}
+
+sub munge_time_lapse {
+	my $lines = shift;
+
+	munge_general($lines, '^=== response in', '^=== response in \d+\.\d+s', '=== response in FLOATs');
+	munge_general($lines, '^=== response in', '^=== response in \d+s', '=== response in INTs');
+}
+
 # this is just a convenience so I can add new munges without having to manually apply them to all test files
 sub munge_standard {
 	my $lines    = shift;
 	my $consider = shift || '.?';
 
 	munge_globs($lines);
-	munge_dates($lines, '^(Subject|Date):');
-	munge_message_ids($lines, '^Message-Id:');
+	munge_dates($lines, '(Subject|Date):');
+	munge_message_ids($lines, 'Message-Id:');
 	munge_version($lines, 'X-Mailer');
 	munge_mime_boundaries($lines);
 	munge_paths($lines);
@@ -879,4 +917,6 @@ sub munge_standard {
 	munge_copyright($lines);
 	munge_tls_available_protocols($lines);
 	munge_open2_failure($lines);
+	munge_tls_cipher($lines);
+	munge_time_lapse($lines);
 }

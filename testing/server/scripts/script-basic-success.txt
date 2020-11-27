@@ -3,17 +3,18 @@
 # ./smtp-server.pl -p 8026 -f scripts/basic-successful-email.txt
 # ./swaks -s 127.0.0.1 -p 8026 -t foo@example.com
 
-include("$Bin/scripts/part-banner-standard.txt");
+include("$scriptDir/part-0000-connect-standard.txt");
 
-include("$Bin/scripts/part-ehlo-basic.txt");
+include("$scriptDir/part-0100-ehlo-basic.txt");
 
-include("$Bin/scripts/part-mail-basic.txt");
+include("$scriptDir/part-1000-mail-basic.txt");
 
 # single recipient
-include("$Bin/scripts/part-rcpt-basic.txt");
+include("$scriptDir/part-1100-rcpt-basic-accept.txt");
 
 # DATA command and the actual body
-include("$Bin/scripts/part-data.txt");
+include("$scriptDir/part-2500-data-accept-basic.txt");
 
 # receive the QUIT and acknowledge it
-include("$Bin/scripts/part-close.txt");
+include("$scriptDir/part-3000-shutdown-accept.txt");
+
