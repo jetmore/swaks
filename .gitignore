@@ -30,6 +30,8 @@ tmp/*
 !testing/certs/*.crt
 !testing/certs/*.pem
 
+testing/mta/*-install
+
 # sublime project files
 *.sublime-project
 *.sublime-workspace
