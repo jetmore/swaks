@@ -963,3 +963,4 @@
            file if it already existed.
 * 20201126 --port and --local-port should override a port set in --server or
            --local-port.
+* 20201222 Add transaction-level tests

@@ -1,0 +1,17 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+
+
+test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver \
+  --pipeline \
+  --pipe '%TEST_SERVER% --silent --domain pipe \
+  part-0000-connect-standard.txt \
+  part-0101-ehlo-all.txt \
+  part-1010-mail-pipeline-read.txt \
+  part-1110-rcpt-pipeline-read.txt \
+  part-2510-data-pipeline-data-read.txt \
+  part-1012-mail-pipeline-respond-failure.txt \
+  part-1113-rcpt-pipeline-respond-failure-cascade.txt \
+  part-2513-data-pipeline-data-respond-failure-cascade.txt \
+  part-3000-shutdown-accept.txt \
+  '
