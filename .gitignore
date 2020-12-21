@@ -19,10 +19,16 @@ Thumbs.db
 *.tmp
 *.log
 *.lock
+tmp/*
 
 *.csr
 *.key
 *.crt
+*.pem
+!testing/certs/*.csr
+!testing/certs/*.key
+!testing/certs/*.crt
+!testing/certs/*.pem
 
 # sublime project files
 *.sublime-project
