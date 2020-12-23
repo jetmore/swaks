@@ -1,0 +1,9 @@
+debian:
+
+sudo apt-get install libpcre3-dev
+sudo apt-get install libdb5.3-dev
+sudo apt-get install libssl-dev
+sudo apt-get install libsasl2-dev
+sudo apt-get install libidn2-dev
+sudo apt-get install libidn11-dev
+

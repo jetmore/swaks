@@ -1,0 +1,8 @@
+=== Trying pipe to %TEST_SERVER% --silent --domain pipe   part-0201-intialize-tls.txt   part-0000-connect-standard.txt   part-3000-shutdown-accept.txt   ...
+=== Connected to %TEST_SERVER% --silent --domain pipe   part-0201-intialize-tls.txt   part-0000-connect-standard.txt   part-3000-shutdown-accept.txt   .
+=== TLS started with cipher VERSION:CIPHER:BITS
+=== TLS no local certificate set
+=== TLS peer DN="/C=US/ST=Indiana/O=Swaks Development/CN=node.example.com/emailAddress=proj-swaks@jetmore.net"
+ ~> QUIT
+<~* 220 SERVER ESMTP ready
+=== Connection closed with child process.

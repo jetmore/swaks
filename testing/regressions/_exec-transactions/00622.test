@@ -1,0 +1,13 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver \
+  --auth --auth-optional --auth-user validuser --auth-password validpassword \
+   --pipe '%TEST_SERVER% --silent --domain pipe \
+  part-0000-connect-standard.txt \
+  part-0100-ehlo-basic.txt \
+  part-1000-mail-basic.txt \
+  part-1100-rcpt-basic-accept.txt \
+  part-2500-data-accept-basic.txt \
+  part-3000-shutdown-accept.txt \
+  '
+

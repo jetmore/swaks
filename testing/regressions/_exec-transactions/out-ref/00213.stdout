@@ -1,0 +1,80 @@
+=== Trying pipe to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   part-0101-ehlo-all.txt   part-0200-starttls-basic.txt   part-0101-ehlo-all.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   ...
+=== Connected to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   part-0101-ehlo-all.txt   part-0200-starttls-basic.txt   part-0101-ehlo-all.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   .
+<-  220 SERVER ESMTP ready
+ -> EHLO hserver
+<-  250-SERVER Hello Server [1.1.1.1]
+<-  250-STARTTLS
+<-  250-PIPELINING
+<-  250-XCLIENT ADDR NAME PORT PROTO DESTADDR DESTPORT HELO LOGIN REVERSE_NAME
+<-  250-PRDR
+<-  250-AUTH CRAM-MD5
+<-  250-AUTH CRAM-SHA1
+<-  250-AUTH PLAIN
+<-  250-AUTH LOGIN
+<-  250-AUTH NTLM
+<-  250-AUTH DIGEST-MD5
+<-  250-AUTH=login
+<-  250 HELP
+ -> STARTTLS
+<-  220 TLS go ahead
+=== TLS started with cipher VERSION:CIPHER:BITS
+=== TLS no local certificate set
+=== TLS peer DN="/C=US/ST=Indiana/O=Swaks Development/CN=node.example.com/emailAddress=proj-swaks@jetmore.net"
+=== -----BEGIN CERTIFICATE-----
+=== MIID3TCCAsWgAwIBAgIUFQU5NT2EO9gtC5YP96Fa9d8vFTcwDQYJKoZIhvcNAQEL
+=== BQAwejELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB0luZGlhbmExGjAYBgNVBAoMEVN3
+=== YWtzIERldmVsb3BtZW50MRYwFAYDVQQDDA1Td2FrcyBSb290IENBMSUwIwYJKoZI
+=== hvcNAQkBFhZwcm9qLXN3YWtzQGpldG1vcmUubmV0MB4XDTIwMTIxMzE2MzExMFoX
+=== DTMwMTAyMjE2MzExMFowfTELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB0luZGlhbmEx
+=== GjAYBgNVBAoMEVN3YWtzIERldmVsb3BtZW50MRkwFwYDVQQDDBBub2RlLmV4YW1w
+=== bGUuY29tMSUwIwYJKoZIhvcNAQkBFhZwcm9qLXN3YWtzQGpldG1vcmUubmV0MIIB
+=== IjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtk8opJgeWgaE7EugTv0lO10Z
+=== dG2IgOF/9oHgy4VE1ViL2vKkng87zNju6B7cZXTh+UmIj6nKD31FTZlMvluD83BP
+=== nksPSrlGa7+5Tx5AgCHewQYS2G8dkxHUEB867AkWfOQVAdNPDd4czEwUqjWkPJhp
+=== tIveT+yxv9jVwcf5ggjJ9NVu6SF6sflpd/QwPcEObRIEMyG/ARKLrbmBZibrJSB6
+=== XuSEWCTM8nml1OfpO6on1kd1+2a9Rtt0keCg7ydRBS4xDfKLYvgsNdSiRCrfEMhM
+=== wXxKyGx/v8HcGbOCECbEZBCoN+pAwLi+EUhBUndrA05AByZdzLokKoYq6KqyBwID
+=== AQABo1gwVjAfBgNVHSMEGDAWgBQK0ikrqvXVxOvKWIHtPtiIFSzsfjAJBgNVHRME
+=== AjAAMAsGA1UdDwQEAwIE8DAbBgNVHREEFDASghBub2RlLmV4YW1wbGUuY29tMA0G
+=== CSqGSIb3DQEBCwUAA4IBAQA54XEux2wDyyMPHJqjgMIYsAAetS+fzgJxlEIDVnPl
+=== 4SA6zwLLQc1PgpzyVo2LOwUc/zpX+6aMrFrMu5wCEAC0S2/pBXn2lJPXCW6T1dK8
+=== h//a6Ceup9OBeuTMhtyNLUa7bqnW1iNsK9V0ur7jlClNNAHZ+Q1zYJjBudMHLTuT
+=== 1wAsYnWK2cTKqpOjg9uiZ1NQP3EpOvuvUAmo8TCMDBD4KNtAj8LotlwengfolChG
+=== Rg/SXzYMtMv1nlbJXi62OtLqj/IeYTTQ5OfARVHX3FBlwY0VIjHFYKNAcUtRRBfm
+=== ZRps3SucdulE1rliU1S6PNOrBhpvns8wqswyAAx8b3y4
+=== -----END CERTIFICATE-----
+ ~> EHLO hserver
+<~  250-SERVER Hello Server [1.1.1.1]
+<~  250-STARTTLS
+<~  250-PIPELINING
+<~  250-XCLIENT ADDR NAME PORT PROTO DESTADDR DESTPORT HELO LOGIN REVERSE_NAME
+<~  250-PRDR
+<~  250-AUTH CRAM-MD5
+<~  250-AUTH CRAM-SHA1
+<~  250-AUTH PLAIN
+<~  250-AUTH LOGIN
+<~  250-AUTH NTLM
+<~  250-AUTH DIGEST-MD5
+<~  250-AUTH=login
+<~  250 HELP
+ ~> MAIL FROM:<recip@host1.nodns.test.swaks.net>
+<~  250 Accepted
+ ~> RCPT TO:<user@host1.nodns.test.swaks.net>
+<~  250 Accepted
+ ~> DATA
+<~  354 Enter message, ending with "." on a line by itself
+ ~> Date: Wed, 03 Nov 1999 11:24:29 -0500
+ ~> To: user@host1.nodns.test.swaks.net
+ ~> From: recip@host1.nodns.test.swaks.net
+ ~> Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+ ~> Message-Id: <19991103112429.047942@localhost>
+ ~> X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+ ~> 
+ ~> This is a test mailing
+ ~> 
+ ~> 
+ ~> .
+<~  250 OK id=fakeemail
+ ~> QUIT
+<~  221 SERVER closing connection
+=== Connection closed with child process.

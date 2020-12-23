@@ -19,19 +19,8 @@ environment/tooling:
 	perl must be in your path.
 	the Capture::Tiny perl module needs to be installed
 	the Text::Diff perl module needs to be installed
-	all "optional" perl modules must be installed to run the test suite. (see Authen::NTLM note below)
-
---
-
-Authen::NTLM
-
-I'm not even sure this module is distributed anymore.  There are no tests for it, but I wanted to make a mandate that all modules need to be installed.
-If you do not actually have Authen::NTLM installed, you can fake it for the purposes of testing by making sure that lib/authen-ntlm-local is in your
-PERL5LIB:
-
-export PERL5LIB=lib/authen-ntlm-local
-
-This will load a fake version of the module that will make swaks happy for the purposes of testing
+	the Proc::Background perl module needs to be installed
+	all "optional" perl modules must be installed to run the test suite (that is, `swaks --support` must show every option supported)
 
 --
 

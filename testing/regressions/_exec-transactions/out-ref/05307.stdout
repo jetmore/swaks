@@ -1,0 +1,49 @@
+=== Trying pipe to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   part-0100-ehlo-basic.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   ...
+=== Connected to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   part-0100-ehlo-basic.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   .
+<   0000: 32 32 30 20  53 45 52 56  45 52 20 45  53 4D 54 50    220.SERVER.ESMTP
+<   0016: 20 72 65 61  64 79 0D 0A                              .ready..        
+<-  220 SERVER ESMTP ready
+ -> EHLO hserver
+  > 0000: 45 48 4C 4F  20 68 73 65  72 76 65 72  0D 0A          EHLO.hserver..  
+<   0000: 32 35 30 2D  53 45 52 56  45 52 20 48  65 6C 6C 6F    250-SERVER.Hello
+<   0016: 20 53 65 72  76 65 72 20  5B 31 2E 31  2E 31 2E 31    .Server.[1.1.1.1
+<   0032: 5D 0D 0A                                              ]..             
+<   0000: 32 35 30 20  48 45 4C 50  0D 0A                       250.HELP..      
+<-  250-SERVER Hello Server [1.1.1.1]
+<-  250 HELP
+ -> MAIL FROM:<recip@host1.nodns.test.swaks.net>
+  > 0000: 4D 41 49 4C  20 46 52 4F  4D 3A 3C 72  65 63 69 70    MAIL.FROM:<recip
+  > 0016: 40 68 6F 73  74 31 2E 6E  6F 64 6E 73  2E 74 65 73    @host1.nodns.tes
+  > 0032: 74 2E 73 77  61 6B 73 2E  6E 65 74 3E  0D 0A          t.swaks.net>..  
+<   0000: 32 35 30 20  41 63 63 65  70 74 65 64  0D 0A          250.Accepted..  
+<-  250 Accepted
+ -> RCPT TO:<user@host1.nodns.test.swaks.net>
+  > 0000: 52 43 50 54  20 54 4F 3A  3C 75 73 65  72 40 68 6F    RCPT.TO:<user@ho
+  > 0016: 73 74 31 2E  6E 6F 64 6E  73 2E 74 65  73 74 2E 73    st1.nodns.test.s
+  > 0032: 77 61 6B 73  2E 6E 65 74  3E 0D 0A                    waks.net>..     
+<   0000: 32 35 30 20  41 63 63 65  70 74 65 64  0D 0A          250.Accepted..  
+<-  250 Accepted
+ -> DATA
+  > 0000: 44 41 54 41  0D 0A                                    DATA..          
+<   0000: 33 35 34 20  45 6E 74 65  72 20 6D 65  73 73 61 67    354.Enter.messag
+<   0016: 65 2C 20 65  6E 64 69 6E  67 20 77 69  74 68 20 22    e,.ending.with."
+<   0032: 2E 22 20 6F  6E 20 61 20  6C 69 6E 65  20 62 79 20    .".on.a.line.by.
+<   0048: 69 74 73 65  6C 66 0D 0A                              itself..        
+<-  354 Enter message, ending with "." on a line by itself
+ -> Subject: foo
+ -> 
+ -> body
+ -> 
+ -> 
+ -> .
+  > 0000: 53 75 62 6A  65 63 74 3A  20 66 6F 6F  0D 0A 0D 0A    Subject:.foo....
+  > 0016: 62 6F 64 79  0D 0A 0D 0A  0D 0A 2E 0D  0A             body.........   
+<   0000: 32 35 30 20  4F 4B 20 69  64 3D 66 61  6B 65 65 6D    250.OK.id=fakeem
+<   0016: 61 69 6C 0D  0A                                       ail..           
+<-  250 OK id=fakeemail
+ -> QUIT
+  > 0000: 51 55 49 54  0D 0A                                    QUIT..          
+<   0000: 32 32 31 20  53 45 52 56  45 52 20 63  6C 6F 73 69    221.SERVER.closi
+<   0016: 6E 67 20 63  6F 6E 6E 65  63 74 69 6F  6E 0D 0A       ng.connection.. 
+<-  221 SERVER closing connection
+=== Connection closed with child process.

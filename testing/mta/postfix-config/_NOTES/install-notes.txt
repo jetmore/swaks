@@ -1,0 +1,51 @@
+debian:
+
+sudo apt-get install m4
+
+
+make tidy
+make makefiles \
+  CCARGS="-DUSE_TLS" AUXLIBS="-lssl -lcrypto" \
+  config_directory=/home/jetmore/Documents/git/swaks/testing/mta/postfix-config \
+  command_directory=/home/jetmore/Documents/git/swaks/testing/mta/postfix-install/bin \
+  daemon_directory=/home/jetmore/Documents/git/swaks/testing/mta/postfix-install/libexec \
+  data_directory=/home/jetmore/Documents/git/swaks/testing/mta/postfix-install/lib \
+  mail_spool_directory=/home/jetmore/Documents/git/swaks/testing/mta/postfix-install/mailspool \
+  mailq_path=/home/jetmore/Documents/git/swaks/testing/mta/postfix-install/bin/mailq \
+  manpage_directory=/home/jetmore/Documents/git/swaks/testing/mta/postfix-install/man \
+  meta_directory=/home/jetmore/Documents/git/swaks/testing/mta/postfix-config \
+  newaliases_path=/home/jetmore/Documents/git/swaks/testing/mta/postfix-install/bin/newaliases \
+  queue_directory=/home/jetmore/Documents/git/swaks/testing/mta/postfix-install/queue \
+  readme_directory=/home/jetmore/Documents/git/swaks/testing/mta/postfix-install/readme \
+  sendmail_path=/home/jetmore/Documents/git/swaks/testing/mta/postfix-install/bin/sendmail \
+  shlib_directory=/home/jetmore/Documents/git/swaks/testing/mta/postfix-install/lib
+
+make
+
+# first install:
+sudo make install
+
+# subsequent installs:
+sudo make upgrade
+
+most defaults during install should be acceptable, but needed to provide values for these:
+mail_owner: jetmore
+setgid_group: mail
+
+add to main.cf
+mydestination = $myhostname, node.example.com
+mynetworks = 192.168.0.0/16, 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12
+alias_database = texthash:/home/jetmore/Documents/git/swaks/testing/mta/postfix-config/aliases
+alias_maps  = texthash:/home/jetmore/Documents/git/swaks/testing/mta/postfix-config/aliases
+maillog_file = /dev/stdout
+smtpd_authorized_xclient_hosts = 192.168.0.0/16, 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12
+smtpd_authorized_xforward_hosts = 192.168.0.0/16, 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12
+smtpd_tls_cert_file = /home/jetmore/Documents/git/swaks/testing/certs/node.example.com.crt
+smtpd_tls_key_file = /home/jetmore/Documents/git/swaks/testing/certs/node.example.com.key
+smtpd_tls_security_level = may
+
+
+edit master.cf, change ^smtp to 1026:
+#smtp      inet  n       -       n       -       -       smtpd
+1026      inet  n       -       n       -       -       smtpd
+

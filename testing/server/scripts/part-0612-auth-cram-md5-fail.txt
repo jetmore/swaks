@@ -1,0 +1,7 @@
+#  -> AUTH CRAM-MD5
+get_line();
+# <-  334 PDQ1Ny4xNjA3NDY1NzMzQG5vZGUuZXhhbXBsZS5jb20+
+send_line("334 PDQ1Ny4xNjA3NDY1NzMzQG5vZGUuZXhhbXBsZS5jb20+");
+#  -> dmFsaWR1c2VyIDFiNDQ4MzliOGIxNDA4ZDI5MDY4OGRkMTNhMDYxMGU3
+get_line();
+send_line("535 Incorrect authentication data");

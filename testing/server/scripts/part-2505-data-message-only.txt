@@ -1,0 +1,2 @@
+get_line('^\.$'); # rest of email
+send_line("250 OK id=fakeemail");
