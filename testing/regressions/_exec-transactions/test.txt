@@ -50,7 +50,7 @@
    13 --xclient not advertised --xclient-optional
    14 --xclient not advertised --xclient-optional-strict
    15 --xclient failed
-##   16 --xclient failed --xclient-optional (THIS HAS A WEIRD MESSAGE, SKIPPING FOR NOW)
+   16 --xclient failed --xclient-optional
    17 --xclient failed --xclient-optional-strict
 #   18 --xclient --pipeline success - it's unclear to me the practical purpose of using xclient with pipelining, or how to really test
 #   19 --xclient --pipeline failure

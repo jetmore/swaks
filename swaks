@@ -353,7 +353,7 @@ sub xclient_try {
 			ptrans(12, $error);
 			do_smtp_quit(1, 33) if (!$G::xclient{optional});
 		} elsif ($result->{code} == 3) {
-			ptrans(12, "XCLIENT attempted but failed.  Exiting");
+			ptrans(12, "XCLIENT attempted but failed");
 			do_smtp_quit(1, 33) if ($G::xclient{optional} != 1);
 		} else {
 			do_smtp_drop()     if ($G::drop_after eq 'xclient');

@@ -969,3 +969,6 @@
            there's only one on CPAN anymore.
 * 20201223 When an unsupported XCLIENT attribute is requested, print the
            missing attribute in the error.
+* 20201223 Don't print "Exiting" in the XCLIENT attempted but failed message.
+           It is always unnecessary (Auth doesn't print it) and is wrong
+           when --xclient-optional is in use.
