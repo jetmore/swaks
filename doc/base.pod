@@ -695,7 +695,7 @@ When C<--proxy> is not used, all of C<--proxy-family>, C<--proxy-source>, C<--pr
 
 =item --proxy-version [ 1 | 2 ]
 
-Whether to use version 1 (human readable) or version 2 (binary) of the Proxy protocol.  Version 1 is the default.  Version 2 is only implemented through the "address block", and is roughly on par with the information provided in version 1.
+Whether to use version 1 (human readable) or version 2 (binary) of the Proxy protocol.  Version 1 is the default.  Version 2 is only implemented through the "address block", and is roughly on par with the information provided in version 1. (Arg-Required, From-Prompt)
 
 =item --proxy [<string>]
 

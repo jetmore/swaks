@@ -964,3 +964,4 @@
 * 20201126 --port and --local-port should override a port set in --server or
            --local-port.
 * 20201222 Add transaction-level tests
+* 20201223 Add missing option hints from --proxy-version documentation
