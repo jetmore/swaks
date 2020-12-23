@@ -555,7 +555,7 @@ The CRAM-SHA1 authenticator requires the L<Digest::SHA> module.  This type has o
 
 =item NTLM/SPA/MSN
 
-These authenticators require the Authen::NTLM module.  Note that there are two modules using the L<Authen::NTLM> namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.03.tar.gz) is the version required by Swaks.  This type has been tested against Exim, Communigate, and Exchange 2007.
+These authenticators require the Authen::NTLM module.  This type has been tested against Exim, Communigate, and Exchange 2007.
 
 In addition to the standard username and password, this authentication type can also recognize a "domain".  The domain can be set using the C<--auth-extra> "domain" keyword.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
 

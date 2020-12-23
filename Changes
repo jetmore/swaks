@@ -965,3 +965,5 @@
            --local-port.
 * 20201222 Add transaction-level tests
 * 20201223 Add missing option hints from --proxy-version documentation
+* 20201223 Remove documentation note about which Authen::NTLM version to use,
+           there's only one on CPAN anymore.
