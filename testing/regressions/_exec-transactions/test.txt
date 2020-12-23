@@ -54,6 +54,7 @@
    17 --xclient failed --xclient-optional-strict
 #   18 --xclient --pipeline success - it's unclear to me the practical purpose of using xclient with pipelining, or how to really test
 #   19 --xclient --pipeline failure
+   20 --xclient-SPECIFIC fails when SPECIFIC isn't available (multiple SPECIFICS)
 
 00500 - prdr (COMPLETE)
     0 happy path - 3 addrs, 3 accepts

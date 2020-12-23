@@ -342,13 +342,17 @@ sub xclient_try {
 		# 3 - xclient attempted but did not succeed
 		$G::drop_before_read = 1 if ($G::drop_after_send eq 'xclient');
 		my $result = do_smtp_xclient($ehlo);
-		if ($result == 1) {
+		if ($result->{code} == 1) {
 			ptrans(12, "Host did not advertise XCLIENT");
 			do_smtp_quit(1, 33) if (!$G::xclient{optional});
-		} elsif ($result == 2) {
-			ptrans(12, "Host did not advertise requested XCLIENT attributes");
+		} elsif ($result->{code} == 2) {
+			my $error = 'Host did not advertise requested XCLIENT attributes';
+			if (exists($result->{missing_attrs}) && ref($result->{missing_attrs}) eq 'ARRAY' && scalar(@{$result->{missing_attrs}})) {
+				$error .= ' (' . join(', ', sort(@{$result->{missing_attrs}})) . ')';
+			}
+			ptrans(12, $error);
 			do_smtp_quit(1, 33) if (!$G::xclient{optional});
-		} elsif ($result == 3) {
+		} elsif ($result->{code} == 3) {
 			ptrans(12, "XCLIENT attempted but failed.  Exiting");
 			do_smtp_quit(1, 33) if ($G::xclient{optional} != 1);
 		} else {
@@ -653,26 +657,35 @@ sub do_smtp_tls {
 
 sub do_smtp_xclient {
 	my $e = shift;
+	my $return = { code => 0 };
 
 	# 0 - xclient succeeded normally
 	# 1 - xclient not advertised
 	# 2 - xclient advertised but not attempted, mismatch in requested attrs
 	# 3 - xclient attempted but did not succeed
 	if (!$e->{XCLIENT}) {
-		return(1);
+		$return->{code} = 1;
+		return($return);
 	}
 	my @parts = ();
 	foreach my $attr (keys %{$G::xclient{attr}}) {
 		if (!$e->{XCLIENT}{$attr}) {
-			return(2) if (!$G::xclient{no_verify});
+			if (!$G::xclient{no_verify}) {
+				$return->{code} = 2;
+				push(@{$return->{missing_attrs}}, $attr);
+			}
 		}
 	}
+	return($return) if ($return->{code} != 0);
 
 	foreach my $string (@{$G::xclient{strings}}) {
 		my $str = "XCLIENT " . $string;
-		do_smtp_gen($str, '220') || return(3);
+		if (!do_smtp_gen($str, '220')) {
+			$return->{code} = 3;
+			return($return);
+		}
 	}
-	return(0);
+	return($return);
 }
 
 # see xtext encoding in http://tools.ietf.org/html/rfc1891

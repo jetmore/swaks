@@ -967,3 +967,5 @@
 * 20201223 Add missing option hints from --proxy-version documentation
 * 20201223 Remove documentation note about which Authen::NTLM version to use,
            there's only one on CPAN anymore.
+* 20201223 When an unsupported XCLIENT attribute is requested, print the
+           missing attribute in the error.
