@@ -984,3 +984,5 @@
            base64 encoded.
 * 20201224 Change error message when missing --proxy* option to list every
            missing option instead of just the first missing.
+* 20201224 --no-hints should also include --no-info-hints, analogous to
+           --hide-informational/--hide-all which already worked this way.

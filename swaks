@@ -2720,14 +2720,15 @@ sub process_args {
 	if (get_arg('no_hints', $o)) {
 		$G::no_hints_send = 1;
 		$G::no_hints_recv = 1;
+		$G::no_hints_info = 1;
 	}
 	else {
 		$G::no_hints_send      = get_arg('no_hints_send', $o);
 		$G::no_hints_recv      = get_arg('no_hints_recv', $o);
+		$G::no_hints_info      = get_arg('no_hints_info', $o);
 	}
 	$G::dump_mail          = get_arg('dump_mail', $o);
 	$G::suppress_data      = get_arg('suppress_data', $o);
-	$G::no_hints_info      = get_arg('no_hints_info', $o);
 	$G::hide_send          = get_arg('hide_send', $o);
 	$G::hide_receive       = get_arg('hide_receive', $o);
 	$G::hide_informational = get_arg('hide_informational', $o);

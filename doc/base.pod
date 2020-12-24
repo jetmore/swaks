@@ -945,9 +945,10 @@ Summarizes the DATA portion of the SMTP transaction instead of printing every li
 
 Display time lapse between send/receive pairs.  This option is most useful when L<Time::HiRes> is available, in which case the time lapse will be displayed in thousandths of a second.  If L<Time::HiRes> is unavailable or "i" is given as an argument the lapse will be displayed in integer seconds only. (Arg-Optional)
 
-=item -nih, --no-info-hints
 
 Don't display the transaction hint for informational transactions.  This is most useful when needing to copy some portion of the informational lines, for instance the certificate output from C<--tls-get-peer-cert>. (Arg-None)
+
+=item -nih, --no-info-hints
 
 =item -nsh, --no-send-hints
 
@@ -955,7 +956,7 @@ Don't display the transaction hint for informational transactions.  This is most
 
 =item -nth, --no-hints
 
-C<--no-send-hints> and C<--no-receive-hints> suppress the transaction hints from send and receive lines, respectively.  This is often useful when copying some portion of the transaction for use elsewhere (for instance, C<--no-send-hints --hide-receive --hide-informational> is a useful way to get only the client-side commands for a given transaction).  C<--no-hints> is identical to specifying both C<--no-send-hints> and C<--no-receive-hints>. (Arg-None)
+C<--no-info-hints>, C<--no-send-hints>, and C<--no-receive-hints> suppress the transaction hints from info, send, and receive lines, respectively.  This is often useful when copying some portion of the transaction for use elsewhere (for instance, C<--no-send-hints --hide-receive --hide-informational> is a useful way to get only the client-side commands for a given transaction and C<--no-info-hints --tls-get-peer-cert> for copying the peer certifiate).  C<--no-hints> is identical to specifying C<--no-info-hints --no-send-hints --no-receive-hints>. (Arg-None)
 
 =item -raw, --show-raw-text
 
