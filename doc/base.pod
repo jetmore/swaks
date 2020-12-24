@@ -333,6 +333,10 @@ In a STARTTLS (but not tls-on-connect) session, terminate the transaction after 
 
 Quit after XCLIENT is negotiation. This always quits after the point where XCLIENT would have been negotiated, regardless of whether it was attempted.
 
+=item XCLIENT-HELO
+
+Quit after the HELO that XCLIENT negotiation triggers. This differs from HELO and FIRST-HELO because XCLIENT negotiation can happen at multiple points in the SMTP transaction and it is impossible to specifically refer to the XCLIENT-triggered HELO using the HELO or FIRST-HELO stop-points. This always quits after the point where the XCLIENT-triggered HELO would have occurred, regardless of whether it was attempted.
+
 =item STARTTLS, TLS
 
 Quit the transaction immediately following TLS negotiation.  Note that this happens in different places depending on whether STARTTLS or tls-on-connect are used.  This always quits after the point where TLS would have been negotiated, regardless of whether it was attempted.

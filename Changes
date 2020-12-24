@@ -975,3 +975,5 @@
 * 20201223 Fix several --drop-after-send bugs and inconsistencies.
 * 20201224 Fix --quit-after/--drop-after/--drop-after-send with XCLIENT
            stop-point when XCLIENT is not negotiated.
+* 20201224 Add new stop-point XCLIENT-HELO to address lack of specificity
+           when mixing XCLIENT and HELO stop-point.

@@ -361,14 +361,14 @@ sub xclient_try {
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient');
 
 			# re-helo if the XCLIENT command succeeded
-			$G::drop_before_read = 1 if ($G::drop_after_send eq 'helo');
+			$G::drop_before_read = 1 if ($G::drop_after_send eq 'xclient-helo');
 			do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 34);
-			do_smtp_drop()     if ($G::drop_after eq 'helo');
-			do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
+			do_smtp_drop()     if ($G::drop_after eq 'xclient-helo');
+			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient-helo');
 		}
 	}
-	do_smtp_drop()     if ($G::drop_after eq 'xclient' || $G::drop_after_send eq 'xclient');
-	do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient');
+	do_smtp_drop()     if ($G::drop_after =~ /xclient(?:-helo)?/ || $G::drop_after_send =~ /xclient(?:-helo)?/);
+	do_smtp_quit(1, 0) if ($G::quit_after =~ /xclient(?:-helo)?/);
 }
 
 sub tls_post_start {
@@ -2808,11 +2808,12 @@ sub process_args {
 			elsif (${"G::$opt"} eq 'banner')        { ${"G::$opt"} = 'connect';    }
 			elsif (${"G::$opt"} eq 'from')          { ${"G::$opt"} = 'mail';       }
 			elsif (${"G::$opt"} eq 'to')            { ${"G::$opt"} = 'rcpt';       }
-			elsif (${"G::$opt"} ne 'connect' && ${"G::$opt"} ne 'first-helo' &&
-			       ${"G::$opt"} ne 'tls'     && ${"G::$opt"} ne 'helo'       &&
-			       ${"G::$opt"} ne 'auth'    && ${"G::$opt"} ne 'mail'       &&
-			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient'    &&
-			       ${"G::$opt"} ne 'data'    && ${"G::$opt"} ne 'dot')
+			elsif (${"G::$opt"} ne 'connect' && ${"G::$opt"} ne 'first-helo'   &&
+			       ${"G::$opt"} ne 'tls'     && ${"G::$opt"} ne 'helo'         &&
+			       ${"G::$opt"} ne 'auth'    && ${"G::$opt"} ne 'mail'         &&
+			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient'      &&
+			       ${"G::$opt"} ne 'data'    && ${"G::$opt"} ne 'xclient-helo' &&
+			       ${"G::$opt"} ne 'dot')
 			{
 				ptrans(12, "Unknown $opt value " . ${"G::$opt"} . ", exiting");
 				exit(1);

@@ -130,8 +130,9 @@
    10 --quit-after first-helo (with --tls)
    11 --quit-after tls (nt using tls)
    12 --quit-after helo (with --tls)
-##   13 --quit-after helo (with --xclient) (SEEMS TO BE BROKEN - SHOULD BE QUITTING AT SECOND HELO, NOT FIRST)
+   13 --quit-after xclient-helo (with --xclient)
    14 --quit-after auth (not using auth)
+   17 --quit-after xclient-helo (without --xclient)
 
 05100 - --drop-after
   100 --drop-after connect
@@ -147,10 +148,11 @@
    10 --drop-after first-helo (with --tls)
    11 --drop-after tls (nt using tls)
    12 --drop-after helo (with --tls)
-##   13 --drop-after helo (with --xclient) (SEEMS TO BE BROKEN - SHOULD BE QUITTING AT SECOND HELO, NOT FIRST)
+   13 --drop-after xclient-helo (with --xclient)
    14 --drop-after auth (not using auth)
    15 --drop-after data
    16 --drop-after dot
+   17 --drop-after xclient-helo (without --xclient)
 
 05200 - --drop-after-send
   200 --drop-after-send connect
@@ -166,10 +168,11 @@
    10 --drop-after-send first-helo (with --tls)
    11 --drop-after-send tls (nt using tls)
    12 --drop-after-send helo (with --tls)
-##   13 --drop-after-send helo (with --xclient) (SEEMS TO BE BROKEN - SHOULD BE QUITTING AT SECOND HELO, NOT FIRST)
+   13 --drop-after-send xclient-helo (with --xclient)
    14 --drop-after-send auth (not using auth)
    15 --drop-after-send data
    16 --drop-after-send dot
+   17 --drop-after-send xclient-helo (without --xclient)
 helo with --xclient and --xclient-before-starttls
 
 05300 - output options

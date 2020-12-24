@@ -1,9 +1,7 @@
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver \
-  --drop-after-send xclient-helo --xclient-name 'foo' --pipe '%TEST_SERVER% --silent --domain pipe \
+  --drop-after xclient-helo --pipe '%TEST_SERVER% --silent --domain pipe \
   part-0000-connect-standard.txt \
-  part-0101-ehlo-all.txt \
-  part-0300-xclient-basic-accept.txt \
   part-0101-ehlo-all.txt \
   '
