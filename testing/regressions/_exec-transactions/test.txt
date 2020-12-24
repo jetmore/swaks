@@ -125,7 +125,7 @@
     5 --quit-after auth
     6 --quit-after mail
     7 --quit-after rcpt
-##    8 --quit-after xclient (not using xclient) (unlike tls and auth, this isn't documented to fail no matter what - need to understand what's up)
+    8 --quit-after xclient (not using xclient)
     9 --quit-after first-helo (without --tls)
    10 --quit-after first-helo (with --tls)
    11 --quit-after tls (nt using tls)
@@ -142,7 +142,7 @@
     5 --drop-after auth
     6 --drop-after mail
     7 --drop-after rcpt
-##    8 --drop-after xclient (not using xclient) (unlike tls and auth, this isn't documented to fail no matter what - need to understand what's up)
+    8 --drop-after xclient (not using xclient)
     9 --drop-after first-helo (without --tls)
    10 --drop-after first-helo (with --tls)
    11 --drop-after tls (nt using tls)
@@ -161,7 +161,7 @@
     5 --drop-after-send auth
     6 --drop-after-send mail
     7 --drop-after-send rcpt
-##    8 --drop-after-send xclient (not using xclient) (unlike tls and auth, this isn't documented to fail no matter what - need to understand what's up)
+    8 --drop-after-send xclient (not using xclient)
     9 --drop-after-send first-helo (without --tls)
    10 --drop-after-send first-helo (with --tls)
    11 --drop-after-send tls (nt using tls)

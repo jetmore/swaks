@@ -331,7 +331,7 @@ In a STARTTLS (but not tls-on-connect) session, terminate the transaction after 
 
 =item XCLIENT
 
-Quit after XCLIENT is sent.
+Quit after XCLIENT is negotiation. This always quits after the point where XCLIENT would have been negotiated, regardless of whether it was attempted.
 
 =item STARTTLS, TLS
 

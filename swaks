@@ -367,6 +367,8 @@ sub xclient_try {
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
 		}
 	}
+	do_smtp_drop()     if ($G::drop_after eq 'xclient' || $G::drop_after_send eq 'xclient');
+	do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient');
 }
 
 sub tls_post_start {

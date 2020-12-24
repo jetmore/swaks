@@ -973,3 +973,5 @@
            It is always unnecessary (Auth doesn't print it) and is wrong
            when --xclient-optional is in use.
 * 20201223 Fix several --drop-after-send bugs and inconsistencies.
+* 20201224 Fix --quit-after/--drop-after/--drop-after-send with XCLIENT
+           stop-point when XCLIENT is not negotiated.
