@@ -108,7 +108,7 @@
     0 v1 (implicit), --proxy-*, success
     1 v1 (explicit), --proxy, success
     2 v2, --proxy-*, success
-#    3 v2, --proxy, success
+    3 v2, --proxy, success
 #    4 proxy + tls-on-connect
 
 

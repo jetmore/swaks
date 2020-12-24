@@ -1,0 +1,4 @@
+PROXY Info:
+  proxy       = yes
+  version     = 1
+  raw string  = TCP4 1.1.1.1 2.2.2.2 1 2

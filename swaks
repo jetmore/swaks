@@ -2089,7 +2089,7 @@ sub get_option_struct {
 		# PROXY
 		# argument is the raw PROXY string
 		{ opts    => ['proxy'],                                            suffix => ':s',
-		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT|OP_FROM_FILE,
 		  prompt  => 'PROXY string: ',                                     match  => '^.+$',
 		  okey    => 'proxy_raw',                                          type   => 'scalar', },
 		# PROXY version (1 or 2)
@@ -3329,7 +3329,13 @@ sub process_args {
 	$G::proxy{try}     = 0;
 	$G::proxy{attr}    = {};
 	$G::proxy{version} = get_arg('proxy_version', $o);
-	$G::proxy{raw}     = get_arg('proxy_raw', $o);
+	if ($G::proxy{raw} = get_arg('proxy_raw', $o)) {
+		$G::proxy{raw} =~ s/\r?\n$//;
+		$G::proxy{raw} =  db64($G::proxy{raw}) if ($G::proxy{raw} =~ s/^base64://);
+		$G::proxy{raw} =~ s/^PROXY //;
+		my $v2header      =  pack("W[12]", 0x0D, 0x0A,0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A);
+		$G::proxy{raw} =~ s/^$v2header//;
+	}
 	foreach my $attr ('family', 'source', 'source_port', 'dest', 'dest_port', 'protocol', 'command') {
 		if (my $val = get_arg('proxy_' . $attr, $o)) {
 			if ($G::proxy{raw}) {
@@ -3699,7 +3705,7 @@ sub get_running_state {
 			push(@{$parts[-1]}, '  proxy       = yes');
 			push(@{$parts[-1]}, "  version     = $G::proxy{version}");
 			if ($G::proxy{raw}) {
-				push(@{$parts[-1]}, "  raw string  = $G::proxy{raw}");
+				push(@{$parts[-1]}, "  raw string  = " . ($G::proxy{version} != 1 ? eb64($G::proxy{raw}) : $G::proxy{raw}));
 			} else {
 				push(@{$parts[-1]},
 					'  family      = ' . $G::proxy{attr}{family},

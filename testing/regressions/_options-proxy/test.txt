@@ -172,6 +172,38 @@
   032 --proxy-protocol DGRAM  is legal
   035 --proxy-command LOCAL is legal
   036 --proxy-command PROXY is legal
+-
+  100 --proxy     --version 1 (no header)
+  101 --proxy b64 --version 1 (no header)
+  102 --proxy b64 --version 2 (no header)
+  103 --proxy     --version 1 (header)
+  104 --proxy b64 --version 1 (header)
+  105 --proxy b64 --version 2 (header)
+  106 --proxy FILE:PLAIN --version 1 (no header)
+  107 --proxy FILE:B64   --version 1 (no header)
+  108 --proxy FILE:PLAIN --version 2 (no header)
+  109 --proxy FILE:B64   --version 2 (no header)
+  110 --proxy FILE:PLAIN --version 1 (header)
+  111 --proxy FILE:B64   --version 1 (header)
+  112 --proxy FILE:PLAIN --version 2 (header)
+  113 --proxy FILE:B64   --version 2 (header)
+
+v1, no header (v1-noheader.bin):
+TCP4 1.1.1.1 2.2.2.2 1 2
+v1, proxy header (v1-header.bin):
+PROXY TCP4 1.1.1.1 2.2.2.2 1 2
+v1, no header, b64 encoded (v1-noheader.b64):
+base64:VENQNCAxLjEuMS4xIDIuMi4yLjIgMSAy
+v1, proxy header, base64 encoded (v1-header.b64):
+base64:UFJPWFkgVENQNCAxLjEuMS4xIDIuMi4yLjIgMSAy
+
+v2, no header, base64 encoded (v2-noheader.b64):
+base64:IREADAEBAQECAgICAG8A3g==
+v2, header, base64 encoded (v2-header.b64):
+base64:DQoNCgANClFVSVQKIREADAEBAQECAgICAG8A3g==
+
+v2, no header, raw (v2-noheader.bin):
+v2, header, raw (v2-header.bin):
 
 
 

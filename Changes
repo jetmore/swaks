@@ -977,3 +977,8 @@
            stop-point when XCLIENT is not negotiated.
 * 20201224 Add new stop-point XCLIENT-HELO to address lack of specificity
            when mixing XCLIENT and HELO stop-point.
+* 20201224 In --dump output, print a raw proxy string in base64 if version 2
+* 20201224 --proxy argument can now (optionally) be provided with the protocol
+           prefix.
+* 20201224 Allow --proxy to read string from a file, and allow it to be
+           base64 encoded.
