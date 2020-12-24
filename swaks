@@ -197,7 +197,7 @@ sub sendmail {
 	if ($G::tls_on_connect) {
 		if (start_tls()) {
 			tls_post_start();
-			do_smtp_drop()     if ($G::drop_after eq 'tls');
+			do_smtp_drop()     if ($G::drop_after eq 'tls' || $G::drop_after_send eq 'tls');
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 		} else {
 			ptrans(12, "TLS startup failed ($G::link{tls}{res})");
@@ -206,6 +206,7 @@ sub sendmail {
 	}
 
 	# read the server's 220 banner.
+	do_smtp_drop()     if ($G::drop_after_send eq 'connect');
 	do_smtp_gen(undef, '220') || do_smtp_quit(1, 21);
 	do_smtp_drop()     if ($G::drop_after eq 'connect');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'connect');
@@ -241,7 +242,7 @@ sub sendmail {
 		ptrans(12, "TLS requested, advertised, and locally unavailable.  Exiting");
 		do_smtp_quit(1, 29);
 	}
-	do_smtp_drop()     if ($G::drop_after eq 'tls');
+	do_smtp_drop()     if ($G::drop_after eq 'tls' || $G::drop_after_send eq 'tls');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 
 	#if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
@@ -293,7 +294,7 @@ sub sendmail {
 		ptrans(12, "Auth requested, advertised, and locally unavailable.  Exiting");
 		do_smtp_quit(1, 28);
 	}
-	do_smtp_drop()     if ($G::drop_after eq 'auth');
+	do_smtp_drop()     if ($G::drop_after eq 'auth' || $G::drop_after_send eq 'auth');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'auth');
 
 	# send MAIL

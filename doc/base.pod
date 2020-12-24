@@ -373,7 +373,23 @@ Quit after the final '.' of the message is sent.
 
 =item --das, --drop-after-send <stop-point>
 
-This option is similar to C<--drop-after>, but instead of dropping the connection after reading a response to the stop-point, it drops the connection immediately after sending stop-point.  It accepts the same stop-points as C<--drop-after>. (Arg-Required)
+This option is similar to C<--drop-after>, but instead of dropping the connection after reading a response to the stop-point, it drops the connection immediately after sending stop-point.  It accepts the same stop-points as C<--drop-after>. If the stop-point is for an optional part of the transaction which is not actually sent (for instance STARTTLS or AUTH), this option will behave identically to C<--drop-after>. See below for specific details. (Arg-Required)
+
+=over 4
+
+=item CONNECT
+
+Connect to the server and then drops the connection before receiving the server's banner.
+
+=item STARTTLS, TLS
+
+Behaves identically to C<--drop-after>.
+
+=item HELO, EHLO, LHLO
+
+Doesn't necessarily work as expected.  If it appears to read the HELO response incorrectly, use FIRST-HELO instead.
+
+=back
 
 =item --timeout [<time>]
 

@@ -153,23 +153,24 @@
    16 --drop-after dot
 
 05200 - --drop-after-send
-  200 --drop-after connect
-##    1 --drop-after xclient - pending figuring out the right server actions for xclient
-    2 --drop-after tls (with --tls)
-    3 --drop-after tls (with --tls-on-connect)
-    4 --drop-after helo
-    5 --drop-after auth
-    6 --drop-after mail
-    7 --drop-after rcpt
-##    8 --drop-after xclient (not using xclient) (unlike tls and auth, this isn't documented to fail no matter what - need to understand what's up)
-    9 --drop-after first-helo (without --tls)
-   10 --drop-after first-helo (with --tls)
-   11 --drop-after tls (nt using tls)
-   12 --drop-after helo (with --tls)
-##   13 --drop-after helo (with --xclient) (SEEMS TO BE BROKEN - SHOULD BE QUITTING AT SECOND HELO, NOT FIRST)
-   14 --drop-after auth (not using auth)
-   15 --drop-after data
-   16 --drop-after dot
+  200 --drop-after-send connect
+    1 --drop-after-send xclient - pending figuring out the right server actions for xclient
+    2 --drop-after-send tls (with --tls)
+    3 --drop-after-send tls (with --tls-on-connect)
+    4 --drop-after-send helo
+    5 --drop-after-send auth
+    6 --drop-after-send mail
+    7 --drop-after-send rcpt
+##    8 --drop-after-send xclient (not using xclient) (unlike tls and auth, this isn't documented to fail no matter what - need to understand what's up)
+    9 --drop-after-send first-helo (without --tls)
+   10 --drop-after-send first-helo (with --tls)
+   11 --drop-after-send tls (nt using tls)
+   12 --drop-after-send helo (with --tls)
+##   13 --drop-after-send helo (with --xclient) (SEEMS TO BE BROKEN - SHOULD BE QUITTING AT SECOND HELO, NOT FIRST)
+   14 --drop-after-send auth (not using auth)
+   15 --drop-after-send data
+   16 --drop-after-send dot
+helo with --xclient and --xclient-before-starttls
 
 05300 - output options
     0 --suppress-data
