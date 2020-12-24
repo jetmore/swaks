@@ -173,6 +173,12 @@
   035 --proxy-command LOCAL is legal
   036 --proxy-command PROXY is legal
 -
+  040 --proxy-family lists other required options
+  041 --proxy-source lists other required options
+  042 --proxy-source-port lists other required options
+  043 --proxy-dest lists other required options
+  044 --proxy-dest-port lists other required options
+-
   100 --proxy     --version 1 (no header)
   101 --proxy b64 --version 1 (no header)
   102 --proxy b64 --version 2 (no header)

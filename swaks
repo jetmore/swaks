@@ -3358,12 +3358,16 @@ sub process_args {
 	if ($G::proxy{try} && !$G::proxy{raw}) {
 		$G::proxy{attr}{protocol} ||= 'STREAM';
 		$G::proxy{attr}{command}  ||= 'PROXY';
+		my @missing = ();
 		foreach my $attr ('family', 'source', 'source_port', 'dest', 'dest_port', 'protocol', 'command') {
 			if (!$G::proxy{attr}{$attr}) {
-				ptrans(12, "Incomplete set of --proxy-* options (missing $attr)");
-				exit(35);
+				push(@missing, $attr);
 			}
 			$G::proxy{attr}{$attr} = uc($G::proxy{attr}{$attr});
+		}
+		if (scalar(@missing)) {
+			ptrans(12, 'Incomplete set of --proxy-* options (missing ' . join(', ', @missing) . ')');
+			exit(35);
 		}
 		if ($G::proxy{attr}{protocol} !~ /^(UNSPEC|STREAM|DGRAM)$/) {
 			ptrans(12, 'unknown --proxy-protocol argument ' . $G::proxy{attr}{protocol});

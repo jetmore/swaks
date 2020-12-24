@@ -982,3 +982,5 @@
            prefix.
 * 20201224 Allow --proxy to read string from a file, and allow it to be
            base64 encoded.
+* 20201224 Change error message when missing --proxy* option to list every
+           missing option instead of just the first missing.
