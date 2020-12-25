@@ -2,7 +2,7 @@ blank lines and commented (w/ #) lines are skipped
 continuation lines work (lines that end in '\' are combined with the following line
 
 Tokens:
-	%SWAKS%        - will be replaced with the path to swaks. If $TEST_SWAKS is defined it will be used for %SWAKS%
+	%SWAKS%        - will be replaced with the path to swaks. If $SWAKS_TEST_SWAKS is defined it will be used for %SWAKS%
 	%TESTID%       - The current test ID.  This is defined as the filename, minus the .test extension.  Almost always (and preferably) numeric,
 	                 it is possible to use alpha chars if there's some reason.
 	%TESTDIR%      - the path to the base of the currently running test suite

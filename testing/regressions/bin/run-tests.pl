@@ -1,13 +1,13 @@
 #!/usr/bin/env perl
 
 # - example usage (run every test under _options-data):
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl _options-data
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl _options-data
 # - example usage (run every test under _options-data matching ^05)
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl _options-data ^05
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl _options-data ^05
 # - example usage (run every test without prompting the user, but save the results):
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl --headless --outfile var/results.1570707905 _options-data
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl --headless --outfile var/results.1570707905 _options-data
 # - example usage (only run tests that failed during the previous headless run):
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl --errors --infile var/results.1570707905 _options-data
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl --errors --infile var/results.1570707905 _options-data
 
 use strict;
 use Capture::Tiny;
@@ -37,7 +37,7 @@ my $testRe  =  shift || '.'; # pattern to match test IDs against. Allows to run 
 my $outDir  =  catfile($testDir, "out-dyn");
 my $refDir  =  catfile($testDir, "out-ref");
 my $certDir =  catfile($Bin, '..', '..', 'certs');
-my $autoCat =  $ENV{TEST_AUTOCAT} ? 1 : 0;
+my $autoCat =  $ENV{SWAKS_TEST_AUTOCAT} ? 1 : 0;
 
 my @forks        = ();
 my $customTokens = {};
@@ -53,17 +53,17 @@ my $tokens       = {
 	},
 	'local' => {},
 };
-if ($ENV{TEST_SWAKS}) {
-	if ($ENV{TEST_SWAKS} =~ m|[/\\]|) {
-		$ENV{TEST_SWAKS} = rel2abs($ENV{TEST_SWAKS});
+if ($ENV{SWAKS_TEST_SWAKS}) {
+	if ($ENV{SWAKS_TEST_SWAKS} =~ m|[/\\]|) {
+		$ENV{SWAKS_TEST_SWAKS} = rel2abs($ENV{SWAKS_TEST_SWAKS});
 	}
-	$tokens->{'global'}{'%SWAKS%'} = $ENV{TEST_SWAKS};
+	$tokens->{'global'}{'%SWAKS%'} = $ENV{SWAKS_TEST_SWAKS};
 }
-if ($ENV{TEST_SERVER}) {
-	if ($ENV{TEST_SERVER} =~ m|[/\\]|) {
-		$ENV{TEST_SERVER} = rel2abs($ENV{TEST_SERVER});
+if ($ENV{SWAKS_TEST_SERVER}) {
+	if ($ENV{SWAKS_TEST_SERVER} =~ m|[/\\]|) {
+		$ENV{SWAKS_TEST_SERVER} = rel2abs($ENV{SWAKS_TEST_SERVER});
 	}
-	$tokens->{'global'}{'%TEST_SERVER%'} = $ENV{TEST_SERVER};
+	$tokens->{'global'}{'%TEST_SERVER%'} = $ENV{SWAKS_TEST_SERVER};
 }
 
 if (!-d $testDir) {
@@ -296,8 +296,11 @@ sub runResult {
 									if (length($ENV{'PAGER'})) {
 										unshift(@cmds, $ENV{'PAGER'});
 									}
-									else {
-										print "WARNING: consider setting PAGER environment variable\n";
+									if (length($ENV{'SWAKS_TEST_PAGER'})) {
+										unshift(@cmds, $ENV{'SWAKS_TEST_PAGER'});
+									}
+									if (scalar(@cmds) == 1) {
+										print "WARNING: consider setting SWAKS_TEST_PAGER or PAGER environment variables\n";
 									}
 								}
 
@@ -322,10 +325,10 @@ sub runResult {
 								next INTERACT;
 							}
 							elsif ($input eq 'e') {
-								my $editor = $ENV{'SWAKS_EDITOR'} || $ENV{'VISUAL'} || $ENV{'EDITOR'};
+								my $editor = $ENV{'SWAKS_TEST_EDITOR'} || $ENV{'VISUAL'} || $ENV{'EDITOR'};
 								my $file   = catfile($tokens->{'%TESTDIR%'}, "$tokens->{'%TESTID%'}.test");
 								if (!-e $editor) {
-									print STDERR "No valid editor found, consider setting SWAKS_EDITOR, VISUAL, or EDITOR environment variables\n";
+									print STDERR "No valid editor found, consider setting SWAKS_TEST_EDITOR, VISUAL, or EDITOR environment variables\n";
 									next INTERACT;
 								}
 								debug('exec', "$editor $file");

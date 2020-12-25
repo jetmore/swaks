@@ -3,9 +3,9 @@
 # run all defined tests in headless mode
 
 # - example usage (run all tests.  Print them to STDOUT without prompting for user action. Save to state file):
-#  - TEST_SWAKS=../../swaks bin/run-all.pl
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-all.pl
 # - example usage (only run tests that failed during the last run-all.pl execution):
-#  - TEST_SWAKS=../../swaks bin/run-all.pl --errors
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-all.pl --errors
 
 # this leaves var/results.* files laying around, should prune them periodically
 
