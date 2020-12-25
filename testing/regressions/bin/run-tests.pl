@@ -37,6 +37,7 @@ my $testRe  =  shift || '.'; # pattern to match test IDs against. Allows to run 
 my $outDir  =  catfile($testDir, "out-dyn");
 my $refDir  =  catfile($testDir, "out-ref");
 my $certDir =  catfile($Bin, '..', '..', 'certs');
+my $autoCat =  $ENV{TEST_AUTOCAT} ? 1 : 0;
 
 my @forks        = ();
 my $customTokens = {};
@@ -256,6 +257,7 @@ sub runResult {
 
 				if (-e $diffFile) {
 					if (!$opts->{'headless'}) {
+						my $autoCatRan = 0;
 						INTERACT:
 						while (1) {
 							print "Test ", catfile($tokens->{'%TESTDIR%'}, $tokens->{'%TESTID%'}), " is about to fail.\n",
@@ -264,11 +266,18 @@ sub runResult {
 							      "ACTION: ", $testObj->{'test action'}[0], "\n",
 							      "(i)gnore file, review (d)iff ((w)ith or with(o)ut line endings), (e)dit test, (r)erun test, (s)kip test, (a)ccept new results, (q)uit: ";
 
-							# read a single character w/o requiring user to hit enter
-							ReadMode 'cbreak';
-							my $input = ReadKey(0);
-							ReadMode 'normal';
-							print "$input\n";
+							my $input;
+							if (!$autoCat || $autoCatRan) {
+								# read a single character w/o requiring user to hit enter
+								ReadMode 'cbreak';
+								$input = ReadKey(0);
+								ReadMode 'normal';
+								print "$input\n";
+							}
+							elsif ($autoCat) {
+								$input = 'd';
+								print "autoCat\n";
+							}
 
 							if ($input eq 'i') {
 								# ignore is to ignore this specific file failure
@@ -280,11 +289,16 @@ sub runResult {
 								$showFile = "$diffFile.nole" if ($input eq 'o');
 
 								my @cmds = ('intcat');
-								if (length($ENV{'PAGER'})) {
-									unshift(@cmds, $ENV{'PAGER'});
+								if ($input eq 'd' && $autoCat && !$autoCatRan) {
+									$autoCatRan = 1;
 								}
 								else {
-									print "WARNING: consider setting PAGER environment variable\n";
+									if (length($ENV{'PAGER'})) {
+										unshift(@cmds, $ENV{'PAGER'});
+									}
+									else {
+										print "WARNING: consider setting PAGER environment variable\n";
+									}
 								}
 
 								CMD:
@@ -310,6 +324,10 @@ sub runResult {
 							elsif ($input eq 'e') {
 								my $editor = $ENV{'SWAKS_EDITOR'} || $ENV{'VISUAL'} || $ENV{'EDITOR'};
 								my $file   = catfile($tokens->{'%TESTDIR%'}, "$tokens->{'%TESTID%'}.test");
+								if (!-e $editor) {
+									print STDERR "No valid editor found, consider setting SWAKS_EDITOR, VISUAL, or EDITOR environment variables\n";
+									next INTERACT;
+								}
 								debug('exec', "$editor $file");
 								system($editor, $file);
 								redo TEST_EXECUTION;

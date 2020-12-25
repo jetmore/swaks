@@ -986,3 +986,4 @@
            missing option instead of just the first missing.
 * 20201224 --no-hints should also include --no-info-hints, analogous to
            --hide-informational/--hide-all which already worked this way.
+* 20201225 Add autocat feature to test tools

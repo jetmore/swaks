@@ -4,7 +4,11 @@ export TEST_SWAKS=../../swaks
 export SWAKS_EDITOR='/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl'
 export TEST_SERVER=../server/smtp-server.pl
 
-# this can be really convenient when you have a ton of small changes to accept.  Don't have to (q)uit out of less
+
+# Either or both of these can be really convenient when you have a ton of small changes to accept.
+# Setting PAGER to cat means you don't have to quit out of a pager when viewing the diff
 #export PAGER=cat
+# Setting TEST_AUTOCAT to 1 means that everytime a test fails, the diff is auto-catted for review
+#export TEST_AUTOCAT=1
 
 exec $*

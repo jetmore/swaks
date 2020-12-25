@@ -12,15 +12,20 @@ runenv.bat   - same as runenv, but specific to Windows.
 
 
 environment/tooling:
-	PAGER environment variable should be set to make displaying of diffs most useful (can just set it to 'less')
+	swaks MUST be in your path.
+		- TEST_SWAKS environment variable can be set to an explicit swaks to avoid looking up in PATH
+		- on Windows, swaks MUST be named swaks.pl
+	perl MUST be in your path.
+	Capture::Tiny perl module MUST be installed
+	Text::Diff perl module needs MUST installed
+	Proc::Background perl module MUST be installed
+	all "optional" perl modules MUST be installed to run the test suite (that is, `swaks --support` must show every option supported)
+	TEST_SERVER environment variable MUST be set to a suitable path to run transaction tests.  The runenv default should be suitable everywhere
+	PAGER environment variable SHOULD be set to make displaying of diffs most useful (can just set it to 'less')
 		- except on Windows, see below
-	swaks must be in your path.  If TEST_SWAKS environment variable is set, it will be used instead of looking in PATH
-		- on Windows, swaks _must_ be named swaks.pl
-	perl must be in your path.
-	the Capture::Tiny perl module needs to be installed
-	the Text::Diff perl module needs to be installed
-	the Proc::Background perl module needs to be installed
-	all "optional" perl modules must be installed to run the test suite (that is, `swaks --support` must show every option supported)
+	TEST_AUTOCAT environment variable MAY be set to 1 to force run-tests.pl to display a diff automatically on test failure
+	SWAKS_EDITOR environment variable MAY be set to a text editor.  When (e)dit is chosen, the test scriopt will be opened using this variable
+		- If SWAKS_EDITOR is not set, VISUAL and then EDITOR will also be checked
 
 --
 
