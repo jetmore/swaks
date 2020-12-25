@@ -1,0 +1,3 @@
+=== Trying pipe to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   ...
+=== Connected to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   .
+=== Dropping connection

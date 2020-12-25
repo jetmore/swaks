@@ -197,7 +197,7 @@ sub sendmail {
 	if ($G::tls_on_connect) {
 		if (start_tls()) {
 			tls_post_start();
-			do_smtp_drop()     if ($G::drop_after eq 'tls');
+			do_smtp_drop()     if ($G::drop_after eq 'tls' || $G::drop_after_send eq 'tls');
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 		} else {
 			ptrans(12, "TLS startup failed ($G::link{tls}{res})");
@@ -206,6 +206,7 @@ sub sendmail {
 	}
 
 	# read the server's 220 banner.
+	do_smtp_drop()     if ($G::drop_after_send eq 'connect');
 	do_smtp_gen(undef, '220') || do_smtp_quit(1, 21);
 	do_smtp_drop()     if ($G::drop_after eq 'connect');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'connect');
@@ -241,7 +242,7 @@ sub sendmail {
 		ptrans(12, "TLS requested, advertised, and locally unavailable.  Exiting");
 		do_smtp_quit(1, 29);
 	}
-	do_smtp_drop()     if ($G::drop_after eq 'tls');
+	do_smtp_drop()     if ($G::drop_after eq 'tls' || $G::drop_after_send eq 'tls');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 
 	#if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
@@ -293,7 +294,7 @@ sub sendmail {
 		ptrans(12, "Auth requested, advertised, and locally unavailable.  Exiting");
 		do_smtp_quit(1, 28);
 	}
-	do_smtp_drop()     if ($G::drop_after eq 'auth');
+	do_smtp_drop()     if ($G::drop_after eq 'auth' || $G::drop_after_send eq 'auth');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'auth');
 
 	# send MAIL
@@ -342,26 +343,32 @@ sub xclient_try {
 		# 3 - xclient attempted but did not succeed
 		$G::drop_before_read = 1 if ($G::drop_after_send eq 'xclient');
 		my $result = do_smtp_xclient($ehlo);
-		if ($result == 1) {
+		if ($result->{code} == 1) {
 			ptrans(12, "Host did not advertise XCLIENT");
 			do_smtp_quit(1, 33) if (!$G::xclient{optional});
-		} elsif ($result == 2) {
-			ptrans(12, "Host did not advertise requested XCLIENT attributes");
+		} elsif ($result->{code} == 2) {
+			my $error = 'Host did not advertise requested XCLIENT attributes';
+			if (exists($result->{missing_attrs}) && ref($result->{missing_attrs}) eq 'ARRAY' && scalar(@{$result->{missing_attrs}})) {
+				$error .= ' (' . join(', ', sort(@{$result->{missing_attrs}})) . ')';
+			}
+			ptrans(12, $error);
 			do_smtp_quit(1, 33) if (!$G::xclient{optional});
-		} elsif ($result == 3) {
-			ptrans(12, "XCLIENT attempted but failed.  Exiting");
+		} elsif ($result->{code} == 3) {
+			ptrans(12, "XCLIENT attempted but failed");
 			do_smtp_quit(1, 33) if ($G::xclient{optional} != 1);
 		} else {
 			do_smtp_drop()     if ($G::drop_after eq 'xclient');
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient');
 
 			# re-helo if the XCLIENT command succeeded
-			$G::drop_before_read = 1 if ($G::drop_after_send eq 'helo');
+			$G::drop_before_read = 1 if ($G::drop_after_send eq 'xclient-helo');
 			do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 34);
-			do_smtp_drop()     if ($G::drop_after eq 'helo');
-			do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
+			do_smtp_drop()     if ($G::drop_after eq 'xclient-helo');
+			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient-helo');
 		}
 	}
+	do_smtp_drop()     if ($G::drop_after =~ /xclient(?:-helo)?/ || $G::drop_after_send =~ /xclient(?:-helo)?/);
+	do_smtp_quit(1, 0) if ($G::quit_after =~ /xclient(?:-helo)?/);
 }
 
 sub tls_post_start {
@@ -653,26 +660,35 @@ sub do_smtp_tls {
 
 sub do_smtp_xclient {
 	my $e = shift;
+	my $return = { code => 0 };
 
 	# 0 - xclient succeeded normally
 	# 1 - xclient not advertised
 	# 2 - xclient advertised but not attempted, mismatch in requested attrs
 	# 3 - xclient attempted but did not succeed
 	if (!$e->{XCLIENT}) {
-		return(1);
+		$return->{code} = 1;
+		return($return);
 	}
 	my @parts = ();
 	foreach my $attr (keys %{$G::xclient{attr}}) {
 		if (!$e->{XCLIENT}{$attr}) {
-			return(2) if (!$G::xclient{no_verify});
+			if (!$G::xclient{no_verify}) {
+				$return->{code} = 2;
+				push(@{$return->{missing_attrs}}, $attr);
+			}
 		}
 	}
+	return($return) if ($return->{code} != 0);
 
 	foreach my $string (@{$G::xclient{strings}}) {
 		my $str = "XCLIENT " . $string;
-		do_smtp_gen($str, '220') || return(3);
+		if (!do_smtp_gen($str, '220')) {
+			$return->{code} = 3;
+			return($return);
+		}
 	}
-	return(0);
+	return($return);
 }
 
 # see xtext encoding in http://tools.ietf.org/html/rfc1891
@@ -2073,7 +2089,7 @@ sub get_option_struct {
 		# PROXY
 		# argument is the raw PROXY string
 		{ opts    => ['proxy'],                                            suffix => ':s',
-		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT|OP_FROM_FILE,
 		  prompt  => 'PROXY string: ',                                     match  => '^.+$',
 		  okey    => 'proxy_raw',                                          type   => 'scalar', },
 		# PROXY version (1 or 2)
@@ -2704,14 +2720,15 @@ sub process_args {
 	if (get_arg('no_hints', $o)) {
 		$G::no_hints_send = 1;
 		$G::no_hints_recv = 1;
+		$G::no_hints_info = 1;
 	}
 	else {
 		$G::no_hints_send      = get_arg('no_hints_send', $o);
 		$G::no_hints_recv      = get_arg('no_hints_recv', $o);
+		$G::no_hints_info      = get_arg('no_hints_info', $o);
 	}
 	$G::dump_mail          = get_arg('dump_mail', $o);
 	$G::suppress_data      = get_arg('suppress_data', $o);
-	$G::no_hints_info      = get_arg('no_hints_info', $o);
 	$G::hide_send          = get_arg('hide_send', $o);
 	$G::hide_receive       = get_arg('hide_receive', $o);
 	$G::hide_informational = get_arg('hide_informational', $o);
@@ -2792,11 +2809,12 @@ sub process_args {
 			elsif (${"G::$opt"} eq 'banner')        { ${"G::$opt"} = 'connect';    }
 			elsif (${"G::$opt"} eq 'from')          { ${"G::$opt"} = 'mail';       }
 			elsif (${"G::$opt"} eq 'to')            { ${"G::$opt"} = 'rcpt';       }
-			elsif (${"G::$opt"} ne 'connect' && ${"G::$opt"} ne 'first-helo' &&
-			       ${"G::$opt"} ne 'tls'     && ${"G::$opt"} ne 'helo'       &&
-			       ${"G::$opt"} ne 'auth'    && ${"G::$opt"} ne 'mail'       &&
-			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient'    &&
-			       ${"G::$opt"} ne 'data'    && ${"G::$opt"} ne 'dot')
+			elsif (${"G::$opt"} ne 'connect' && ${"G::$opt"} ne 'first-helo'   &&
+			       ${"G::$opt"} ne 'tls'     && ${"G::$opt"} ne 'helo'         &&
+			       ${"G::$opt"} ne 'auth'    && ${"G::$opt"} ne 'mail'         &&
+			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient'      &&
+			       ${"G::$opt"} ne 'data'    && ${"G::$opt"} ne 'xclient-helo' &&
+			       ${"G::$opt"} ne 'dot')
 			{
 				ptrans(12, "Unknown $opt value " . ${"G::$opt"} . ", exiting");
 				exit(1);
@@ -3312,7 +3330,13 @@ sub process_args {
 	$G::proxy{try}     = 0;
 	$G::proxy{attr}    = {};
 	$G::proxy{version} = get_arg('proxy_version', $o);
-	$G::proxy{raw}     = get_arg('proxy_raw', $o);
+	if ($G::proxy{raw} = get_arg('proxy_raw', $o)) {
+		$G::proxy{raw} =~ s/\r?\n$//;
+		$G::proxy{raw} =  db64($G::proxy{raw}) if ($G::proxy{raw} =~ s/^base64://);
+		$G::proxy{raw} =~ s/^PROXY //;
+		my $v2header      =  pack("W[12]", 0x0D, 0x0A,0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A);
+		$G::proxy{raw} =~ s/^$v2header//;
+	}
 	foreach my $attr ('family', 'source', 'source_port', 'dest', 'dest_port', 'protocol', 'command') {
 		if (my $val = get_arg('proxy_' . $attr, $o)) {
 			if ($G::proxy{raw}) {
@@ -3335,12 +3359,16 @@ sub process_args {
 	if ($G::proxy{try} && !$G::proxy{raw}) {
 		$G::proxy{attr}{protocol} ||= 'STREAM';
 		$G::proxy{attr}{command}  ||= 'PROXY';
+		my @missing = ();
 		foreach my $attr ('family', 'source', 'source_port', 'dest', 'dest_port', 'protocol', 'command') {
 			if (!$G::proxy{attr}{$attr}) {
-				ptrans(12, "Incomplete set of --proxy-* options (missing $attr)");
-				exit(35);
+				push(@missing, $attr);
 			}
 			$G::proxy{attr}{$attr} = uc($G::proxy{attr}{$attr});
+		}
+		if (scalar(@missing)) {
+			ptrans(12, 'Incomplete set of --proxy-* options (missing ' . join(', ', @missing) . ')');
+			exit(35);
 		}
 		if ($G::proxy{attr}{protocol} !~ /^(UNSPEC|STREAM|DGRAM)$/) {
 			ptrans(12, 'unknown --proxy-protocol argument ' . $G::proxy{attr}{protocol});
@@ -3682,7 +3710,7 @@ sub get_running_state {
 			push(@{$parts[-1]}, '  proxy       = yes');
 			push(@{$parts[-1]}, "  version     = $G::proxy{version}");
 			if ($G::proxy{raw}) {
-				push(@{$parts[-1]}, "  raw string  = $G::proxy{raw}");
+				push(@{$parts[-1]}, "  raw string  = " . ($G::proxy{version} != 1 ? eb64($G::proxy{raw}) : $G::proxy{raw}));
 			} else {
 				push(@{$parts[-1]},
 					'  family      = ' . $G::proxy{attr}{family},

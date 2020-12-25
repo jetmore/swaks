@@ -331,7 +331,11 @@ In a STARTTLS (but not tls-on-connect) session, terminate the transaction after 
 
 =item XCLIENT
 
-Quit after XCLIENT is sent.
+Quit after XCLIENT is negotiation. This always quits after the point where XCLIENT would have been negotiated, regardless of whether it was attempted.
+
+=item XCLIENT-HELO
+
+Quit after the HELO that XCLIENT negotiation triggers. This differs from HELO and FIRST-HELO because XCLIENT negotiation can happen at multiple points in the SMTP transaction and it is impossible to specifically refer to the XCLIENT-triggered HELO using the HELO or FIRST-HELO stop-points. This always quits after the point where the XCLIENT-triggered HELO would have occurred, regardless of whether it was attempted.
 
 =item STARTTLS, TLS
 
@@ -373,7 +377,23 @@ Quit after the final '.' of the message is sent.
 
 =item --das, --drop-after-send <stop-point>
 
-This option is similar to C<--drop-after>, but instead of dropping the connection after reading a response to the stop-point, it drops the connection immediately after sending stop-point.  It accepts the same stop-points as C<--drop-after>. (Arg-Required)
+This option is similar to C<--drop-after>, but instead of dropping the connection after reading a response to the stop-point, it drops the connection immediately after sending stop-point.  It accepts the same stop-points as C<--drop-after>. If the stop-point is for an optional part of the transaction which is not actually sent (for instance STARTTLS or AUTH), this option will behave identically to C<--drop-after>. See below for specific details. (Arg-Required)
+
+=over 4
+
+=item CONNECT
+
+Connect to the server and then drops the connection before receiving the server's banner.
+
+=item STARTTLS, TLS
+
+Behaves identically to C<--drop-after>.
+
+=item HELO, EHLO, LHLO
+
+Doesn't necessarily work as expected.  If it appears to read the HELO response incorrectly, use FIRST-HELO instead.
+
+=back
 
 =item --timeout [<time>]
 
@@ -555,7 +575,7 @@ The CRAM-SHA1 authenticator requires the L<Digest::SHA> module.  This type has o
 
 =item NTLM/SPA/MSN
 
-These authenticators require the Authen::NTLM module.  Note that there are two modules using the L<Authen::NTLM> namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.03.tar.gz) is the version required by Swaks.  This type has been tested against Exim, Communigate, and Exchange 2007.
+These authenticators require the Authen::NTLM module.  This type has been tested against Exim, Communigate, and Exchange 2007.
 
 In addition to the standard username and password, this authentication type can also recognize a "domain".  The domain can be set using the C<--auth-extra> "domain" keyword.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
 
@@ -695,11 +715,13 @@ When C<--proxy> is not used, all of C<--proxy-family>, C<--proxy-source>, C<--pr
 
 =item --proxy-version [ 1 | 2 ]
 
-Whether to use version 1 (human readable) or version 2 (binary) of the Proxy protocol.  Version 1 is the default.  Version 2 is only implemented through the "address block", and is roughly on par with the information provided in version 1.
+Whether to use version 1 (human readable) or version 2 (binary) of the Proxy protocol.  Version 1 is the default.  Version 2 is only implemented through the "address block", and is roughly on par with the information provided in version 1. (Arg-Required, From-Prompt)
 
 =item --proxy [<string>]
 
-If this option is used, its argument is passed unchanged after the "PROXY " portion (or the 12-byte protocol header for version 2) of the Proxy exchange.  This option allows sending incomplete or malformed Proxy strings to a target server for testing.  No attempt to translate or modify this string is made, so if used with C<--proxy-version 2> the argument should be in the appropriate binary format.  This option is mutually exclusive with all other C<--proxy-*> options which provide granular proxy information. (Arg-Required, From-Prompt)
+This option provides the raw proxy string which will be sent to the server.  The protocol prefix ("PROXY " for version 1, the 12-byte protocol header for version 2) can be present or not in the argument.  This option allows sending incomplete or malformed Proxy strings to a target server for testing.  This option is mutually exclusive with all other C<--proxy-*> options which provide granular proxy information.
+
+Because version 2 of the Proxy protocol is a binary protocol, there are multiple ways to provide the argument to this option.  If the argument starts with "base64:", that prefix is stripped and the rest of the string is base64 decoded before use.  If the argument starts with C<@> it will be treated as a filename and the proxy value will be read from the file.  Any other value is assumed to be the literal value for the proxy string. (Arg-Required, From-Prompt, From-File)
 
 =item --proxy-family [<string>]
 
@@ -923,9 +945,10 @@ Summarizes the DATA portion of the SMTP transaction instead of printing every li
 
 Display time lapse between send/receive pairs.  This option is most useful when L<Time::HiRes> is available, in which case the time lapse will be displayed in thousandths of a second.  If L<Time::HiRes> is unavailable or "i" is given as an argument the lapse will be displayed in integer seconds only. (Arg-Optional)
 
-=item -nih, --no-info-hints
 
 Don't display the transaction hint for informational transactions.  This is most useful when needing to copy some portion of the informational lines, for instance the certificate output from C<--tls-get-peer-cert>. (Arg-None)
+
+=item -nih, --no-info-hints
 
 =item -nsh, --no-send-hints
 
@@ -933,7 +956,7 @@ Don't display the transaction hint for informational transactions.  This is most
 
 =item -nth, --no-hints
 
-C<--no-send-hints> and C<--no-receive-hints> suppress the transaction hints from send and receive lines, respectively.  This is often useful when copying some portion of the transaction for use elsewhere (for instance, C<--no-send-hints --hide-receive --hide-informational> is a useful way to get only the client-side commands for a given transaction).  C<--no-hints> is identical to specifying both C<--no-send-hints> and C<--no-receive-hints>. (Arg-None)
+C<--no-info-hints>, C<--no-send-hints>, and C<--no-receive-hints> suppress the transaction hints from info, send, and receive lines, respectively.  This is often useful when copying some portion of the transaction for use elsewhere (for instance, C<--no-send-hints --hide-receive --hide-informational> is a useful way to get only the client-side commands for a given transaction and C<--no-info-hints --tls-get-peer-cert> for copying the peer certifiate).  C<--no-hints> is identical to specifying C<--no-info-hints --no-send-hints --no-receive-hints>. (Arg-None)
 
 =item -raw, --show-raw-text
 
