@@ -1,5 +1,5 @@
-=== Trying pipe to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   part-0100-ehlo-basic.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   ...
-=== Connected to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   part-0100-ehlo-basic.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   .
+Trying pipe to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   part-0100-ehlo-basic.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   ...
+Connected to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   part-0100-ehlo-basic.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   .
 220 SERVER ESMTP ready
 EHLO hserver
 250-SERVER Hello Server [1.1.1.1]
@@ -24,4 +24,4 @@ This is a test mailing
 250 OK id=fakeemail
 QUIT
 221 SERVER closing connection
-=== Connection closed with child process.
+Connection closed with child process.
