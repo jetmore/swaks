@@ -1,4 +1,4 @@
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 title: non-english-locale emails generate english date strings
 
 # this looks like a standard test, but the date munging won't work if we generated it with czech day/month names

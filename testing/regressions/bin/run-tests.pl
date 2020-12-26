@@ -182,6 +182,16 @@ sub runTest {
 	}
 }
 
+sub saveExit {
+	my $id   = shift;
+	my $exit = shift;
+	my $file = catfile($outDir, $id . '.exits');
+
+	open(O, ">>$file") || die "Couldn't open $file to write: $!\n";
+	printf O "%-15s %3d   %s\n", $exit->[0], $exit->[1], join(' ', @{$exit->[2]});
+	close(O);
+}
+
 sub saveResult {
 	my $string = shift;
 
@@ -403,7 +413,8 @@ sub runAction {
 		$args[0] =~ s|/|\\|g if ($^O eq 'MSWin32');
 		debug('CMD', join('; ', @args));
 		debug('exec', join(' ', map { "'$_'" } @args));
-		system(@args);
+		my $exit = system(@args);
+		saveExit($tokens->{'local'}{'%TESTID%'}, [ $verb, $exit >> 8, \@args ]);
 	}
 	elsif ($verb =~ /^CMD_CAPTURE(?::(\S+))?$/) {
 		my $suffix     = $1 ? ".$1" : '';
@@ -415,7 +426,8 @@ sub runAction {
 		@args          = grep(!/^STDIN:/, @args);
 
 		$stdinFile =~ s/^STDIN://;
-		captureOutput(\@args, $stdoutFile, $stderrFile, $stdinFile);
+		my $exit = captureOutput(\@args, $stdoutFile, $stderrFile, $stdinFile);
+		saveExit($tokens->{'%TESTID%'}, [ $verb, $exit, \@args ]);
 	}
 	elsif ($verb eq 'FORK') {
 		$args[0] =~ s|/|\\|g if ($^O eq 'MSWin32');
@@ -698,6 +710,7 @@ sub captureOutput {
 	my $outFile = shift;
 	my $errFile = shift;
 	my $inFile  = shift;
+	my $exit;
 	my $debug   = join(' ', map { "'$_'" } (@$args)) . " >$outFile 2>$errFile";
 	$debug     .= " <$inFile" if ($inFile);
 
@@ -721,10 +734,15 @@ sub captureOutput {
 			my $command = cmdquote(@$args);
 			open(P, "|-", join(' ', $command)) || die "Couldn't open pipe to $command: $!\n";
 			print P $stdin;
-			close(P);
+			if (close(P)) {
+				$exit = 0;
+			}
+			else {
+				$exit = $?;
+			}
 		}
 		else {
-			system(@$args);
+			$exit = system(@$args) >> 8;
 		}
 	};
 
@@ -735,6 +753,8 @@ sub captureOutput {
 	open(FILESTDERR, ">$errFile") || die "Can't open new stderr file $errFile to write: $!\n";
 	print FILESTDERR $stderr;
 	close(FILESTDERR);
+
+	return($exit);
 }
 
 sub get_hostname {

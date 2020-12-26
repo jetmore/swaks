@@ -1,6 +1,6 @@
 # Generated Wed Jul 10 22:52:20 2019 by ./gen-tests.pl '-n' '150' '-o' 'xclient-proto' '-v' 'ESMTP' '-i' '' '-p' 'XCLIENT proto:' '-d' '.' '-r'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: xclient-proto, command line, valid arg (--option=)
 

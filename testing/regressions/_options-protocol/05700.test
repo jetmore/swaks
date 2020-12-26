@@ -1,4 +1,4 @@
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 # this test delays because of live DNS lookup, need to figure out how to work around
 pre action: SET_ENV LOGNAME test_logname

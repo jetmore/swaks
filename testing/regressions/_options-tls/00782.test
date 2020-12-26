@@ -1,6 +1,6 @@
 # Generated Thu Dec 20 17:06:34 2018 by ./gen-tests.pl '.' '750' 'tls-key' '%TESTDIR%/%TESTID%.test' '/path/to/CertFile'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tls-key, command line, valid arg (--option=)
 

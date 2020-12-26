@@ -1,4 +1,4 @@
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 test action: FORK %TEST_SERVER% --silent --domain unix --interface %OUTDIR%/%TESTID%.sock \
   part-0001-connect-with-print.txt \

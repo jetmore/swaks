@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 12:36:24 2018 by ./gen-tests.pl '.' '700' 'hide-receive' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: hide-receive, env var, no arg
 

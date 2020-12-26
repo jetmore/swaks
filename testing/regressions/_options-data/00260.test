@@ -1,6 +1,6 @@
 # Generated Sat Jul 13 10:36:15 2019 by ./gen-tests.pl '-n' '250' '-o' 'dump-as-body-shows-password' '-v' '' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --au auth_user --ap auth_pass --dab AUTH'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: dump-as-body-shows-password, config, no arg
 

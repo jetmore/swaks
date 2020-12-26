@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 12:37:05 2018 by ./gen-tests.pl '.' '900' 'hide-informational' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: hide-informational, config, no-option
 

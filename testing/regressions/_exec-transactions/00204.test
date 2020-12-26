@@ -1,4 +1,4 @@
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 skip: it's unclear to me whether swaks is wrong or smtp-server.pl is wrong, but we're dropping the connection before I expected it
 

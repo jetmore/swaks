@@ -1,4 +1,4 @@
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 # this is an awkward test - --protocol should force auth, but auth will require username/pass.  We can't provide user/pass on command
 # line though, because that also would trigger auth.  The only clean way to do it is to allow --protocol to force auth, then

@@ -2,6 +2,6 @@ once action: IFOS!=MSWin32 DEFINE %OUTPUT_SWAKS% %OUTDIR%/swaks
 once action: IFOS=MSWin32  DEFINE %OUTPUT_SWAKS% %OUTDIR%/swaks.pl
 once action: MERGE %OUTPUT_SWAKS% file:%SWAKS% file:%TESTDIR%/swaksrc-data mode:00755
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 test action: CMD_CAPTURE %OUTPUT_SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser.ver --config

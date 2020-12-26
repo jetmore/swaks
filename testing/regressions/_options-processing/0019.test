@@ -2,7 +2,7 @@ once action: IFOS!=MSWin32 DEFINE %OUTPUT_SWAKS% %OUTDIR%/swaks
 once action: IFOS=MSWin32  DEFINE %OUTPUT_SWAKS% %OUTDIR%/swaks.pl
 once action: MERGE %OUTPUT_SWAKS% file:%SWAKS% file:%TESTDIR%/swaksrc-data mode:00755
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 pre action: SET_ENV SWAKS_HOME --UNSET--
 pre action: SET_ENV HOME --UNSET--

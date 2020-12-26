@@ -1,6 +1,6 @@
 # Generated Tue Dec 11 19:01:20 2018 by ./gen-tests.pl '.' '500' 'tls-cipher' '3DES:+RSA' ''
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tls-cipher, config, no arg
 

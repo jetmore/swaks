@@ -1,6 +1,6 @@
 # Generated Wed Jul 10 22:58:33 2019 by ./gen-tests.pl '-n' '400' '-o' 'xclient-reverse-name' '-v' 'REVSTR' '-i' '' '-p' 'XCLIENT reverse_name:' '-d' '.' '-r'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: xclient-reverse-name, config, no arg
 

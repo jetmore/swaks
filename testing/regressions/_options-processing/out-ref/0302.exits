@@ -1,0 +1,1 @@
+CMD_CAPTURE       0   /path/to/OUTDIR/swaks --dump DATA --to user@host1.nodns.test.swaks.net --from from@host1.nodns.test.swaks.net --server ser.ver --config /path/to/TESTDIR/swaksrc-config-2

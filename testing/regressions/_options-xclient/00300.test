@@ -1,6 +1,6 @@
 # Generated Wed Jul 10 22:55:06 2019 by ./gen-tests.pl '-n' '300' '-o' 'xclient-helo' '-v' 'HELOSTR' '-i' '' '-p' 'XCLIENT helo:' '-d' '.' '-r'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: xclient-helo, command line, no arg
 

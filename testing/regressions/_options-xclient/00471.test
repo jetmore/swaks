@@ -1,6 +1,6 @@
 # Generated Wed Jul 10 23:00:55 2019 by ./gen-tests.pl '-n' '450' '-o' 'xclient' '-v' 'REVERSE_NAME=testname PORT=25' '-i' '' '-p' 'XCLIENT string:' '-d' '.' '-r'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: xclient, env var, valid arg
 

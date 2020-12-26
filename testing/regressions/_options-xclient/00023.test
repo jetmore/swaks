@@ -1,6 +1,6 @@
 # Generated Wed Jul 10 22:45:59 2019 by ./gen-tests.pl '-n' '0' '-o' 'xclient-addr' '-v' '1.1.1.1' '-i' '' '-p' 'XCLIENT addr:' '-d' '.' '-r'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: xclient-addr, env var, no-option
 

@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 12:37:12 2018 by ./gen-tests.pl '.' '950' 'hi' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: hi, config, no-option
 

@@ -1,6 +1,6 @@
 # Generated Wed Jul 10 22:53:15 2019 by ./gen-tests.pl '-n' '200' '-o' 'xclient-destaddr' '-v' '2.2.2.2' '-i' '' '-p' 'XCLIENT destaddr:' '-d' '.' '-r'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: xclient-destaddr, env var, no arg
 

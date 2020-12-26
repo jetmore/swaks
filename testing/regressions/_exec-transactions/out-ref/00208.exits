@@ -1,0 +1,1 @@
+CMD_CAPTURE      29   %SWAKS_COMMAND% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --tls-on-connect --pipe %TEST_SERVER% --silent --domain pipe --key /path/to/TESTDIR/test-server-keyX.dat --cert /path/to/TESTDIR/test-server-certX.dat   part-0201-intialize-tls.txt   

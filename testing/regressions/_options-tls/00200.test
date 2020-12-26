@@ -1,6 +1,6 @@
 # Generated Tue Dec 11 18:55:41 2018 by ./gen-tests.pl '.' '200' 'tls-optional-strict' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tls-optional-strict, command line, no arg
 

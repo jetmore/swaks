@@ -1,6 +1,6 @@
 # Generated Tue Dec 11 18:56:22 2018 by ./gen-tests.pl '.' '350' 'tlsc' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tlsc, command line, no-option
 
