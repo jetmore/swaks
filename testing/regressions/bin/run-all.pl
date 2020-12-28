@@ -34,12 +34,12 @@ my $nextfile = "$vard/results." . time();
 my $prevfile;
 
 if ($opts->{errors} || $opts->{winnow}) {
-	opendir(DIR, "$home/var") || die "Couldn't opendir $home/var\n";
+	opendir(DIR, "$vard") || die "Couldn't opendir $home/var\n";
 	my $file = (sort(grep(/^results./, readdir(DIR))))[-1]; # get the newest file
 	closedir(DIR);
 
 	if ($file) {
-		$prevfile = "$home/var/$file";
+		$prevfile = "$vard/$file";
 	}
 	else {
 		die "Unable to find a var/results.* file to use for previous errors\n";
@@ -79,6 +79,8 @@ if (!$opts->{errors}) {
 	}
 
 	print "\n";
+	print "===============\n";
+	print "results: $nextfile\n";
 	print "===============\n";
 	my $testSuiteFailures = join(', ', grep { $runResults{$_} != 0; } (keys(%runResults)));
 	if ($testSuiteFailures) {

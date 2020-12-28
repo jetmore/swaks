@@ -1,2 +1,2 @@
-*** Error connecting to /path/to/OUTDIR/07001.sock:
+*** Error connecting to %OUTDIR%/07001.sock:
 *** 	connect: No such file or directory

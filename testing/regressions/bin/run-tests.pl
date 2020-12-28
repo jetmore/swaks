@@ -880,9 +880,10 @@ sub munge_paths {
 	my $lines    = shift;
 	my $consider = shift || '.?';
 
-	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%OUTDIR%'}), '/path/to/OUTDIR');
-	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%REFDIR%'}), '/path/to/REFDIR');
-	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%TESTDIR%'}), '/path/to/TESTDIR');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%OUTDIR%'}), '%OUTDIR%');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%REFDIR%'}), '%REFDIR%');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%TESTDIR%'}), '%TESTDIR%');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%CERTDIR%'}), '%CERTDIR%');
 }
 
 sub munge_local_hostname {

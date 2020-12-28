@@ -1,1 +1,1 @@
-CMD_CAPTURE       0   %SWAKS_COMMAND% --dump OUTPUT --to user@host1.nodns.test.swaks.net --server ser.ver --no-show-time-lapse --config /path/to/OUTDIR/swaksrc-0343
+CMD_CAPTURE       0   %SWAKS_COMMAND% --dump OUTPUT --to user@host1.nodns.test.swaks.net --server ser.ver --no-show-time-lapse --config %OUTDIR%/swaksrc-0343

@@ -1,1 +1,1 @@
-CMD_CAPTURE       0   %SWAKS_COMMAND% --dump DATA --server ser.ver --config /path/to/OUTDIR/swaksrc-0050
+CMD_CAPTURE       0   %SWAKS_COMMAND% --dump DATA --server ser.ver --config %OUTDIR%/swaksrc-0050

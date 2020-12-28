@@ -1,1 +1,1 @@
-CMD_CAPTURE       0   %SWAKS_COMMAND% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server ser.ver --config /path/to/OUTDIR/swaksrc-00063
+CMD_CAPTURE       0   %SWAKS_COMMAND% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server ser.ver --config %OUTDIR%/swaksrc-00063

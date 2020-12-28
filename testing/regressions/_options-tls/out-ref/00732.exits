@@ -1,1 +1,1 @@
-CMD_CAPTURE       0   %SWAKS_COMMAND% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --tls --tls-key /path/to/TESTDIR/00732.test --server ser ver --tls-cert=/path/to/TESTDIR/00732.test
+CMD_CAPTURE       0   %SWAKS_COMMAND% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --tls --tls-key %TESTDIR%/00732.test --server ser ver --tls-cert=%TESTDIR%/00732.test

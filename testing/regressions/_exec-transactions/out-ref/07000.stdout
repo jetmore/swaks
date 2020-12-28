@@ -1,5 +1,5 @@
-=== Trying /path/to/OUTDIR/07000.sock...
-=== Connected to /path/to/OUTDIR/07000.sock.
+=== Trying %OUTDIR%/07000.sock...
+=== Connected to %OUTDIR%/07000.sock.
 <-  220 SERVER ESMTP ready for peer ()
  -> EHLO hserver
 <-  250-SERVER Hello Server [1.1.1.1]

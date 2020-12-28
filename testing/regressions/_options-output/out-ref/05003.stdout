@@ -13,4 +13,4 @@ Output Info:
   hide_informational = FALSE
   hide_all           = FALSE
   trans_fh_of        = STDOUT (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
-  trans_fh_ef        = /path/to/OUTDIR/05003.out (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+  trans_fh_ef        = %OUTDIR%/05003.out (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
