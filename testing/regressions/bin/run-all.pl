@@ -10,6 +10,7 @@
 # this leaves var/results.* files laying around, should prune them periodically
 
 use strict;
+use Cwd qw(realpath);
 use FindBin qw($Bin);
 use Getopt::Long;
 
@@ -18,7 +19,7 @@ GetOptions($opts, 'errors|e!', 'winnow|w!') || die "Couldn't understand options\
 
 my $pattern = shift || '^_';
 
-my $home     = "$Bin/..";
+my $home     = realpath("$Bin/..");
 my $runTests = "$home/bin/run-tests.pl";
 
 opendir(D, $home) || die "Couldn't opendir $home: $!\n";

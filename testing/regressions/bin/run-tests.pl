@@ -11,6 +11,7 @@
 
 use strict;
 use Capture::Tiny;
+use Cwd qw(realpath);
 use File::Copy qw();
 use File::Spec::Functions qw(:ALL);
 use FindBin qw($Bin);
@@ -55,13 +56,13 @@ my $tokens       = {
 };
 if ($ENV{SWAKS_TEST_SWAKS}) {
 	if ($ENV{SWAKS_TEST_SWAKS} =~ m|[/\\]|) {
-		$ENV{SWAKS_TEST_SWAKS} = rel2abs($ENV{SWAKS_TEST_SWAKS});
+		$ENV{SWAKS_TEST_SWAKS} = realpath(rel2abs($ENV{SWAKS_TEST_SWAKS}));
 	}
 	$tokens->{'global'}{'%SWAKS%'} = $ENV{SWAKS_TEST_SWAKS};
 }
 if ($ENV{SWAKS_TEST_SERVER}) {
 	if ($ENV{SWAKS_TEST_SERVER} =~ m|[/\\]|) {
-		$ENV{SWAKS_TEST_SERVER} = rel2abs($ENV{SWAKS_TEST_SERVER});
+		$ENV{SWAKS_TEST_SERVER} = realpath(rel2abs($ENV{SWAKS_TEST_SERVER}));
 	}
 	$tokens->{'global'}{'%TEST_SERVER%'} = $ENV{SWAKS_TEST_SERVER};
 }
@@ -268,13 +269,14 @@ sub runResult {
 				if (-e $diffFile) {
 					if (!$opts->{'headless'}) {
 						my $autoCatRan = 0;
+						my $action     = $testObj->{'test action'}[0];
 						INTERACT:
 						while (1) {
 							print "Test ", catfile($tokens->{'%TESTDIR%'}, $tokens->{'%TESTID%'}), " is about to fail.\n",
 							      "DIFF:   $args[0], $args[1]\n",
 							      ($testObj->{title} ? "TITLE:  $testObj->{title}\n" : ''),
-							      "ACTION: ", $testObj->{'test action'}[0], "\n",
-							      "(i)gnore file, review (d)iff ((w)ith or with(o)ut line endings), (e)dit test, (r)erun test, (s)kip test, (a)ccept new results, (q)uit: ";
+							      "ACTION: $action\n",
+							      "(i)gnore file; review (d)iff ((w)ith or with(o)ut line endings); (e)dit, (r)erun, or (s)kip test; (u)nmunge; (a)ccept new results; (q)uit: ";
 
 							my $input;
 							if (!$autoCat || $autoCatRan) {
@@ -344,6 +346,10 @@ sub runResult {
 								debug('exec', "$editor $file");
 								system($editor, $file);
 								redo TEST_EXECUTION;
+							}
+							elsif ($input eq 'u') {
+								$action = join(' ', mshellwords(replaceTokens($tokens, $testObj->{'test action'}[0])));
+								next INTERACT;
 							}
 							elsif ($input eq 'r') {
 								redo TEST_EXECUTION;
