@@ -41,6 +41,7 @@ if ($opts->{errors} || $opts->{winnow}) {
 
 	if ($file) {
 		$prevfile = "$vard/$file";
+		#print "Using previous results file $prevfile\n";
 	}
 	else {
 		die "Unable to find a var/results.* file to use for previous errors\n";
@@ -55,11 +56,14 @@ foreach my $test (sort @tests) {
 	}
 	elsif ($opts->{winnow}) {
 		@testCmd = ('--errors', '--infile', $prevfile, '--headless', '--outfile', $nextfile);
+		open(O, ">>$nextfile"); close(O); # ensure the next file will exist even if the test run doesn't create it
 	}
 	else {
 		@testCmd = (                                   '--headless', '--outfile', $nextfile);
+		open(O, ">>$nextfile"); close(O); # ensure the next file will exist even if the test run doesn't create it
 	}
 	@testCmd = ($runTests, @testCmd, $test);
+	#print "executing ", join(' ', @testCmd), "\n";
 	system(@testCmd);
 	$runResults{$test} = $? >> 8;
 }
