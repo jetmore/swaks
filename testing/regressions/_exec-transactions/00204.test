@@ -1,10 +1,10 @@
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
-skip: it's unclear to me whether swaks is wrong or smtp-server.pl is wrong, but we're dropping the connection before I expected it
+
 
 test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver \
-  --tls --tls-optional \
-  --pipe '%TEST_SERVER% --silent --domain pipe --key %TESTDIR%/test-server-keyX.dat --cert %TESTDIR%/test-server-certX.dat \
+  --tls --tls-optional --tls-cipher NULL-SHA256 --tls-protocol TLSv1_2 \
+  --pipe '%TEST_SERVER% --silent --domain pipe \
   part-0000-connect-standard.txt \
   part-0101-ehlo-all.txt \
   part-0200-starttls-basic.txt \
@@ -13,3 +13,7 @@ test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from rec
   part-2500-data-accept-basic.txt \
   part-3000-shutdown-accept.txt \
   '
+
+
+
+
