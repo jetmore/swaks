@@ -74,6 +74,7 @@ acl_smtp_data =         acl_check_data
 acl_smtp_auth = acl_check_auth
 acl_smtp_mail = acl_check_mail
 acl_smtp_predata = acl_check_predata
+acl_smtp_starttls = acl_check_starttls
 
 
 # You should not change those settings until you understand how ACLs work.
@@ -120,8 +121,12 @@ acl_smtp_predata = acl_check_predata
  tls_certificate = /home/jetmore/Documents/git/swaks/testing/certs/node.example.com.crt
  tls_privatekey = /home/jetmore/Documents/git/swaks/testing/certs/node.example.com.key
 
+tls_verify_certificates = system
+tls_try_verify_hosts = *
+#tls_verify_hosts = *
+
 # For OpenSSL, prefer EC- over RSA-authenticated ciphers
-# tls_require_ciphers = ECDSA:RSA:!COMPLEMENTOFDEFAULT
+ tls_require_ciphers = ${if def:acl_c_ciphers{$acl_c_ciphers}{ECDSA:RSA:!COMPLEMENTOFDEFAULT}}
 
 # In order to support roaming users who wish to send email from anywhere,
 # you may want to make Exim listen on other ports as well as port 25, in
@@ -594,7 +599,13 @@ acl_check_mail:
 acl_check_predata:
   deny message = Forced failure by sender
        senders = ^predata-fail
+  accept
 
+acl_check_starttls:
+  deny message = Forced reject of STARTTLS by sender
+       condition = ${if eq{$sender_helo_name}{starttls-fail}}
+  warn condition = ${if eq{$sender_helo_name}{starttls-fail-protocol}}
+       set acl_c_cipher = HIGH:!NULL
   accept
 
 

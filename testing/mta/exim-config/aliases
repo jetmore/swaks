@@ -33,3 +33,9 @@ data-fail3::blackhole:
 
 ## this sender will be rejected in the predata phase (after DATA, before actual message transmission)
 #predata-fail@client.example.com
+
+## this HELO STRING will cause the STARTTLS transaction to fail (the STARTTLS will be rejected)
+#starttls-fail
+
+## this HELO STRING will cause the actual TLS negotiation to fail if client requests NULL-SHA256
+#starttls-fail-negotiation
