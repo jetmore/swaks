@@ -114,7 +114,7 @@
     1 v1 (explicit), --proxy, success
     2 v2, --proxy-*, success
     3 v2, --proxy, success
-#    4 proxy + tls-on-connect
+    4 proxy + tls-on-connect (note I couldn't get this to work over pipe, suspect issue w/ smtp-server.pl)
 
 
 
@@ -203,9 +203,9 @@ helo with --xclient and --xclient-before-starttls
 # finicky so I'm just getting the happy path for now
 06000 - tcp specific
     0 --server --port (127.0.0.1)
-#    1 --server --port (::1) skip for now, definitely something weird with test server and ::1
-#    2 --server --port -4
-#    3 --server --port -6
+    1 --server --port (::1) skip for now, definitely something weird with test server and ::1
+    2 --server --port -4
+    3 --server --port -6
     5 --server --port --local-interface --local-port succeed
 
 
@@ -226,6 +226,7 @@ helo with --xclient and --xclient-before-starttls
 
   part-0000-connect-standard.txt \
   part-0001-connect-with-print.txt \
+  part-0002-connect-with-print-server-only.txt \
   part-0100-ehlo-basic.txt \
   part-0101-ehlo-all.txt \
   part-0102-ehlo-xclient-fewer.txt \

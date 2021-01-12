@@ -1,6 +1,6 @@
-=== Trying ::1:8125...
-=== Connected to ::1.
-<-  220 SERVER ESMTP ready
+=== Trying localhost:8125...
+=== Connected to localhost.
+<-  220 SERVER ESMTP ready for peer 127.0.0.1
  -> EHLO hserver
 <-  250-SERVER Hello Server [1.1.1.1]
 <-  250 HELP
