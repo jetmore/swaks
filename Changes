@@ -990,3 +990,4 @@
 * 20201225 Add exit code checking to regression tests
 * 20210116 Fix dead link to openssl cipher list format documentation in
            --tls-cipher doc.
+* 20210116 Update copyright year to 2021
