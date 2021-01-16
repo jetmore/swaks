@@ -1,0 +1,1 @@
+CMD_CAPTURE       0   %SWAKS_COMMAND% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --server ser.ver --no-local-port --config %OUTDIR%/swaksrc-0345

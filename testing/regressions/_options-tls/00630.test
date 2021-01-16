@@ -1,6 +1,6 @@
 # Generated Thu Dec 20 17:09:21 2018 by ./gen-tests.pl '.' '600' 'tls-ca-path' '%TESTDIR%/%TESTID%.test' '/path/to/CAFile'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tls-ca-path command line, no arg (-option)
 

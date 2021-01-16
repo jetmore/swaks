@@ -1,0 +1,1 @@
+CMD_CAPTURE       0   %SWAKS_COMMAND% --dump PROTOCOL --from recip@host1.nodns.test.swaks.net --server ser.ver --quit connect --to foo@bar.com --no-to

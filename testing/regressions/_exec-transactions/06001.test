@@ -1,6 +1,4 @@
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
-
-skip: I think there's something wrong with SMTP server here
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 test action: FORK %TEST_SERVER% --silent -i ::1 -p 8125 \
   part-0000-connect-standard.txt \

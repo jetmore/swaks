@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 12:22:36 2018 by ./gen-tests.pl '.' '0' 'suppress-data' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: suppress-data, env var, no arg
 

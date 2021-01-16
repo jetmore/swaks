@@ -1,6 +1,6 @@
 # Generated Thu Jul 11 16:50:38 2019 by ./gen-tests.pl '-n' '250' '-o' 'auth-optional-strict' '-v' 'LOGIN' '-i' 'foo' '-d' '.' '-r' '-s' '%SWAKS% --dump AUTH --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: auth-optional-strict, env var, no-option
 

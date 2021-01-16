@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 12:22:47 2018 by ./gen-tests.pl '.' '450' 'nrh' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: nrh, config, invalid arg
 

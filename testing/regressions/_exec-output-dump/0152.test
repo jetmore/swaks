@@ -1,3 +1,3 @@
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 test action: CMD_CAPTURE %SWAKS% --dump protocol --server ser.ver --to ADDR1,ADDR2 --from FROM --helo HELO --quit mail --drop-after rcpt --drop-after-send helo --timeout 99 --protocol smtp --pipeline --prdr --force-getpwuid

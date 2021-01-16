@@ -1,16 +1,17 @@
 #!/usr/bin/env perl
 
 # - example usage (run every test under _options-data):
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl _options-data
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl _options-data
 # - example usage (run every test under _options-data matching ^05)
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl _options-data ^05
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl _options-data ^05
 # - example usage (run every test without prompting the user, but save the results):
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl --headless --outfile var/results.1570707905 _options-data
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl --headless --outfile var/results.1570707905 _options-data
 # - example usage (only run tests that failed during the previous headless run):
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl --errors --infile var/results.1570707905 _options-data
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl --errors --infile var/results.1570707905 _options-data
 
 use strict;
 use Capture::Tiny;
+use Cwd qw(realpath);
 use File::Copy qw();
 use File::Spec::Functions qw(:ALL);
 use FindBin qw($Bin);
@@ -37,6 +38,7 @@ my $testRe  =  shift || '.'; # pattern to match test IDs against. Allows to run 
 my $outDir  =  catfile($testDir, "out-dyn");
 my $refDir  =  catfile($testDir, "out-ref");
 my $certDir =  catfile($Bin, '..', '..', 'certs');
+my $autoCat =  $ENV{SWAKS_TEST_AUTOCAT} ? 1 : 0;
 
 my @forks        = ();
 my $customTokens = {};
@@ -52,17 +54,17 @@ my $tokens       = {
 	},
 	'local' => {},
 };
-if ($ENV{TEST_SWAKS}) {
-	if ($ENV{TEST_SWAKS} =~ m|[/\\]|) {
-		$ENV{TEST_SWAKS} = rel2abs($ENV{TEST_SWAKS});
+if ($ENV{SWAKS_TEST_SWAKS}) {
+	if ($ENV{SWAKS_TEST_SWAKS} =~ m|[/\\]|) {
+		$ENV{SWAKS_TEST_SWAKS} = realpath(rel2abs($ENV{SWAKS_TEST_SWAKS}));
 	}
-	$tokens->{'global'}{'%SWAKS%'} = $ENV{TEST_SWAKS};
+	$tokens->{'global'}{'%SWAKS%'} = $ENV{SWAKS_TEST_SWAKS};
 }
-if ($ENV{TEST_SERVER}) {
-	if ($ENV{TEST_SERVER} =~ m|[/\\]|) {
-		$ENV{TEST_SERVER} = rel2abs($ENV{TEST_SERVER});
+if ($ENV{SWAKS_TEST_SERVER}) {
+	if ($ENV{SWAKS_TEST_SERVER} =~ m|[/\\]|) {
+		$ENV{SWAKS_TEST_SERVER} = realpath(rel2abs($ENV{SWAKS_TEST_SERVER}));
 	}
-	$tokens->{'global'}{'%TEST_SERVER%'} = $ENV{TEST_SERVER};
+	$tokens->{'global'}{'%TEST_SERVER%'} = $ENV{SWAKS_TEST_SERVER};
 }
 
 if (!-d $testDir) {
@@ -181,6 +183,16 @@ sub runTest {
 	}
 }
 
+sub saveExit {
+	my $id   = shift;
+	my $exit = shift;
+	my $file = catfile($outDir, $id . '.exits');
+
+	open(O, ">>$file") || die "Couldn't open $file to write: $!\n";
+	printf O "%-15s %3d   %s\n", $exit->[0], $exit->[1], join(' ', @{$exit->[2]});
+	close(O);
+}
+
 sub saveResult {
 	my $string = shift;
 
@@ -256,19 +268,28 @@ sub runResult {
 
 				if (-e $diffFile) {
 					if (!$opts->{'headless'}) {
+						my $autoCatRan = 0;
+						my $action     = $testObj->{'test action'}[0];
 						INTERACT:
 						while (1) {
 							print "Test ", catfile($tokens->{'%TESTDIR%'}, $tokens->{'%TESTID%'}), " is about to fail.\n",
 							      "DIFF:   $args[0], $args[1]\n",
 							      ($testObj->{title} ? "TITLE:  $testObj->{title}\n" : ''),
-							      "ACTION: ", $testObj->{'test action'}[0], "\n",
-							      "(i)gnore file, review (d)iff ((w)ith or with(o)ut line endings), (e)dit test, (r)erun test, (s)kip test, (a)ccept new results, (q)uit: ";
+							      "ACTION: $action\n",
+							      "(i)gnore file; review (d)iff ((w)ith or with(o)ut line endings); (e)dit, (r)erun, or (s)kip test; (u)nmunge; (a)ccept new results; (q)uit: ";
 
-							# read a single character w/o requiring user to hit enter
-							ReadMode 'cbreak';
-							my $input = ReadKey(0);
-							ReadMode 'normal';
-							print "$input\n";
+							my $input;
+							if (!$autoCat || $autoCatRan) {
+								# read a single character w/o requiring user to hit enter
+								ReadMode 'cbreak';
+								$input = ReadKey(0);
+								ReadMode 'normal';
+								print "$input\n";
+							}
+							elsif ($autoCat) {
+								$input = 'd';
+								print "autoCat\n";
+							}
 
 							if ($input eq 'i') {
 								# ignore is to ignore this specific file failure
@@ -280,11 +301,19 @@ sub runResult {
 								$showFile = "$diffFile.nole" if ($input eq 'o');
 
 								my @cmds = ('intcat');
-								if (length($ENV{'PAGER'})) {
-									unshift(@cmds, $ENV{'PAGER'});
+								if ($input eq 'd' && $autoCat && !$autoCatRan) {
+									$autoCatRan = 1;
 								}
 								else {
-									print "WARNING: consider setting PAGER environment variable\n";
+									if (length($ENV{'PAGER'})) {
+										unshift(@cmds, $ENV{'PAGER'});
+									}
+									if (length($ENV{'SWAKS_TEST_PAGER'})) {
+										unshift(@cmds, $ENV{'SWAKS_TEST_PAGER'});
+									}
+									if (scalar(@cmds) == 1) {
+										print "WARNING: consider setting SWAKS_TEST_PAGER or PAGER environment variables\n";
+									}
 								}
 
 								CMD:
@@ -308,11 +337,19 @@ sub runResult {
 								next INTERACT;
 							}
 							elsif ($input eq 'e') {
-								my $editor = $ENV{'SWAKS_EDITOR'} || $ENV{'VISUAL'} || $ENV{'EDITOR'};
+								my $editor = $ENV{'SWAKS_TEST_EDITOR'} || $ENV{'VISUAL'} || $ENV{'EDITOR'};
 								my $file   = catfile($tokens->{'%TESTDIR%'}, "$tokens->{'%TESTID%'}.test");
+								if (!-e $editor) {
+									print STDERR "No valid editor found, consider setting SWAKS_TEST_EDITOR, VISUAL, or EDITOR environment variables\n";
+									next INTERACT;
+								}
 								debug('exec', "$editor $file");
 								system($editor, $file);
 								redo TEST_EXECUTION;
+							}
+							elsif ($input eq 'u') {
+								$action = join(' ', mshellwords(replaceTokens($tokens, $testObj->{'test action'}[0])));
+								next INTERACT;
 							}
 							elsif ($input eq 'r') {
 								redo TEST_EXECUTION;
@@ -382,7 +419,8 @@ sub runAction {
 		$args[0] =~ s|/|\\|g if ($^O eq 'MSWin32');
 		debug('CMD', join('; ', @args));
 		debug('exec', join(' ', map { "'$_'" } @args));
-		system(@args);
+		my $exit = system(@args);
+		saveExit($tokens->{'local'}{'%TESTID%'}, [ $verb, $exit >> 8, \@args ]);
 	}
 	elsif ($verb =~ /^CMD_CAPTURE(?::(\S+))?$/) {
 		my $suffix     = $1 ? ".$1" : '';
@@ -394,7 +432,8 @@ sub runAction {
 		@args          = grep(!/^STDIN:/, @args);
 
 		$stdinFile =~ s/^STDIN://;
-		captureOutput(\@args, $stdoutFile, $stderrFile, $stdinFile);
+		my $exit = captureOutput(\@args, $stdoutFile, $stderrFile, $stdinFile);
+		saveExit($tokens->{'%TESTID%'}, [ $verb, $exit, \@args ]);
 	}
 	elsif ($verb eq 'FORK') {
 		$args[0] =~ s|/|\\|g if ($^O eq 'MSWin32');
@@ -677,6 +716,7 @@ sub captureOutput {
 	my $outFile = shift;
 	my $errFile = shift;
 	my $inFile  = shift;
+	my $exit;
 	my $debug   = join(' ', map { "'$_'" } (@$args)) . " >$outFile 2>$errFile";
 	$debug     .= " <$inFile" if ($inFile);
 
@@ -700,10 +740,15 @@ sub captureOutput {
 			my $command = cmdquote(@$args);
 			open(P, "|-", join(' ', $command)) || die "Couldn't open pipe to $command: $!\n";
 			print P $stdin;
-			close(P);
+			if (close(P)) {
+				$exit = 0;
+			}
+			else {
+				$exit = $?;
+			}
 		}
 		else {
-			system(@$args);
+			$exit = system(@$args) >> 8;
 		}
 	};
 
@@ -714,6 +759,8 @@ sub captureOutput {
 	open(FILESTDERR, ">$errFile") || die "Can't open new stderr file $errFile to write: $!\n";
 	print FILESTDERR $stderr;
 	close(FILESTDERR);
+
+	return($exit);
 }
 
 sub get_hostname {
@@ -839,9 +886,10 @@ sub munge_paths {
 	my $lines    = shift;
 	my $consider = shift || '.?';
 
-	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%OUTDIR%'}), '/path/to/OUTDIR');
-	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%REFDIR%'}), '/path/to/REFDIR');
-	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%TESTDIR%'}), '/path/to/TESTDIR');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%OUTDIR%'}), '%OUTDIR%');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%REFDIR%'}), '%REFDIR%');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%TESTDIR%'}), '%TESTDIR%');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%CERTDIR%'}), '%CERTDIR%');
 }
 
 sub munge_local_hostname {

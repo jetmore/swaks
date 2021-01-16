@@ -1,0 +1,1 @@
+CMD_CAPTURE       0   %SWAKS_COMMAND% --dump PROTOCOL --to sender@host1.nodns.test.swaks.net --server ser.ver --config %OUTDIR%/swaksrc-00160

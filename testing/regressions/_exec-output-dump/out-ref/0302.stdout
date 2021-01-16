@@ -4,7 +4,7 @@ TLS / Encryption Info:
   local cert          = /LOCAL/CERT
   local key           = /LOCAL/KEY
   local cipher list   = TEST_CIPHER
-  ca path             = /path/to/TESTDIR/0302.test
+  ca path             = %TESTDIR%/0302.test
   sni string          = 
   verify server cert  = TRUE
   available protocols = TLS_PROTOCOL_LIST

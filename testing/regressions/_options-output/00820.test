@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 12:36:46 2018 by ./gen-tests.pl '.' '800' 'hide-send' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: hide-send, env var, no arg
 

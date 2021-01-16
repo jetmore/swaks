@@ -1,4 +1,4 @@
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 # this is documented in test.txt too, but to document as close to the issue as possible, this doesn't actually work.
 # Because "no_" sorts before "show_", this is equivilant to '--no-show-time-lapse --show-time-lapse'.  Since

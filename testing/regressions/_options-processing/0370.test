@@ -1,4 +1,4 @@
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 pre action: SET_ENV SWAKS_OPT_server 'test-server'
 pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'--pipe test-pipe\n'

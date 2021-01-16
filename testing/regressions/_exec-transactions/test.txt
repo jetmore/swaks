@@ -19,19 +19,24 @@
     1 --tls fail (not advertised)
     2 --tls fail (something protocol related, not sure what yet) (NOTE THAT WE JUST EXIT, NOT QUIT - IS THAT CORRECT?)
     3 --tls --tls-optional unadvertised (should succeed)
-#    4 --tls --tls-optional protocol (should succeed)
+    4 --tls --tls-optional protocol-failure  (should succeed - sort of.  If the server can't hack it, that's not our problem)
     5 --tls --tls-optional-strict unadvertised (should succeed)
-#    6 --tls --tls-optional-strict protocol (should fail)
+    6 --tls --tls-optional-strict protocol-failure (should fail)
     7 --tls-on-connect success
     8 --tls-on-connect failure
-#   10 --tls-cert --tls-key
+   10 --tls-cert --tls-key
    11 --tls-verify (should fail - server's key is not signed by a known CA)
    12 --tls-verify --tls-ca-path (should succeed - server's key is signed by the ca)
    13 --tls-get-peer-cert (STDOUT)
    14 --tls-get-peer-cert (FILE)
-#   15 --tls-sni
-#   16 --tls-protocol (this might be difficult to get cross-platform reproducibility)
-#   17 --tls-cipher (this might be difficult to get cross-platform reproducibility)
+   15 --tls-protocol TLSv1_1 (if the option didn't work, one of 15 and 16 would fail)
+   16 --tls-protocol TLSv1_2 (if the option didn't work, one of 15 and 16 would fail)
+   17 --tls STARTTLS rejected (should fail)
+   18 --tls --tls-optional STARTTLS rejected (should succeed)
+   19 --tls --tls-optional-strict STARTTLS rejected (should fail)
+   20 --tls-cipher ECDHE-ECDSA-AES256-GCM-SHA384 (if the option didn't work, one of 20 and 21 would fail)
+   21 --tls-cipher AES256-GCM-SHA384 (if the option didn't work, one of 20 and 21 would fail)
+   22 --tls-sni (would like a smtp-server.pl method that prints the SNI to confirm it was sent)
 
 00300 - xclient (COMPLETE)
     0 happy path
@@ -109,7 +114,7 @@
     1 v1 (explicit), --proxy, success
     2 v2, --proxy-*, success
     3 v2, --proxy, success
-#    4 proxy + tls-on-connect
+    4 proxy + tls-on-connect (note I couldn't get this to work over pipe, suspect issue w/ smtp-server.pl)
 
 
 
@@ -198,9 +203,9 @@ helo with --xclient and --xclient-before-starttls
 # finicky so I'm just getting the happy path for now
 06000 - tcp specific
     0 --server --port (127.0.0.1)
-#    1 --server --port (::1) skip for now, definitely something weird with test server and ::1
-#    2 --server --port -4
-#    3 --server --port -6
+    1 --server --port (::1) skip for now, definitely something weird with test server and ::1
+    2 --server --port -4
+    3 --server --port -6
     5 --server --port --local-interface --local-port succeed
 
 
@@ -221,6 +226,7 @@ helo with --xclient and --xclient-before-starttls
 
   part-0000-connect-standard.txt \
   part-0001-connect-with-print.txt \
+  part-0002-connect-with-print-server-only.txt \
   part-0100-ehlo-basic.txt \
   part-0101-ehlo-all.txt \
   part-0102-ehlo-xclient-fewer.txt \
@@ -229,6 +235,11 @@ helo with --xclient and --xclient-before-starttls
   part-0105-ehlo-post-tls-info.txt \
   part-0200-starttls-basic.txt \
   part-0201-intialize-tls.txt \
+  part-0202-tls-reject-starttls.txt \
+  part-0210-tls-display-protocol.txt \
+  part-0211-tls-display-cipher.txt \
+  part-0212-tls-display-peercert.txt \
+  part-0213-tls-display-sni.txt \
   part-0300-xclient-basic-accept.txt \
   part-0301-xclient-basic-reject.txt \
   part-0500-prdr-start.txt \

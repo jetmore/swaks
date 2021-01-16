@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 21:45:30 2018 by ./gen-tests.pl '.' '1400' 'dump-mail' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: dump-mail, command line, no arg
 

@@ -1,6 +1,6 @@
 # Generated Thu Dec 20 17:33:09 2018 by ./gen-tests.pl '.' '1500' 'output' '%OUTDIR%/%TESTID%.out' '/foo/bar/baz.t'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.out
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits %TESTID%.out
 
 title: output, command line, valid arg (--option=)
 

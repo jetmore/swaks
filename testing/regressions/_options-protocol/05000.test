@@ -1,7 +1,7 @@
 once action: IFOS!=MSWin32 DEFINE %EMPTY% <>
 once action: IFOS=MSWin32  DEFINE %EMPTY% ^<^>
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 test action: CMD_CAPTURE %SWAKS% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --server ser.ver \
     --from '%EMPTY%'

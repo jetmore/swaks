@@ -1,0 +1,1 @@
+CMD_CAPTURE       0   %SWAKS_COMMAND% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --pipe /foo/bar --config %OUTDIR%/swaksrc-01362

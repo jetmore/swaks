@@ -1,1 +1,1 @@
-*** Option processing error: file /path/to/TESTDIR/foo.txt not openable for option attach (No such file or directory)
+*** Option processing error: file %TESTDIR%/foo.txt not openable for option attach (No such file or directory)

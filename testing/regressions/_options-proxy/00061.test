@@ -1,6 +1,6 @@
 # Generated Tue Dec 25 11:13:37 2018 by ./gen-tests.pl '-n' '50' '-o' 'proxy-version' '-v' '2' '-i' '4' '-p' 'PROXY version:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROXY --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver" --proxy FORCEPROXY'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: proxy-version, config, valid arg
 

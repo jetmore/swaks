@@ -1,6 +1,6 @@
 # Generated Wed Jul 10 22:46:25 2019 by ./gen-tests.pl '-n' '50' '-o' 'xclient-name' '-v' '1.1.1.1' '-i' '' '-p' 'XCLIENT name:' '-d' '.' '-r'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: xclient-name, command line, valid arg (--option=)
 

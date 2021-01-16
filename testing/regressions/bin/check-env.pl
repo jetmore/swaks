@@ -17,11 +17,15 @@ foreach my $dir ((split(/$pathVarDelim/, $ENV{PATH}))) {
 }
 
 if ($^O ne 'MSWin32') {
-	if (length($ENV{'PAGER'}) && findpath($ENV{'PAGER'})) {
-		print "ok  PAGER ($ENV{'PAGER'})\n";
+	my $found = 0;
+	foreach my $var ('SWAKS_TEST_PAGER', 'PAGER') {
+		if (length($ENV{$var}) && findpath($ENV{$var})) {
+			print "ok  pager -> $var ($ENV{$var})\n";
+			$found = 1;
+		}
 	}
-	else {
-		print "NOK Your PAGER environment variable is empty or doesn't point to a valid command.  Setting it to a valid pager is not required but can make viewing diffs much easier\n";
+	if (!$found) {
+		print "NOK Could not identify a pager via SWAKS_TEST_PAGER or PAGER.  Setting one of these to a valid pager is not required but can make viewing large diffs much easier\n";
 	}
 }
 
@@ -42,21 +46,21 @@ foreach my $module ('Capture::Tiny', 'Text::Diff', 'Proc::Background') {
 }
 
 my $swaksScript;
-if (length($ENV{'TEST_SWAKS'})) {
-	if (my $swaks = findpath($ENV{'TEST_SWAKS'})) {
-		print "ok  swaks (TEST_SWAKS -> $swaks)\n";
+if (length($ENV{'SWAKS_TEST_SWAKS'})) {
+	if (my $swaks = findpath($ENV{'SWAKS_TEST_SWAKS'})) {
+		print "ok  swaks (SWAKS_TEST_SWAKS -> $swaks)\n";
 		$swaksScript = $swaks;
 	}
 	else {
-		print "NOK Tests will use $ENV{'TEST_SWAKS'} from TEST_SWAKS, but that is not valid\n";
+		print "NOK Tests will use $ENV{'SWAKS_TEST_SWAKS'} from SWAKS_TEST_SWAKS, but that is not valid\n";
 	}
 }
 elsif (my $swaks = findpath('swaks')) {
-	print "ok  swaks (PATH -> $swaks) (NOTE: this is found via PATH, consider setting TEST_SWAKS to be more explicit for testing\n";
+	print "ok  swaks (PATH -> $swaks) (NOTE: this is found via PATH, consider setting SWAKS_TEST_SWAKS to be more explicit for testing\n";
 	$swaksScript = $swaks;
 }
 else {
-	print "NOK swaks not found in either TEST_SWAKS or PATH\n";
+	print "NOK swaks not found in either SWAKS_TEST_SWAKS or PATH\n";
 }
 
 # I believe this is no longer needed after switch to Pod::Usage

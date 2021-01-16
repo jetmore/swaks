@@ -1,4 +1,4 @@
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 # create a .netrc
 pre action: MERGE %OUTDIR%/.netrc mode:0600 string:'machine host1.nodns.test.swaks.net login netrc-username1 password netrc-password1\nmachine host1.nodns.test.swaks.net login netrc-username2 password netrc-password2\nmachine host1.nodns.test.swaks.net login netrc-username3 password netrc-password3\n'

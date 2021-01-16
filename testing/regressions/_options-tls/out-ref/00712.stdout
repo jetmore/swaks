@@ -2,7 +2,7 @@ TLS / Encryption Info:
   tls                 = starttls (required)
   peer cert           = 
   local cert          = /path/to/CertFile
-  local key           = /path/to/TESTDIR/00712.test
+  local key           = %TESTDIR%/00712.test
   local cipher list   = 
   ca path             = 
   sni string          = 
