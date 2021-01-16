@@ -991,3 +991,5 @@
 * 20210116 Fix dead link to openssl cipher list format documentation in
            --tls-cipher doc.
 * 20210116 Update copyright year to 2021
+* 20210116 Add TLS informational line showing whether client certificate was
+           by the server and whether swaks sent it.

@@ -373,6 +373,7 @@ sub xclient_try {
 
 sub tls_post_start {
 	ptrans(11, "TLS started with cipher $G::link{tls}{cipher_string}");
+	ptrans(11, "TLS client certificate " . ($G::link{tls}{server_requested_cert} ? '' : 'not ') . "requested and " . ($G::link{tls}{client_sent_cert} ? '' : 'not ') . "sent");
 	if ($G::link{tls}{local_cert_subject}) {
 		ptrans(11, "TLS local DN=\"$G::link{tls}{local_cert_subject}\"");
 	} else {
@@ -422,6 +423,23 @@ sub start_tls {
 	}
 	Net::SSLeay::CTX_set_options($t{con}, $ctx_options);
 	Net::SSLeay::CTX_set_verify($t{con}, 0x01, 0) if ($G::tls_verify);
+
+	# This callback is called at various stages of the TLS negotiation.  Currently used to determine whether the server requested
+	# a certificate. CTX_set_client_cert_cb (cf https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_client_cert_cb.html)
+	# would be much better for this, but doesn't seem to be implemented in Net::SSLeay yet
+	$t{server_requested_cert} = 0;
+	$t{client_sent_cert}      = 0;
+	Net::SSLeay::CTX_set_info_callback($t{con}, sub {
+		# print STDERR "in SSL info callback: $_[1], $_[2], ", Net::SSLeay::state_string($_[0]), ", ", Net::SSLeay::state_string_long($_[0]), "\n";
+		if (Net::SSLeay::state_string($_[0]) eq 'TRCR') {
+			# TRCR, SSLv3/TLS read server certificate request
+			$t{server_requested_cert} = 1;
+		}
+		elsif (Net::SSLeay::state_string($_[0]) eq 'TWCV') {
+			# TWCV, SSLv3/TLS write certificate verify
+			$t{client_sent_cert} = 1;
+		}
+	});
 
 	if ($G::tls_ca_path) {
 		my @args = ('', $G::tls_ca_path);

@@ -37,6 +37,10 @@
    20 --tls-cipher ECDHE-ECDSA-AES256-GCM-SHA384 (if the option didn't work, one of 20 and 21 would fail)
    21 --tls-cipher AES256-GCM-SHA384 (if the option didn't work, one of 20 and 21 would fail)
    22 --tls-sni (would like a smtp-server.pl method that prints the SNI to confirm it was sent)
+   23 TLS client certificate info line -- client certs NOT present, server does NOT request them
+   24 TLS client certificate info line -- client certs NOT present, server DOES     request them
+   25 TLS client certificate info line -- client certs ARE present, server DOES     request them
+   26 TLS client certificate info line -- client certs ARE present, server does NOT request them
 
 00300 - xclient (COMPLETE)
     0 happy path

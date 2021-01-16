@@ -34,6 +34,7 @@
  -> STARTTLS
 <-  220 TLS go ahead
 === TLS started with cipher VERSION:CIPHER:BITS
+=== TLS client certificate not requested and not sent
 === TLS no local certificate set
 === TLS peer DN="/C=US/ST=Indiana/O=Swaks Development/CN=node.example.com/emailAddress=proj-swaks@jetmore.net"
  ~> EHLO hserver
