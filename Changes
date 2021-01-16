@@ -993,3 +993,4 @@
 * 20210116 Update copyright year to 2021
 * 20210116 Add TLS informational line showing whether client certificate was
            by the server and whether swaks sent it.
+* 20210116 Use named constant in TLS code instead of magic number

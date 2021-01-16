@@ -422,7 +422,7 @@ sub start_tls {
 		}
 	}
 	Net::SSLeay::CTX_set_options($t{con}, $ctx_options);
-	Net::SSLeay::CTX_set_verify($t{con}, 0x01, 0) if ($G::tls_verify);
+	Net::SSLeay::CTX_set_verify($t{con}, Net::SSLeay::VERIFY_PEER(), 0) if ($G::tls_verify);
 
 	# This callback is called at various stages of the TLS negotiation.  Currently used to determine whether the server requested
 	# a certificate. CTX_set_client_cert_cb (cf https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_client_cert_cb.html)
