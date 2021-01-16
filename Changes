@@ -988,3 +988,5 @@
            --hide-informational/--hide-all which already worked this way.
 * 20201225 Add autocat feature to test tools
 * 20201225 Add exit code checking to regression tests
+* 20210116 Fix dead link to openssl cipher list format documentation in
+           --tls-cipher doc.

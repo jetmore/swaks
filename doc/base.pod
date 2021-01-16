@@ -501,7 +501,7 @@ The specification string is a comma-delimited list of protocols that can be used
 
 =item --tls-cipher <cipher-string>
 
-The argument to this option is passed to the underlying OpenSSL library to set the list of acceptable ciphers to the be used for the connection.  The format of this string is opaque to Swaks and is defined in L<http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT>.  A brief example would be C<--tls-cipher '3DES:+RSA'>. (Arg-Required)
+The argument to this option is passed to the underlying OpenSSL library to set the list of acceptable ciphers to the be used for the connection.  The format of this string is opaque to Swaks and is defined in L<https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT>.  A brief example would be C<--tls-cipher '3DES:+RSA'>. (Arg-Required)
 
 =item --tls-verify
 
