@@ -6,6 +6,7 @@ TLS / Encryption Info:
   local cipher list   = TEST_CIPHER
   ca path             = %TESTDIR%/0302.test
   sni string          = 
-  verify server cert  = TRUE
+  verify server cert  = CA, HOST
+  verify target host  = 
   available protocols = TLS_PROTOCOL_LIST
   requested protocols = TLSv1_1

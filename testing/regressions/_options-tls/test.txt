@@ -262,6 +262,54 @@
   831 tls-sni, command line, valid arg (-option=)
   832 tls-sni, command line, valid arg (--option=)
 
+00900 --tls-verify-ca
+  900 tls-verify-ca, command line, no arg
+  # 901 tls-verify-ca, command line, valid arg
+  902 tls-verify-ca, command line, invalid arg
+  903 tls-verify-ca, command line, no-option
+  910 tls-verify-ca, config, no arg
+  # 911 tls-verify-ca, config, valid arg
+  912 tls-verify-ca, config, invalid arg
+  913 tls-verify-ca, config, no-option
+  920 tls-verify-ca, env var, no arg
+  # 921 tls-verify-ca, env var, valid arg
+  922 tls-verify-ca, env var, invalid arg
+  923 tls-verify-ca, env var, no-option
+  930 tls-verify-ca command line, no arg (-option)
+  # 931 tls-verify-ca, command line, valid arg (-option=)
+  # 932 tls-verify-ca, command line, valid arg (--option=)
+00950 --tls-verify-host
+  950 tls-verify-host, command line, no arg
+  # 951 tls-verify-host, command line, valid arg
+  952 tls-verify-host, command line, invalid arg
+  953 tls-verify-host, command line, no-option
+  960 tls-verify-host, config, no arg
+  # 961 tls-verify-host, config, valid arg
+  962 tls-verify-host, config, invalid arg
+  963 tls-verify-host, config, no-option
+  970 tls-verify-host, env var, no arg
+  # 971 tls-verify-host, env var, valid arg
+  972 tls-verify-host, env var, invalid arg
+  973 tls-verify-host, env var, no-option
+  980 tls-verify-host command line, no arg (-option)
+  # 981 tls-verify-host, command line, valid arg (-option=)
+  # 982 tls-verify-host, command line, valid arg (--option=)
+01000 --tls-verify-target
+  1000 tls-verify-target, command line, no arg
+  1001 tls-verify-target, command line, valid arg
+  # 1002 tls-verify-target, command line, invalid arg
+  1003 tls-verify-target, command line, no-option
+  1010 tls-verify-target, config, no arg
+  1011 tls-verify-target, config, valid arg
+  # 1012 tls-verify-target, config, invalid arg
+  1013 tls-verify-target, config, no-option
+  1020 tls-verify-target, env var, no arg
+  1021 tls-verify-target, env var, valid arg
+  # 1022 tls-verify-target, env var, invalid arg
+  1023 tls-verify-target, env var, no-option
+  1030 tls-verify-target command line, no arg (-option)
+  1031 tls-verify-target, command line, valid arg (-option=)
+  1032 tls-verify-target, command line, valid arg (--option=)
 
 
 
@@ -272,9 +320,9 @@
   1 --tls-key without --tls-cert is an error
 
 ./gen-tests.pl \
-    -n 800 \
-    -o tls-sni \
-    -v "TLS_SNI_STRING" \
+    -n 1000 \
+    -o tls-verify-target \
+    -v "TLS_HOST_VERIFICATION_STRING" \
     -i '' \
     -d . \
     -r \

@@ -7,5 +7,6 @@ TLS / Encryption Info:
   ca path             = %TESTDIR%/00632.test
   sni string          = 
   verify server cert  = FALSE
+  verify target host  = 
   available protocols = TLS_PROTOCOL_LIST
   requested protocols = 

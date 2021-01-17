@@ -380,6 +380,11 @@ sub tls_post_start {
 		ptrans(11, "TLS no local certificate set");
 	}
 	ptrans(11, "TLS peer DN=\"$G::link{tls}{cert_subject}\"");
+	ptrans(11, sprintf("TLS peer certificate %s CA verification, %s host verification (%s)",
+		$G::link{tls}{server_cert_verified_ca}   ? 'passed' : 'failed',
+		$G::link{tls}{server_cert_verified_host} ? 'passed' : 'failed',
+		$G::link{tls}{server_cert_host_target} ? "using host $G::link{tls}{server_cert_host_target} to verify" : "no host string available to verify"
+	));
 
 	if ($G::tls_get_peer_cert eq 'STDOUT') {
 		ptrans(11, $G::link{tls}{cert_x509});
@@ -422,7 +427,69 @@ sub start_tls {
 		}
 	}
 	Net::SSLeay::CTX_set_options($t{con}, $ctx_options);
-	Net::SSLeay::CTX_set_verify($t{con}, Net::SSLeay::VERIFY_PEER(), 0) if ($G::tls_verify);
+
+	$t{verify_failure_message}          = '';
+	$t{server_cert_verified_ca}         = 0;
+	$t{server_cert_verified_host}       = 0;
+	$t{server_cert_host_target}         = '';
+	$t{server_cert_verification_status} = undef;
+	Net::SSLeay::CTX_set_verify($t{con}, &Net::SSLeay::VERIFY_PEER, sub {
+		my $preverify_ok = shift;
+		my $x509_ctx     = shift;
+		my @failures     = ();
+
+		# this callback is called twice and I can't figure out why.  The first seems to have the values I want
+		# to see, so if we're called multiple times, use the status from the first call
+		if (defined($t{server_cert_verification_status})) {
+			return $t{server_cert_verification_status};
+		}
+
+		# we don't have to do the ca verification, that's handled before we get here
+		if ($preverify_ok) {
+			$t{server_cert_verified_ca} = 1;
+		}
+		else {
+			push(@failures, "server certificate not signed by known CA");
+		}
+
+		$t{server_cert_host_target} = $G::tls_verify_target || $G::link{server};
+		if (!$t{server_cert_host_target}) {
+			push(@failures, "no host available for host verification");
+		}
+		else {
+			my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
+			if ($t{server_cert_host_target} =~ /(:|^\d+\.\d+\.\d+\.\d+$)/) {
+				# verify as an IP
+				if (Net::SSLeay::X509_check_ip_asc($x509, $t{server_cert_host_target}, 0) == 1) {
+					$t{server_cert_verified_host} = 1;
+				}
+			}
+			else {
+				# verify as a hostname
+				if (Net::SSLeay::X509_check_host($x509, $t{server_cert_host_target}, 0) == 1) {
+					$t{server_cert_verified_host} = 1;
+				}
+			}
+
+			if (!$t{server_cert_verified_host}) {
+				push(@failures, 'server certificate did not match target host ' . $t{server_cert_host_target});
+			}
+		}
+
+		$t{verify_failure_message} = join(', ', @failures);
+
+		if ($G::tls_verify_ca && !$t{server_cert_verified_ca}) {
+			$t{server_cert_verification_status} = 0;
+			return 0;
+		}
+		if ($G::tls_verify_host && !$t{server_cert_verified_host}) {
+			$t{server_cert_verification_status} = 0;
+			return 0;
+		}
+
+		$t{server_cert_verification_status} = 1;
+		return 1;
+	});
 
 	# This callback is called at various stages of the TLS negotiation.  Currently used to determine whether the server requested
 	# a certificate. CTX_set_client_cert_cb (cf https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_client_cert_cb.html)
@@ -496,6 +563,9 @@ sub start_tls {
 	$t{active} = Net::SSLeay::connect($t{ssl}) == 1 ? 1 : 0;
 	if (!$t{active}) {
 		$t{res} = "connect(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		if ($t{verify_failure_message}) {
+			$t{res} .= ' (' . $t{verify_failure_message} . ')';
+		}
 		return(0);
 	}
 
@@ -1883,10 +1953,22 @@ sub get_option_struct {
 		{ opts    => ['tls-sni'],                                          suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'tls_sni_hostname',                                   type   => 'scalar', },
-		# require verification of server certificate
+		# require verification of server certificate against both CA and host
 		{ opts    => ['tls-verify'],                                       suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'tls_verify',                                         type   => 'scalar', },
+		# require verification of server certificate against CA
+		{ opts    => ['tls-verify-ca'],                                    suffix => '',
+		  cfgs    => OP_ARG_NONE,
+		  okey    => 'tls_verify_ca',                                      type   => 'scalar', },
+		# require verification of server certificate against the host we're connection to
+		{ opts    => ['tls-verify-host'],                                  suffix => '',
+		  cfgs    => OP_ARG_NONE,
+		  okey    => 'tls_verify_host',                                    type   => 'scalar', },
+		# override the host value used for tls verification
+		{ opts    => ['tls-verify-target'],                                suffix => '=s',
+		  cfgs    => OP_ARG_REQ,
+		  okey    => 'tls_verify_target',                                  type   => 'scalar', },
 		# local key to present to server
 		{ opts    => ['tls-ca-path'],                                      suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
@@ -3232,11 +3314,13 @@ sub process_args {
 				exit(10);
 			}
 		}
-		$G::tls_verify       = get_arg('tls_verify', $o);
-		$G::tls_sni_hostname = get_arg('tls_sni_hostname', $o);
-		$G::tls_cipher       = get_arg('tls_cipher', $o);
-		$G::tls_cert         = get_arg('tls_cert', $o);
-		$G::tls_key          = get_arg('tls_key', $o);
+		$G::tls_verify_ca     = get_arg('tls_verify_ca', $o);
+		$G::tls_verify_host   = get_arg('tls_verify_host', $o);
+		$G::tls_verify_target = get_arg('tls_verify_target', $o);
+		$G::tls_sni_hostname  = get_arg('tls_sni_hostname', $o);
+		$G::tls_cipher        = get_arg('tls_cipher', $o);
+		$G::tls_cert          = get_arg('tls_cert', $o);
+		$G::tls_key           = get_arg('tls_key', $o);
 		if (($G::tls_cert || $G::tls_key) && !($G::tls_cert && $G::tls_key)) {
 			ptrans(12, "--tls-cert and --tls-key require each other.  Exiting");
 			exit(1);
@@ -3244,6 +3328,10 @@ sub process_args {
 		if (($G::tls_ca_path = get_arg('tls_ca_path', $o)) && !-f $G::tls_ca_path && !-d $G::tls_ca_path) {
 			ptrans(12, "--tls-ca-path: $G::tls_ca_path is not a valid file or directory.  Exiting.");
 			exit(1);
+		}
+		if (get_arg('tls_verify', $o)) {
+			$G::tls_verify_ca   = 1;
+			$G::tls_verify_host = 1;
 		}
 
 		# this is kind of a kludge.  There doesn't appear to be a specific openssl call to find supported
@@ -3754,6 +3842,10 @@ sub get_running_state {
 				else                          { push(@{$parts[-1]}, '  tls                 = starttls (required)');        }
 			}
 			elsif ($G::tls_on_connect)        { push(@{$parts[-1]}, '  tls                 = starttls on connect (required)'); }
+			my $verifyString  = 'CA'    if ($G::tls_verify_ca);
+			$verifyString    .= ', '    if ($G::tls_verify_ca && $G::tls_verify_host);
+			$verifyString    .= 'HOST'  if ($G::tls_verify_host);
+			$verifyString     = 'FALSE' if (!$verifyString);
 			push(@{$parts[-1]},
 				"  peer cert           = $G::tls_get_peer_cert",
 				"  local cert          = $G::tls_cert",
@@ -3761,7 +3853,8 @@ sub get_running_state {
 				"  local cipher list   = $G::tls_cipher",
 				"  ca path             = $G::tls_ca_path",
 				"  sni string          = $G::tls_sni_hostname",
-				'  verify server cert  = ' . ($G::tls_verify ? 'TRUE' : 'FALSE'),
+				'  verify server cert  = ' . $verifyString,
+				'  verify target host  = ' . $G::tls_verify_target,
 				'  available protocols = ' . join(', ', @G::tls_supported_protocols),
 				'  requested protocols = ' . join(', ', @G::tls_protocols),
 			);

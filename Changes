@@ -994,3 +994,11 @@
 * 20210116 Add TLS informational line showing whether client certificate was
            by the server and whether swaks sent it.
 * 20210116 Use named constant in TLS code instead of magic number
+* 20210117 Add TLS informational line showing the verification status of
+           the server certificate.
+* 20210117 Change --tls-verify to require both cert and hostname verification.
+           Add --tls-verify-ca (previous behavior of --tls-verify) and
+           --tls-verify-host to just require verification of the certificate
+           against the local CA or the target hostname or IP, respectively.
+* 20210117 Add --tls-verify-target to set a host to be used for verification,
+           overriding the internal connection information.
