@@ -962,7 +962,7 @@
 * 20201126 --output-file (and -stdout and -stderr) now truncate the output
            file if it already existed.
 * 20201126 --port and --local-port should override a port set in --server or
-           --local-port.
+           --local-interface.
 * 20201222 Add transaction-level tests
 * 20201223 Add missing option hints from --proxy-version documentation
 * 20201223 Remove documentation note about which Authen::NTLM version to use,
@@ -988,3 +988,9 @@
            --hide-informational/--hide-all which already worked this way.
 * 20201225 Add autocat feature to test tools
 * 20201225 Add exit code checking to regression tests
+* 20210116 Fix dead link to openssl cipher list format documentation in
+           --tls-cipher doc.
+* 20210116 Update copyright year to 2021
+* 20210116 Add TLS informational line showing whether client certificate was
+           by the server and whether swaks sent it.
+* 20210116 Use named constant in TLS code instead of magic number
