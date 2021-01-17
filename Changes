@@ -962,7 +962,7 @@
 * 20201126 --output-file (and -stdout and -stderr) now truncate the output
            file if it already existed.
 * 20201126 --port and --local-port should override a port set in --server or
-           --local-port.
+           --local-interface.
 * 20201222 Add transaction-level tests
 * 20201223 Add missing option hints from --proxy-version documentation
 * 20201223 Remove documentation note about which Authen::NTLM version to use,
