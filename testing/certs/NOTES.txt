@@ -2,3 +2,109 @@
 root ca:
   openssl genrsa -out ca.key 2048
   openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 -out ca.pem -subj "/C=US/ST=Indiana/O=Swaks Development/CN=Swaks Root CA/emailAddress=proj-swaks@jetmore.net"
+
+get contents of a crt:
+  openssl x509 -text -in signed.example.com.crt
+
+test if a crt is signed:
+  openssl verify -CAfile ca.pem unsigned.example.com.crt
+
+
+
+GENERAL PURPOSE CERTS:
+
+node.example.com.crt, .key
+	Generated: ./generate-cert.sh --signed node.example.com
+	Subject: C=US, ST=Indiana, O=Swaks Development, CN=node.example.com/emailAddress=proj-swaks@jetmore.net
+	Not After : Oct 22 16:31:10 2030 GMT
+	Signed: ca.pem
+	X509v3 Subject Alternative Name:
+		DNS:node.example.com
+
+signed.example.com.crt, .key
+	Generated: ./generate-cert.sh --signed signed.example.com
+	Subject: C=US, ST=Indiana, O=Swaks Development, CN=signed.example.com/emailAddress=proj-swaks@jetmore.net
+	Not After : Oct 22 16:31:20 2030 GMT
+	Signed: ca.pem
+	X509v3 Subject Alternative Name:
+		DNS:signed.example.com
+
+unsigned.example.com.crt, .key
+	Generated: ./generate-cert.sh --unsigned unsigned.example.com
+	Subject: C=US, ST=Indiana, O=Swaks Development, CN=unsigned.example.com/emailAddress=proj-swaks@jetmore.net
+	Not After : Nov 27 13:37:20 2030 GMT
+	Signed: NO
+	X509v3 Subject Alternative Name:
+		DNS:unsigned.example.com
+
+127_0_0_1.crt, .key
+	Generated: ./generate-cert.pl --signed --san 127.0.0.1 --exclude-cn 127.0.0.1 127_0_0_1
+	Subject: C=US, ST=Indiana, O=Swaks Development (127.0.0.1, +SAN)/emailAddress=proj-swaks@jetmore.net
+	Not After : Nov 29 22:37:57 2030 GMT
+	Signed: ca.pem
+	X509v3 Subject Alternative Name:
+		IP Address:127.0.0.1
+
+__1.crt, .key
+	Generated: ./generate-cert.pl --signed --san ::1 --exclude-cn ::1 __1
+	Subject: C=US, ST=Indiana, O=Swaks Development (::1, +SAN)/emailAddress=proj-swaks@jetmore.net
+	Not After : Nov 29 22:42:33 2030 GMT
+	Signed: ca.pem
+	X509v3 Subject Alternative Name:
+		IP Address:0:0:0:0:0:0:0:1
+
+SPECIALTY CERTS:
+
+localhost.crt, .key
+	Generated: ./generate-cert.pl --signed localhost
+	Subject: C=US, ST=Indiana, O=Swaks Development (localhost, +SAN), CN=localhost/emailAddress=proj-swaks@jetmore.net
+	Not After : Nov 29 22:15:56 2030 GMT
+	Signed: ca.pem
+	X509v3 Subject Alternative Name:
+		DNS:localhost
+
+expired-unsigned.example.com.crt, .key
+	Generated: ./generate-cert.pl --expires 1 expired-unsigned.example.com
+	Subject: C=US, ST=Indiana, O=Swaks Development (expired-unsigned.example.com, +SAN), CN=expired-unsigned.example.com/emailAddress=proj-swaks@jetmore.net
+	Not After : Jan 21 21:48:27 2021 GMT
+	Signed: NO
+	X509v3 Subject Alternative Name:
+		DNS:expired-unsigned.example.com
+
+expired-signed.example.com.crt, .key
+	Generated: ./generate-cert.pl --expires 1 --signed expired-signed.example.com
+	Subject: C=US, ST=Indiana, O=Swaks Development (expired-signed.example.com, +SAN), CN=expired-signed.example.com/emailAddress=proj-swaks@jetmore.net
+	Not After : Jan 21 21:51:46 2021 GMT
+	Signed: ca.pem
+	X509v3 Subject Alternative Name:
+		DNS:expired-signed.example.com
+
+wildcard.example.com.crt, .key
+	Generated: ./generate-cert.pl --signed '*.example.com' wildcard.example.com
+	Subject: C=US, ST=Indiana, O=Swaks Development (*.example.com, +SAN), CN=*.example.com/emailAddress=proj-swaks@jetmore.net
+	Not After : Nov 29 21:55:26 2030 GMT
+	Signed: ca.pem
+	X509v3 Subject Alternative Name:
+		DNS:*.example.com
+
+cn-only.example.com.crt, .key
+	Generated: ./generate-cert.pl --signed --san '' cn-only.example.com
+	Subject: C=US, ST=Indiana, O=Swaks Development (cn-only.example.com, -SAN), CN=cn-only.example.com/emailAddress=proj-swaks@jetmore.net
+	Not After : Nov 29 21:57:29 2030 GMT
+	Signed: ca.pem
+
+san-only.example.com.crt.key
+	Generated: ./generate-cert.pl --signed --exclude-cn  san-only.example.com
+	Subject: C=US, ST=Indiana, O=Swaks Development (san-only.example.com, +SAN)/emailAddress=proj-swaks@jetmore.net
+	Not After : Nov 29 21:59:38 2030 GMT
+	Signed: ca.pem
+	X509v3 Subject Alternative Name:
+		DNS:san-only.example.com
+
+san-multiple.example.com.crt, .key
+	Generated: ./generate-cert.pl --signed --san san-multiple.example.com --san san-m1.example.com --san san-m2.example.com  san-multiple.example.com
+	Subject: C=US, ST=Indiana, O=Swaks Development (san-multiple.example.com, +SAN), CN=san-multiple.example.com/emailAddress=proj-swaks@jetmore.net
+	Not After : Nov 29 22:02:32 2030 GMT
+	Signed: ca.pem
+	X509v3 Subject Alternative Name:
+		DNS:san-multiple.example.com, DNS:san-m1.example.com, DNS:san-m2.example.com
