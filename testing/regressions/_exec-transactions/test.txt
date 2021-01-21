@@ -25,8 +25,8 @@
     7 --tls-on-connect success
     8 --tls-on-connect failure
    10 --tls-cert --tls-key
-   #11 reusable - replaced by much more details verification tests starting at 00240
-   #12 reusable - replaced by much more details verification tests starting at 00240
+   11 --tls-ca-path using file
+   12 --tls-ca-path using directory
    13 --tls-get-peer-cert (STDOUT)
    14 --tls-get-peer-cert (FILE)
    15 --tls-protocol TLSv1_1 (if the option didn't work, one of 15 and 16 would fail)
