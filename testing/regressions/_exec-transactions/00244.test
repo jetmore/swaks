@@ -1,0 +1,12 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
+
+test action: FORK %TEST_SERVER% --silent -i 127.0.0.1 -p 8125 \
+    --cert %CERTDIR%/unsigned.example.com.crt --key %CERTDIR%/unsigned.example.com.key \
+    part-0000-connect-standard.txt \
+    part-0101-ehlo-all.txt \
+    part-0200-starttls-basic.txt \
+    part-3000-shutdown-accept.txt
+
+test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver \
+  --server 127.0.0.1 --port 8125 \
+  --tls --quit tls

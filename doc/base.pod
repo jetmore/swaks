@@ -471,7 +471,7 @@ Tell Swaks to use the system-default method of determining the current user's us
 
 =head1 TLS / ENCRYPTION
 
-These are options related to encrypting the transaction.  These have been tested and confirmed to work with all three transport methods.  The L<Net::SSLeay> module is used to perform encryption when it is requested.  If this module is not loadable Swaks will either ignore the TLS request or error out, depending on whether the request was optional.  STARTTLS is defined as an extension in the ESMTP protocol and will be unavailable if C<--protocol> is set to a variation of SMTP.  Because it is not defined in the protocol itself, C<--tls-on-connect> is available for any protocol type if the target supports it.
+These are options related to encrypting the transaction.  These have been tested and confirmed to work with all three transport methods.  The L<Net::SSLeay> module is used to perform encryption when it is requested.  If this module is not loadable Swaks will either ignore the TLS request or error out, depending on whether the request was optional.  STARTTLS is defined as an extension in the ESMTP protocol and will be unavailable if C<--protocol> is set to a variation of plain SMTP.  Because it is not defined in the protocol itself, C<--tls-on-connect> is available for any protocol type if the target supports it.
 
 A local certificate is not required for a TLS connection to be negotiated.  However, some servers use client certificate checking to verify that the client is allowed to connect.  Swaks can be told to use a specific local certificate using the C<--tls-cert> and C<--tls-key> options.
 
@@ -505,7 +505,23 @@ The argument to this option is passed to the underlying OpenSSL library to set t
 
 =item --tls-verify
 
-Tell Swaks to attempt to verify the server's certificate.  If this option is set and the server's certificate is not verifiable (either using the system-default CA information, or custom CA information (see C<--tls-ca-path>)) TLS negotiation will not succeed.  By default, Swaks does not attempt certificate verification. (Arg-None)
+Tell Swaks to attempt to verify the server's certificate.  This option is identical to specifying both the C<--tls-verify-ca> and C<--tls-verify-host> options.  See those options for detailed descriptions of how to fine-tune each type of verification.
+
+By default, TLS verification is not required.  If TLS verification is required by C<--tls-verify>, C<--tls-verify-ca>, or C<--tls-verify-host> and the requested type of verification fails, TLS negotiation will not succeed. (Arg-None)
+
+=item --tls-verify-ca
+
+Require that the server's certificate be signed by a known certificate authority.  By default the list of known CAs will be whatever is available via the client Swaks is running on.  To provide a custom CA, see C<--tls-ca-path>. (Arg-None)
+
+=item --tls-verify-host
+
+Require that the target of the current connection be listed in the server certificate's Subject Alternative Name (SAN) or Subject CommonName (CN).
+
+The target that Swaks uses for verification will vary.  It can be a hostname, either provided directly via the C<--server> option or looked up via MX records.  In this case, verification performs as expected.  If the target is an IP, the IP will be looked up in the certificate, which is possible but usual.  If the transport is C<--pipe> or C<--socket>, there will not be a meaningful target to verify in the certificate and verification will fail.  In this situation it's better to use only C<--tls-verify-ca> or to override the target used for verification with the C<--tls-verify-target> option. (Arg-None)
+
+=item --tls-verify-target <verification-string>
+
+When set, the argument to this option will be used as the host to be verified for C<--tls-verify-host>.  This is necessary when using C<--tls-verify-host> with either the C<--pipe> or C<--socket> transports, which do not have a verifiable target by default.  It can also be used to override the default target lookup when using the C<--server> transport.  For instance, it can be used to verify that the certificate of a server explicitly connect to via IP contains a specific certificate. (Arg-Required)
 
 =item --tls-ca-path <ca-location>
 

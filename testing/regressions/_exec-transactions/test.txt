@@ -25,8 +25,8 @@
     7 --tls-on-connect success
     8 --tls-on-connect failure
    10 --tls-cert --tls-key
-   11 --tls-verify (should fail - server's key is not signed by a known CA)
-   12 --tls-verify --tls-ca-path (should succeed - server's key is signed by the ca)
+   #11 reusable - replaced by much more details verification tests starting at 00240
+   #12 reusable - replaced by much more details verification tests starting at 00240
    13 --tls-get-peer-cert (STDOUT)
    14 --tls-get-peer-cert (FILE)
    15 --tls-protocol TLSv1_1 (if the option didn't work, one of 15 and 16 would fail)
@@ -41,6 +41,40 @@
    24 TLS client certificate info line -- client certs NOT present, server DOES     request them
    25 TLS client certificate info line -- client certs ARE present, server DOES     request them
    26 TLS client certificate info line -- client certs ARE present, server does NOT request them
+   40 TLS verification info line: --fail ca (unsigned cert),           --fail host (pipe - no target host)
+   41 TLS verification info line: --fail ca (signed but unknown cert), --fail host (pipe - no target host)
+   42 TLS verification info line: ++pass ca (signed and known cert),   --fail host (pipe - no target host)
+   43 TLS verification info line: --fail ca (unsigned cert),           --fail host (socket - no target host)
+   44 TLS verification info line: --fail ca (unsigned cert),           --fail host (inet - host doesn't match cert)
+   45 TLS verification info line: --fail ca (unsigned cert),           ++pass host (inet - host (localhost) DOES match cert (ipv4))
+   46 TLS verification info line: --fail ca (unsigned cert),           ++pass host (inet - host (127.0.0.1) DOES match cert (ipv4))
+   47 TLS verification info line: --fail ca (unsigned cert),           --fail host (--tls-verify-target using hostname not in cert)
+   48 TLS verification info line: --fail ca (unsigned cert),           ++pass host (--tls-verify-target using hostname in cert)
+   49 TLS verification info line: --fail ca (unsigned cert),           --fail host (--tls-verify-target using IP not in cert (ipv4))
+   50 TLS verification info line: --fail ca (unsigned cert),           ++pass host (--tls-verify-target using IP in cert (ipv4))
+   51 TLS verification info line: --fail ca (unsigned cert),           ++pass host (hostname     in cert CN,     NOT in SAN)
+   52 TLS verification info line: --fail ca (unsigned cert),           ++pass host (hostname NOT in cert CN,         in SAN)
+   53 TLS verification info line: --fail ca (unsigned cert),           ++pass host (wildcard hostname in cert)
+   54 TLS verification info line: ++pass ca,                           ++pass host (socket, using --tls-verify-target)
+   #55 TLS verification info line: --fail ca (signed but expired cert), --fail host (pipe - no target host)
+   56 TLS verification info line: --fail ca (unsigned cert),           ++pass host (hostname in list of multiple SANs)
+   57 TLS verification info line: --fail ca (unsigned cert),           ++pass host (inet - host (localhost) DOES match cert (ipv6))
+   58 TLS verification info line: --fail ca (unsigned cert),           ++pass host (inet - host (::1) DOES match cert (ipv6))
+   60 --tls-verify-ca   FAIL (bad  ca, bad  host)
+   61 --tls-verify-ca   FAIL (bad  ca, good host)
+   62 --tls-verify-ca   PASS (good ca, bad  host)
+   63 --tls-verify-ca   PASS (good ca, good host)
+   64 --tls-verify-host FAIL (bad  ca, bad  host)
+   65 --tls-verify-host PASS (bad  ca, good host)
+   66 --tls-verify-host FAIL (good ca, bad  host)
+   67 --tls-verify-host PASS (good ca, good host)
+   68 --tls-verify      FAIL (bad  ca, bad  host)
+   69 --tls-verify      FAIL (bad  ca, good host)
+   70 --tls-verify      FAIL (good ca, bad  host)
+   71 --tls-verify      PASS (good ca, good host)
+   72 --tls-verify-ca   FAIL (bad  ca, NO  host) (the point of this test is because the "no host" error shown when tls negotiation fails is unique)
+   73 --tls-verify-ca   FAIL (bad  ca, PRESENT BUT INCORRECT  host) (ensure the version of the failure message which includes the hostname)
+
 
 00300 - xclient (COMPLETE)
     0 happy path
@@ -207,7 +241,7 @@ helo with --xclient and --xclient-before-starttls
 # finicky so I'm just getting the happy path for now
 06000 - tcp specific
     0 --server --port (127.0.0.1)
-    1 --server --port (::1) skip for now, definitely something weird with test server and ::1
+    1 --server --port (::1)
     2 --server --port -4
     3 --server --port -6
     5 --server --port --local-interface --local-port succeed

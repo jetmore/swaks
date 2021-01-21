@@ -1,0 +1,1 @@
+CMD_CAPTURE       0   %SWAKS_COMMAND% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server ::1 --6 --port 8125 --tls --quit tls

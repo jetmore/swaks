@@ -21,5 +21,6 @@
 === TLS client certificate not requested and not sent
 === TLS no local certificate set
 === TLS peer DN="/C=US/ST=Indiana/O=Swaks Development/CN=node.example.com/emailAddress=proj-swaks@jetmore.net"
+=== TLS peer certificate failed CA verification, failed host verification (no host string available to verify)
  ~> EHLO hserver
 === Dropping connection

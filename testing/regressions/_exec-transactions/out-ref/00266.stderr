@@ -1,0 +1,2 @@
+*** TLS startup failed (connect(): error:1416F086:SSL routines:tls_process_server_certificate:certificate verify failed (server certificate did not match target host badhost.example.com))
+*** STARTTLS attempted but failed
