@@ -9,6 +9,8 @@ get contents of a crt:
 test if a crt is signed:
   openssl verify -CAfile ca.pem unsigned.example.com.crt
 
+regenerate the hashes used by --tls-ca-path when provided with a path instead of a directory
+  /usr/local/Cellar/openssl@1.1/1.1.1h/bin/c_rehash ~/Documents/git/swaks/testing/certs
 
 
 GENERAL PURPOSE CERTS:
