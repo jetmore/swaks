@@ -1002,3 +1002,7 @@
            against the local CA or the target hostname or IP, respectively.
 * 20210117 Add --tls-verify-target to set a host to be used for verification,
            overriding the internal connection information.
+* 20210123 Clarify --auth-optional-strict documentation
+* 20210123 Adding --cc and --bcc options.
+* 20210123 Add PROXY as a valid --quit-after, --drop-after, and
+           --drop-after-send argument.

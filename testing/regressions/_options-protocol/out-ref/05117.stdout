@@ -1,0 +1,13 @@
+Protocol Info:
+  protocol        = esmtp
+  helo            = LOCAL_HOST_NAME
+  from            = sender@host2.nodns.test.swaks.net
+  to              = recip@host1.nodns.test.swaks.net
+  force getpwuid  = FALSE
+  quit after      = proxy
+  drop after      = 
+  drop after send = 
+  server_only     = TRUE
+  timeout         = 30
+  pipeline        = FALSE
+  prdr            = FALSE

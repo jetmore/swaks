@@ -319,14 +319,46 @@
   980 force-getpwuid command line, no arg (-option)
   # 981 force-getpwuid, command line, valid arg (-option=)
   # 982 force-getpwuid, command line, valid arg (--option=)
+01000 --cc
+  1000 cc, command line, no arg
+  1001 cc, command line, valid arg
+  # 1002 cc, command line, invalid arg
+  1003 cc, command line, no-option
+  1010 cc, config, no arg
+  1011 cc, config, valid arg
+  # 1012 cc, config, invalid arg
+  1013 cc, config, no-option
+  1020 cc, env var, no arg
+  1021 cc, env var, valid arg
+  # 1022 cc, env var, invalid arg
+  1023 cc, env var, no-option
+  1030 cc command line, no arg (-option)
+  1031 cc, command line, valid arg (-option=)
+  1032 cc, command line, valid arg (--option=)
+01050 --bcc
+  1050 bcc, command line, no arg
+  1051 bcc, command line, valid arg
+  # 1052 bcc, command line, invalid arg
+  1053 bcc, command line, no-option
+  1060 bcc, config, no arg
+  1061 bcc, config, valid arg
+  # 1062 bcc, config, invalid arg
+  1063 bcc, config, no-option
+  1070 bcc, env var, no arg
+  1071 bcc, env var, valid arg
+  # 1072 bcc, env var, invalid arg
+  1073 bcc, env var, no-option
+  1080 bcc command line, no arg (-option)
+  1081 bcc, command line, valid arg (-option=)
+  1082 bcc, command line, valid arg (--option=)
 
 
 ./gen-tests.pl \
-    -n 950 \
-    -o force-getpwuid \
-    -v '' \
-    -i invalid-option \
-    -p '' \
+    -n 1050 \
+    -o bcc \
+    -v 'bcc@example.com' \
+    -i '' \
+    -p 'Bcc:' \
     -d . \
     -r \
     -s '%SWAKS% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo helo-string --server ser.ver'
@@ -354,6 +386,7 @@
   114 --quit-after TO
   115 --quit-after STARTTLS
   116 --quit-after XCLIENT-HELO
+  117 --quit-after PROXY
   120 --quit-after CONNECT + no recip doesn't prompt for To:
   121 --quit-after FIRST-HELO + no recip doesn't prompt for To:
   122 --quit-after XCLIENT + no recip doesn't prompt for To:
@@ -380,6 +413,7 @@
   214 --drop-after TO
   215 --drop-after STARTTLS
   216 --drop-after XCLIENT-HELO
+  217 --drop-after PROXY
 --
   300 --drop-after-send CONNECT
   301 --drop-after-send BANNER
@@ -398,6 +432,7 @@
   314 --drop-after-send TO
   315 --drop-after-send STARTTLS
   316 --drop-after-send XCLIENT-HELO
+  317 --drop-after-send PROXY
 --
   400 --protocol smtp
   401 --protocol ssmtp
@@ -424,6 +459,7 @@
   509 --timeout 2g # error
 --
   600 --to addr1,addr2,addr3 uses the domain of the last address (if no other target provided)
+  601 --to addr1,addr2,addr3 uses the domain of the last address even when -cc and -bcc are present (if no other target provided)
 --
   700 $LOGNAME is used for sender by default
   701 --force-getpwuid overrides $LOGNAME

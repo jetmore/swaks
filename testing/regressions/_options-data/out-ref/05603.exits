@@ -1,1 +1,1 @@
-CMD_CAPTURE       0   %SWAKS_COMMAND% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server ser.ver --config %OUTDIR%/swaksrc-05603 --body custom body --add-header Custom-Header: custom header
+CMD_CAPTURE       0   %SWAKS_COMMAND% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server ser.ver --config %OUTDIR%/swaksrc-05603 --cc cc@example.com --bcc bcc@example.com --body custom body --add-header Custom-Header: custom header

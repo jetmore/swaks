@@ -303,9 +303,15 @@ These options are related to the protocol layer.
 
 =item -t, --to [<email-address>[,<email-address>[,...]]]
 
-Tells Swaks to use argument(s) as the envelope-recipient for the email, or prompt for recipient if no argument provided.  If multiple recipients are provided and the recipient domain is needed to determine routing the domain of the last recipient provided is used.
+=item --cc [<email-address>[,<email-address>[,...]]]
 
-There is no default value for this option.  If no recipients are provided via any means, user will be prompted to provide one interactively.  The only exception to this is if a C<--quit-after> value is provided which will cause the SMTP transaction to be terminated before the recipient is needed. (Arg-Required, From-Prompt)
+=item --bcc [<email-address>[,<email-address>[,...]]]
+
+These options all tell Swaks to use the argument(s) as the envelope-recipient for the email.  There are subtle differences between these three options, detailed below.  If any option is specified but with no arguments, Swaks will prompt the user for an argument.
+
+C<--to> is special in that it is the only option required by Swaks. There is no default value for this option.  If no recipients are provided via any means, user will be prompted to provide one interactively.  The only exception to this is if a C<--quit-after> value is provided which will cause the SMTP transaction to be terminated before the recipient is needed.  If multiple recipients are provided and the recipient domain is needed to determine routing, the domain of the last recipient in the C<--to> argument list is used.
+
+The primary distinction between these options is how their arguments are treated when generating the DATA portion of the email.  They each have their own replacement tokens (C<%TO_ADDRESS%>, C<%CC_ADDRESS%>, and C<%BCC_ADDRESS%> respectively) which can be used by anyone crafting a custom DATA.  In Swaks' default message, C<%TO_ADDRESS%> will be used for the To: header and, if it is populated, C<%CC_HEADER%> will be used for a Cc: header.  C<%BCC_ADDRESS%> is not used in the default DATA. (Arg-Required, From-Prompt)
 
 =item -f, --from [<email-address>]
 
@@ -320,6 +326,10 @@ String to use as argument to HELO/EHLO/LHLO command, or prompt user if no argume
 Point at which the transaction should be stopped.  When the requested stopping point is reached in the transaction, and provided that Swaks has not errored out prior to reaching it, Swaks will send "QUIT" and attempt to close the connection cleanly.  These are the valid arguments and notes about their meaning. (Arg-Required)
 
 =over 4
+
+=item PROXY
+
+Quit after the server sends a response to a PROXY request.  Note that if there is not an error negotiating proxy, this will be synonymous with CONNECT.
 
 =item CONNECT, BANNER
 
@@ -367,11 +377,11 @@ The option is similar to C<--quit-after>, but instead of trying to cleanly shut 
 
 =item DATA
 
-Quit after DATA is sent.
+Drop the connection after DATA is sent by server.
 
 =item DOT
 
-Quit after the final '.' of the message is sent.
+Drop the connection after the final '.' of the message is sent by server.
 
 =back
 
@@ -603,7 +613,7 @@ This option behaves identically to C<--auth> except that it requests authenticat
 
 =item -aos, --auth-optional-strict [<auth-type>[,<auth-type>[,...]]]
 
-This option is a compromise between C<--auth> and C<--auth-optional>.  If no common auth-types are found, Swaks behaves as if C<--auth-optional> were specified and proceeds with the transaction.  If Swaks can't support requested auth-type, the server doesn't advertise any common auth-types, or if no credentials succeed, Swaks behaves as if C<--auth> were used and exits with an error. (Arg-Optional)
+This option is a compromise between C<--auth> and C<--auth-optional>.  If authentication is never attempted (server doesn't advertise authentication or no common authentication types are found), it behaves like C<--auth-optional> and the smtp transaction continues.  If authentication is attempted but fails, it behaves like C<--auth> and exits with an error. (Arg-Optional)
 
 =item -au, --auth-user [<username>]
 
@@ -803,7 +813,15 @@ Replaced with the envelope-sender.
 
 =item %TO_ADDRESS%, ..TO_ADDRESS..
 
-Replaced with the envelope-recipient(s).
+Replaced with the envelope-recipient(s) set by the C<--to> option.
+
+=item %CC_ADDRESS%, ..CC_ADDRESS..
+
+Replaced with the envelope-recipient(s) set by the C<--cc> option.
+
+=item %BCC_ADDRESS%, ..BCC_ADDRESS..
+
+Replaced with the envelope-recipient(s) set by the C<--bcc> option.
 
 =item %DATE%, ..DATE..
 

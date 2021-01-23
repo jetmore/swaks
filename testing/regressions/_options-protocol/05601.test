@@ -1,0 +1,6 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
+# this is slow on work network because it tries to dns update.  Just live with it until I get dummy dns up and running
+test action: CMD_CAPTURE %SWAKS% --dump TRANSPORT,PROTOCOL --from sender@host2.nodns.test.swaks.net --helo helo-string \
+    --to recip@host1.nodns.test.swaks.net,recip@host2.nodns.test.swaks.net,recip@host3.nodns.test.swaks.net \
+    --cc cc1@cchost1.nodns.test.swaks.net,cc2@cchost2.nodns.test.swaks.net \
+    --bcc bcc1@bcchost1.nodns.test.swaks.net,bcc2@bcchost2.nodns.test.swaks.net
