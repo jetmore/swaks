@@ -86,7 +86,7 @@ elsif ($G::dump_mail) {
 # XXX hash that we can pass verbatim here
 open_link();
 
-sendmail($opts->{from}, $opts->{to}, $opts->{helo}, $opts->{data},
+sendmail($opts->{from}, $opts->{env_to}, $opts->{helo}, $opts->{data},
          $opts->{a_user}, $opts->{a_pass}, $opts->{a_type});
 
 teardown_link();
@@ -1793,11 +1793,21 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'From: ',                                             match  => '^.*$',
 		  okey    => 'mail_from',                                          type   => 'scalar', },
-		# envelope-(t)o address
+		# (t)o address(es) (will be added to envelope recipients)
 		{ opts    => ['to', 't'],                                          suffix => ':s',
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'To: ',                                               match  => '^.+$',
 		  okey    => 'mail_to',                                            type   => 'scalar', },
+		# cc address(es) (will be added to envelope recipients)
+		{ opts    => ['cc'],                                               suffix => ':s',
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
+		  prompt  => 'Cc: ',                                               match  => '^.+$',
+		  okey    => 'mail_cc',                                            type   => 'scalar', },
+		# bcc address(es) (will be added to envelope recipients)
+		{ opts    => ['bcc'],                                              suffix => ':s',
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
+		  prompt  => 'Bcc: ',                                              match  => '^.+$',
+		  okey    => 'mail_bcc',                                           type   => 'scalar', },
 		# (h)elo string
 		{ opts    => ['helo', 'ehlo', 'lhlo', 'h'],                        suffix => ':s',
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
@@ -2779,6 +2789,8 @@ sub process_args {
 		NEWLINE       => { regexp => '(%|\.\.)NEWLINE\1',       literal => '%NEWLINE%',       },
 		FROM_ADDRESS  => { regexp => '(%|\.\.)FROM_ADDRESS\1',  literal => '%FROM_ADDRESS%',  },
 		TO_ADDRESS    => { regexp => '(%|\.\.)TO_ADDRESS\1',    literal => '%TO_ADDRESS%',    },
+		CC_ADDRESS    => { regexp => '(%|\.\.)CC_ADDRESS\1',    literal => '%CC_ADDRESS%',    },
+		BCC_ADDRESS   => { regexp => '(%|\.\.)BCC_ADDRESS\1',   literal => '%BCC_ADDRESS%',   },
 		MESSAGEID     => { regexp => '(%|\.\.)MESSAGEID\1',     literal => '%MESSAGEID%',     },
 		SWAKS_VERSION => { regexp => '(%|\.\.)SWAKS_VERSION\1', literal => '%SWAKS_VERSION%', },
 		DATE          => { regexp => '(%|\.\.)DATE\1',          literal => '%DATE%',          },
@@ -3004,10 +3016,13 @@ sub process_args {
 	$G::link{type}                    ||= 'socket-inet';
 	($G::link{server},$G::link{port})   = parse_server($mail_server_t, get_arg('mail_port', $o));
 	$n{to}                              = get_arg('mail_to', $o);
+	$n{cc}                              = get_arg('mail_cc', $o);
+	$n{bcc}                             = get_arg('mail_bcc', $o);
 	# we absolutely must have a recipient. If we don't have one yet, prompt for one
 	if (!$n{to} && !($G::server_only && ($G::link{server} || $G::link{type} eq 'socket-unix' || $G::link{type} eq 'pipe'))) {
 		$n{to} = interact("To: ", '^.+$'); # WCSXXXFIXME I wish we could look up the prompt and re from $a
 	}
+	$n{env_to} = join(',', grep { $_ ne '' } ($n{to}, $n{cc}, $n{bcc})); # env_to will hold all recipients, regardless of how they were set
 
 	# try to catch obvious -s/-li/-4/-6 errors as soon as possible.  We don't actually do any DNS
 	# lookups ourselves, so errors like -s being a domain with only A RRs and -li being a domain
@@ -3182,7 +3197,11 @@ sub process_args {
 
 	# SMTP DATA
 	$n{data} = get_arg('mail_data', $o) ||
-               'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
+	           'Date: %DATE%\n' .
+	           'To: %TO_ADDRESS%\n' .
+	           ($n{cc} ? 'Cc: %CC_ADDRESS%\n' : '') .
+	           'From: %FROM_ADDRESS%\n'.
+	           'Subject: test %DATE%\n' .
 	           "Message-Id: <%MESSAGEID%>\n" .
 	           "X-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/".'\n' .
 	           ($bound ? 'MIME-Version: 1.0\nContent-Type: ' . $main_content_type . '; boundary="' . $bound. '"\n' : '') .
@@ -3283,6 +3302,8 @@ sub process_args {
 		$n{data} =~ s/\\n|$G::tokens->{NEWLINE}{regexp}/\r\n/g;
 		$n{data} =~ s/$G::tokens->{FROM_ADDRESS}{regexp}/$n{from}/g;
 		$n{data} =~ s/$G::tokens->{TO_ADDRESS}{regexp}/$n{to}/g;
+		$n{data} =~ s/$G::tokens->{CC_ADDRESS}{regexp}/$n{cc}/g;
+		$n{data} =~ s/$G::tokens->{BCC_ADDRESS}{regexp}/$n{bcc}/g;
 		$n{data} =~ s/$G::tokens->{MESSAGEID}{regexp}/get_messageid()/ge;
 		$n{data} =~ s/$G::tokens->{SWAKS_VERSION}{regexp}/$p_version/g;
 		$n{data} =~ s/$G::tokens->{DATE}{regexp}/get_date_string()/ge;
@@ -3779,7 +3800,7 @@ sub get_running_state {
 			"  protocol        = $G::protocol",
 			"  helo            = $opts->{helo}",
 			"  from            = $opts->{from}",
-			"  to              = $opts->{to}",
+			"  to              = $opts->{env_to}",
 			'  force getpwuid  = ' . ($opts->{force_getpwuid} ? 'TRUE' : 'FALSE'),
 			"  quit after      = $G::quit_after",
 			"  drop after      = $G::drop_after",

@@ -1,8 +1,10 @@
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver --helo host1.nodns.test.swaks.net --from from@host1.nodns.test.swaks.net \
+--cc cc@example.com \
+--bcc bcc@example.com \
 --body "custom body" \
 --add-header "Custom-Header: custom header" \
---data "from - %FROM_ADDRESS%%NEWLINE%to - %TO_ADDRESS%%NEWLINE%Message-Id: <%MESSAGEID%>%NEWLINE%swaks_version - %SWAKS_VERSION%%NEWLINE%new headers - %NEW_HEADERS%%NEWLINE%Date: %DATE%%NEWLINE%body - %BODY%%NEWLINE%"
+--data "from - %FROM_ADDRESS%%NEWLINE%to - %TO_ADDRESS%%NEWLINE%cc - %CC_ADDRESS%%NEWLINE%bcc - %BCC_ADDRESS%%NEWLINE%Message-Id: <%MESSAGEID%>%NEWLINE%swaks_version - %SWAKS_VERSION%%NEWLINE%new headers - %NEW_HEADERS%%NEWLINE%Date: %DATE%%NEWLINE%body - %BODY%%NEWLINE%"
 
 skip: IFOS=MSWin32 Invalid on Windows, %TOKEN% tokens not consistently available on Windows

@@ -2,7 +2,7 @@ Protocol Info:
   protocol        = smtp
   helo            = HELO
   from            = FROM
-  to              = ADDR1,ADDR2
+  to              = ADDR1,ADDR2,CC1,CC2,BCC1,BCC2
   force getpwuid  = TRUE
   quit after      = mail
   drop after      = rcpt

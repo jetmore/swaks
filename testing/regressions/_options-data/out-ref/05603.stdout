@@ -2,6 +2,8 @@ DATA Info:
   data = <<.
 recip@host1.nodns.test.swaks.net
 to - user@host1.nodns.test.swaks.net
+cc - cc@example.com
+bcc - bcc@example.com
 Message-Id: <19991103112429.047942@localhost>
 swaks_version - DEVRELEASE
 new headers - Custom-Header: custom header

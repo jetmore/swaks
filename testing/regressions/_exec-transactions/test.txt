@@ -13,6 +13,10 @@
    54 --pipeline multiple RCPT: accept accept
    55 --pipeline multiple RCPT: accept   fail
    56 --pipeline multiple RCPT:   fail   fail
+   60 --cc gets added to envelope recipients
+   61 --bcc gets added to envelope recipients
+   62 --to, --cc, --bcc all work together
+   63 --to, --cc, --bcc use a consistent order regardless of order options are presented
 
 00200 - tls
     0 --tls success

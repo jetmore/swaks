@@ -303,9 +303,15 @@ These options are related to the protocol layer.
 
 =item -t, --to [<email-address>[,<email-address>[,...]]]
 
-Tells Swaks to use argument(s) as the envelope-recipient for the email, or prompt for recipient if no argument provided.  If multiple recipients are provided and the recipient domain is needed to determine routing the domain of the last recipient provided is used.
+=item --cc [<email-address>[,<email-address>[,...]]]
 
-There is no default value for this option.  If no recipients are provided via any means, user will be prompted to provide one interactively.  The only exception to this is if a C<--quit-after> value is provided which will cause the SMTP transaction to be terminated before the recipient is needed. (Arg-Required, From-Prompt)
+=item --bcc [<email-address>[,<email-address>[,...]]]
+
+These options all tell Swaks to use the argument(s) as the envelope-recipient for the email.  There are subtle differences between these three options, detailed below.  If any option is specified but with no arguments, Swaks will prompt the user for an argument.
+
+C<--to> is special in that it is the only option required by Swaks. There is no default value for this option.  If no recipients are provided via any means, user will be prompted to provide one interactively.  The only exception to this is if a C<--quit-after> value is provided which will cause the SMTP transaction to be terminated before the recipient is needed.  If multiple recipients are provided and the recipient domain is needed to determine routing, the domain of the last recipient in the C<--to> argument list is used.
+
+The primary distinction between these options is how their arguments are treated when generating the DATA portion of the email.  They each have their own replacement tokens (C<%TO_ADDRESS%>, C<%CC_ADDRESS%>, and C<%BCC_ADDRESS%> respectively) which can be used by anyone crafting a custom DATA.  In Swaks' default message, C<%TO_ADDRESS%> will be used for the To: header and, if it is populated, C<%CC_HEADER%> will be used for a Cc: header.  C<%BCC_ADDRESS%> is not used in the default DATA. (Arg-Required, From-Prompt)
 
 =item -f, --from [<email-address>]
 
@@ -803,7 +809,15 @@ Replaced with the envelope-sender.
 
 =item %TO_ADDRESS%, ..TO_ADDRESS..
 
-Replaced with the envelope-recipient(s).
+Replaced with the envelope-recipient(s) set by the C<--to> option.
+
+=item %CC_ADDRESS%, ..CC_ADDRESS..
+
+Replaced with the envelope-recipient(s) set by the C<--cc> option.
+
+=item %BCC_ADDRESS%, ..BCC_ADDRESS..
+
+Replaced with the envelope-recipient(s) set by the C<--bcc> option.
 
 =item %DATE%, ..DATE..
 
