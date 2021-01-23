@@ -603,7 +603,7 @@ This option behaves identically to C<--auth> except that it requests authenticat
 
 =item -aos, --auth-optional-strict [<auth-type>[,<auth-type>[,...]]]
 
-This option is a compromise between C<--auth> and C<--auth-optional>.  If no common auth-types are found, Swaks behaves as if C<--auth-optional> were specified and proceeds with the transaction.  If Swaks can't support requested auth-type, the server doesn't advertise any common auth-types, or if no credentials succeed, Swaks behaves as if C<--auth> were used and exits with an error. (Arg-Optional)
+This option is a compromise between C<--auth> and C<--auth-optional>.  If authentication is never attempted (server doesn't advertise authentication or no common authentication types are found), it behaves like C<--auth-optional> and the smtp transaction continues.  If authentication is attempted but fails, it behaves like C<--auth> and exits with an error. (Arg-Optional)
 
 =item -au, --auth-user [<username>]
 
