@@ -327,6 +327,10 @@ Point at which the transaction should be stopped.  When the requested stopping p
 
 =over 4
 
+=item PROXY
+
+Quit after the server sends a response to a PROXY request.  Note that if there is not an error negotiating proxy, this will be synonymous with CONNECT.
+
 =item CONNECT, BANNER
 
 Terminate the session after receiving the greeting banner from the target.
@@ -373,11 +377,11 @@ The option is similar to C<--quit-after>, but instead of trying to cleanly shut 
 
 =item DATA
 
-Quit after DATA is sent.
+Drop the connection after DATA is sent by server.
 
 =item DOT
 
-Quit after the final '.' of the message is sent.
+Drop the connection after the final '.' of the message is sent by server.
 
 =back
 

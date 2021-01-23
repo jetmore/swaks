@@ -1,0 +1,4 @@
+=== Trying pipe to %TEST_SERVER% --silent --domain pipe   part-0800-proxy-read.txt   ...
+=== Connected to %TEST_SERVER% --silent --domain pipe   part-0800-proxy-read.txt   .
+ -> PROXY TCP4 1.1.1.1 2.2.2.2 111 222
+=== Dropping connection

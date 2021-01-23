@@ -192,6 +192,7 @@ sub sendmail {
 	my $ehlo    = {};    # If server is esmtp, save advertised features here
 
 	do_smtp_proxy() if ($G::proxy{try});
+	do_smtp_drop()     if ($G::drop_after eq 'proxy' || $G::drop_after_send eq 'proxy');
 
 	# start up tls if -tlsc specified
 	if ($G::tls_on_connect) {
@@ -210,6 +211,7 @@ sub sendmail {
 	do_smtp_gen(undef, '220') || do_smtp_quit(1, 21);
 	do_smtp_drop()     if ($G::drop_after eq 'connect');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'connect');
+	do_smtp_quit(1, 0) if ($G::quit_after eq 'proxy');
 
 	# Send a HELO string
 	$G::drop_before_read = 1 if ($G::drop_after_send eq 'first-helo');
@@ -2926,7 +2928,7 @@ sub process_args {
 			       ${"G::$opt"} ne 'auth'    && ${"G::$opt"} ne 'mail'         &&
 			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient'      &&
 			       ${"G::$opt"} ne 'data'    && ${"G::$opt"} ne 'xclient-helo' &&
-			       ${"G::$opt"} ne 'dot')
+			       ${"G::$opt"} ne 'dot'     && ${"G::$opt"} ne 'proxy')
 			{
 				ptrans(12, "Unknown $opt value " . ${"G::$opt"} . ", exiting");
 				exit(1);

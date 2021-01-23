@@ -180,6 +180,8 @@
    13 --quit-after xclient-helo (with --xclient)
    14 --quit-after auth (not using auth)
    17 --quit-after xclient-helo (without --xclient)
+   18 --quit-after proxy (with --proxy)
+   19 --quit-after proxy (without --proxy)
 
 05100 - --drop-after
   100 --drop-after connect
@@ -200,6 +202,8 @@
    15 --drop-after data
    16 --drop-after dot
    17 --drop-after xclient-helo (without --xclient)
+   18 --drop-after proxy (with --proxy)
+   19 --drop-after proxy (without --proxy)
 
 05200 - --drop-after-send
   200 --drop-after-send connect
@@ -220,6 +224,8 @@
    15 --drop-after-send data
    16 --drop-after-send dot
    17 --drop-after-send xclient-helo (without --xclient)
+   18 --drop-after-send proxy (with --proxy)
+   19 --drop-after-send proxy (without --proxy)
 helo with --xclient and --xclient-before-starttls
 
 05300 - output options
