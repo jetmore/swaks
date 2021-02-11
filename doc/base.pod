@@ -780,6 +780,26 @@ Specify the destination address of the proxied connection. (Arg-Required, From-P
 Specify the destination port of the proxied connection. (Arg-Required, From-Prompt)
 
 =back
+ 
+=head1 SOCKS PROXY OPTIONS
+
+Swaks is able to use a SOCKS proxy to connect SMTP via TCP. It relies on the IO::Socket::Socks module's behavior.
+
+=over 4
+
+=item --socks-host [VALUE]
+
+If this option is used, its argument is used as the host which is the socks proxy.
+
+=item --socks-port [VALUE]
+
+Specify the port the socks proxy is listening for connections to. Defaults to 1080.
+
+=item --socks-version [ 4 | 5 ]
+
+Specify the socks protocol version to speak. Defaults to 5.
+
+=back
 
 =head1 DATA OPTIONS
 
