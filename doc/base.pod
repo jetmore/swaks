@@ -599,6 +599,14 @@ The DIGEST-MD5 protocol's "digest-uri" values can be set using the C<--auth-extr
 
 The CRAM-SHA1 authenticator requires the L<Digest::SHA> module.  This type has only been tested against a non-standard implementation on an Exim server and may therefore have some implementation deficiencies.
 
+=item GSSAPI
+
+The GSSAPI authenticator requires the Authen::SASL module, as well as one of Authen::SASL::XS or Authen::SASL::Cyrus for the libsasl bindings.
+
+Although the most commonly used GSSAPI mechanisms are passwordless, the authenticator will prompt for a password regardless.  However, it will not acquire initial credentials on your behalf if the mechanism doesn't already do so.  For instance, Kerberos requires you to obtain a TGT using "kinit" before authenticating.
+
+The GSSAPI service and host can be set using the --auth-extra option; for instance, "--auth-extra gss-serv-type=lmtp,gss-host=mail.example.com".
+
 =item NTLM/SPA/MSN
 
 These authenticators require the Authen::NTLM module.  This type has been tested against Exim, Communigate, and Exchange 2007.
@@ -646,6 +654,14 @@ The dmd5-host keyword is used by the DIGEST-MD5 authenticator and is used, in pa
 =item dmd5-serv-name
 
 The dmd5-serv-name keyword is used by the DIGEST-MD5 authenticator and is used, in part, to build the digest-uri-value string (see RFC2831)
+
+=item gss-serv-type
+
+The gss-serv-type keyword is used by the GSSAPI authenticator to specify the GSS service name (see RFC 4752).
+
+=item gss-host
+
+The gss-host keyword is used by the GSSAPI authenticator to specify the GSS hostname, which must match the server's fully qualified domain name (see RFC 4752).
 
 =back
 
