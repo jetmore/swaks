@@ -39,7 +39,7 @@ Test a spam scanner using GTUBE in the body of an email, routed via the MX recor
 
 =over 4
 
- swaks --to user@example.com --body /path/to/gtube/file
+ swaks --to user@example.com --body @/path/to/gtube/file
 
 =back
 
