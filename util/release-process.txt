@@ -23,10 +23,13 @@ git checkout -b release/v$RELEASE
 # Update Changes, add a release entry
 
 # run automated testing
+## make sure local environment is ready for testing, fix if anything missing
+cd testing/regressions
+bin/runenv bin/check-env.pl
 ## run all tests non-interactively
-TEST_SWAKS=../../swaks bin/run-all.pl
+bin/runenv bin/run-all.pl
 ## rerun any failed tests in interactive mode
-TEST_SWAKS=../../swaks bin/run-all.pl --errors
+bin/runenv bin/run-all.pl --errors
 
 # run manual testing
 ## see steps in testing/MANUAL.txt

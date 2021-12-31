@@ -19,6 +19,7 @@ environment/tooling:
 	Capture::Tiny perl module MUST be installed
 	Text::Diff perl module needs MUST installed
 	Proc::Background perl module MUST be installed
+	Term::ReadKey perl module must be installed
 	all "optional" perl modules MUST be installed to run the test suite (that is, `swaks --support` must show every option supported)
 	SWAKS_TEST_SERVER environment variable MUST be set to a suitable path to run transaction tests.  The runenv default should be suitable everywhere
 	SWAKS_TEST_PAGER environment variable SHOULD be set to make displaying of diffs most useful (can just set it to 'less')
