@@ -27,6 +27,14 @@ Deliver a standard test email, requiring CRAM-MD5 authentication as user me@exam
 
 =back
 
+Deliver a standard test email, through Gmail SMTP server using XOAUTH2 authentication as user guser@gmail.com.  An XOAUTH2 access token is read in from the access_token file.
+
+=over 4
+
+ swaks --to user@example.com --from guser@gmail.com --server smtp.gmail.com:587 -tls --auth XOAUTH2 -au guser@gmail.com -ap < access_token
+
+=back
+
 Test a virus scanner using EICAR in an attachment.  Don't show the message DATA part.:
 
 =over 4
@@ -581,6 +589,10 @@ The following tables lists the valid auth-types
 
 These basic authentication types are fully supported and tested and have no additional requirements
 
+=item XOAUTH2
+
+The XOAUTH2 is an authorization protocol used by many SMTP servers, and is required by Gmail going forward.  An "access token" is required, which replaces the password.  See the XOAUTH2 AUTHORIZATION section for instructions on how to obtain an access token from Google.
+
 =item CRAM-MD5
 
 The CRAM-MD5 authenticator requires the L<Digest::MD5> module.  It is fully tested and believed to work against any server that implements it.
@@ -1049,6 +1061,28 @@ Display this help information and exit. (Arg-None)
 Display version information and exit. (Arg-None)
 
 =back
+
+=head1 XOAUTH2 AUTHORIZATION
+
+This section documents the XOAUTH2 authorization procedure specifically for Gmail.  Other providers have a similar setup.  Gmail documentation is at L<https://developers.google.com/gmail/imap/xoauth2-protocol>.
+
+Basically, there are three steps involved.
+
+=over 4
+
+=item Z<>1.
+
+Register an app with Google, which will generate a client_id and client_secret.  Instructions: L<https://alpine.x10host.com/alpine/alpine-info/misc/RegisteringAlpineinGmail.html>
+
+=item Z<>2.
+
+Download the Python2 script, oauth2.py, from Google: L<https://developers.google.com/gmail/imap/xoauth2-libraries>
+
+oauth2.py connects to Google, generates access and refresh tokens using the client_id and client_secret from step 1. The access token is typically valid for 1 hour, while the refresh token lasts indefinitely.  Use oauth2.py again with the refresh token to generate a new access token when required.
+
+=item Z<>3.
+
+Use the access token generated above as password for the XOAUTH2 authorization method. See example in the QUICK START section.
 
 =head1 DEPRECATIONS
 
