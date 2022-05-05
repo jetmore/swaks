@@ -801,7 +801,7 @@ If the argument does not contain any literal (0x0a) or representative (0x5c, 0x6
 
 Any other argument will be used as the DATA contents.
 
-The value can be on one single line, with C<\n> (ASCII 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is C<Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\nMessage-Id: <%MESSAGEID%>\nX-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n>.
+The value can be on one single line, with C<\n> (ASCII 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is C<< Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\nMessage-Id: <%MESSAGEID%>\nX-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n >>.
 
 Very basic token parsing is performed on the DATA portion.  The following table shows the recognized tokens and their replacement values. (Arg-Required, From-Prompt, From-File)
 
