@@ -1008,3 +1008,4 @@
            --drop-after-send argument.
 * 20211208 Fix deprecated use of --body in doc (#39)
 * 20220505 Update copyright year to 2022
+* 20220505 Fix double-entry for Linux on installations.html
