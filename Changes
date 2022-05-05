@@ -1007,3 +1007,4 @@
 * 20210123 Add PROXY as a valid --quit-after, --drop-after, and
            --drop-after-send argument.
 * 20211208 Fix deprecated use of --body in doc (#39)
+* 20220505 Update copyright year to 2022
