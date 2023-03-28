@@ -1,0 +1,2 @@
+get_line(); # XCLIENT
+send_line("220 SERVER ESMTP ready");

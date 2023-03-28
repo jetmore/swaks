@@ -1,0 +1,41 @@
+## These will be accepted
+accept::blackhole:
+accept1::blackhole:
+accept2::blackhole:
+accept3::blackhole:
+
+## will fail at rcpt time
+fail::fail:invalid user
+fail1::fail:invalid user
+fail2::fail:invalid user
+fail3::fail:invalid user
+
+## will defer at rcpt time
+defer::defer:deferred user
+defer1::defer:deferred user
+defer2::defer:deferred user
+defer3::defer:deferred user
+
+# accepted at rcpt time, then forced to fail at PRDR time
+prdr-fail::blackhole:
+prdr-fail1::blackhole:
+prdr-fail2::blackhole:
+prdr-fail3::blackhole:
+
+# accepted at rcpt time, then forced to fail after message is received (between \n.\n and response)
+data-fail::blackhole:
+data-fail1::blackhole:
+data-fail2::blackhole:
+data-fail3::blackhole:
+
+## this sender will be rejected at MAIL time
+#mail-fail@client.example.com
+
+## this sender will be rejected in the predata phase (after DATA, before actual message transmission)
+#predata-fail@client.example.com
+
+## this HELO STRING will cause the STARTTLS transaction to fail (the STARTTLS will be rejected)
+#starttls-fail
+
+## this HELO STRING will cause the actual TLS negotiation to fail if client requests NULL-SHA256
+#starttls-fail-negotiation

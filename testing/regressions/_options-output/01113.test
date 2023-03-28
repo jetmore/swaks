@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 12:45:31 2018 by ./gen-tests.pl '.' '1100' 'silent' '2' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: silent, config, no-option
 

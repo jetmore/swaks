@@ -1,0 +1,8 @@
+accept /dev/null
+accept1 /dev/null
+accept2 /dev/null
+accept3 /dev/null
+fail::fail:invalid user
+fail1::fail:invalid user
+fail2::fail:invalid user
+fail3::fail:invalid user

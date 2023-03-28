@@ -1,6 +1,6 @@
 # Generated Sat Jul 13 12:27:38 2019 by ./gen-tests.pl '-n' '1050' '-o' 'h-From:' '-v' 'added-by--header' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" %TESTING%'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: h-From:, command line, no arg
 

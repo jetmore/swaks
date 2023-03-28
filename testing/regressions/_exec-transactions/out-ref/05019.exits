@@ -1,0 +1,1 @@
+CMD_CAPTURE       0   %SWAKS_COMMAND% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --quit-after proxy --pipe %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   part-3000-shutdown-accept.txt   

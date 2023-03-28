@@ -1,0 +1,9 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
+title: non-english-locale emails generate english date strings
+
+# this looks like a standard test, but the date munging won't work if we generated it with czech day/month names
+
+pre action: IFOS=MSWin32 SET_ENV LC_ALL Czech
+pre action: IFOS!=MSWin32 SET_ENV LC_ALL cs_CZ.UTF-8
+
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"

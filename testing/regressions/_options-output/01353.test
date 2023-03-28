@@ -1,8 +1,8 @@
 # Generated Mon Dec 10 21:26:34 2018 by ./gen-tests.pl '.' '1350' 'dump' 'OUTPUT' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: dump, command line, no-option
 
-test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --pipe /foo/bar \
+test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --dump-mail \
     --dump OUTPUT --no-dump

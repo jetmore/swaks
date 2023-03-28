@@ -1,0 +1,1 @@
+CMD_CAPTURE       2   %SWAKS_COMMAND% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --socket %OUTDIR%/07001.sock

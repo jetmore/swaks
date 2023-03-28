@@ -6,6 +6,7 @@ TLS / Encryption Info:
   local cipher list   = 
   ca path             = 
   sni string          = 
-  verify server cert  = TRUE
-  available protocols = SSLv2, SSLv3, TLSv1, TLSv1_1, TLSv1_2
+  verify server cert  = CA, HOST
+  verify target host  = 
+  available protocols = TLS_PROTOCOL_LIST
   requested protocols = 

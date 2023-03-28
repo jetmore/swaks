@@ -12,5 +12,5 @@ Output Info:
   hide_receive       = FALSE
   hide_informational = FALSE
   hide_all           = FALSE
-  trans_fh_of        = /path/to/OUTDIR/01621.fileout (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+  trans_fh_of        = %OUTDIR%/01621.fileout (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
   trans_fh_ef        = STDERR (GLOB(0xdeadbeef),GLOB(0xdeadbeef))

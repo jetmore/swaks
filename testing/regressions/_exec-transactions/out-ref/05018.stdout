@@ -1,0 +1,7 @@
+=== Trying pipe to %TEST_SERVER% --silent --domain pipe   part-0800-proxy-read.txt   part-0000-connect-standard.txt   part-3000-shutdown-accept.txt   ...
+=== Connected to %TEST_SERVER% --silent --domain pipe   part-0800-proxy-read.txt   part-0000-connect-standard.txt   part-3000-shutdown-accept.txt   .
+ -> PROXY TCP4 1.1.1.1 2.2.2.2 111 222
+<-  220 SERVER ESMTP ready
+ -> QUIT
+<-  221 SERVER closing connection
+=== Connection closed with child process.

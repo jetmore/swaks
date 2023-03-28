@@ -1,6 +1,6 @@
 # Generated Thu Dec 20 17:09:21 2018 by ./gen-tests.pl '.' '450' 'tlsp' 'tlsv1_1,tlsv1_2' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tlsp, command line, valid arg (--option=)
 

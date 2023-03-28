@@ -1,6 +1,6 @@
 # Generated Thu Dec 20 17:09:21 2018 by ./gen-tests.pl '.' '550' 'tls-verify' '' 'sdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tls-verify command line, no arg (-option)
 

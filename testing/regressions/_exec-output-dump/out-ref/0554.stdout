@@ -8,7 +8,7 @@ Authentication Info:
   password       = 'TEST_PASS'
   show plaintext = FALSE
   hide password  = CUSTOM_PASSWORD_REPLACEMENT
-  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, PLAIN
+  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, MSN, NTLM, PLAIN, SPA
   extras         = 
   type map       = CRAM-MD5 = CRAM-MD5
                    CRAM-SHA1 = CRAM-SHA1
@@ -36,7 +36,7 @@ Authentication Info:
   password       = 'TEST_PASS'
   show plaintext = FALSE
   hide password  = CUSTOM_PASSWORD_REPLACEMENT
-  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, PLAIN
+  allowed types  = CRAM-MD5, CRAM-SHA1, DIGEST-MD5, LOGIN, MSN, NTLM, PLAIN, SPA
   extras         = 
   type map       = CRAM-MD5 = CRAM-MD5
                    CRAM-SHA1 = CRAM-SHA1

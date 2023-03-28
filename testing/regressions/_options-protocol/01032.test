@@ -1,0 +1,8 @@
+# Generated Sat Jan 23 11:08:20 2021 by ./gen-tests.pl '-n' '1000' '-o' 'cc' '-v' 'cc@example.com' '-i' '' '-p' 'Cc:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo helo-string --server ser.ver'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: cc, command line, valid arg (--option=)
+
+test action: CMD_CAPTURE %SWAKS% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo helo-string --server ser.ver \
+    --cc=cc@example.com

@@ -1,6 +1,6 @@
 # Generated Thu Dec 20 17:34:08 2018 by ./gen-tests.pl '.' '300' 'no-send-hints' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: no-send-hints command line, no arg (-option)
 

@@ -1,5 +1,6 @@
-personal_ws-1.1 en 323 
+personal_ws-1.1 en 343 
 ADDR
+ARGV
 ASN
 ATTR
 ActiveState
@@ -21,6 +22,7 @@ CTX
 Christoph
 Clasen
 Cmd
+DEPRECATIONS
 DES
 DEVRELEASE
 DGRAM
@@ -36,6 +38,7 @@ ESMTPS
 ESMTPSA
 ETRN
 Erwan
+FreeBSD
 GPL
 GPLv
 GTUBE
@@ -66,6 +69,7 @@ Lischke
 LocalAddr
 LocalPort
 LoginName
+MConfig
 MDAs
 MERCHANTABILITY
 MESSAGEID
@@ -76,12 +80,17 @@ MUA
 MX
 MacOS
 MacPorts
+Makefile
 Metzler
 Muñoz
 NTLM
 NULLNULL
+NetBSD
+OpenBSD
 OpenSSL
+OpossumPetya's
 PEM
+POSIX
 PROTO
 PWD
 Pieter
@@ -92,6 +101,7 @@ README
 RSA
 RSS
 ReadKey
+Reimplementation
 Ritcey
 Rybalko
 SASL
@@ -127,6 +137,7 @@ TZ
 TZs
 UNSPEC
 Ulrich
+Unpackaged
 Util
 VPN
 WCS
@@ -154,20 +165,24 @@ bes
 bh
 boolean
 changelogs
+chmod
 chris
 communigate
 config
 configurability
 cp
+cpan
 da
 dabsp
 das
 delim
+deprecations
 dest
 destaddr
 destport
 dev
 dmd
+dnf
 dns
 eb
 ecelerity
@@ -222,6 +237,7 @@ localhost
 lp
 lport
 lt
+macOS
 manip
 md
 microtimer
@@ -235,6 +251,7 @@ nSubject
 nTo
 nX
 namespace
+natively
 ndf
 ne
 netrc
@@ -249,6 +266,7 @@ okey
 oobar
 openable
 openssl
+pacman
 params
 perl
 perldoc
@@ -295,6 +313,7 @@ stty
 su'd
 submitters
 subscripting
+sudo
 sugg
 swak
 swaks
@@ -322,3 +341,4 @@ xclient
 xforward
 xinet
 xtext
+xvzf

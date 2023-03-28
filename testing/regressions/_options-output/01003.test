@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 12:37:23 2018 by ./gen-tests.pl '.' '1000' 'hide-all' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: hide-all, command line, no-option
 

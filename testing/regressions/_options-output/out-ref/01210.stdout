@@ -1,6 +1,7 @@
 === AUTH CRAM-MD5 supported
 === AUTH CRAM-SHA1 supported
 === AUTH DIGEST-MD5 supported
+=== AUTH NTLM supported
 === Basic AUTH supported
 === Date Manipulation supported
 === High Resolution Timing supported

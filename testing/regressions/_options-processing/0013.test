@@ -1,7 +1,8 @@
-once action: MERGE %OUTDIR%/swaks file:%SWAKS% file:%TESTDIR%/swaksrc-data
-once action: CMD chmod 00755 %OUTDIR%/swaks
+once action: IFOS!=MSWin32 DEFINE %OUTPUT_SWAKS% %OUTDIR%/swaks
+once action: IFOS=MSWin32  DEFINE %OUTPUT_SWAKS% %OUTDIR%/swaks.pl
+once action: MERGE %OUTPUT_SWAKS% file:%SWAKS% file:%TESTDIR%/swaksrc-data mode:00755
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 pre action: SET_ENV SWAKS_HOME %TESTDIR%/SWAKS_HOME
-test action: CMD_CAPTURE %OUTDIR%/swaks --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser.ver --config %TESTDIR%/swaksrc-config-1 --config
+test action: CMD_CAPTURE %OUTPUT_SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser.ver --config %TESTDIR%/swaksrc-config-1 --config

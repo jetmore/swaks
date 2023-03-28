@@ -1,0 +1,1 @@
+CMD_CAPTURE       0   %SWAKS_COMMAND% --dump TRANSPORT,PROTOCOL --from sender@host2.nodns.test.swaks.net --helo helo-string --to recip@host1.nodns.test.swaks.net,recip@host2.nodns.test.swaks.net,recip@host3.nodns.test.swaks.net

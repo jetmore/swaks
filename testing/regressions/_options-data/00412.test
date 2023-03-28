@@ -1,6 +1,6 @@
 # Generated Sat Jul 13 10:55:50 2019 by ./gen-tests.pl '-n' '400' '-o' 'attach' '-v' 'CUSTOM ATTACH BODY' '-i' '/path/to/file.txt' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: attach, config, invalid arg
 

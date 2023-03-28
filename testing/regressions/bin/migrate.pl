@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # migrate.pl _options-data _options-data-new 0003 05000
 

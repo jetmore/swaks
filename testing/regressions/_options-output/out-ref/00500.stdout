@@ -5,7 +5,7 @@ Output Info:
   protect_prompt     = FALSE
   no_hints_send      = TRUE
   no_hints_recv      = TRUE
-  no_hints_info      = FALSE
+  no_hints_info      = TRUE
   silent             = 0
   dump_mail          = FALSE
   hide_send          = FALSE

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # use 'swaks --help' to view documentation for this program
 #
@@ -10,13 +10,18 @@
 #       Twitter: http://www.twitter.com/SwaksSMTP
 
 use strict;
+use Pod::Usage;
+use File::Spec::Functions qw(splitdir);
+
+binmode(STDOUT);
+binmode(STDERR);
 
 $|            = 1;
-my($p_name)   = $0 =~ m|/?([^/]+)$|;
+my($p_name)   = (splitdir($0))[-1] =~ m|^(.+?)(\.pl)?$|;
 my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010-2019 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2010-2022 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,8 +43,7 @@ my %O = %{ load_args() };
 
 # before we do anything else, check for --help and --version
 if (get_arg('help', \%O)) {
-	ext_usage();
-	exit;
+	pod2usage(-verbose => 2, -exit => 0);
 }
 if (get_arg('version', \%O)) {
 	print "$p_name version $p_version\n\n$p_cp\n";
@@ -82,7 +86,7 @@ elsif ($G::dump_mail) {
 # XXX hash that we can pass verbatim here
 open_link();
 
-sendmail($opts->{from}, $opts->{to}, $opts->{helo}, $opts->{data},
+sendmail($opts->{from}, $opts->{env_to}, $opts->{helo}, $opts->{data},
          $opts->{a_user}, $opts->{a_pass}, $opts->{a_type});
 
 teardown_link();
@@ -201,12 +205,13 @@ sub sendmail {
 	my $ehlo    = {};    # If server is esmtp, save advertised features here
 
 	do_smtp_proxy() if ($G::proxy{try});
+	do_smtp_drop()     if ($G::drop_after eq 'proxy' || $G::drop_after_send eq 'proxy');
 
 	# start up tls if -tlsc specified
 	if ($G::tls_on_connect) {
 		if (start_tls()) {
 			tls_post_start();
-			do_smtp_drop()     if ($G::drop_after eq 'tls');
+			do_smtp_drop()     if ($G::drop_after eq 'tls' || $G::drop_after_send eq 'tls');
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 		} else {
 			ptrans(12, "TLS startup failed ($G::link{tls}{res})");
@@ -215,9 +220,11 @@ sub sendmail {
 	}
 
 	# read the server's 220 banner.
+	do_smtp_drop()     if ($G::drop_after_send eq 'connect');
 	do_smtp_gen(undef, '220') || do_smtp_quit(1, 21);
 	do_smtp_drop()     if ($G::drop_after eq 'connect');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'connect');
+	do_smtp_quit(1, 0) if ($G::quit_after eq 'proxy');
 
 	# Send a HELO string
 	$G::drop_before_read = 1 if ($G::drop_after_send eq 'first-helo');
@@ -250,12 +257,8 @@ sub sendmail {
 		ptrans(12, "TLS requested, advertised, and locally unavailable.  Exiting");
 		do_smtp_quit(1, 29);
 	}
-	do_smtp_drop()     if ($G::drop_after eq 'tls');
+	do_smtp_drop()     if ($G::drop_after eq 'tls' || $G::drop_after_send eq 'tls');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
-
-	if (!$G::xclient{before_tls}) {
-		xclient_try($helo, $ehlo);
-	}
 
 	#if ($G::link{tls}{active} && $ehlo->{STARTTLS}) {
 	if ($G::link{tls}{active} && !$G::tls_on_connect) {
@@ -267,6 +270,10 @@ sub sendmail {
 	do_smtp_drop()     if ($G::drop_after_send eq 'helo'); # haaaack.  Need to use first-helo for this. Just quit here to prevent the mail from being delivered
 	do_smtp_drop()     if ($G::drop_after eq 'helo');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
+
+	if (!$G::xclient{before_tls}) {
+		xclient_try($helo, $ehlo);
+	}
 
 	# handle auth here if user has requested it
 	if ($a_type) {
@@ -302,7 +309,7 @@ sub sendmail {
 		ptrans(12, "Auth requested, advertised, and locally unavailable.  Exiting");
 		do_smtp_quit(1, 28);
 	}
-	do_smtp_drop()     if ($G::drop_after eq 'auth');
+	do_smtp_drop()     if ($G::drop_after eq 'auth' || $G::drop_after_send eq 'auth');
 	do_smtp_quit(1, 0) if ($G::quit_after eq 'auth');
 
 	# send MAIL
@@ -351,36 +358,48 @@ sub xclient_try {
 		# 3 - xclient attempted but did not succeed
 		$G::drop_before_read = 1 if ($G::drop_after_send eq 'xclient');
 		my $result = do_smtp_xclient($ehlo);
-		if ($result == 1) {
+		if ($result->{code} == 1) {
 			ptrans(12, "Host did not advertise XCLIENT");
 			do_smtp_quit(1, 33) if (!$G::xclient{optional});
-		} elsif ($result == 2) {
-			ptrans(12, "Host did not advertise requested XCLIENT attributes");
+		} elsif ($result->{code} == 2) {
+			my $error = 'Host did not advertise requested XCLIENT attributes';
+			if (exists($result->{missing_attrs}) && ref($result->{missing_attrs}) eq 'ARRAY' && scalar(@{$result->{missing_attrs}})) {
+				$error .= ' (' . join(', ', sort(@{$result->{missing_attrs}})) . ')';
+			}
+			ptrans(12, $error);
 			do_smtp_quit(1, 33) if (!$G::xclient{optional});
-		} elsif ($result == 3) {
-			ptrans(12, "XCLIENT attempted but failed.  Exiting");
+		} elsif ($result->{code} == 3) {
+			ptrans(12, "XCLIENT attempted but failed");
 			do_smtp_quit(1, 33) if ($G::xclient{optional} != 1);
 		} else {
 			do_smtp_drop()     if ($G::drop_after eq 'xclient');
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient');
 
 			# re-helo if the XCLIENT command succeeded
-			$G::drop_before_read = 1 if ($G::drop_after_send eq 'helo');
+			$G::drop_before_read = 1 if ($G::drop_after_send eq 'xclient-helo');
 			do_smtp_helo($helo, $ehlo, $G::protocol) || do_smtp_quit(1, 34);
-			do_smtp_drop()     if ($G::drop_after eq 'helo');
-			do_smtp_quit(1, 0) if ($G::quit_after eq 'helo');
+			do_smtp_drop()     if ($G::drop_after eq 'xclient-helo');
+			do_smtp_quit(1, 0) if ($G::quit_after eq 'xclient-helo');
 		}
 	}
+	do_smtp_drop()     if ($G::drop_after =~ /xclient(?:-helo)?/ || $G::drop_after_send =~ /xclient(?:-helo)?/);
+	do_smtp_quit(1, 0) if ($G::quit_after =~ /xclient(?:-helo)?/);
 }
 
 sub tls_post_start {
 	ptrans(11, "TLS started with cipher $G::link{tls}{cipher_string}");
+	ptrans(11, "TLS client certificate " . ($G::link{tls}{server_requested_cert} ? '' : 'not ') . "requested and " . ($G::link{tls}{client_sent_cert} ? '' : 'not ') . "sent");
 	if ($G::link{tls}{local_cert_subject}) {
 		ptrans(11, "TLS local DN=\"$G::link{tls}{local_cert_subject}\"");
 	} else {
 		ptrans(11, "TLS no local certificate set");
 	}
 	ptrans(11, "TLS peer DN=\"$G::link{tls}{cert_subject}\"");
+	ptrans(11, sprintf("TLS peer certificate %s CA verification, %s host verification (%s)",
+		$G::link{tls}{server_cert_verified_ca}   ? 'passed' : 'failed',
+		$G::link{tls}{server_cert_verified_host} ? 'passed' : 'failed',
+		$G::link{tls}{server_cert_host_target} ? "using host $G::link{tls}{server_cert_host_target} to verify" : "no host string available to verify"
+	));
 
 	if ($G::tls_get_peer_cert eq 'STDOUT') {
 		ptrans(11, $G::link{tls}{cert_x509});
@@ -423,7 +442,86 @@ sub start_tls {
 		}
 	}
 	Net::SSLeay::CTX_set_options($t{con}, $ctx_options);
-	Net::SSLeay::CTX_set_verify($t{con}, 0x01, 0) if ($G::tls_verify);
+
+	$t{verify_failure_message}          = '';
+	$t{server_cert_verified_ca}         = 0;
+	$t{server_cert_verified_host}       = 0;
+	$t{server_cert_host_target}         = '';
+	$t{server_cert_verification_status} = undef;
+	Net::SSLeay::CTX_set_verify($t{con}, &Net::SSLeay::VERIFY_PEER, sub {
+		my $preverify_ok = shift;
+		my $x509_ctx     = shift;
+		my @failures     = ();
+
+		# this callback is called twice and I can't figure out why.  The first seems to have the values I want
+		# to see, so if we're called multiple times, use the status from the first call
+		if (defined($t{server_cert_verification_status})) {
+			return $t{server_cert_verification_status};
+		}
+
+		# we don't have to do the ca verification, that's handled before we get here
+		if ($preverify_ok) {
+			$t{server_cert_verified_ca} = 1;
+		}
+		else {
+			push(@failures, "server certificate not signed by known CA");
+		}
+
+		$t{server_cert_host_target} = $G::tls_verify_target || $G::link{server};
+		if (!$t{server_cert_host_target}) {
+			push(@failures, "no host available for host verification");
+		}
+		else {
+			my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
+			if ($t{server_cert_host_target} =~ /(:|^\d+\.\d+\.\d+\.\d+$)/) {
+				# verify as an IP
+				if (Net::SSLeay::X509_check_ip_asc($x509, $t{server_cert_host_target}, 0) == 1) {
+					$t{server_cert_verified_host} = 1;
+				}
+			}
+			else {
+				# verify as a hostname
+				if (Net::SSLeay::X509_check_host($x509, $t{server_cert_host_target}, 0) == 1) {
+					$t{server_cert_verified_host} = 1;
+				}
+			}
+
+			if (!$t{server_cert_verified_host}) {
+				push(@failures, 'server certificate did not match target host ' . $t{server_cert_host_target});
+			}
+		}
+
+		$t{verify_failure_message} = join(', ', @failures);
+
+		if ($G::tls_verify_ca && !$t{server_cert_verified_ca}) {
+			$t{server_cert_verification_status} = 0;
+			return 0;
+		}
+		if ($G::tls_verify_host && !$t{server_cert_verified_host}) {
+			$t{server_cert_verification_status} = 0;
+			return 0;
+		}
+
+		$t{server_cert_verification_status} = 1;
+		return 1;
+	});
+
+	# This callback is called at various stages of the TLS negotiation.  Currently used to determine whether the server requested
+	# a certificate. CTX_set_client_cert_cb (cf https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_client_cert_cb.html)
+	# would be much better for this, but doesn't seem to be implemented in Net::SSLeay yet
+	$t{server_requested_cert} = 0;
+	$t{client_sent_cert}      = 0;
+	Net::SSLeay::CTX_set_info_callback($t{con}, sub {
+		# print STDERR "in SSL info callback: $_[1], $_[2], ", Net::SSLeay::state_string($_[0]), ", ", Net::SSLeay::state_string_long($_[0]), "\n";
+		if (Net::SSLeay::state_string($_[0]) eq 'TRCR') {
+			# TRCR, SSLv3/TLS read server certificate request
+			$t{server_requested_cert} = 1;
+		}
+		elsif (Net::SSLeay::state_string($_[0]) eq 'TWCV') {
+			# TWCV, SSLv3/TLS write certificate verify
+			$t{client_sent_cert} = 1;
+		}
+	});
 
 	if ($G::tls_ca_path) {
 		my @args = ('', $G::tls_ca_path);
@@ -480,6 +578,9 @@ sub start_tls {
 	$t{active} = Net::SSLeay::connect($t{ssl}) == 1 ? 1 : 0;
 	if (!$t{active}) {
 		$t{res} = "connect(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		if ($t{verify_failure_message}) {
+			$t{res} .= ' (' . $t{verify_failure_message} . ')';
+		}
 		return(0);
 	}
 
@@ -662,26 +763,35 @@ sub do_smtp_tls {
 
 sub do_smtp_xclient {
 	my $e = shift;
+	my $return = { code => 0 };
 
 	# 0 - xclient succeeded normally
 	# 1 - xclient not advertised
 	# 2 - xclient advertised but not attempted, mismatch in requested attrs
 	# 3 - xclient attempted but did not succeed
 	if (!$e->{XCLIENT}) {
-		return(1);
+		$return->{code} = 1;
+		return($return);
 	}
 	my @parts = ();
 	foreach my $attr (keys %{$G::xclient{attr}}) {
 		if (!$e->{XCLIENT}{$attr}) {
-			return(2) if (!$G::xclient{no_verify});
+			if (!$G::xclient{no_verify}) {
+				$return->{code} = 2;
+				push(@{$return->{missing_attrs}}, $attr);
+			}
 		}
 	}
+	return($return) if ($return->{code} != 0);
 
 	foreach my $string (@{$G::xclient{strings}}) {
 		my $str = "XCLIENT " . $string;
-		do_smtp_gen($str, '220') || return(3);
+		if (!do_smtp_gen($str, '220')) {
+			$return->{code} = 3;
+			return($return);
+		}
 	}
-	return(0);
+	return($return);
 }
 
 # see xtext encoding in http://tools.ietf.org/html/rfc1891
@@ -1421,6 +1531,7 @@ sub interact {
 					#local $SIG{INT} = sub { ReadMode('restore'); };
 					chomp($response = <STDIN>);
 					ReadMode('restore');
+					print "\n";
 				} else {
 					$G::interact_method ||= "default";
 					chomp($response = <STDIN>);
@@ -1444,6 +1555,7 @@ sub interact {
 						}
 					}
 					ReadMode('restore');
+					print "\n";
 					$response = join('', @resp);
 				} elsif ($G::interact_method eq "unix-stty" || (!$G::interact_method && open(STTY, "stty -a |"))) {
 					$G::interact_method ||= "unix-stty";
@@ -1451,6 +1563,7 @@ sub interact {
 					system('stty', '-echo');
 					chomp($response = <STDIN>);
 					system('stty', 'echo');
+					print "\n";
 				} else {
 					$G::interact_method ||= "default";
 					chomp($response = <STDIN>);
@@ -1681,6 +1794,7 @@ sub get_option_struct {
 		OP_FROM_PROMPT => 0x08, # option prompts for an argument if none provided
 		OP_FROM_FILE   => 0x10, # option treats arg of '-' to mean 'read from stdin' (no prompt)
 		OP_DEPRECATED  => 0x20, # This option is deprecated
+		OP_SENSITIVE   => 0x40, # indicates that if prompted for, the argument should be masked (see --protect-prompt)
 	};
 
 	@G::raw_option_data = (
@@ -1695,11 +1809,21 @@ sub get_option_struct {
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'From: ',                                             match  => '^.*$',
 		  okey    => 'mail_from',                                          type   => 'scalar', },
-		# envelope-(t)o address
+		# (t)o address(es) (will be added to envelope recipients)
 		{ opts    => ['to', 't'],                                          suffix => ':s',
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
 		  prompt  => 'To: ',                                               match  => '^.+$',
 		  okey    => 'mail_to',                                            type   => 'scalar', },
+		# cc address(es) (will be added to envelope recipients)
+		{ opts    => ['cc'],                                               suffix => ':s',
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
+		  prompt  => 'Cc: ',                                               match  => '^.+$',
+		  okey    => 'mail_cc',                                            type   => 'scalar', },
+		# bcc address(es) (will be added to envelope recipients)
+		{ opts    => ['bcc'],                                              suffix => ':s',
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
+		  prompt  => 'Bcc: ',                                              match  => '^.+$',
+		  okey    => 'mail_bcc',                                           type   => 'scalar', },
 		# (h)elo string
 		{ opts    => ['helo', 'ehlo', 'lhlo', 'h'],                        suffix => ':s',
 		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
@@ -1775,7 +1899,7 @@ sub get_option_struct {
 		  okey    => 'auth_user',                                          type   => 'scalar', },
 		# pass for auth
 		{ opts    => ['auth-password', 'ap'],                              suffix => ':s',
-		  cfgs    => OP_ARG_OPT, # we dynamically change this later
+		  cfgs    => OP_ARG_OPT|OP_SENSITIVE, # we dynamically change this later
 		  okey    => 'auth_pass',                                          type   => 'scalar', },
 		# auth type map
 		{ opts    => ['auth-map', 'am'],                                   suffix => '=s',
@@ -1855,10 +1979,22 @@ sub get_option_struct {
 		{ opts    => ['tls-sni'],                                          suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
 		  okey    => 'tls_sni_hostname',                                   type   => 'scalar', },
-		# require verification of server certificate
+		# require verification of server certificate against both CA and host
 		{ opts    => ['tls-verify'],                                       suffix => '',
 		  cfgs    => OP_ARG_NONE,
 		  okey    => 'tls_verify',                                         type   => 'scalar', },
+		# require verification of server certificate against CA
+		{ opts    => ['tls-verify-ca'],                                    suffix => '',
+		  cfgs    => OP_ARG_NONE,
+		  okey    => 'tls_verify_ca',                                      type   => 'scalar', },
+		# require verification of server certificate against the host we're connection to
+		{ opts    => ['tls-verify-host'],                                  suffix => '',
+		  cfgs    => OP_ARG_NONE,
+		  okey    => 'tls_verify_host',                                    type   => 'scalar', },
+		# override the host value used for tls verification
+		{ opts    => ['tls-verify-target'],                                suffix => '=s',
+		  cfgs    => OP_ARG_REQ,
+		  okey    => 'tls_verify_target',                                  type   => 'scalar', },
 		# local key to present to server
 		{ opts    => ['tls-ca-path'],                                      suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
@@ -2079,7 +2215,7 @@ sub get_option_struct {
 		# PROXY
 		# argument is the raw PROXY string
 		{ opts    => ['proxy'],                                            suffix => ':s',
-		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT,
+		  cfgs    => OP_ARG_REQ|OP_FROM_PROMPT|OP_FROM_FILE,
 		  prompt  => 'PROXY string: ',                                     match  => '^.+$',
 		  okey    => 'proxy_raw',                                          type   => 'scalar', },
 		# PROXY version (1 or 2)
@@ -2263,9 +2399,19 @@ sub load_args {
 	@fakeARGV = ();
 	foreach my $v (sort keys %ENV) {
 		if ($v =~ m|^SWAKS_OPT_(.*)$|) {
-			my $tv = $1; $tv =~ s|_|-|g;
+			my $tv =  $1;
+			my $ta =  $ENV{$v};
+			$tv    =~ s|_|-|g;
+			$tv    =  lc($tv) if ($^O eq 'MSWin32');
+			$ta    =  '' if ($ta eq '<>');
+
+			if ($^O eq 'MSWin32' && $tv =~ /^(no-)?h(?:eader)?-/) {
+				ptrans(12, 'Embedding header names in environment variable names is not supported on Windows. Exiting');
+				exit(1);
+			}
+
 			push(@fakeARGV, '--' . $tv);
-			push(@fakeARGV, $ENV{$v}) if (length($ENV{$v}));
+			push(@fakeARGV, $ta) if (length($ta));
 		}
 	}
 	fetch_args(\%ARGS, $option_list, \@fakeARGV) if (scalar(@fakeARGV));
@@ -2563,7 +2709,7 @@ sub get_arg {
 					ptrans(12, "Internal option processing error: option $argExt->{opt} missing required match key (this is a swaks bug)");
 					exit(1);
 				}
-				$return = interact($optConfig->{prompt}, $optConfig->{match});
+				$return = interact($optConfig->{prompt}, $optConfig->{match}, $optConfig->{cfgs} & OP_SENSITIVE);
 			}
 			# No arg, no request to prompt - this is an error since we're requiring an arg
 			else {
@@ -2609,7 +2755,7 @@ sub get_arg {
 						# the old rule for --data was that anything that didn't have a newline in it would be treated
 						# as a file, and we would error if we couldn't open it. That would prevent us from sending
 						# typoed filenames as the data of messages
-						if ($return !~ m/\\n|\n|%NEWLINE%/) {
+						if ($return !~ m/\\n|\n|$G::tokens->{NEWLINE}{regexp}/) {
 							deprecate('Inferring a filename from the argument to --' . $argExt->{opt} .
 							          ' will be removed in the future.  Prefix filenames with \'@\' instead.');
 							if (!open(F, "<$return")) {
@@ -2672,6 +2818,19 @@ sub process_args {
 	my %n     = ();    # This is the hash we will return w/ the fixed-up args
 	my $a     = get_option_struct(); # defining information for all options
 
+	$G::tokens = {
+		NEWLINE       => { regexp => '(%|\.\.)NEWLINE\1',       literal => '%NEWLINE%',       },
+		FROM_ADDRESS  => { regexp => '(%|\.\.)FROM_ADDRESS\1',  literal => '%FROM_ADDRESS%',  },
+		TO_ADDRESS    => { regexp => '(%|\.\.)TO_ADDRESS\1',    literal => '%TO_ADDRESS%',    },
+		CC_ADDRESS    => { regexp => '(%|\.\.)CC_ADDRESS\1',    literal => '%CC_ADDRESS%',    },
+		BCC_ADDRESS   => { regexp => '(%|\.\.)BCC_ADDRESS\1',   literal => '%BCC_ADDRESS%',   },
+		MESSAGEID     => { regexp => '(%|\.\.)MESSAGEID\1',     literal => '%MESSAGEID%',     },
+		SWAKS_VERSION => { regexp => '(%|\.\.)SWAKS_VERSION\1', literal => '%SWAKS_VERSION%', },
+		DATE          => { regexp => '(%|\.\.)DATE\1',          literal => '%DATE%',          },
+		BODY          => { regexp => '(%|\.\.)BODY\1',          literal => '%BODY%',          },
+		NEW_HEADERS   => { regexp => '(%|\.\.)NEW_HEADERS\1',   literal => '%NEW_HEADERS%',   },
+	};
+
 	# handle the output file handles early so they can be used for errors
 	# we don't need to keep track of the actual files but it will make debugging
 	# easier later
@@ -2683,7 +2842,7 @@ sub process_args {
 	my $output_file_stderr = get_arg('output_file_stderr', $o) || $output_file;
 	my $output_file_stdout = get_arg('output_file_stdout', $o) || $output_file;
 	if ($output_file_stderr) {
-		if (!open(OUTEFH, '>>'.$output_file_stderr)) {
+		if (!open(OUTEFH, '>'.$output_file_stderr)) {
 			ptrans(12, 'Unable to open ' . $output_file_stderr . ' for writing');
 			exit(1);
 		}
@@ -2695,7 +2854,7 @@ sub process_args {
 		$G::trans_fh_of = $G::trans_fh_ef;
 	}
 	elsif ($output_file_stdout) {
-		if (!open(OUTOFH, '>>'.$output_file_stdout)) {
+		if (!open(OUTOFH, '>'.$output_file_stdout)) {
 			ptrans(12, 'Unable to open ' . $output_file_stdout . ' for writing');
 			exit(1);
 		}
@@ -2706,14 +2865,15 @@ sub process_args {
 	if (get_arg('no_hints', $o)) {
 		$G::no_hints_send = 1;
 		$G::no_hints_recv = 1;
+		$G::no_hints_info = 1;
 	}
 	else {
 		$G::no_hints_send      = get_arg('no_hints_send', $o);
 		$G::no_hints_recv      = get_arg('no_hints_recv', $o);
+		$G::no_hints_info      = get_arg('no_hints_info', $o);
 	}
 	$G::dump_mail          = get_arg('dump_mail', $o);
 	$G::suppress_data      = get_arg('suppress_data', $o);
-	$G::no_hints_info      = get_arg('no_hints_info', $o);
 	$G::hide_send          = get_arg('hide_send', $o);
 	$G::hide_receive       = get_arg('hide_receive', $o);
 	$G::hide_informational = get_arg('hide_informational', $o);
@@ -2794,11 +2954,12 @@ sub process_args {
 			elsif (${"G::$opt"} eq 'banner')        { ${"G::$opt"} = 'connect';    }
 			elsif (${"G::$opt"} eq 'from')          { ${"G::$opt"} = 'mail';       }
 			elsif (${"G::$opt"} eq 'to')            { ${"G::$opt"} = 'rcpt';       }
-			elsif (${"G::$opt"} ne 'connect' && ${"G::$opt"} ne 'first-helo' &&
-			       ${"G::$opt"} ne 'tls'     && ${"G::$opt"} ne 'helo'       &&
-			       ${"G::$opt"} ne 'auth'    && ${"G::$opt"} ne 'mail'       &&
-			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient'    &&
-			       ${"G::$opt"} ne 'data'    && ${"G::$opt"} ne 'dot')
+			elsif (${"G::$opt"} ne 'connect' && ${"G::$opt"} ne 'first-helo'   &&
+			       ${"G::$opt"} ne 'tls'     && ${"G::$opt"} ne 'helo'         &&
+			       ${"G::$opt"} ne 'auth'    && ${"G::$opt"} ne 'mail'         &&
+			       ${"G::$opt"} ne 'rcpt'    && ${"G::$opt"} ne 'xclient'      &&
+			       ${"G::$opt"} ne 'data'    && ${"G::$opt"} ne 'xclient-helo' &&
+			       ${"G::$opt"} ne 'dot'     && ${"G::$opt"} ne 'proxy')
 			{
 				ptrans(12, "Unknown $opt value " . ${"G::$opt"} . ", exiting");
 				exit(1);
@@ -2888,10 +3049,13 @@ sub process_args {
 	$G::link{type}                    ||= 'socket-inet';
 	($G::link{server},$G::link{port})   = parse_server($mail_server_t, get_arg('mail_port', $o));
 	$n{to}                              = get_arg('mail_to', $o);
+	$n{cc}                              = get_arg('mail_cc', $o);
+	$n{bcc}                             = get_arg('mail_bcc', $o);
 	# we absolutely must have a recipient. If we don't have one yet, prompt for one
 	if (!$n{to} && !($G::server_only && ($G::link{server} || $G::link{type} eq 'socket-unix' || $G::link{type} eq 'pipe'))) {
 		$n{to} = interact("To: ", '^.+$'); # WCSXXXFIXME I wish we could look up the prompt and re from $a
 	}
+	$n{env_to} = join(',', grep { $_ ne '' } ($n{to}, $n{cc}, $n{bcc})); # env_to will hold all recipients, regardless of how they were set
 
 	# try to catch obvious -s/-li/-4/-6 errors as soon as possible.  We don't actually do any DNS
 	# lookups ourselves, so errors like -s being a domain with only A RRs and -li being a domain
@@ -3066,7 +3230,11 @@ sub process_args {
 
 	# SMTP DATA
 	$n{data} = get_arg('mail_data', $o) ||
-               'Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\n' .
+	           'Date: %DATE%\n' .
+	           'To: %TO_ADDRESS%\n' .
+	           ($n{cc} ? 'Cc: %CC_ADDRESS%\n' : '') .
+	           'From: %FROM_ADDRESS%\n'.
+	           'Subject: test %DATE%\n' .
 	           "Message-Id: <%MESSAGEID%>\n" .
 	           "X-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/".'\n' .
 	           ($bound ? 'MIME-Version: 1.0\nContent-Type: ' . $main_content_type . '; boundary="' . $bound. '"\n' : '') .
@@ -3074,7 +3242,8 @@ sub process_args {
 	           '\n' .
 	           '%BODY%\n';
 	if (!get_arg('no_data_fixup', $o)) {
-		$n{data}            =~ s/%BODY%/$body/g;
+		# $n{data}            =~ s/%BODY%/$body/g;
+		$n{data}            =~ s/$G::tokens->{BODY}{regexp}/$body/g;
 		$n{data}            =~ s/\\n/\r\n/g;
 		my $addHeader_accum =  get_accum('add_header', $o);
 		my $addHeaderOpt    =  [];
@@ -3151,9 +3320,9 @@ sub process_args {
 		}
 
 		# if there are new headers, add them as appropriate
-		if ($newHeader =~ /%NEW_HEADERS%/) {
+		if ($newHeader =~ /$G::tokens->{NEW_HEADERS}{regexp}/) {
 			$n{add_header} = join("\r\n", @{$addHeaderOpt}) . "\r\n" if (@{$addHeaderOpt});
-			$newHeader     =~ s/%NEW_HEADERS%/$n{add_header}/g;
+			$newHeader     =~ s/$G::tokens->{NEW_HEADERS}{regexp}/$n{add_header}/g;
 		} elsif (scalar(@{$addHeaderOpt})) {
 			foreach my $line (@{$addHeaderOpt}) {
 				$newHeader .= $line . "\r\n";
@@ -3163,12 +3332,14 @@ sub process_args {
 		# Now re-assemble our data by adding the headers back on to the front
 		$n{data} = $newHeader . "\r\n" . $n{data};
 
-		$n{data} =~ s/\\n|%NEWLINE%/\r\n/g;
-		$n{data} =~ s/%FROM_ADDRESS%/$n{from}/g;
-		$n{data} =~ s/%TO_ADDRESS%/$n{to}/g;
-		$n{data} =~ s/%MESSAGEID%/get_messageid()/ge;
-		$n{data} =~ s/%SWAKS_VERSION%/$p_version/g;
-		$n{data} =~ s/%DATE%/get_date_string()/ge;
+		$n{data} =~ s/\\n|$G::tokens->{NEWLINE}{regexp}/\r\n/g;
+		$n{data} =~ s/$G::tokens->{FROM_ADDRESS}{regexp}/$n{from}/g;
+		$n{data} =~ s/$G::tokens->{TO_ADDRESS}{regexp}/$n{to}/g;
+		$n{data} =~ s/$G::tokens->{CC_ADDRESS}{regexp}/$n{cc}/g;
+		$n{data} =~ s/$G::tokens->{BCC_ADDRESS}{regexp}/$n{bcc}/g;
+		$n{data} =~ s/$G::tokens->{MESSAGEID}{regexp}/get_messageid()/ge;
+		$n{data} =~ s/$G::tokens->{SWAKS_VERSION}{regexp}/$p_version/g;
+		$n{data} =~ s/$G::tokens->{DATE}{regexp}/get_date_string()/ge;
 		$n{data} =~ s/^From [^\n]*\n// if (!get_arg('no_strip_from', $o));
 		$n{data} =~ s/\r?\n\.\r?\n?$//s;   # If there was a trailing dot, remove it
 		$n{data} =~ s/\n\./\n../g;         # quote any other leading dots
@@ -3197,11 +3368,13 @@ sub process_args {
 				exit(10);
 			}
 		}
-		$G::tls_verify       = get_arg('tls_verify', $o);
-		$G::tls_sni_hostname = get_arg('tls_sni_hostname', $o);
-		$G::tls_cipher       = get_arg('tls_cipher', $o);
-		$G::tls_cert         = get_arg('tls_cert', $o);
-		$G::tls_key          = get_arg('tls_key', $o);
+		$G::tls_verify_ca     = get_arg('tls_verify_ca', $o);
+		$G::tls_verify_host   = get_arg('tls_verify_host', $o);
+		$G::tls_verify_target = get_arg('tls_verify_target', $o);
+		$G::tls_sni_hostname  = get_arg('tls_sni_hostname', $o);
+		$G::tls_cipher        = get_arg('tls_cipher', $o);
+		$G::tls_cert          = get_arg('tls_cert', $o);
+		$G::tls_key           = get_arg('tls_key', $o);
 		if (($G::tls_cert || $G::tls_key) && !($G::tls_cert && $G::tls_key)) {
 			ptrans(12, "--tls-cert and --tls-key require each other.  Exiting");
 			exit(1);
@@ -3209,6 +3382,10 @@ sub process_args {
 		if (($G::tls_ca_path = get_arg('tls_ca_path', $o)) && !-f $G::tls_ca_path && !-d $G::tls_ca_path) {
 			ptrans(12, "--tls-ca-path: $G::tls_ca_path is not a valid file or directory.  Exiting.");
 			exit(1);
+		}
+		if (get_arg('tls_verify', $o)) {
+			$G::tls_verify_ca   = 1;
+			$G::tls_verify_host = 1;
 		}
 
 		# this is kind of a kludge.  There doesn't appear to be a specific openssl call to find supported
@@ -3313,7 +3490,13 @@ sub process_args {
 	$G::proxy{try}     = 0;
 	$G::proxy{attr}    = {};
 	$G::proxy{version} = get_arg('proxy_version', $o);
-	$G::proxy{raw}     = get_arg('proxy_raw', $o);
+	if ($G::proxy{raw} = get_arg('proxy_raw', $o)) {
+		$G::proxy{raw} =~ s/\r?\n$//;
+		$G::proxy{raw} =  db64($G::proxy{raw}) if ($G::proxy{raw} =~ s/^base64://);
+		$G::proxy{raw} =~ s/^PROXY //;
+		my $v2header      =  pack("W[12]", 0x0D, 0x0A,0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A);
+		$G::proxy{raw} =~ s/^$v2header//;
+	}
 	foreach my $attr ('family', 'source', 'source_port', 'dest', 'dest_port', 'protocol', 'command') {
 		if (my $val = get_arg('proxy_' . $attr, $o)) {
 			if ($G::proxy{raw}) {
@@ -3336,12 +3519,16 @@ sub process_args {
 	if ($G::proxy{try} && !$G::proxy{raw}) {
 		$G::proxy{attr}{protocol} ||= 'STREAM';
 		$G::proxy{attr}{command}  ||= 'PROXY';
+		my @missing = ();
 		foreach my $attr ('family', 'source', 'source_port', 'dest', 'dest_port', 'protocol', 'command') {
 			if (!$G::proxy{attr}{$attr}) {
-				ptrans(12, "Incomplete set of --proxy-* options (missing $attr)");
-				exit(35);
+				push(@missing, $attr);
 			}
 			$G::proxy{attr}{$attr} = uc($G::proxy{attr}{$attr});
+		}
+		if (scalar(@missing)) {
+			ptrans(12, 'Incomplete set of --proxy-* options (missing ' . join(', ', @missing) . ')');
+			exit(35);
 		}
 		if ($G::proxy{attr}{protocol} !~ /^(UNSPEC|STREAM|DGRAM)$/) {
 			ptrans(12, 'unknown --proxy-protocol argument ' . $G::proxy{attr}{protocol});
@@ -3483,7 +3670,7 @@ sub process_args {
 
 				$auth_pass_t ||= obtain_from_netrc('password', $n{a_user});
 				if (!$auth_pass_t) {
-					my $cfg = { cfgs => OP_ARG_REQ|OP_FROM_PROMPT, prompt  => 'Password: ', match  => 'SKIP', okey => 'auth_pass', akey => 'auth_pass' };
+					my $cfg = { cfgs => OP_ARG_REQ|OP_FROM_PROMPT|OP_SENSITIVE, prompt  => 'Password: ', match  => 'SKIP', okey => 'auth_pass', akey => 'auth_pass' };
 					$auth_pass_t = get_arg('auth_pass', $o, $cfg, 1);
 				}
 				$n{a_pass} = $auth_pass_t eq '<>' ? '' : $auth_pass_t;
@@ -3552,30 +3739,35 @@ sub encode_mime_part {
 }
 
 sub parse_server {
-	my $server = shift;
-	my $port   = shift;
+	my $server       = shift;
+	my $port         = shift;
+	my $returnServer = $server;
+	my $returnPort   = $port;
 
 	if ($server =~ m|^\[([^\]]+)\]:(.*)$|) {
 		# [1.2.3.4]:25
 		# [hostname]:25
 		# [1:2::3]:25
-		return($1, $2);
+		$returnServer = $1;
+		$returnPort   = $2;
 	} elsif ($server =~ m|^([^:]+):([^:]+)$|) {
 		# 1.2.3.4:25
 		# hostname:25
-		return($1, $2);
+		$returnServer = $1;
+		$returnPort   = $2;
 	} elsif ($server =~ m|^\[?([^/\]]*)\]?/(\w+)$|) {
 		# 1.2.3.4/25   [1.2.3.4]/25
 		# hostname/25  [hostname]/25
 		# 1:2::3/25    [1:2::3]/25
-		return($1, $2);
+		$returnServer = $1;
+		$returnPort   = $2;
 	} elsif ($server =~ m|^\[([^\]]+)\]$|) {
 		# [1.2.3.4]
 		# [hostname]
 		# [1:2::3]
-		return($1, $port);
+		$returnServer = $1;
 	}
-	return($server, $port);
+	return($returnServer, length($port) ? $port : $returnPort);
 }
 
 sub get_running_state {
@@ -3649,7 +3841,7 @@ sub get_running_state {
 			"  protocol        = $G::protocol",
 			"  helo            = $opts->{helo}",
 			"  from            = $opts->{from}",
-			"  to              = $opts->{to}",
+			"  to              = $opts->{env_to}",
 			'  force getpwuid  = ' . ($opts->{force_getpwuid} ? 'TRUE' : 'FALSE'),
 			"  quit after      = $G::quit_after",
 			"  drop after      = $G::drop_after",
@@ -3686,7 +3878,7 @@ sub get_running_state {
 			push(@{$parts[-1]}, '  proxy       = yes');
 			push(@{$parts[-1]}, "  version     = $G::proxy{version}");
 			if ($G::proxy{raw}) {
-				push(@{$parts[-1]}, "  raw string  = $G::proxy{raw}");
+				push(@{$parts[-1]}, "  raw string  = " . ($G::proxy{version} != 1 ? eb64($G::proxy{raw}) : $G::proxy{raw}));
 			} else {
 				push(@{$parts[-1]},
 					'  family      = ' . $G::proxy{attr}{family},
@@ -3712,6 +3904,10 @@ sub get_running_state {
 				else                          { push(@{$parts[-1]}, '  tls                 = starttls (required)');        }
 			}
 			elsif ($G::tls_on_connect)        { push(@{$parts[-1]}, '  tls                 = starttls on connect (required)'); }
+			my $verifyString  = 'CA'    if ($G::tls_verify_ca);
+			$verifyString    .= ', '    if ($G::tls_verify_ca && $G::tls_verify_host);
+			$verifyString    .= 'HOST'  if ($G::tls_verify_host);
+			$verifyString     = 'FALSE' if (!$verifyString);
 			push(@{$parts[-1]},
 				"  peer cert           = $G::tls_get_peer_cert",
 				"  local cert          = $G::tls_cert",
@@ -3719,7 +3915,8 @@ sub get_running_state {
 				"  local cipher list   = $G::tls_cipher",
 				"  ca path             = $G::tls_ca_path",
 				"  sni string          = $G::tls_sni_hostname",
-				'  verify server cert  = ' . ($G::tls_verify ? 'TRUE' : 'FALSE'),
+				'  verify server cert  = ' . $verifyString,
+				'  verify target host  = ' . $G::tls_verify_target,
 				'  available protocols = ' . join(', ', @G::tls_supported_protocols),
 				'  requested protocols = ' . join(', ', @G::tls_protocols),
 			);
@@ -3768,32 +3965,46 @@ sub get_running_state {
 
 sub get_username {
 	my $force_getpwuid = shift;
+	my $fallback       = '';
 	if ($^O eq 'MSWin32') {
 		require Win32;
-		return Win32::LoginName();
+		$fallback = Win32::LoginName();
+	}
+	else {
+		$fallback = (getpwuid($<))[0];
 	}
 	if ($force_getpwuid) {
-		return (getpwuid($<))[0];
+		return $fallback;
 	}
-	return $ENV{LOGNAME} || (getpwuid($<))[0];
+	return $ENV{LOGNAME} || $fallback;
 }
 
 sub get_date_string {
 	return($G::date_string) if (length($G::date_string) > 0);
 
-	my $et = time();
+	my $et          = time();
+	my @month_names = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
+	my @day_names   = qw(Sun Mon Tue Wed Thu Fri Sat);
 
-	if (!avail("date_manip")) {
-		ptrans(12, avail_str("date_manip").".  Date strings will be in GMT");
+	# Windows has POSIX::strftime but not %z.  Consider adding POSIX::strftime::GNU as an alternate option for date_manip in future
+	# but for now just force to UTC if %z doesn't appear to work
+	if (!avail("date_manip") || POSIX::strftime("%z", localtime($et)) !~ /\d\d\d\d$/) {
 		my @l = gmtime($et);
 		$G::date_string = sprintf("%s, %02d %s %d %02d:%02d:%02d %+05d",
-		                          (qw(Sun Mon Tue Wed Thu Fri Sat))[$l[6]],
+		                          $day_names[$l[6]],
 		                          $l[3],
-		                          (qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec))[$l[4]],
+		                          $month_names[$l[4]],
 		                          $l[5]+1900, $l[2], $l[1], $l[0],
 		                          0);
 	} else {
-		$G::date_string = POSIX::strftime("%a, %d %b %Y %H:%M:%S %z", localtime($et));
+		# this is convoluted because %a (week day name) and %b (month name) are localized, but per RFC they should be in English. Since
+		# un-localizing didn't work on every system I tested, jump through hoops here to not use those fields at all.
+		my @l = localtime($et);
+		$G::date_string = sprintf("%s, %s %s %s",
+			                      $day_names[POSIX::strftime("%w", @l)],
+			                      POSIX::strftime("%d", @l),
+			                      $month_names[POSIX::strftime("%m", @l) - 1],
+			                      POSIX::strftime("%Y %H:%M:%S %z", @l));
 	}
 	return($G::date_string);
 }
@@ -3851,15 +4062,12 @@ sub build_version {
 	}
 }
 
-sub ext_usage {
-	require Config;
-	$ENV{PATH} .= ":" unless $ENV{PATH} eq "";
-	$ENV{PATH}  = $ENV{PATH} . $Config::Config{'installscript'};
-	$< = $> = 1 if ($> == 0 || $< == 0);
-	exec("perldoc", $0) || exit(1);
-	# make parser happy
-	%Config::Config = ();
+### This is the end of released code
 
-	exit(0);
-}
+=pod
 
+=head1 DESCRIPTION
+
+This is a version of swaks from version control
+
+=cut

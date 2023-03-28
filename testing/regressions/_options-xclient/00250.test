@@ -1,6 +1,6 @@
 # Generated Wed Jul 10 22:54:11 2019 by ./gen-tests.pl '-n' '250' '-o' 'xclient-destport' '-v' '26' '-i' '' '-p' 'XCLIENT destport:' '-d' '.' '-r'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: xclient-destport, command line, no arg
 

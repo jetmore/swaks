@@ -1,6 +1,6 @@
 # Generated Tue Dec 11 19:48:58 2018 by ./gen-tests.pl '.' '700' 'tls-cert' '%TESTDIR%/%TESTID%.test' '/path/to/CertFile'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tls-cert, config, no arg
 

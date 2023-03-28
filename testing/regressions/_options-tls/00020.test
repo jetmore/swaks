@@ -1,6 +1,6 @@
 # Generated Tue Dec 11 18:51:19 2018 by ./gen-tests.pl '.' '0' 'tls' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tls, env var, no arg
 

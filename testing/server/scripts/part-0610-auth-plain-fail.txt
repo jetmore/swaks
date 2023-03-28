@@ -1,0 +1,2 @@
+get_line(); # auth plain
+send_line("535 Incorrect authentication data");

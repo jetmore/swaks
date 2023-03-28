@@ -8,6 +8,7 @@ use FindBin qw($Bin);
 
 my $home = "$Bin/..";
 my $release_d = "$home/RELEASE";
+my $app_d     = "$home/App-swaks";
 my $release = shift || die "Need release\n";
 
 if (-d $release_d) {
@@ -29,6 +30,7 @@ open(I, "<$home/swaks") || die "can't read from $home/swaks\n";
 while (<I>) {
   # build_version("DEVRELEASE"
   s|build_version\("DEVRELEASE"|build_version("$release"|g;
+  last if (/^### This is the end of released code/);
   print O;
 }
 close(I);
@@ -45,10 +47,8 @@ chmod(0755, "$release_d/swaks") || die "Couldn't chmod $release_d/swaks: $!\n";
 print "done\n";
 
 my $pod2text = Pod::Text->new();
-
 foreach my $file (["$home/doc/base.pod",         "$release_d/doc/ref.txt"],
-                  ["$home/doc/recipes.pod",      "$release_d/doc/recipes.txt"],
-                  ["$home/doc/installation.pod", "$release_d/doc/installation.txt"])
+                  ["$home/doc/recipes.pod",      "$release_d/doc/recipes.txt"])
 {
   print "Building " . getRelative($file->[1], $home) . "... ";
   $pod2text->parse_from_file($file->[0], $file->[1]);
@@ -86,6 +86,15 @@ print "done\n";
 print "Copying  " . getRelative("$release_d/README.txt", $home) . "... ";
 copy("$home/doc/README-template.txt", "$release_d/README.txt") || die "can't copy($home/doc/README-template.txt, $release_d/README.txt) : $!";
 print "done\n";
+
+print "Copying  " . getRelative("$app_d/LICENSE.txt", $home) . "... ";
+copy("$home/LICENSE", "$app_d/LICENSE") || die "can't copy($home/LICENSE, $release_d/LICENSE) : $!";
+print "done\n";
+
+print "Copying  " . getRelative("$app_d/swaks", $home) . "... ";
+copy("$release_d/swaks", "$app_d/swaks") || die "can't copy($release_d/swaks, $app_d/swaks) : $!";
+print "done\n";
+chmod(0755, "$app_d/swaks") || die "Couldn't chmod $app_d/swaks: $!\n";
 
 exit;
 

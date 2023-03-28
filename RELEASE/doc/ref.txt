@@ -20,7 +20,8 @@ QUICK START
 
     Deliver a standard test email, requiring CRAM-MD5 authentication as user
     me@example.com. An "X-Test" header will be added to the email body. The
-    authentication password will be prompted for.
+    authentication password will be prompted for if it cannot be obtained
+    from your .netrc file.
 
          swaks --to user@example.com --from me@example.com --auth CRAM-MD5 --auth-user me@example.com --header-X-Test "test email"
 
@@ -52,11 +53,6 @@ TERMS AND CONVENTIONS
     This document tries to be consistent and specific in its use of the
     following terms to reduce confusion.
 
-    Transaction
-        A transaction is the opening of a connection over a transport to a
-        target and using a messaging protocol to attempt to deliver a
-        message.
-
     Target
         The target of a transaction is the thing that Swaks connects to.
         This generic term is used throughout the documentation because most
@@ -66,6 +62,11 @@ TERMS AND CONVENTIONS
     Transport
         The transport is the underlying method used to connect to the
         target.
+
+    Transaction
+        A transaction is the opening of a connection over a transport to a
+        target and using a messaging protocol to attempt to deliver a
+        message.
 
     Protocol
         The protocol is the application language used to communicate with
@@ -81,25 +82,50 @@ TERMS AND CONVENTIONS
         A message's envelope contains the "true" sender and receiver of a
         message. It can also be referred to as its components,
         envelope-sender and envelope-recipients. It is important to note
-        that a messages envelope does not have to match its To: and From:
-        headers.
+        that a messages envelope does not have to match its "To:" and
+        "From:" headers.
 
     DATA
         The DATA portion of an SMTP transaction is the actual message that
         is being transported. It consists of both the message's headers and
-        its body. DATA and body are sometimes use synonymously, but they are
-        always two distinct things in this document.
+        its body. DATA and body are sometimes used synonymously, but they
+        are always two distinct things in this document.
 
     Headers
         A message's headers are defined as all the lines in the message's
         DATA section before the first blank line. They contain information
-        about the email that will be displayed to the recipient such as To:,
-        From:, Subject:, etc. In this document headers will always be
-        written with a capitalized first letter and a trailing colon.
+        about the email that will be displayed to the recipient such as
+        "To:", "From:", "Subject:", etc. In this document headers will
+        always be written with a capitalized first letter and a trailing
+        colon.
 
     Body
         A message's body is the portion of its DATA section following the
         first blank line.
+
+    Option
+        An option is a flag which changes Swaks' behavior. Always called an
+        option regardless of how it is provided. For instance,
+        "--no-data-fixup" is an option.
+
+    Argument
+        When an option takes addition data beside the option itself, that
+        additional data is called an argument. In "--quit-after
+        <stop-point>'", "<stop-point>" is the argument to the "--quit-after"
+        option.
+
+    <literal-string>
+        When used in the definition of an option, text that is inside of
+        angle brackets ("<>") indicates a descriptive label for a value that
+        the user should provide. For instance, "--quit-after <stop-point>"
+        indicates that "<stop-point>" should be replaced with a valid
+        stop-point value.
+
+    [<optional-value>]
+        When used in the definition of an option, text inside of square
+        brackets ([]) indicates that the value is optional and can be
+        omitted. For instance, "--to [<recipient>]" indicates that the
+        "--to" option can be used with or without a specified "<recipient>".
 
 OPTION PROCESSING
     To prevent potential confusion in this document a flag to Swaks is
@@ -107,7 +133,14 @@ OPTION PROCESSING
     that additional data is referred to as an argument to the option. For
     example, "--from fred@example.com" might be provided to Swaks on the
     command line, with "--from" being the option and "fred@example.com"
-    being --from's argument.
+    being "--from"'s argument.
+
+    Options and arguments are the only way to provide information to Swaks.
+    If Swaks finds data during option processing that is neither an option
+    nor an option's argument, it will error and exit. For instance, if
+    "--no-data-fixup 1" were found on the command line, this would result in
+    an error because "--no-data-fixup" does not take an argument and
+    therefore Swaks would not know what to do with 1.
 
     Options can be given to Swaks in three ways. They can be specified in a
     configuration file, in environment variables, and on the command line.
@@ -115,8 +148,8 @@ OPTION PROCESSING
     Swaks may prompt the user for the argument.
 
     When Swaks evaluates its options, it first looks for a configuration
-    file (either in a default location or specified with --config). Then it
-    evaluates any options in environment variables. Finally, it evaluates
+    file (either in a default location or specified with "--config"). Then
+    it evaluates any options in environment variables. Finally, it evaluates
     command line options. At each round of processing, any options set
     earlier will be overridden. Additionally, any option can be prefixed
     with "no-" to cause Swaks to forget that the variable had previously
@@ -127,10 +160,53 @@ OPTION PROCESSING
     As a general rule, if the same option is given multiple time, the last
     time it is given is the one that will be used. This applies to both
     intra-method (if "--from user1@example.com --from user2@example.com" is
-    given, user2@example.com will be used) and inter-method (if "from
+    given, "user2@example.com" will be used) and inter-method (if "from
     user1@example.com" is given in a config file and "--from
-    user2@example.com" is given on the command line, user2@example.com will
-    be used)
+    user2@example.com" is given on the command line, "user2@example.com"
+    will be used)
+
+    Each option definition ends with a parenthetical synopsis of how the
+    option behaves. The following codes can be used
+
+    Arg-None, Arg-Optional, Arg-Required
+        These three codes are mutually exclusive and describe whether or not
+        the option takes an argument. Note that this does not necessarily
+        describe whether the argument is required to be specified directly,
+        but rather whether an argument is required eventually. For instance,
+        "--to" is labeled as Arg-Required, but it is legal to specify "--to"
+        on the command line without an argument. This is because Swaks can
+        prompt for the required argument if it is not directly provided.
+
+    From-Prompt
+        An option labeled with From-Prompt will prompt the user
+        interactively for the argument if none is provided.
+
+    From-File
+        An option labeled with From-File will handle arguments as files in
+        certain situations.
+
+        If the initial argument is "-", the final argument is the contents
+        of "STDIN". Multiple options can all specify "STDIN", but the same
+        content will be used for each of them.
+
+        If the initial argument is prefixed with "@", the argument will be
+        treated as a path to a file. The file will be opened and the
+        contents will be used as the final argument. If the contents of the
+        file can't be read, Swaks will exit. To specify a literal value
+        starting with an "@", use two "@" symbols. The first will be
+        stripped.
+
+    Sensitive
+        If an option marked Sensitive attempts to prompt the user for an
+        argument and the "--protect-prompt" option is set, Swaks will
+        attempt to mask the user input from being echoed on the terminal.
+        Swaks tries to mask the input in several ways, but if none of them
+        work program flow will continue with unmasked input.
+
+    Deprecated
+        An option labeled Deprecated has been officially deprecated and will
+        be removed in a future release. See the "DEPRECATIONS" section of
+        this documentation for details about the deprecations.
 
     The exact mechanism and format for using each of the types is listed
     below.
@@ -139,39 +215,49 @@ OPTION PROCESSING
         A configuration file can be used to set commonly-used or abnormally
         verbose options. By default, Swaks looks in order for
         $SWAKS_HOME/.swaksrc, $HOME/.swaksrc, and $LOGDIR/.swaksrc. If one
-        of those is found to exist (and --config has not been used) that
+        of those is found to exist (and "--config" has not been used) that
         file is used as the configuration file.
 
         Additionally, a configuration file in a non-default location can be
-        specified using --config. If this is set and not given an argument
+        specified using "--config". If this is set and not given an argument
         Swaks will not use any configuration file, including any default
-        file. If --config points to a readable file, it is used as the
+        file. If "--config" points to a readable file, it is used as the
         configuration file, overriding any default that may exist. If it
         points to a non-readable file an error will be shown and Swaks will
         exit.
 
         A set of "portable" defaults can also be created by adding options
         to the end of the Swaks program file. As distributed, the last line
-        of Swaks should be "__END__". Any lines added after __END__ will be
-        treated as the contents of a configuration file. This allows a set
-        of user preferences to be automatically copied from server to server
-        in a single file.
+        of Swaks should be "__END__". Any lines added after "__END__" will
+        be treated as the contents of a configuration file. This allows a
+        set of user preferences to be automatically copied from server to
+        server in a single file.
 
         If configuration files have not been explicitly turned off, the
-        __END__ config is always read. Only one other configuration file
+        "__END__" config is always read. Only one other configuration file
         will ever be used per single invocation of Swaks, even if multiple
-        configuration files are specified. If the __END__ config and another
-        config are to be read, the __END__ config will be processed first.
-        Specifying the --config option with no argument turns off the
-        processing of both the __END__ config and any actual config files.
+        configuration files are specified. If the "__END__" config and
+        another config are to be read, the "__END__" config will be
+        processed first. Specifying the "--config" option with no argument
+        turns off the processing of both the "__END__" config and any actual
+        config files.
 
-        In a configuration file lines beginning with a hash (#) are ignored.
-        All other lines are assumed to be an option to Swaks, with the
-        leading dash or dashes optional. Everything after a option line's
-        first space is assumed to be the option's argument and is not shell
-        processed. Therefore, quoting is usually unneeded and will be
-        included literally in the argument. Here is an example of the
-        contents of a configuration file:
+        In a configuration file lines beginning with a hash ("#") are
+        ignored. All other lines are assumed to be an option to Swaks, with
+        the leading dash or dashes optional. Everything after an option
+        line's first space is assumed to be the option's argument and is not
+        shell processed. Therefore, quoting is usually unneeded and will be
+        included literally in the argument.
+
+        There is a subtle difference between providing an option with no
+        argument and providing an option with an empty argument. If an
+        option line does not have a space, the entire line is treated as an
+        option and there is no argument. If the line ends in a single space,
+        it will be processed as an option with an empty argument. So, "apt"
+        will be treated as "--apt", but "apt " will be treated as
+        "--apt ''".
+
+        Here is an example of the contents of a configuration file:
 
             # always use this sender, no matter server or logged in user
             --from fred@example.com
@@ -182,20 +268,20 @@ OPTION PROCESSING
 
         Options specific to configuration file:
 
-        --config [/path/to/config]
+        --config [<config-file>]
             This option provides a path to a specific configuration file to
             be used. If specified with no argument, no automatically-found
-            configuration file (via $HOME, etc, or __END__) will be
+            configuration file (via $HOME, etc, or "__END__") will be
             processed. If the argument is a valid file, that file will be
-            used as the configuration file (after __END__ config). If option
-            is not a valid, readable file, Swaks will error and exit. This
-            option can be specified multiple times, but only the first time
-            it is specified (in environment variable and the command line
-            search order) will be used.
+            used as the configuration file (after "__END__" config). If
+            argument is not a valid, readable file, Swaks will error and
+            exit. This option can be specified multiple times, but only the
+            first time it is specified (in environment variable and the
+            command line search order) will be used. (Arg-Optional)
 
-    ENVIRONMENT VARIABLES
+    CONFIGURATION ENVIRONMENT VARIABLES
         Options can be supplied via environment variables. The variables are
-        in the form $SWAKS_OPT_name, where name is the name of the option
+        in the form $SWAKS_OPT_name, where "name" is the name of the option
         that would be specified on the command line. Because dashes aren't
         allowed in environment variable names in most UNIX-ish shells, no
         leading dashes should be used and any dashes inside the option's
@@ -207,15 +293,15 @@ OPTION PROCESSING
 
         Setting a variable to an empty value is the same as specifying it on
         the command line with no argument. For instance, setting
-        SWAKS_OPT_server="" would cause Swaks to prompt the use for the
+        <SWAKS_OPT_server=""> would cause Swaks to prompt the user for the
         server to which to connect at each invocation.
 
         Because there is no inherent order in options provided by setting
         environment variables, the options are sorted before being
         processed. This is not a great solution, but it at least defines the
         behavior, which would be otherwise undefined. As an example, if both
-        SWAKS_OPT_from and SWAKS_OPT_f were set, the value from
-        SWAKS_OPT_from would be used, because it sorts after SWAKS_OPT_f.
+        $SWAKS_OPT_from and $SWAKS_OPT_f were set, the value from
+        $SWAKS_OPT_from would be used, because it sorts after $SWAKS_OPT_f.
         Also as a result of not having an inherent order in environment
         processing, unsetting options with the "no-" prefix is unreliable.
         It works if the option being turned off sorts before "no-", but
@@ -225,14 +311,14 @@ OPTION PROCESSING
         problem.
 
         In addition to setting the equivalent of command line options,
-        SWAKS_HOME can be set to a directory containing the default .swaksrc
-        to be used.
+        $SWAKS_HOME can be set to a directory containing the default
+        .swaksrc to be used.
 
     COMMAND LINE OPTIONS
         The final method of supplying options to Swaks is via the command
         line. The options behave in a manner consistent with most UNIX-ish
         command line programs. Many options have both a short and long form
-        (for instance -s and --server). By convention short options are
+        (for instance "-s" and "--server"). By convention short options are
         specified with a single dash and long options are specified with a
         double-dash. This is only a convention and either prefix will work
         with either type.
@@ -248,7 +334,7 @@ TRANSPORTS
     sockets"). Connecting via network sockets is the default behavior.
     Because of the singular nature of the transport used, each set of
     options in the following section is mutually exclusive. Specifying more
-    than one of --server, --pipe, or --socket will result in an error.
+    than one of "--server", "--pipe", or "--socket" will result in an error.
     Mixing other options between transport types will only result in the
     irrelevant options being ignored. Below is a brief description of each
     type of transport and the options that are specific to that transport
@@ -257,9 +343,9 @@ TRANSPORTS
     NETWORK SOCKETS
         This transport attempts to deliver a message via TCP/IP, the
         standard method for delivering SMTP. This is the default transport
-        for Swaks. If none of --server, --pipe, or --socket are given then
-        this transport is used and the target server is determined from the
-        recipient's domain (see --server below for more details).
+        for Swaks. If none of "--server", "--pipe", or "--socket" are given
+        then this transport is used and the target server is determined from
+        the recipient's domain (see "--server" below for more details).
 
         This transport requires the IO::Socket module which is part of the
         standard Perl distribution. If this module is not loadable,
@@ -268,7 +354,7 @@ TRANSPORTS
 
         IPv6 is supported when the IO::Socket::INET6 module is present.
 
-        -s, --server [target mail server[:port]]
+        -s, --server [<target-server>[:<port>]]
             Explicitly tell Swaks to use network sockets and specify the
             hostname or IP address to which to connect, or prompt if no
             argument is given. If this option is not given and no other
@@ -279,36 +365,42 @@ TRANSPORTS
             The target port can optionally be set here. Supported formats
             for this include SERVER:PORT (supporting names and IPv4
             addresses); [SERVER]:PORT and SERVER/PORT (supporting names,
-            IPv4 and IPv6 addresses). See also --copy-routing.
+            IPv4 and IPv6 addresses). See also "--copy-routing".
+            (Arg-Required, From-Prompt)
 
-        -p, --port [port]
+        -p, --port [<port>]
             Specify which TCP port on the target is to be used, or prompt if
             no argument is listed. The argument can be a service name (as
             retrieved by getservbyname(3)) or a port number. The default
-            port is smtp/25 unless influenced by the --protocol or
-            --tls-on-connect options.
+            port is smtp/25 unless influenced by the "--protocol" or
+            "--tls-on-connect" options. (Arg-Required, From-Prompt)
 
-        -li, --local-interface [IP or hostname[:port]]
+        -li, --local-interface [<local-interface>[:<port>]]
             Use argument as the local interface for the outgoing SMTP
             connection, or prompt user if no argument given. Argument can be
             an IP address or a hostname. Default action is to let the
-            operating system choose the local interface. See --server for
-            additional comments on :port format.
+            operating system choose the local interface. See "--server" for
+            additional comments on :<port> format. (Arg-Required,
+            From-Prompt)
 
-        -lp, --local-port, --lport [port]
-            Specify the outgoing port to originate the transaction from. If
-            this option is not specified the system will pick an ephemeral
-            port. Note that regular users cannot specify some ports.
+        -lp, --local-port, --lport [<port>]
+            Specify the outgoing port from which to originate the
+            transaction. The argument can be a service name (as retrieved by
+            getservbyname(3)) or a port number. If this option is not
+            specified the system will pick an ephemeral port. Note that
+            regular users cannot specify some ports. (Arg-Required,
+            From-Prompt)
 
-        --copy-routing [domain]
+        --copy-routing <domain>
             The argument is interpreted as the domain part of an email
             address and it is used to find the target server using the same
             logic that would be used to look up the target server for a
-            recipient email address. See --to option for more details on how
-            the target is determined from the email domain.
+            recipient email address. See "--to" option for more details on
+            how the target is determined from the email domain.
+            (Arg-Required)
 
         -4, -6
-            Force IPv4 or IPv6.
+            Force IPv4 or IPv6. (Arg-None)
 
     UNIX SOCKETS
         This transport method attempts to deliver messages via a UNIX-domain
@@ -319,41 +411,41 @@ TRANSPORTS
         attempting to use this transport will result in an error and program
         termination.
 
-        --socket [/path/to/socket/file]
+        --socket [<socket-file>]
             This option takes as its argument a UNIX-domain socket file. If
             Swaks is unable to open this socket it will display an error and
-            exit.
+            exit. (Arg-Required, From-Prompt)
 
     PIPES
         This transport attempts to spawn a process and communicate with it
         via pipes. The spawned program must be prepared to behave as a mail
-        server over STDIN/STDOUT. Any MTA designed to operate from
+        server over "STDIN"/"STDOUT". Any MTA designed to operate from
         inet/xinet should support this. In addition, some MTAs provide
-        testing modes that can be communicated with via STDIN/STDOUT. This
-        transport can be used to automate that testing. For example, if you
-        implemented DNSBL checking with Exim and you wanted to make sure it
-        was working, you could run 'swaks --pipe "exim -bh 127.0.0.2"'.
+        testing modes that can be communicated with via "STDIN"/"STDOUT".
+        This transport can be used to automate that testing. For example, if
+        you implemented DNSBL checking with Exim and you wanted to make sure
+        it was working, you could run "swaks --pipe "exim -bh 127.0.0.2"".
         Ideally, the process you are talking to should behave exactly like
-        an SMTP server on STDIN and STDOUT. Any debugging should be sent to
-        STDERR, which will be directed to your terminal. In practice, Swaks
-        can generally handle some debug on the child's STDOUT, but there are
-        no guarantees on how much it can handle.
+        an SMTP server on "STDIN" and "STDOUT". Any debugging should be sent
+        to "STDERR", which will be directed to your terminal. In practice,
+        Swaks can generally handle some debug on the child's "STDOUT", but
+        there are no guarantees on how much it can handle.
 
         This transport requires the IPC::Open2 module which is part of the
         standard Perl distribution. If this module is not loadable,
         attempting to use this transport will result in an error and program
         termination.
 
-        --pipe [/path/to/command and arguments]
+        --pipe [<command-and-arguments>]
             Provide a process name and arguments to the process. Swaks will
             attempt to spawn the process and communicate with it via pipes.
             If the argument is not an executable Swaks will display an error
-            and exit.
+            and exit. (Arg-Required, From-Prompt)
 
 PROTOCOL OPTIONS
     These options are related to the protocol layer.
 
-    -t, --to [email-address[,email-address,...]]
+    -t, --to [<email-address>[,<email-address>[,...]]]
         Tells Swaks to use argument(s) as the envelope-recipient for the
         email, or prompt for recipient if no argument provided. If multiple
         recipients are provided and the recipient domain is needed to
@@ -361,37 +453,40 @@ PROTOCOL OPTIONS
 
         There is no default value for this option. If no recipients are
         provided via any means, user will be prompted to provide one
-        interactively. The only exception to this is if a --quit-after value
-        is provided which will cause the SMTP transaction to be terminated
-        before the recipient is needed.
+        interactively. The only exception to this is if a "--quit-after"
+        value is provided which will cause the SMTP transaction to be
+        terminated before the recipient is needed. (Arg-Required,
+        From-Prompt)
 
-    -f, --from [email-address]
+    -f, --from [<email-address>]
         Use argument as envelope-sender for email, or prompt user if no
-        argument specified. The string <> can be supplied to mean the null
+        argument specified. The string "<>" can be supplied to mean the null
         sender. If user does not specify a sender address a default value is
         used. The domain-part of the default sender is a best guess at the
         fully-qualified domain name of the local host. The method of
-        determining the local-part varies. On Windows, Win32::LoginName() is
-        used. On UNIX-ish platforms, the $LOGNAME environment variable is
+        determining the local-part varies. On Windows, "Win32::LoginName()"
+        is used. On UNIX-ish platforms, the $LOGNAME environment variable is
         used if it is set. Otherwise getpwuid(3) is used. See also
-        --force-getpwuid. If Swaks cannot determine a local hostname and the
-        sender address is needed for the transaction, Swaks will error and
-        exit. In this case, a valid string must be provided via this option.
+        "--force-getpwuid". If Swaks cannot determine a local hostname and
+        the sender address is needed for the transaction, Swaks will error
+        and exit. In this case, a valid string must be provided via this
+        option. (Arg-Required, From-Prompt)
 
-    --ehlo, --lhlo, -h, --helo [helo-string]
+    --ehlo, --lhlo, -h, --helo [<helo-string>]
         String to use as argument to HELO/EHLO/LHLO command, or prompt user
         if no argument is specified. If this option is not used a best guess
         at the fully-qualified domain name of the local host is used. If
         Swaks cannot determine a local hostname and the helo string is
         needed for the transaction, Swaks will error and exit. In this case,
-        a valid string must be provided via this option.
+        a valid string must be provided via this option. (Arg-Required,
+        From-Prompt)
 
-    -q, --quit, --quit-after [stop-point]
+    -q, --quit, --quit-after <stop-point>
         Point at which the transaction should be stopped. When the requested
         stopping point is reached in the transaction, and provided that
         Swaks has not errored out prior to reaching it, Swaks will send
         "QUIT" and attempt to close the connection cleanly. These are the
-        valid arguments and notes about their meaning.
+        valid arguments and notes about their meaning. (Arg-Required)
 
         CONNECT, BANNER
             Terminate the session after receiving the greeting banner from
@@ -427,38 +522,40 @@ PROTOCOL OPTIONS
         RCPT, TO
             Quit after RCPT TO: is sent.
 
-    --da, --drop-after [stop-point]
-        The option is similar to --quit-after, but instead of trying to
+    --da, --drop-after <stop-point>
+        The option is similar to "--quit-after", but instead of trying to
         cleanly shut down the session it simply terminates the session. This
-        option accepts the same stop-points as --quit-after and additionally
-        accepts DATA and DOT, detailed below.
+        option accepts the same stop-points as "--quit-after" and
+        additionally accepts DATA and DOT, detailed below. (Arg-Required)
 
         DATA
             Quit after DATA is sent.
 
         DOT Quit after the final '.' of the message is sent.
 
-    --das, --drop-after-send [stop-point]
-        This option is similar to --drop-after, but instead of dropping the
-        connection after reading a response to the stop-point, it drops the
-        connection immediately after sending stop-point. It accepts the same
-        stop-points as --drop-after.
+    --das, --drop-after-send <stop-point>
+        This option is similar to "--drop-after", but instead of dropping
+        the connection after reading a response to the stop-point, it drops
+        the connection immediately after sending stop-point. It accepts the
+        same stop-points as "--drop-after". (Arg-Required)
 
-    --timeout [time]
+    --timeout [<time>]
         Use argument as the SMTP transaction timeout, or prompt user if no
         argument given. Argument can either be a pure digit, which will be
-        interpreted as seconds, or can have a specifier s or m (5s = 5
-        seconds, 3m = 180 seconds). As a special case, 0 means don't timeout
-        the transactions. Default value is 30s.
+        interpreted as seconds, or can have a specifier s, m, or h (5s = 5
+        seconds, 3m = 180 seconds, 1h = 3600 seconds). As a special case, 0
+        means don't timeout the transactions. Default value is 30s.
+        (Arg-Required, From-Prompt)
 
-    --protocol [protocol]
+    --protocol <protocol>
         Specify which protocol to use in the transaction. Valid options are
         shown in the table below. Currently the 'core' protocols are SMTP,
         ESMTP, and LMTP. By using variations of these protocol types one can
         tersely specify default ports, whether authentication should be
         attempted, and the type of TLS connection that should be attempted.
-        The default protocol is ESMTP. This table demonstrates the available
-        arguments to --protocol and the options each sets as a side effect:
+        The default protocol is ESMTP. The following table demonstrates the
+        available arguments to "--protocol" and the options each sets as a
+        side effect. (Arg-Required)
 
         SMTP
             HELO, "-p 25"
@@ -498,16 +595,17 @@ PROTOCOL OPTIONS
 
     --pipeline
         If the remote server supports it, attempt SMTP PIPELINING (RFC
-        2920).
+        2920). (Arg-None)
 
     --prdr
         If the server supports it, attempt Per-Recipient Data Response
-        (PRDR) (https://tools.ietf.org/html/draft-hall-prdr-00.txt). PRDR is
-        not yet standardized, but MTAs have begun implementing the proposal.
+        (PRDR) (<https://tools.ietf.org/html/draft-hall-prdr-00.txt>). PRDR
+        is not yet standardized, but MTAs have begun implementing the
+        proposal. (Arg-None)
 
     --force-getpwuid
         Tell Swaks to use the getpwuid method of finding the default sender
-        local-part instead of trying $LOGNAME first.
+        local-part instead of trying $LOGNAME first. (Arg-None)
 
 TLS / ENCRYPTION
     These are options related to encrypting the transaction. These have been
@@ -516,18 +614,19 @@ TLS / ENCRYPTION
     If this module is not loadable Swaks will either ignore the TLS request
     or error out, depending on whether the request was optional. STARTTLS is
     defined as an extension in the ESMTP protocol and will be unavailable if
-    --protocol is set to a variation of SMTP. Because it is not defined in
-    the protocol itself, --tls-on-connect is available for any protocol type
-    if the target supports it.
+    "--protocol" is set to a variation of SMTP. Because it is not defined in
+    the protocol itself, "--tls-on-connect" is available for any protocol
+    type if the target supports it.
 
     A local certificate is not required for a TLS connection to be
     negotiated. However, some servers use client certificate checking to
     verify that the client is allowed to connect. Swaks can be told to use a
-    specific local certificate using the --tls-cert and --tls-key options.
+    specific local certificate using the "--tls-cert" and "--tls-key"
+    options.
 
     -tls
         Require connection to use STARTTLS. Exit if TLS not available for
-        any reason (not advertised, negotiations failed, etc).
+        any reason (not advertised, negotiations failed, etc). (Arg-None)
 
     -tlso, --tls-optional
         Attempt to use STARTTLS if available, continue with normal
@@ -540,85 +639,90 @@ TLS / ENCRYPTION
         client thinks it is plaintext. There may be an attempt to add more
         granular state detection in the future, but for now just be aware
         that odd things may happen with this option if the TLS negotiation
-        is attempted and fails.
+        is attempted and fails. (Arg-None)
 
     -tlsos, --tls-optional-strict
         Attempt to use STARTTLS if available. Proceed with transaction if
         TLS is negotiated successfully or STARTTLS not advertised. If
         STARTTLS is advertised but TLS negotiations fail, treat as an error
         and abort transaction. Due to the caveat noted above, this is a much
-        saner option than --tls-optional.
+        saner option than "--tls-optional". (Arg-None)
 
-    --tlsc, --tls-on-connect
+    -tlsc, --tls-on-connect
         Initiate a TLS connection immediately on connection. Following
         common convention, if this option is specified the default port
         changes from 25 to 465, though this can still be overridden with the
-        --port option.
+        --port option. (Arg-None)
 
-    -tlsp, --tls-protocol SPECIFICATION
+    -tlsp, --tls-protocol <tls-version-specification>
         Specify which protocols to use (or not use) when negotiating TLS. At
         the time of this writing, the available protocols are sslv2, sslv3,
         tlsv1, tlsv1_1, tlsv1_2, and tlsv1_3. The availability of these
         protocols is dependent on your underlying OpenSSL library, so not
         all of these may be available. The list of available protocols is
-        shown in the output of --dump (assuming TLS is available at all).
+        shown in the output of "--dump" (assuming TLS is available at all).
 
         The specification string is a comma-delimited list of protocols that
         can be used or not used. For instance 'tlsv1,tlsv1_1' will only
         succeed if one of those two protocols is available on both the
         client and the server. Conversely, 'no_sslv2,no_sslv3' will attempt
         to negotiate any protocol except sslv2 and sslv3. The two forms of
-        specification cannot be mixed.
+        specification cannot be mixed. (Arg-Required)
 
-    -tls-cipher CIPHER_STRING
+    --tls-cipher <cipher-string>
         The argument to this option is passed to the underlying OpenSSL
         library to set the list of acceptable ciphers to the be used for the
         connection. The format of this string is opaque to Swaks and is
         defined in
-        http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT. A
-        brief example would be --tls-cipher '3DES:+RSA'.
+        <http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT>.
+        A brief example would be "--tls-cipher '3DES:+RSA'". (Arg-Required)
 
     --tls-verify
         Tell Swaks to attempt to verify the server's certificate. If this
         option is set and the server's certificate is not verifiable (either
         using the system-default CA information, or custom CA information
-        (see --tls-ca-path)) TLS negotiation will not succeed. By default,
-        Swaks does not attempt certificate verification.
+        (see "--tls-ca-path")) TLS negotiation will not succeed. By default,
+        Swaks does not attempt certificate verification. (Arg-None)
 
-    --tls-ca-path [ /path/to/CAfile | /path/to/CAdir/ ]
+    --tls-ca-path <ca-location>
         Specify an alternate location for CA information for verifying
-        server certificates. The default behavior is to use the underlying
-        OpenSSL library's default information.
+        server certificates. The argument can point to a file or directory.
+        The default behavior is to use the underlying OpenSSL library's
+        default information. (Arg-Required)
 
-    --tls-cert /path/to/file
+    --tls-cert <cert-file>
         Provide a path to a file containing the local certificate Swaks
         should use if TLS is negotiated. The file path argument is required.
         As currently implemented the certificate in the file must be in PEM
         format. Contact the author if there's a compelling need for ASN1. If
-        this option is set, --tls-key is also required.
+        this option is set, "--tls-key" is also required. (Arg-Required)
 
-    --tls-key /path/to/file
+    --tls-key <key-file>
         Provide a path to a file containing the local private key Swaks
         should use if TLS is negotiated. The file path argument is required.
         As currently implemented the certificate in the file must be in PEM
         format. Contact the author if there's a compelling need for ASN1. If
-        this option is set, --tls-cert is also required.
+        this option is set, "--tls-cert" is also required. (Arg-Required)
 
-    --tls-get-peer-cert [/path/to/file]
+    --tls-get-peer-cert [<output-file>]
         Get a copy of the TLS peer's certificate. If no argument is given,
-        it will be displayed to STDOUT. If an argument is given it is
+        it will be displayed to "STDOUT". If an argument is given it is
         assumed to be a filesystem path specifying where the certificate
         should be written. The saved certificate can then be examined using
         standard tools such as the openssl command. If a file is specified
-        its contents will be overwritten.
+        its contents will be overwritten. (Arg-Optional)
+
+    --tls-sni <sni-string>
+        Specify the Server Name Indication field to send when the TLS
+        connection is initiated. (Arg-Required)
 
 AUTHENTICATION
     Swaks will attempt to authenticate to the target mail server if
     instructed to do so. This section details available authentication
     types, requirements, options and their interactions, and other fine
     points in authentication usage. Because authentication is defined as an
-    extension in the ESMTP protocol it will be unavailable if --protocol is
-    set to a variation of SMTP.
+    extension in the ESMTP protocol it will be unavailable if "--protocol"
+    is set to a variation of SMTP.
 
     All authentication methods require base64 encoding. If the MIME::Base64
     Perl module is loadable Swaks attempts to use it to perform these
@@ -643,18 +747,18 @@ AUTHENTICATION
     individual notes and requirements.
 
     The following options affect Swaks' use of authentication. These options
-    are all inter-related. For instance, specifying --auth-user implies
-    --auth and --auth-password. Specifying --auth-optional implies
-    --auth-user and --auth-password, etc.
+    are all inter-related. For instance, specifying "--auth-user" implies
+    "--auth" and "--auth-password". Specifying "--auth-optional" implies
+    "--auth-user" and "--auth-password", etc.
 
-    -a, --auth [auth-type[,auth-type,...]]
+    -a, --auth [<auth-type>[,<auth-type>[,...]]]
         Require Swaks to authenticate. If no argument is given, any
         supported auth-types advertised by the server are tried until one
         succeeds or all fail. If one or more auth-types are specified as an
         argument, each that the server also supports is tried in order until
         one succeeds or all fail. This option requires Swaks to
         authenticate, so if no common auth-types are found or no credentials
-        succeed, Swaks displays an error and exits.
+        succeed, Swaks displays an error and exits. (Arg-Optional)
 
         The following tables lists the valid auth-types
 
@@ -680,11 +784,11 @@ AUTHENTICATION
             support DIGEST-MD5 better, please get in touch with me.
 
             The DIGEST-MD5 protocol's "realm" value can be set using the
-            --auth-extra "realm" keyword. If no realm is given, a reasonable
-            default will be used.
+            "--auth-extra" "realm" keyword. If no realm is given, a
+            reasonable default will be used.
 
             The DIGEST-MD5 protocol's "digest-uri" values can be set using
-            the --auth-extra option. For instance, you could create the
+            the "--auth-extra" option. For instance, you could create the
             digest-uri-value of "lmtp/mail.example.com/example.com" with the
             option "--auth-extra
             dmd5-serv-type=lmtp,dmd5-host=mail.example.com,dmd5-serv-name=ex
@@ -707,39 +811,47 @@ AUTHENTICATION
 
             In addition to the standard username and password, this
             authentication type can also recognize a "domain". The domain
-            can be set using the --auth-extra "domain" keyword. Note that
+            can be set using the "--auth-extra" "domain" keyword. Note that
             this has never been tested with a mail server that doesn't
             ignore DOMAIN so this may be implemented incorrectly.
 
-    -ao, --auth-optional [auth-type[,auth-type,...]]
-        This option behaves identically to --auth except that it requests
+    -ao, --auth-optional [<auth-type>[,<auth-type>[,...]]]
+        This option behaves identically to "--auth" except that it requests
         authentication rather than requiring it. If no common auth-types are
         found or no credentials succeed, Swaks proceeds as if authentication
-        had not been requested.
+        had not been requested. (Arg-Optional)
 
-    -aos, --auth-optional-strict [auth-type[,auth-type,...]]
-        This option is a compromise between --auth and --auth-optional. If
-        no common auth-types are found, Swaks behaves as if --auth-optional
-        were specified and proceeds with the transaction. If Swaks can't
-        support requested auth-type, the server doesn't advertise any common
-        auth-types, or if no credentials succeed, Swaks behaves as if --auth
-        were used and exits with an error.
+    -aos, --auth-optional-strict [<auth-type>[,<auth-type>[,...]]]
+        This option is a compromise between "--auth" and "--auth-optional".
+        If no common auth-types are found, Swaks behaves as if
+        "--auth-optional" were specified and proceeds with the transaction.
+        If Swaks can't support requested auth-type, the server doesn't
+        advertise any common auth-types, or if no credentials succeed, Swaks
+        behaves as if "--auth" were used and exits with an error.
+        (Arg-Optional)
 
-    -au, --auth-user [username]
-        Provide the username to be used for authentication, or prompt the
-        user for it if no argument is provided. The string <> can be
-        supplied to mean an empty username.
+    -au, --auth-user [<username>]
+        Provide the username to be used for authentication. If no username
+        is provided, indicate that Swaks should attempt to find the username
+        via .netrc (requires the Net::Netrc module). If no username is
+        provided and cannot be found via .netrc, the user will be prompted
+        to provide one. The string "<>" can be supplied to mean an empty
+        username. (Arg-Required, From-Prompt)
 
-    -ap, --auth-password [password]
-        Provide the password to be used for authentication, or prompt the
-        user for it if no argument is provided. The string <> can be
-        supplied to mean an empty password.
+    -ap, --auth-password [<password>]
+        Provide the password to be used for authentication. If no password
+        is provided, indicate that Swaks should attempt to find the password
+        via .netrc (requires the Net::Netrc module). If no password is
+        provided and cannot be found via .netrc, the user will be prompted
+        to provide one. The string "<>" can be supplied to mean an empty
+        password. (Arg-Required, From-Prompt, Sensitive)
 
-    -ae, --auth-extra [KEYWORD=value[,...]]
+    -ae, --auth-extra <key-value-pair>[,<key-value-pair>[,...]]
         Some of the authentication types allow extra information to be
         included in the authentication process. Rather than add a new option
-        for every nook and cranny of each authenticator, the --auth-extra
-        option allows this information to be supplied.
+        for every nook and cranny of each authenticator, the "--auth-extra"
+        option allows this information to be supplied. The format for
+        <key-value-pair> is KEYWORD=VALUE. (Arg-Required)
 
         The following table lists the currently recognized keywords and the
         authenticators that use them
@@ -764,32 +876,35 @@ AUTHENTICATION
             authenticator and is used, in part, to build the
             digest-uri-value string (see RFC2831)
 
-    -am, --auth-map [auth-alias=auth-type[,...]]
+    -am, --auth-map <key-value-pair>[,<key-value-pair>[,...]]
         Provides a way to map alternate names onto base authentication
         types. Useful for any sites that use alternate names for common
-        types. This functionality is actually used internally to map types
-        SPA and MSN onto the base type NTLM. The command line argument to
-        simulate this would be "--auth-map SPA=NTLM,MSN=NTLM". All of the
-        auth-types listed above are valid targets for mapping except SPA and
-        MSN.
+        types. The format for <key-value-pair> is AUTH-ALIAS=AUTH-TYPE. This
+        functionality is actually used internally to map types SPA and MSN
+        onto the base type NTLM. The command line argument to simulate this
+        would be "--auth-map SPA=NTLM,MSN=NTLM". All of the auth-types
+        listed above are valid targets for mapping except SPA and MSN.
+        (Arg-Required)
 
     -apt, --auth-plaintext
         Instead of showing AUTH strings base64 encoded as they are
         transmitted, translate them to plaintext before printing on screen.
+        (Arg-None)
 
-    -ahp, --auth-hide-password [replacement string]
+    -ahp, --auth-hide-password [<replacement-string>]
         If this option is specified, any time a readable password would be
         printed to the terminal (specifically AUTH PLAIN and AUTH LOGIN) the
         password is replaced with the string 'PROVIDED_BUT_REMOVED' (or the
-        contents of "replacement string" if provided). The dummy string may
-        or may not be base64 encoded, contingent on the --auth-plaintext
+        contents of <replacement-string> if provided). The dummy string may
+        or may not be base64 encoded, contingent on the "--auth-plaintext"
         option.
 
-        Note that --auth-hide-password is similar, but not identical, to the
-        --protect-prompt option. The former protects passwords from being
-        displayed in the SMTP transaction regardless of how they are
+        Note that "--auth-hide-password" is similar, but not identical, to
+        the "--protect-prompt" option. The former protects passwords from
+        being displayed in the SMTP transaction regardless of how they are
         entered. The latter protects sensitive strings when the user types
         them at the terminal, regardless of how the string would be used.
+        (Arg-Optional)
 
 XCLIENT OPTIONS
     XCLIENT is an SMTP extension introduced by the Postfix project. XCLIENT
@@ -797,7 +912,7 @@ XCLIENT OPTIONS
     information, such as IP address or hostname, for the client. This allows
     much easier paths for testing mail server configurations. Full details
     on the protocol are available at
-    http://www.postfix.org/XCLIENT_README.html.
+    <http://www.postfix.org/XCLIENT_README.html>.
 
     The XCLIENT verb can be passed to the server multiple times per SMTP
     session with different attributes. For instance, HELO and PROTO might be
@@ -807,19 +922,19 @@ XCLIENT OPTIONS
     The different options attempt to expose simplicity for those using Swaks
     as a client, and complexity for those using Swaks to test installs.
 
-    --xclient-addr [VALUE]
-    --xclient-name [VALUE]
-    --xclient-port [VALUE]
-    --xclient-proto [VALUE]
-    --xclient-destaddr [VALUE]
-    --xclient-destport [VALUE]
-    --xclient-helo [VALUE]
-    --xclient-login [VALUE]
-    --xclient-reverse-name [VALUE]
+    --xclient-addr [<string>]
+    --xclient-name [<string>]
+    --xclient-port [<string>]
+    --xclient-proto [<string>]
+    --xclient-destaddr [<string>]
+    --xclient-destport [<string>]
+    --xclient-helo [<string>]
+    --xclient-login [<string>]
+    --xclient-reverse-name [<string>]
         These options specify XCLIENT attributes that should be sent to the
-        target server. If [VALUE] is not provided, Swaks will prompt and
-        read the value on STDIN. See
-        http://www.postfix.org/XCLIENT_README.html for official
+        target server. If <string> is not provided, Swaks will prompt and
+        read the value on "STDIN". See
+        <http://www.postfix.org/XCLIENT_README.html> for official
         documentation for what the attributes mean and their possible
         values, including the special "[UNAVAILABLE]" and "[TEMPUNAVAIL]"
         values.
@@ -831,11 +946,12 @@ XCLIENT OPTIONS
         Note that the "REVERSE_NAME" attribute doesn't seem to appear in the
         official documentation. There is a mailing list thread that
         documents it, viewable at
-        http://comments.gmane.org/gmane.mail.postfix.user/192623.
+        <http://comments.gmane.org/gmane.mail.postfix.user/192623>.
 
         These options can all be mixed with each other, and can be mixed
-        with the --xclient option (see below). By default all attributes
-        will be combined into one XCLIENT call, but see --xclient-delim.
+        with the "--xclient" option (see below). By default all attributes
+        will be combined into one XCLIENT call, but see "--xclient-delim".
+        (Arg-Required, From-Prompt)
 
     --xclient-delim
         When this option is specified, it indicates a break in XCLIENT
@@ -845,81 +961,80 @@ XCLIENT OPTIONS
         calls, "XCLIENT HELO=helo+20string" and "XCLIENT
         NAME=foo.example.com ADDR=192.168.1.1". This option is ignored where
         it doesn't make sense (at the start or end of XCLIENT options, by
-        itself, consecutively, etc).
+        itself, consecutively, etc). (Arg-None)
 
-    --xclient [XCLIENT_STRING]
+    --xclient [<string>]
         This is the "free form" XCLIENT option. Whatever value is provided
-        for XCLIENT_STRING will be sent verbatim as the argument to the
-        XCLIENT SMTP command. For example, if "--xclient 'NAME=
-        ADDR=192.168.1.1 FOO=bar'" is used, Swaks will send the SMTP command
-        "XCLIENT NAME= ADDR=192.168.1.1 FOO=bar". If no XCLIENT_STRING is
-        passed on command line, Swaks will prompt and read the value on
-        STDIN.
+        for <string> will be sent verbatim as the argument to the XCLIENT
+        SMTP command. For example, if "--xclient 'NAME= ADDR=192.168.1.1
+        FOO=bar'" is used, Swaks will send the SMTP command "XCLIENT NAME=
+        ADDR=192.168.1.1 FOO=bar". If no argument is passed on command line,
+        Swaks will prompt and read the value on STDIN.
 
         The primary advantage to this over the more specific options above
         is that there is no XCLIENT syntax validation here. This allows you
         to send invalid XCLIENT to the target server for testing.
         Additionally, at least one MTA (Message Systems' Momentum, formerly
         ecelerity) implements XCLIENT without advertising supported
-        attributes. The --xclient option allows you to skip the "supported
+        attributes. The "--xclient" option allows you to skip the "supported
         attributes" check when communicating with this type of MTA (though
-        see also --xclient-no-verify).
+        see also "--xclient-no-verify").
 
-        The --xclient option can be mixed freely with the --xclient-*
-        options above. The argument to --xclient will be sent in its own
+        The "--xclient" option can be mixed freely with the "--xclient-*"
+        options above. The argument to "--xclient" will be sent in its own
         command group. For instance, if "--xclient-addr 192.168.0.1
         --xclient-port 26 --xclient 'FOO=bar NAME=wind'" is given to Swaks,
         "XCLIENT ADDR=192.168.0.1 PORT=26" and "XCLIENT FOO=bar NAME=wind"
-        will both be sent to the target server.
+        will both be sent to the target server. (Arg-Required, From-Prompt)
 
     --xclient-no-verify
         Do not enforce the requirement that an XCLIENT attribute must be
         advertised by the server in order for Swaks to send it in an XCLIENT
         command. This is to support servers which don't advertise the
-        attributes but still support them.
+        attributes but still support them. (Arg-None)
 
     --xclient-before-starttls
         If Swaks is configured to attempt both XCLIENT and STARTTLS, it will
         do STARTTLS first. If this option is specified it will attempt
-        XCLIENT first.
+        XCLIENT first. (Arg-None)
 
     --xclient-optional
     --xclient-optional-strict
-        In normal operation, setting one of the --xclient* options will
+        In normal operation, setting one of the "--xclient*" options will
         require a successful XCLIENT transaction to take place in order to
         proceed (that is, XCLIENT needs to be advertised, all the
         user-requested attributes need to have been advertised, and the
         server needs to have accepted Swaks' XCLIENT request). These options
-        change that behavior. --xclient-optional tells Swaks to proceed
+        change that behavior. "--xclient-optional" tells Swaks to proceed
         unconditionally past the XCLIENT stage of the SMTP transaction,
-        regardless of whether it was successful. --xclient-optional-strict
+        regardless of whether it was successful. "--xclient-optional-strict"
         is similar but more granular. The strict version will continue to
         XCLIENT was not advertised, but will fail if XCLIENT was attempted
-        but did not succeed.
+        but did not succeed. (Arg-None)
 
 PROXY OPTIONS
     Swaks implements the Proxy protocol as defined in
-    http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt. Proxy allows
-    an application load balancer, such as HAProxy, to be used in front of an
-    MTA while still allowing the MTA access to the originating host
-    information. Proxy support in Swaks allows direct testing of an MTA
+    <http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt>. Proxy
+    allows an application load balancer, such as HAProxy, to be used in
+    front of an MTA while still allowing the MTA access to the originating
+    host information. Proxy support in Swaks allows direct testing of an MTA
     configured to expect requests from a proxy, bypassing the proxy itself
     during testing.
 
     Swaks makes no effort to ensure that the Proxy options used are
-    internally consistent. For instance, --proxy-family (in version 1) is
+    internally consistent. For instance, "--proxy-family" (in version 1) is
     expected to be one of "TCP4" or "TCP6". While it will likely not make
     sense to the target server, Swaks makes no attempt to ensure that
-    --proxy-source and --proxy-dest are in the same protocol family as
-    --proxy-family or each other.
+    "--proxy-source" and "--proxy-dest" are in the same protocol family as
+    "--proxy-family" or each other.
 
-    The --proxy option is mutually exclusive with all other --proxy-*
-    options except --proxy-version.
+    The "--proxy" option is mutually exclusive with all other "--proxy-*"
+    options except "--proxy-version".
 
-    When --proxy is not used, all of --proxy-family, --proxy-source,
-    --proxy-source-port, --proxy-dest, and --proxy-dest-port are required.
-    Additionally, when --proxy-version is 2, --proxy-protocol and
-    --proxy-command are optional.
+    When "--proxy" is not used, all of "--proxy-family", "--proxy-source",
+    "--proxy-source-port", "--proxy-dest", and "--proxy-dest-port" are
+    required. Additionally, when "--proxy-version" is 2, "--proxy-protocol"
+    and "--proxy-command" are optional.
 
     --proxy-version [ 1 | 2 ]
         Whether to use version 1 (human readable) or version 2 (binary) of
@@ -927,78 +1042,93 @@ PROXY OPTIONS
         implemented through the "address block", and is roughly on par with
         the information provided in version 1.
 
-    --proxy [VALUE]
+    --proxy [<string>]
         If this option is used, its argument is passed unchanged after the
         "PROXY " portion (or the 12-byte protocol header for version 2) of
         the Proxy exchange. This option allows sending incomplete or
         malformed Proxy strings to a target server for testing. No attempt
         to translate or modify this string is made, so if used with
         "--proxy-version 2" the argument should be in the appropriate binary
-        format. This option is mutually exclusive with all other --proxy-*
-        options which provide granular proxy information.
+        format. This option is mutually exclusive with all other "--proxy-*"
+        options which provide granular proxy information. (Arg-Required,
+        From-Prompt)
 
-    --proxy-family [VALUE]
+    --proxy-family [<string>]
         For version 1, specifies both the address family and transport
         protocol. The protocol defines TCP4 and TCP6.
 
         For version 2, specifies only the address family. The protocol
-        defines AF_UNSPEC, AF_INET, AF_INET6, and AF_UNIX.
+        defines AF_UNSPEC, AF_INET, AF_INET6, and AF_UNIX. (Arg-Required,
+        From-Prompt)
 
-    --proxy-protocol [VALUE]
+    --proxy-protocol [<string>]
         For version 2, specifies the transport protocol. The protocol
         defines UNSPEC, STREAM, and DGRAM. The default is STREAM. This
-        option is unused in version 1
+        option is unused in version 1. (Arg-Required, From-Prompt)
 
-    --proxy-command [VALUE]
+    --proxy-command [<string>]
         For version 2, specifies the transport protocol. The protocol
         defines LOCAL and PROXY. The default is PROXY. This option is unused
-        in version 1
+        in version 1. (Arg-Required, From-Prompt)
 
-    --proxy-source [VALUE]
-        Specify the source address of the proxied connection.
+    --proxy-source [<string>]
+        Specify the source address of the proxied connection. (Arg-Required,
+        From-Prompt)
 
-    --proxy-source-port [VALUE]
-        Specify the source port of the proxied connection.
+    --proxy-source-port [<string>]
+        Specify the source port of the proxied connection. (Arg-Required,
+        From-Prompt)
 
-    --proxy-dest [VALUE]
+    --proxy-dest [<string>]
         Specify the destination address of the proxied connection.
+        (Arg-Required, From-Prompt)
 
-    --proxy-dest-port [VALUE]
+    --proxy-dest-port [<string>]
         Specify the destination port of the proxied connection.
+        (Arg-Required, From-Prompt)
 
 DATA OPTIONS
     These options pertain to the contents for the DATA portion of the SMTP
-    transaction. By default a very simple message is sent. If the --attach
-    or --attach-body options are used, Swaks attempts to upgrade to a MIME
+    transaction. By default a very simple message is sent. If the "--attach"
+    or "--attach-body" options are used, Swaks attempts to upgrade to a MIME
     message.
 
-    -d, --data [data-portion]
+    -d, --data [<data-portion>]
         Use argument as the entire contents of DATA.
 
         If no argument is provided, user will be prompted to supply value.
 
-        If the argument '-' is provided the data will be read from STDIN
-        with no prompt (same as -g).
+        If the argument "-" is provided the data will be read from "STDIN"
+        with no prompt.
+
+        If the argument starts with "@" it will be treated as a filename. If
+        you would like to pass in an argument that starts with "@" and isn't
+        a filename, prefix the argument with an additional "@". For example,
+        "@file.txt" will force processing of file.txt. @@data will use the
+        string '@data'.
 
         If the argument does not contain any literal (0x0a) or
         representative (0x5c, 0x6e or %NEWLINE%) newline characters, it will
         be treated as a filename. If the file is open-able, the contents of
         the file will be used as the data portion. If the file cannot be
-        opened, Swaks will error and exit.
+        opened, Swaks will error and exit. The entire behavior described in
+        this paragraph is deprecated and will be removed in a future
+        release. Instead use a leading "@" to explicitly set that the
+        argument is a filename.
 
         Any other argument will be used as the DATA contents.
 
-        The value can be on one single line, with \n (ASCII 0x5c, 0x6e)
+        The value can be on one single line, with "\n" (ASCII 0x5c, 0x6e)
         representing where line breaks should be placed. Leading dots will
         be quoted. Closing dot is not required but is allowed. The default
         value for this option is "Date: %DATE%\nTo: %TO_ADDRESS%\nFrom:
         %FROM_ADDRESS%\nSubject: test %DATE%\nMessage-Id:
-        <%MESSAGEID%>\nX-Mailer: swaks v%SWAKS_VERSION%
-        jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n".
+        <%MESSAGEID%"\nX-Mailer: swaks v%SWAKS_VERSION%
+        jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n>.
 
         Very basic token parsing is performed on the DATA portion. The
         following table shows the recognized tokens and their replacement
-        values:
+        values. (Arg-Required, From-Prompt, From-File)
 
         %FROM_ADDRESS%
             Replaced with the envelope-sender.
@@ -1009,8 +1139,8 @@ DATA OPTIONS
         %DATE%
             Replaced with the current time in a format suitable for
             inclusion in the Date: header. Note this attempts to use the
-            standard module Time::Local for timezone calculations. If this
-            module is unavailable the date string will be in GMT.
+            standard module POSIX for timezone calculations. If this module
+            is unavailable the date string will be in GMT.
 
         %MESSAGEID%
             Replaced with a message ID string suitable for use in a
@@ -1022,132 +1152,143 @@ DATA OPTIONS
             process.
 
         %NEW_HEADERS%
-            Replaced with the contents of the --add-header option. If
-            --add-header is not specified this token is simply removed.
+            Replaced with the contents of the "--add-header" option. If
+            "--add-header" is not specified this token is simply removed.
 
         %BODY%
-            Replaced with the value specified by the --body option. See
-            --body for default.
+            Replaced with the value specified by the "--body" option. See
+            "--body" for default.
 
         %NEWLINE%
             Replaced with carriage return, newline (0x0d, 0x0a). This is
-            identical to using '\n' (0x5c, 0x6e), but doesn't have the
+            identical to using "\n" (0x5c, 0x6e), but doesn't have the
             escaping concerns that the backslash can cause on the newline.
 
-    -dab, --dump-as-body [section[,section]]
-        If --dump-as-body is used and no other option is used to change the
-        default body of the message, the body is replaced with output
-        similar to the output of what is provided by --dump. --dump's
+    -dab, --dump-as-body [<section>[,<section>[,...]]]
+        If "--dump-as-body" is used and no other option is used to change
+        the default body of the message, the body is replaced with output
+        similar to the output of what is provided by "--dump". "--dump"'s
         initial program capability stanza is not displayed, and the "data"
-        section is not included. Additionally, --dump always includes
-        passwords. By default --dump-as-body does not include passwords,
-        though this can be changed with --dump-as-body-shows-password.
-        --dump-as-body takes the same arguments as --dump except the SUPPORT
-        and DATA arguments are not supported.
+        section is not included. Additionally, "--dump" always includes
+        passwords. By default "--dump-as-body" does not include passwords,
+        though this can be changed with "--dump-as-body-shows-password".
+        "--dump-as-body" takes the same arguments as "--dump" except the
+        SUPPORT and DATA arguments are not supported. (Arg-Optional)
 
     -dabsp, --dump-as-body-shows-password
-        Cause --dump-as-body to include plaintext passwords. This option is
-        not recommended. This option implies --dump-as-body.
+        Cause "--dump-as-body" to include plaintext passwords. This option
+        is not recommended. This option implies "--dump-as-body". (Arg-None)
 
-    --body [body-specification]
+    --body [<body-specification>]
         Specify the body of the email. The default is "This is a test
-        mailing". If no argument to --body is given, prompt to supply one
-        interactively. If '-' is supplied, the body will be read from
-        standard input. If any other text is provided and the text
-        represents an open-able file, the content of that file is used as
-        the body. If it does not represent an open-able file, the text
-        itself is used as the body.
+        mailing". If no argument to "--body" is given, prompt to supply one
+        interactively. If "-" is supplied, the body will be read from
+        standard input. Arguments beginning with "@" will be treated as
+        filenames containing the body data to use (see "--data" for more
+        detail).
 
-        If the message is forced to MIME format (see --attach) "--body 'body
-        text'" is the same as "--attach-type text/plain --attach-body 'body
-        text'". See --attach-body for details on creating a
-        multipart/alternative body.
+        If, after the above processing, the argument represents an open-able
+        file, the content of that file is used as the body. This is
+        deprecated behavior and will be removed in a future release. Instead
+        use a leading "@" to explicitly set that the argument is a filename.
 
-    --attach [attachment-specification]
-        When one or more --attach option is supplied, the message is changed
-        into a multipart/mixed MIME message. The arguments to --attach are
-        processed the same as --body with respect to STDIN, file contents,
-        etc. --attach can be supplied multiple times to create multiple
-        attachments. By default, each attachment is attached as an
-        application/octet-stream file. See --attach-type for changing this
-        behavior.
+        If the message is forced to MIME format (see "--attach") "--body
+        'body text'" is the same as "--attach-type text/plain --attach-body
+        'body text'". See "--attach-body" for details on creating a
+        multipart/alternative body. (Arg-Required, From-Prompt, From-File)
+
+    --attach [<attachment-specification>]
+        When one or more "--attach" option is supplied, the message is
+        changed into a multipart/mixed MIME message. The arguments to
+        "--attach" are processed the same as "--body" with respect to
+        "STDIN", file contents, etc. "--attach" can be supplied multiple
+        times to create multiple attachments. By default, each attachment is
+        attached as an application/octet-stream file. See "--attach-type"
+        for changing this behavior.
 
         If the contents of the attachment are provided via a file name, the
-        MIME encoding will include that file name. See --attach-name for
+        MIME encoding will include that file name. See "--attach-name" for
         more detail on file naming.
 
-        It is legal for '-' (STDIN) to be specified as an argument multiple
-        times (once for --body and multiple times for --attach). In this
-        case, the same content will be attached each time it is specified.
-        This is useful for attaching the same content with multiple MIME
-        types.
+        It is legal for "-" ("STDIN") to be specified as an argument
+        multiple times (once for "--body" and multiple times for
+        "--attach"). In this case, the same content will be attached each
+        time it is specified. This is useful for attaching the same content
+        with multiple MIME types. (Arg-Required, From-File)
 
-    --attach-body [body-specification]
-        This is a variation on --attach that is specifically for the body
-        part of the email. It behaves identically to --attach in that it
+    --attach-body [<body-specification>]
+        This is a variation on "--attach" that is specifically for the body
+        part of the email. It behaves identically to "--attach" in that it
         takes the same arguments and forces the creation of a MIME message.
         However, it is different in that the argument will always be the
         first MIME part in the message, no matter where in option processing
-        order it is encountered. Additionally, --attach-body options stack
+        order it is encountered. Additionally, "--attach-body" options stack
         to allow creation of multipart/alternative bodies. For example,
-        '--attach-type text/plain --attach "plain text body" --attach-type
-        text/html --attach "html body"' would create a multipart/alternative
-        message body.
+        "--attach-type text/plain --attach-body 'plain text body'
+        --attach-type text/html --attach-body 'html body'" would create a
+        multipart/alternative message body. (Arg-Required, From-File)
 
-    --attach-type [mime-type]
+    --attach-type <mime-type>
         By default, content that gets MIME attached to a message with the
-        --attach option is encoded as application/octet-stream (except for
-        the body, which is text/plain by default). --attach-type changes the
-        mime type for every --attach option which follows it. It can be
-        specified multiple times. The current MIME type gets reset to
+        "--attach" option is encoded as application/octet-stream (except for
+        the body, which is text/plain by default). "--attach-type" changes
+        the mime type for every "--attach" option which follows it. It can
+        be specified multiple times. The current MIME type gets reset to
         application/octet-stream between processing body parts and other
-        parts.
+        parts. (Arg-Required)
 
-    --attach-name [name]
+    --attach-name [<name>]
         This option sets the filename that will be included in the MIME part
-        created for the next --attach option. If no argument is set for this
-        option, it causes no filename information to be included for the
-        next MIME part, even if Swaks could generate it from the local file
-        name.
+        created for the next "--attach" option. If no argument is set for
+        this option, it causes no filename information to be included for
+        the next MIME part, even if Swaks could generate it from the local
+        file name. (Arg-Optional)
 
-    -ah, --add-header [header]
-        This option allows headers to be added to the DATA. If %NEW_HEADERS%
-        is present in the DATA it is replaced with the argument to this
-        option. If %NEW_HEADERS% is not present, the argument is inserted
-        between the first two consecutive newlines in the DATA (that is, it
-        is inserted at the end of the existing headers).
+    -ah, --add-header <header>
+        This option allows headers to be added to the DATA. If
+        "%NEW_HEADERS%" is present in the DATA it is replaced with the
+        argument to this option. If "%NEW_HEADERS%" is not present, the
+        argument is inserted between the first two consecutive newlines in
+        the DATA (that is, it is inserted at the end of the existing
+        headers).
 
         The option can either be specified multiple times or a single time
-        with multiple headers separated by a literal '\n' string. So,
+        with multiple headers separated by a literal "\n" string. So,
         "--add-header 'Foo: bar' --add-header 'Baz: foo'" and "--add-header
         'Foo: bar\nBaz: foo'" end up adding the same two headers.
+        (Arg-Required)
 
-    --header [header-and-data], --h-Header [data]
+    --header <header-and-data>, --h-<header> <data>
         These options allow a way to change headers that already exist in
-        the DATA. '--header "Subject: foo"' and '--h-Subject foo' are
+        the DATA. "--header 'Subject: foo'" and "--h-Subject foo" are
         equivalent. If the header does not already exist in the data then
-        this argument behaves identically to --add-header. However, if the
+        this argument behaves identically to "--add-header". However, if the
         header already exists it is replaced with the one specified.
+        Negating the version of this option with the header name in the
+        option (eg "--no-header-Subject") will remove all previously
+        processed "--header" options, not just the ones used for 'Subject'.
+        (Arg-Required)
 
-    -g  If specified, Swaks will read the DATA value for the mail from
-        STDIN. This is equivalent to "--data -". If there is a From_ line in
-        the email, it will be removed (but see -nsf option). Useful for
-        delivering real message (stored in files) instead of using example
-        messages.
+    -g  This option is a direct alias to "--data -" (read DATA from
+        "STDIN"). It is totally secondary to "--data". Any occurrence of
+        "--data" will cause "-g" to be ignored. This option cannot be
+        negated with the "no-" prefix. This option is deprecated and will be
+        removed in a future version of Swaks. (Arg-None, Deprecated)
 
     --no-data-fixup, -ndf
         This option forces Swaks to do no massaging of the DATA portion of
         the email. This includes token replacement, From_ stripping,
-        trailing-dot addition, --body/attachment inclusion, and any header
-        additions. This option is only useful when used with --data, since
-        the internal default DATA portion uses tokens.
+        trailing-dot addition, "--body"/attachment inclusion, and any header
+        additions. This option is only useful when used with "--data", since
+        the internal default DATA portion uses tokens. (Arg-None)
 
     --no-strip-from, -nsf
         Don't strip the From_ line from the DATA portion, if present.
+        (Arg-None)
 
 OUTPUT OPTIONS
     Swaks provides a transcript of its transactions to its caller
-    (STDOUT/STDERR) by default. This transcript aims to be as faithful a
+    ("STDOUT"/"STDERR") by default. This transcript aims to be as faithful a
     representation as possible of the transaction though it does modify this
     output by adding informational prefixes to lines and by providing
     plaintext versions of TLS transactions
@@ -1159,47 +1300,47 @@ OUTPUT OPTIONS
     table indicates the hints and their meanings:
 
     "==="
-        Indicates an informational line generated by Swaks
+        Indicates an informational line generated by Swaks.
 
     "***"
-        Indicates an error generated within Swaks
+        Indicates an error generated within Swaks.
 
     " ->"
-        Indicates an expected line sent by Swaks to target server
+        Indicates an expected line sent by Swaks to target server.
 
     " ~>"
         Indicates a TLS-encrypted, expected line sent by Swaks to target
-        server
+        server.
 
     "**>"
-        Indicates an unexpected line sent by Swaks to the target server
+        Indicates an unexpected line sent by Swaks to the target server.
 
     "*~>"
         Indicates a TLS-encrypted, unexpected line sent by Swaks to target
-        server
+        server.
 
     "  >"
         Indicates a raw chunk of text sent by Swaks to a target server (see
-        --show-raw-text). There is no concept of "expected" or "unexpected"
-        at this level.
+        "--show-raw-text"). There is no concept of "expected" or
+        "unexpected" at this level.
 
     "<- "
-        Indicates an expected line sent by target server to Swaks
+        Indicates an expected line sent by target server to Swaks.
 
     "<~ "
         Indicates a TLS-encrypted, expected line sent by target server to
-        Swaks
+        Swaks.
 
     "<**"
-        Indicates an unexpected line sent by target server to Swaks
+        Indicates an unexpected line sent by target server to Swaks.
 
     "<~*"
         Indicates a TLS-encrypted, unexpected line sent by target server to
-        Swaks
+        Swaks.
 
     "<  "
         Indicates a raw chunk of text received by Swaks from a target server
-        (see --show-raw-text). There is no concept of "expected" or
+        (see "--show-raw-text"). There is no concept of "expected" or
         "unexpected" at this level.
 
     The following options control what and how output is displayed to the
@@ -1210,111 +1351,137 @@ OUTPUT OPTIONS
         printing every line. This option is very helpful, bordering on
         required, when using Swaks to send certain test emails. Emails with
         attachments, for instance, will quickly overwhelm a terminal if the
-        DATA is not suppressed.
+        DATA is not suppressed. (Arg-None)
 
     -stl, --show-time-lapse [i]
         Display time lapse between send/receive pairs. This option is most
         useful when Time::HiRes is available, in which case the time lapse
         will be displayed in thousandths of a second. If Time::HiRes is
         unavailable or "i" is given as an argument the lapse will be
-        displayed in integer seconds only.
+        displayed in integer seconds only. (Arg-Optional)
 
     -nih, --no-info-hints
         Don't display the transaction hint for informational transactions.
         This is most useful when needing to copy some portion of the
         informational lines, for instance the certificate output from
-        --tls-get-peer-cert.
+        "--tls-get-peer-cert". (Arg-None)
 
     -nsh, --no-send-hints
     -nrh, --no-receive-hints
     -nth, --no-hints
-        --no-send-hints and --no-receive-hints suppress the transaction
-        prefix from send and receive lines, respectively. This is often
+        "--no-send-hints" and "--no-receive-hints" suppress the transaction
+        hints from send and receive lines, respectively. This is often
         useful when copying some portion of the transaction for use
         elsewhere (for instance, "--no-send-hints --hide-receive
         --hide-informational" is a useful way to get only the client-side
-        commands for a given transaction). --no-hints is identical to
-        specifying both --no-send-hints and --no-receive-hints.
-
-        Don't show transaction hints (useful in conjunction with -hr to
-        create copy/paste-able transactions).
+        commands for a given transaction). "--no-hints" is identical to
+        specifying both "--no-send-hints" and "--no-receive-hints".
+        (Arg-None)
 
     -raw, --show-raw-text
         This option will print a hex dump of raw data sent and received by
         Swaks. Each hex dump is the contents of a single read or write on
         the network. This should be identical to what is already being
-        displayed (with the exception of the \r characters being removed).
+        displayed (with the exception of the "\r" characters being removed).
         This option is useful in seeing details when servers are sending
         lots of data in single packets, or breaking up individual lines into
         multiple packets. If you really need to go in depth in that area
         you're probably better with a packet sniffer, but this option is a
-        good first step to seeing odd connection issues.
+        good first step to seeing odd connection issues. (Arg-None)
 
-    --output, --output-file </path/to/file>
-    --output-file-stdout </path/to/file>
-    --output-file-stderr </path/to/file>
+    --output, --output-file <file-path>
+    --output-file-stdout <file-path>
+    --output-file-stderr <file-path>
         These options allow the user to send output to files instead of
-        STDOUT/STDERR. The first option sends both to the same file. The
+        "STDOUT"/"STDERR". The first option sends both to the same file. The
         arguments of &STDOUT and &STDERR are treated specially, referring to
         the "normal" file handles, so "--output-file-stderr '&STDOUT'" would
-        redirect STDERR to STDOUT. These options are honored for all output
-        except --help and --version.
+        redirect "STDERR" to "STDOUT". These options are honored for all
+        output except "--help" and "--version". (Arg-Required)
 
     -pp, --protect-prompt
         Don't echo user input on prompts that are potentially sensitive
-        (right now only authentication password). See also
-        --auth-hide-password
+        (right now only authentication password). Very specifically, any
+        option which is marked 'Sensitive' and eventually prompts for an
+        argument will do its best to mask that argument from being echoed.
+        See also "--auth-hide-password". (Arg-None)
 
     -hr, --hide-receive
         Don't display lines sent from the remote server being received by
-        Swaks
+        Swaks. (Arg-None)
 
     -hs, --hide-send
-        Don't display lines being sent by Swaks to the remote server
+        Don't display lines being sent by Swaks to the remote server.
+        (Arg-None)
 
     -hi, --hide-informational
         Don't display non-error informational lines from Swaks itself.
+        (Arg-None)
 
     -ha, --hide-all
-        Do not display any content to the terminal.
+        Do not display any content to the terminal. (Arg-None)
 
-    -S, --silent [level]
+    -S, --silent [ 1 | 2 | 3 ]
         Cause Swaks to be silent. If no argument is given or if an argument
         of "1" is given, print no output unless/until an error occurs, after
         which all output is shown. If an argument of "2" is given, only
-        print errors. If "3" is given, show no output ever. --silent affects
-        most output but not all. For instance, --help, --version, --dump,
-        and --dump-mail are not affected.
+        print errors. If "3" is given, show no output ever. "--silent"
+        affects most output but not all. For instance, "--help",
+        "--version", "--dump", and "--dump-mail" are not affected.
+        (Arg-Optional)
 
     --support
         Print capabilities and exit. Certain features require non-standard
         Perl modules. This option evaluates whether these modules are
         present and displays which functionality is available and which
         isn't, and which modules would need to be added to gain the missing
-        functionality.
+        functionality. (Arg-None)
 
     --dump-mail
         Cause Swaks to process all options to generate the message it would
-        send, then print that message to STDOUT instead of sending it. This
-        output is identical to the "data" section of --dump, except without
-        the trailing dot.
+        send, then print that message to "STDOUT" instead of sending it.
+        This output is identical to the "data" section of "--dump", except
+        without the trailing dot. (Arg-None)
 
-    --dump [section[,section]]
+    --dump [<section>[,<section>[,...]]]
         This option causes Swaks to print the results of option processing,
         immediately before mail would have been sent. No mail will be sent
-        when --dump is used. Note that --dump is a pure self-diagnosis tool
-        and no effort is made or will ever be made to mask passwords in the
-        --dump output. If a section is provided as an argument to this
+        when "--dump" is used. Note that "--dump" is a pure self-diagnosis
+        tool and no effort is made or will ever be made to mask passwords in
+        the "--dump" output. If a section is provided as an argument to this
         option, only the requested section will be shown. Currently
         supported arguments are SUPPORT, APP, OUTPUT, TRANSPORT, PROTOCOL,
         XCLIENT, PROXY, TLS, AUTH, DATA, and ALL. If no argument is
-        provided, all sections are displayed
+        provided, all sections are displayed (Arg-Optional)
 
     --help
-        Display this help information and exit.
+        Display this help information and exit. (Arg-None)
 
     --version
-        Display version information and exit.
+        Display version information and exit. (Arg-None)
+
+DEPRECATIONS
+    The following features are deprecated and will be removed in a future
+    version of Swaks
+
+    -g option
+        Will be removed no sooner than November 1, 2021.
+
+        The -g option is currently a less-good alias to "--data -". Any uses
+        of "-g" should be able to be directly migrated to "--data -"
+        instead.
+
+    auto-filename detection
+        Will be removed no sooner than November 1, 2021.
+
+        The "--data", "--body", "--attach", and "--attach-body" options
+        currently will attempt to distinguish between an argument that is
+        the actual value to use vs. an argument that represents a file
+        containing the data to use. This behavior has been superseded by
+        prefixing an argument to these options with "@" to explicitly
+        indicate that the argument indicates a file. Any uses of providing a
+        filename to one of these options should be moved to using "@" to
+        indicate a filename is being used.
 
 PORTABILITY
     OPERATING SYSTEMS
@@ -1345,17 +1512,17 @@ PORTABILITY
 ENVIRONMENT VARIABLES
     LOGNAME
         If Swaks must create a sender address, $LOGNAME is used as the
-        message local-part if it is set, and unless --force-getpwuid is
+        message local-part if it is set, and unless "--force-getpwuid" is
         used.
 
     SWAKS_HOME
         Used when searching for a .swaksrc configuration file. See OPTION
-        PROCESSING -> CONFIGURATION FILES above.
+        PROCESSING -> "CONFIGURATION FILES" above.
 
     SWAKS_OPT_*
         Environment variable prefix used to specify Swaks options from
-        environment variables. See OPTION PROCESSING -> ENVIRONMENT
-        VARIABLES above.
+        environment variables. See OPTION PROCESSING -> "CONFIGURATION
+        ENVIRONMENT VARIABLES" above.
 
 EXIT CODES
     0   no errors occurred
@@ -1370,7 +1537,7 @@ EXIT CODES
         to or reading from the child process
 
     5   while running with connection type of "pipe", child process died
-        unexpectedly. This can mean that the program specified with --pipe
+        unexpectedly. This can mean that the program specified with "--pipe"
         doesn't exist.
 
     6   Connection closed unexpectedly. If the close is detected in response
@@ -1452,7 +1619,7 @@ CONTACT INFORMATION
     proj-swaks@jetmore.net.
 
     Change logs, this help, and the latest version are found at
-    http://www.jetmore.org/john/code/swaks/.
+    <http://www.jetmore.org/john/code/swaks/>.
 
     Swaks is crafted with love by John Jetmore from the cornfields of
     Indiana, United States of America.
@@ -1466,11 +1633,11 @@ NOTIFICATIONS
         address. There will not be a response to your email.
 
     Website
-        http://www.jetmore.org/john/blog/c/swaks/
+        <http://www.jetmore.org/john/blog/c/swaks/>
 
     RSS Feed
-        http://www.jetmore.org/john/blog/c/swaks/feed/
+        <http://www.jetmore.org/john/blog/c/swaks/feed/>
 
     Twitter
-        http://twitter.com/SwaksSMTP
+        <http://twitter.com/SwaksSMTP>
 

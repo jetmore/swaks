@@ -1,6 +1,6 @@
 # Generated Tue Dec 25 11:09:28 2018 by ./gen-tests.pl '-n' '0' '-o' 'proxy' '-v' 'PROXY_STRING' '-i' '' '-p' 'PROXY string:' '-d' '.' '-r'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: proxy, env var, no-option
 

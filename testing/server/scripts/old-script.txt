@@ -1,0 +1,77 @@
+# the script used to be hard-coded in smtp-server.pl itself.  This file
+# is the last script before I removed it. Not expected to be used directly, but possibly
+# used as reference for building future scripts
+
+
+#start_tls(); # this is for tls_on_connect
+
+#print L "connection received\n";
+send_line("220 SERVER ESMTP ready");
+
+# uncomment this to force fallback to HELO
+#get_line(); #EHLO
+#send_line("500 unrecognized");
+
+get_line(); # EHLO
+#send_line("250-SERVER Hello Server [1.1.1.1]\n250-STARTTLS\n205-AUTH DIGEST-MD5\n250-AUTH=login\n250 HELP");
+#send_line("250-SERVER Hello Server [1.1.1.1]\n250-STARTTLS\n205-AUTH DIGEST-MD5\n250 HELP");
+send_line("250-SERVER Hello Server [1.1.1.1]");
+send_line("250-STARTTLS");
+#send_line("250-AUTH CRAM-MD5");
+#send_line("250-AUTH PLAIN");
+send_line("250-AUTH DIGEST-MD5");
+#send_line("250-AUTH DIGEST-MD5");
+#send_line("250-AUTH=login");
+send_line("250 HELP");
+
+#get_line(); # STARTTLS
+#send_line("220 TLS go ahead");
+#start_tls();
+#get_line(); # EHLO
+#send_line("250-SERVER Hello Server [1.1.1.1]\n250 HELP");
+
+#get_line(); # AUTH DIGEST-MD5
+#send_line("334 bm9uY2U9IlFpdERwa1BFN2VXS0pYUytDdnFCNWFlajkrcCtpa2dWN2hOQVFOZThTMlU9IixyZWFsbT0ibGFwcHkuamV0bW9yZS5uZXQiLHFvcD0iYXV0aCxhdXRoLWludCxhdXRoLWNvbmYiLGNpcGhlcj0icmM0LTQwLHJjNC01NixyYzQsZGVzLDNkZXMiLG1heGJ1Zj04MTkyLGNoYXJzZXQ9dXRmLTgsYWxnb3JpdGhtPW1kNS1zZXNz");
+##send_line("334 bm9uY2U9Ijk0Mjk4NWExMTY3NzA1NDQ1YXZtLnFzZXJ2ZXJzeXN0ZW1zLmNvbSIscW9wPSJhdXRoIixhbGdvcml0aG09bWQ1LXNlc3M=");
+#get_line(); # AUTH DIGEST-MD5 digest
+#send_line("334 cnNwYXV0aD1mYjI2NjZlOGM3YWJiNTllM2M1ZWI1ZDU0Y2VjMjc3Zg==");
+#get_line(); # AUTH DIGEST-MD5 digest
+##send_line("235 Authentication succeeded");
+#send_line("235 Authentication succeeded");
+
+get_line(); # AUTH DIGEST-MD5
+send_line("334 bm9uY2U9IlFpdERwa1BFN2VXS0pYUytDdnFCNWFlajkrcCtpa2dWN2hOQVFOZThTMlU9IixyZWFsbT0ibGFwcHkuamV0bW9yZS5uZXQiLHFvcD0iYXV0aCxhdXRoLWludCxhdXRoLWNvbmYiLGNpcGhlcj0icmM0LTQwLHJjNC01NixyYzQsZGVzLDNkZXMiLG1heGJ1Zj04MTkyLGNoYXJzZXQ9dXRmLTgsYWxnb3JpdGhtPW1kNS1zZXNz");
+get_line(); # AUTH DIGEST-MD5 digest
+send_line("535 5.7.0 authentication failed");
+get_line();
+send_line("221 SERVER closing connection");
+return();
+#get_line(); # AUTH DIGEST-MD5 digest
+#send_line("235 Authentication succeeded");
+#send_line("235 Authentication succeeded");
+
+#get_line(); # AUTH PLAIN
+#send_line("235 Authentication succeeded");
+
+#get_line(); # AUTH LOGIN
+#send_line("334 VXNlcm5hbWU6");
+#get_line(); # AUTH LOGIN username
+#send_line("334 UGFzc3dvcmQ6");
+#get_line(); # AUTH LOGIN password
+#send_line("235 Authentication succeeded");
+
+get_line(); # MAIL
+send_line("250 Accepted");
+
+get_line(); # RCPT
+send_line("250 Accepted");
+
+get_line(); # DATA (command, not actual data)
+send_line("354 Enter message, ending with \".\" on a line by itself");
+
+get_line('^\.$'); # rest of email
+send_line("250 OK id=fakeemail");
+
+get_line();
+send_line("221 SERVER closing connection");
+

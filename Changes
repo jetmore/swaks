@@ -909,3 +909,104 @@
 * 20200425 Fix strange issue where GMT offset could oscillate on days of DST
            transition.  Time::Local is no longer used and POSIX is now
            required (#17, deb bug 955798)
+* 20200801 Update copyright year to 2020
+* 20200801 Fix bug which broke XCLIENT and STARTTLS used together (#21)
+* 20201004 Update README.md to reflect changes from
+           234db829dc6e6d45fe4da5f2bef075828ebc0ac7 (#22). Move to reference-
+           style markdown links to make it easier to identify links that
+           need to be changed for a release.
+* 20201004 Fix wording and example around html body on faq.html (#14)
+* 20201004 Add '@' in attach examples to prevent deprecation warnings
+* 20201004 Convert installation.pod to installation.html, link to it from
+           index.html and README.md, and flesh it out. (#7)
+* 20201010 Package App::swaks-20190914.0 for CPAN distribution (#23)
+> 20201010 released 20201010.0
+* 20201011 Fix test scripts to munge copyright date
+* 20201012 Fix date string - should always be in English, not localized
+           (introduced in 434f494abcc3558c73efc0e57a4338adeb402253)
+* 20201013 But actually fix the date string this time. Also fix #25
+* 20201014 Fix --protect-prompt. Not implemented correctly after option
+           processing overhaul in a46b929 #26
+* 20201014 Add newline echo after entering password with --protect-prompt
+> 20201014 released 20201014.0
+* 20201016 Testing: Document and improve automated testing to make it easier
+           for new users to run in new environments
+* 20201018 Change script interpreter line to use /usr/bin/env for portability
+* 20201018 Testing: Add --winnow to run-all.pl
+* 20201030 Fix date generation by confirming environment's strftime supports
+           %z format token.  Windows supports strftime but not %z.
+* 20201030 Windows: use binmode on STDERR/STDOUT to prevent line ending
+           translation.
+* 20201031 Windows: Fix setting options via environment variable  (this fix
+           now means that -S is not supported on Windows)
+* 20201031 Windows: Explicitly revoke support for providing header names
+           embedded in environment variable names (%SWAKS_OPT_header_From%
+           will result in an error)
+* 20201031 Allow a value of '<>' in an environment variable to mean empty
+           string.  Usable everywhere, but needed on Windows since it doesn't
+           support set-but-empty environment variables.
+* 20201101 Windows: Allow LOGNAME environment variable to override default
+           email sender
+* 20201101 Change the generation of help text from a manual perldoc call to
+           Pod::Usage
+* 20201106 Testing: Extensive changes to allow test tools to run on Windows
+           cmd.exe
+* 20201107 Add ..TOKEN.. form of tokens to more-easily allow tokens to be
+           specified from Windows command line.
+* 20201116 Previously changed %DATE% to %MESSAGE_ID% in some tests to protect
+           against accidental expansion on Windows.  Change back to ..DATE..
+           now that it's an option.
+* 20201126 Add tools for visualizing errors caused by line ending issues
+* 20201126 Rework interactive tests and enable on Windows
+* 20201126 Turn releases back on and add release for v20201024.0 (#13)
+* 20201126 --output-file (and -stdout and -stderr) now truncate the output
+           file if it already existed.
+* 20201126 --port and --local-port should override a port set in --server or
+           --local-interface.
+* 20201222 Add transaction-level tests
+* 20201223 Add missing option hints from --proxy-version documentation
+* 20201223 Remove documentation note about which Authen::NTLM version to use,
+           there's only one on CPAN anymore.
+* 20201223 When an unsupported XCLIENT attribute is requested, print the
+           missing attribute in the error.
+* 20201223 Don't print "Exiting" in the XCLIENT attempted but failed message.
+           It is always unnecessary (Auth doesn't print it) and is wrong
+           when --xclient-optional is in use.
+* 20201223 Fix several --drop-after-send bugs and inconsistencies.
+* 20201224 Fix --quit-after/--drop-after/--drop-after-send with XCLIENT
+           stop-point when XCLIENT is not negotiated.
+* 20201224 Add new stop-point XCLIENT-HELO to address lack of specificity
+           when mixing XCLIENT and HELO stop-point.
+* 20201224 In --dump output, print a raw proxy string in base64 if version 2
+* 20201224 --proxy argument can now (optionally) be provided with the protocol
+           prefix.
+* 20201224 Allow --proxy to read string from a file, and allow it to be
+           base64 encoded.
+* 20201224 Change error message when missing --proxy* option to list every
+           missing option instead of just the first missing.
+* 20201224 --no-hints should also include --no-info-hints, analogous to
+           --hide-informational/--hide-all which already worked this way.
+* 20201225 Add autocat feature to test tools
+* 20201225 Add exit code checking to regression tests
+* 20210116 Fix dead link to openssl cipher list format documentation in
+           --tls-cipher doc.
+* 20210116 Update copyright year to 2021
+* 20210116 Add TLS informational line showing whether client certificate was
+           by the server and whether swaks sent it.
+* 20210116 Use named constant in TLS code instead of magic number
+* 20210117 Add TLS informational line showing the verification status of
+           the server certificate.
+* 20210117 Change --tls-verify to require both cert and hostname verification.
+           Add --tls-verify-ca (previous behavior of --tls-verify) and
+           --tls-verify-host to just require verification of the certificate
+           against the local CA or the target hostname or IP, respectively.
+* 20210117 Add --tls-verify-target to set a host to be used for verification,
+           overriding the internal connection information.
+* 20210123 Clarify --auth-optional-strict documentation
+* 20210123 Adding --cc and --bcc options.
+* 20210123 Add PROXY as a valid --quit-after, --drop-after, and
+           --drop-after-send argument.
+* 20211208 Fix deprecated use of --body in doc (#39)
+* 20220505 Update copyright year to 2022
+* 20220505 Fix double-entry for Linux on installations.html #46
+* 20220505 Fix broken POD formatting for the default --data argument #47

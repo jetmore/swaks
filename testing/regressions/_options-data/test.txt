@@ -412,6 +412,7 @@
     15 - --header works with spaces in header name (dupe)
     16 - no colon in header line
     17 - first line of data looks like a continuation header
+    18 - embedding header name in environment variable results in error on Windows
 05250 - regression tests for multi-line headers
   251 header replacement SINGLE-LINE, SINGLE-HEADER FIRST
   252 header replacement SINGLE-LINE, SINGLE-HEADER MIDDLE
@@ -486,6 +487,16 @@
     24 - multiple bodies forces msg:multipart/alternative (--attach-type text/plain --attach-body body.txt --attach-type text/html --attach-body body.html)
     25 - single body, multiple attachments = msg:mp/mixed,
     26 - mult bodies, mult attach = msg:mp/mixed, body:mp/alt, att:whatever
+05600 - data replacement tokens
+    0 - ensure the standard body is replaced
+    1 - all tokens, %TOKEN%, command line
+    2 - all tokens, %TOKEN%, environment variable
+    3 - all tokens, %TOKEN%, config file
+    4 - all tokens, ..TOKEN.., command line
+    5 - all tokens, ..TOKEN.., environment variable
+    6 - all tokens, ..TOKEN.., config file
+   10 --cc causes Cc: header to be added to default body
+   11 --bcc not shown in default body
 
 
 
