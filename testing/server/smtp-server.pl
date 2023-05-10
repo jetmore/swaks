@@ -2,9 +2,15 @@
 
 # add tls support for all domains
 
-# ./smtp-server.pl -p 8026 scripts/basic-successful-email.txt
+
+# ./smtp-server.pl -p 8026 scripts/script-basic-success.txt
 # ./swaks -s 127.0.0.1 -p 8026 -t foo@example.com
 
+# ./smtp-server.pl -p 8026 scripts/script-tls-success.txt
+# ./swaks -s 127.0.0.1 -p 8026 -t foo@example.com -tls
+
+# ./smtp-server.pl -p 8026 -i ::1 -d inet scripts/script-basic-success.txt
+# ./swaks -s ::1 -p 8026 -t foo@example.com -6
 
 
 # ./smtp-server -p 8026 -i 127.0.0.1 -d inet
@@ -20,7 +26,7 @@ use strict;
 no strict "subs";
 use Socket;
 use IO::Socket;
-use IO::Socket::INET6;
+use IO::Socket::IP;
 use Getopt::Long;
 use Net::SSLeay qw(die_now die_if_ssl_error);
 use FindBin qw($Bin);
@@ -172,7 +178,7 @@ sub set_up_cxn {
     }
     print L "listening on $lint pid $$\n" if (!$opt{silent});
   } else {
-    if (!($server = IO::Socket::INET6->new(Proto => 'tcp', Listen => SOMAXCONN, ReuseAddr => 1, LocalAddr => $lint, LocalPort => $port))) {
+    if (!($server = IO::Socket::IP->new(Proto => 'tcp', Listen => SOMAXCONN, ReuseAddr => 1, LocalAddr => $lint, LocalPort => $port))) {
       mexit(2, "Couldn't be an inet domain server on $lint($port): $@");
     }
     print L "listening on $lint($port) pid $$\n" if (!$opt{silent});
