@@ -23,12 +23,12 @@ my $includeCn = $opts->{'exclude-cn'} ? 0 : 1;
 my @san       = (exists($opts->{san}) && ref($opts->{san})) ? @{$opts->{san}} : ($domain);
 @san          = () if (scalar(grep /^$/, @san));
 
-print "Domain: $domain\n",
-      "Out File: $filename.*\n",
-      "Signed:   $signed\n",
-      "Expires:  $expires\n",
-      "Include CN: $includeCn\n",
-      "SAN:        ", join(', ', @san), "\n";
+# print "Domain: $domain\n",
+#       "Out File: $filename.*\n",
+#       "Signed:   $signed\n",
+#       "Expires:  $expires\n",
+#       "Include CN: $includeCn\n",
+#       "SAN:        ", join(', ', @san), "\n";
 
 system(
 	'openssl', 'genrsa',
@@ -61,7 +61,7 @@ close(O);
 
 my $subject = sprintf("/C=%s/ST=%s/O=%s%s/emailAddress=%s",
                       "US", "Indiana",
-                      sprintf("Swaks Development (%s, %sSAN)", $domain, (scalar(@san) ? '+' : '-')),
+                      sprintf("Swaks Development (%s, %sSAN)", $domain, (scalar(@san) ? 'with-' : 'without-')),
                       ($includeCn ? "/CN=$domain" : ''),
                       "proj-swaks\@jetmore.net");
 
@@ -99,6 +99,17 @@ else {
 system(@certArgs);
 
 unlink("$filename.ext", "$filename.csr");
+
+open(P, "openssl x509 -text -in $filename.crt |") || die "Can't run openssl: $!";
+print "    # Signed: ", $signed ? "$cafile.pem" : "NO", "\n";
+print "    # Files: $filename.key, $filename.crt\n";
+while (my $line = <P>) {
+	chomp($line);
+	if ($line =~ s/^\s*(Subject:|Not After|X509v3 Subject Alternative Name:|DNS:|IP Address:)/$1/) {
+		print "    # $line\n";
+	}
+	# print "$line\n";
+}
 
 __DATA__
 
