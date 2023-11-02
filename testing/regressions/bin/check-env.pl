@@ -36,7 +36,7 @@ else {
 	print "NOK perl must be installed and in your path\n";
 }
 
-foreach my $module ('Capture::Tiny', 'Text::Diff', 'Proc::Background') {
+foreach my $module ('Capture::Tiny', 'Text::Diff', 'Proc::Background', 'Term::ReadKey') {
 	if (checkmod($module)) {
 		print "ok  $module\n";
 	}
@@ -62,6 +62,19 @@ elsif (my $swaks = findpath('swaks')) {
 else {
 	print "NOK swaks not found in either SWAKS_TEST_SWAKS or PATH\n";
 }
+
+if (length($ENV{'SWAKS_TEST_SERVER'})) {
+	if (my $ts = findpath($ENV{'SWAKS_TEST_SERVER'})) {
+		print "ok  swaks (SWAKS_TEST_SERVER -> $ts)\n";
+	}
+	else {
+		print "NOK Tests will use $ENV{'SWAKS_TEST_SERVER'} from SWAKS_TEST_SERVER, but that is not valid\n";
+	}
+}
+else {
+	print "NOK no valid test server found via SWAKS_TEST_SERVER\n";
+}
+
 
 # I believe this is no longer needed after switch to Pod::Usage
 # if (my $perldoc = findpath('perldoc')) {
