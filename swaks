@@ -431,32 +431,33 @@ sub start_tls {
 	Net::SSLeay::CTX_set_options($t{con}, $ctx_options);
 
 	$t{verify_failure_message}          = '';
-	$t{server_cert_verified_ca}         = 0;
+	$t{server_cert_verified_ca}         = 1;
 	$t{server_cert_verified_host}       = 0;
 	$t{server_cert_host_target}         = '';
 	$t{server_cert_verification_status} = undef;
+	$t{server_cert_host_target}         = $G::tls_verify_target || $G::link{server};
+	$t{server_cert_error_components}    = {};
+	# This callback can get called multiple times, once per cert in the chain.  Because of that we have to be careful in how
+	# we design it - CA verification is sticky on failure (any cert failure means the whole thing is a failure) and loose
+	# on hostname verification (any hostname success is a success).  Also, we might generate the same error multiple times,
+	# so we need to figure out how to remove duplicates
 	Net::SSLeay::CTX_set_verify($t{con}, &Net::SSLeay::VERIFY_PEER, sub {
 		my $preverify_ok = shift;
 		my $x509_ctx     = shift;
 		my @failures     = ();
 
-		# this callback is called twice and I can't figure out why.  The first seems to have the values I want
-		# to see, so if we're called multiple times, use the status from the first call
-		if (defined($t{server_cert_verification_status})) {
-			return $t{server_cert_verification_status};
-		}
+		# my $x = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
+		# print STDERR "CALLING CTX_set_verify($preverify_ok): " . Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x)) . "\n";
 
 		# we don't have to do the ca verification, that's handled before we get here
-		if ($preverify_ok) {
-			$t{server_cert_verified_ca} = 1;
-		}
-		else {
-			push(@failures, "server certificate not signed by known CA");
+		# we shape it like this because any cert failure fails the whole chain for cert verification
+		if (!$preverify_ok) {
+			$t{server_cert_verified_ca} = 0;
+			$t{server_cert_error_components}{A_sign} = 'server certificate not signed by known CA';
 		}
 
-		$t{server_cert_host_target} = $G::tls_verify_target || $G::link{server};
 		if (!$t{server_cert_host_target}) {
-			push(@failures, "no host available for host verification");
+			$t{server_cert_error_components}{B_host} = "no host available for host verification";
 		}
 		else {
 			my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
@@ -474,22 +475,11 @@ sub start_tls {
 			}
 
 			if (!$t{server_cert_verified_host}) {
-				push(@failures, 'server certificate did not match target host ' . $t{server_cert_host_target});
+				$t{server_cert_error_components}{B_host} = 'server certificate did not match target host ' . $t{server_cert_host_target};
 			}
 		}
 
-		$t{verify_failure_message} = join(', ', @failures);
-
-		if ($G::tls_verify_ca && !$t{server_cert_verified_ca}) {
-			$t{server_cert_verification_status} = 0;
-			return 0;
-		}
-		if ($G::tls_verify_host && !$t{server_cert_verified_host}) {
-			$t{server_cert_verification_status} = 0;
-			return 0;
-		}
-
-		$t{server_cert_verification_status} = 1;
+		# we return success unconditionally and then handle anything we don't like after the connection
 		return 1;
 	});
 
@@ -562,12 +552,30 @@ sub start_tls {
 		Net::SSLeay::set_fd($t{ssl}, fileno($G::link{sock})); # error check?
 	}
 
+	# actually attempt the connection
 	$t{active} = Net::SSLeay::connect($t{ssl}) == 1 ? 1 : 0;
+
+	# Our verification callback always succeeds, so we need to actually evaluate whether we should consider the connection successful here
+	$t{server_cert_verification_status} = 1;
+	if ($G::tls_verify_ca && !$t{server_cert_verified_ca}) {
+		$t{server_cert_verification_status} = 0;
+	}
+	if ($G::tls_verify_host && !$t{server_cert_verified_host}) {
+		$t{server_cert_verification_status} = 0;
+	}
+	if (scalar(keys(%{$t{server_cert_error_components}}))) {
+		$t{verify_failure_message} = join(', ', map { $t{server_cert_error_components}{$_} } sort(keys(%{$t{server_cert_error_components}})));
+	}
+
 	if (!$t{active}) {
 		$t{res} = "connect(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 		if ($t{verify_failure_message}) {
 			$t{res} .= ' (' . $t{verify_failure_message} . ')';
 		}
+		return(0);
+	}
+	elsif (!$t{server_cert_verification_status}) {
+		$t{res} = "connect(): " . $t{verify_failure_message};
 		return(0);
 	}
 
