@@ -6,6 +6,8 @@
 #  - SWAKS_TEST_SWAKS=../../swaks bin/run-all.pl
 # - example usage (only run tests that failed during the last run-all.pl execution):
 #  - SWAKS_TEST_SWAKS=../../swaks bin/run-all.pl --errors
+# - run just the tests in _exec-transactions
+#  - bin/runenv bin/run-all.pl _exec-transactions
 
 # this leaves var/results.* files laying around, should prune them periodically
 
@@ -25,6 +27,10 @@ my $runTests = "$home/bin/run-tests.pl";
 opendir(D, $home) || die "Couldn't opendir $home: $!\n";
 my @tests = grep /$pattern/, readdir(D);
 closedir(D);
+
+if (!scalar(@tests)) {
+	die "No test suites matching pattern $pattern\n";
+}
 
 my $vard = "$home/var";
 if (!-d $vard) {

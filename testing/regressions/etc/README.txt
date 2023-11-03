@@ -85,3 +85,18 @@ bin\runenv bin\run-tests.pl _options-auth 00300
 bin\runenv bin\run-all.pl
 bin\runenv bin\run-all.pl --errors
 bin\runenv bin\run-all.pl --winnow
+
+
+--
+
+
+Test suite status as of 2023-11-03
+macOS 13.0.1
+ - all tests pass
+debian 10.13
+ - all tests pass
+freebsd 12.1-STABLE
+ - some network/socket tests intermittently fail because freebsd doesn't free the socket up fast enough from the previous test
+ - _options-output/01250, 01260, 01270, 01280 all currently fail because --help gets formatted slightly differently on freebsd
+windows
+ - unknown, not making everything run clean on windows a priority for the next release

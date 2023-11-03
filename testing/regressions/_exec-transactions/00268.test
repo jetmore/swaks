@@ -3,7 +3,7 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 
 test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver \
-  --tls --quit tls --tls-verify \
+  --tls --quit tls --tls-verify --tls-ca-path %CERTDIR%/ca-other.pem \
   --pipe '%TEST_SERVER% --silent --domain pipe \
     --cert %CERTDIR%/node.example.com.crt --key %CERTDIR%/node.example.com.key \
     part-0000-connect-standard.txt \
