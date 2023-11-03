@@ -20,7 +20,7 @@
 === TLS started with cipher VERSION:CIPHER:BITS
 === TLS client certificate not requested and not sent
 === TLS no local certificate set
-=== TLS peer DN="/C=US/ST=Indiana/O=Swaks Development (san-multiple.example.com, +SAN)/CN=san-multiple.example.com/emailAddress=proj-swaks@jetmore.net"
+=== TLS peer DN="/C=US/ST=Indiana/O=Swaks Development (san-multiple.example.com, with-SAN)/CN=san-multiple.example.com/emailAddress=proj-swaks@jetmore.net"
 === TLS peer certificate failed CA verification, passed host verification (using host san-m1.example.com to verify)
  ~> QUIT
 <~  221 SERVER closing connection
