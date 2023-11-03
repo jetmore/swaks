@@ -21,7 +21,7 @@ my($p_name)   = (splitdir($0))[-1] =~ m|^(.+?)(\.pl)?$|;
 my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010-2022 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2010-2023 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
