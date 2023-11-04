@@ -256,6 +256,24 @@ helo with --xclient and --xclient-before-starttls
     3 --server --port -6
     5 --server --port --local-interface --local-port succeed
 
+06200 - This is specific to the IO::Socket::IP fallback to IO::Socket/IO::Socket::INET6.  At least some of these will be removed when that deprecated feature is removed
+    0 - disable legacy-ivp4 and legacy-ipv6. Confirm connect via domain name to server
+    1 - disable legacy-ivp4 and legacy-ipv6. Confirm connect via ipv4 to server
+    2 - disable legacy-ivp4 and legacy-ipv6. Confirm connect via ipv6 to server
+   10 - disable primary-inet. Confirm connect via domain name to server
+   11 - disable primary-inet. Confirm connect via ipv4 to server
+   12 - disable primary-inet. Confirm connect via ipv6 to server
+   20 - disable primary-inet. Confirm connect via domainname via ipv4 with -4
+   21 - disable primary-inet. Confirm connect via domainname via ipv6 with -6
+   30 - disable primary-inet and legacy-ipv4. Confirm connect via domainname via ipv4 with -4
+   31 - disable primary-inet and legacy-ipv4. Confirm connect via domainname via ipv6 with -6
+   32 - disable primary-inet and legacy-ipv6. Confirm connect via domainname via ipv4 with -4
+   33 - disable primary-inet and legacy-ipv6. Confirm FAIL to connect via domainname via ipv6 with -6
+
+
+
+
+
 
 07000 - unix socket specific
     0 happy path

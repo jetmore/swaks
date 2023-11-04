@@ -1,0 +1,21 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
+
+# 1 - disable legacy-ivp4 and legacy-ipv6. Confirm connect via ipv4 to server
+
+# create a file that will we consumed by swaks and munge the requirements
+pre action: MERGE ./%OUTDIR%/munge-requirements.pl mode:0600 string:'$G::dependencies{socket_ipv4_legacy}{req} = ["Unavailable::Module"]; $G::dependencies{socket_ipv6_legacy}{req} = ["Unavailable::Module"]; return 1;\n'
+
+# set SWAKS_ALTER_REQUIREMENTS to the file we just created so it will be executed
+pre action: SET_ENV PERL5LIB .
+pre action: SET_ENV SWAKS_ALTER_REQUIREMENTS %OUTDIR%/munge-requirements.pl
+
+test action: FORK %TEST_SERVER% --silent -i 127.0.0.1 -p 8125 \
+  part-0002-connect-with-print-server-only.txt \
+  part-0100-ehlo-basic.txt \
+  part-1000-mail-basic.txt \
+  part-1100-rcpt-basic-accept.txt \
+  part-2500-data-accept-basic.txt \
+  part-3000-shutdown-accept.txt
+
+test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver \
+  --server 127.0.0.1 --port 8125

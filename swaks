@@ -119,12 +119,23 @@ sub open_link {
 		push(@extra_options, "LocalAddr", $G::link{lint})  if ($G::link{lint});
 		push(@extra_options, "LocalPort", $G::link{lport}) if ($G::link{lport});
 
-		# INET6 also supports v4, so use it for everything if it's available.  That
-		# allows the module to handle A vs AAAA records on domain lookups where the
-		# user hasn't set a specific ip version to be used.  If INET6 isn't available
-		# and it's a domain that only has AAAA records, INET will just handle it like
-		# a bogus record and we just won't be able to connect
-		if (avail("ipv6")) {
+		# this is the preferred method, using IO::Socket::IP for everything
+		if (avail("socket_inet")) {
+			if ($G::link{force_ipv6}) {
+				push(@extra_options, "Family", Socket::AF_INET6() );
+			} elsif ($G::link{force_ipv4}) {
+				push(@extra_options, "Family", Socket::AF_INET() );
+			}
+			$G::link{sock} = IO::Socket::IP->new(
+				PeerAddr  => $G::link{server},
+				PeerPort  => $G::link{port},
+				Proto     => 'tcp',
+				Timeout   => $G::link{timeout},
+				@extra_options
+			);
+		} elsif (avail("socket_ipv6_legacy")) {
+			# if IO::Socket::INET6 is available, use it for both v4 and v6 connections
+			# this block is deprecated, in the future we will only support IO::Socket::IP
 			if ($G::link{force_ipv6}) {
 				push(@extra_options, "Domain", Socket::AF_INET6() );
 			} elsif ($G::link{force_ipv4}) {
@@ -139,6 +150,8 @@ sub open_link {
 				@extra_options
 			);
 		} else {
+			# If we've fallen through to here, try IO::Socket::INET, we won't be able to support IPv6
+			# this block is deprecated, in the future we will only support IO::Socket::IP
 			$G::link{sock} = IO::Socket::INET->new(
 				PeerAddr  => $G::link{server},
 				PeerPort  => $G::link{port},
@@ -1753,8 +1766,7 @@ sub time_to_seconds {
 
 sub load_dependencies {
 	%G::dependencies = (
-		auth            => { name => "Basic AUTH",               opt => ['MIME::Base64'],
-		                                                         req => []                    },
+		auth            => { name => "Basic AUTH",               opt => ['MIME::Base64'],     },
 		auth_cram_md5   => { name => "AUTH CRAM-MD5",            req => ['Digest::MD5']       },
 		auth_cram_sha1  => { name => "AUTH CRAM-SHA1",           req => ['Digest::SHA']       },
 		auth_ntlm       => { name => "AUTH NTLM",                req => ['Authen::NTLM']      },
@@ -1763,11 +1775,14 @@ sub load_dependencies {
 		netrc           => { name => 'Netrc Credentials',        req => ['Net::Netrc']        },
 		tls             => { name => "TLS",                      req => ['Net::SSLeay']       },
 		pipe            => { name => "Pipe Transport",           req => ['IPC::Open2']        },
-		socket          => { name => "Socket Transport",         req => ['IO::Socket']        },
-		ipv6            => { name => "IPv6",                     req => ['IO::Socket::INET6'] },
+		socket_unix     => { name => "UNIX Socket Transport",    req => ['IO::Socket::UNIX']  },
+		socket_inet     => { name => "IPv4/v6 Socket Transport", req => ['IO::Socket::IP']    },
 		date_manip      => { name => "Date Manipulation",        req => ['POSIX']             },
 		hostname        => { name => "Local Hostname Detection", req => ['Sys::Hostname']     },
 		hires_timing    => { name => "High Resolution Timing",   req => ['Time::HiRes']       },
+		# these are deprecated, not worrying about formatting
+		socket_ipv4_legacy   => { name => "Legacy IPv4 Socket Transport", req => ['IO::Socket::INET'] },
+		socket_ipv6_legacy   => { name => "Legacy IPv4/v6 Socket Transport", req => ['IO::Socket::INET6'] },
 	);
 }
 
@@ -3088,14 +3103,36 @@ sub process_args {
 			ptrans(12, avail_str("pipe").".  Exiting");
 			exit(10);
 		}
-	} else {
-		if (!avail("socket")) {
-			ptrans(12, avail_str("socket").".  Exiting");
-			exit(10);
-		} elsif (($G::link{force_ipv6} || $G::link{server} =~ m|:| ||  $G::link{lint} =~ m|:|) && !avail("ipv6")) {
-			ptrans(12, avail_str("ipv6").".  Exiting");
+	}
+	elsif ($G::link{type} eq 'socket-unix') {
+		if (!avail("socket_unix")) {
+			ptrans(12, avail_str("socket_unix").".  Exiting");
 			exit(10);
 		}
+	}
+	elsif ($G::link{type} eq 'socket-inet') {
+		if (!avail("socket_inet")) {
+			if (!avail('socket_ipv6_legacy')) {
+				my @errors = ();
+				if (!avail('socket_ipv4_legacy')) {
+					push(@errors, avail_str('socket_ipv4_legacy'));
+				}
+				if ($G::link{force_ipv6} || $G::link{server} =~ m|:| ||  $G::link{lint} =~ m|:|) {
+					push(@errors, avail_str('socket_ipv6_legacy'));
+				}
+				if (scalar(@errors)) {
+					ptrans(12, join(', ', @errors) . ".  Exiting");
+					exit(10);
+				}
+				deprecate('Relying on IO::Socket::INET to send via inet sockets. Install IO::Socket::IP instead.');
+			}
+			else {
+				deprecate('Relying on IO::Socket::INET6 to send via inet sockets. Install IO::Socket::IP instead.');
+			}
+		}
+	}
+	else {
+		ptrans(12, "Unknown transport type '$G::link{type}'.  Exiting");
 	}
 
 	# SMTP timeout

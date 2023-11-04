@@ -1,0 +1,14 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
+
+# 14 - IPv6 fails if primary method not available and ipv6_legacy not available
+
+# create a file that will we consumed by swaks and munge the requirements
+pre action: MERGE ./%OUTDIR%/munge-requirements.pl mode:0600 string:'$G::dependencies{socket_inet}{req} = ["Unavailable::Module"]; $G::dependencies{socket_ipv6_legacy}{req} = ["Unavailable::Module"]; return 1;\n'
+
+# set SWAKS_ALTER_REQUIREMENTS to the file we just created so it will be executed
+pre action: SET_ENV PERL5LIB .
+pre action: SET_ENV SWAKS_ALTER_REQUIREMENTS %OUTDIR%/munge-requirements.pl
+
+test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net \
+    --server "::1" \
+    --dump

@@ -265,6 +265,23 @@
   051 --local-interface ip:port1 --local-port port2 -- port2 wins
 
 
+06200 - This is specific to the IO::Socket::IP fallback to IO::Socket/IO::Socket::INET6.  At least some of these will be removed when that deprecated feature is removed
+    0 - prove our method of indicating that socket_inet is unavailable works
+    1 - prove our method of indicating that socket_ipv4_legacy is unavailable works
+    2 - prove our method of indicating that socket_ipv6_legacy is unavailable works
+   10 - IPv4/IPv6 works (by which I mean, doesn't error out if we're running in inet socket mode) even if legacy isn't available
+   11 - IPv4/IPv6 works if primary method not available
+   12 - IPv4 works if primary method not available and ipv6_legacy not available
+   13 - domain works if primary method not available and ipv6_legacy not available
+   14 - IPv6 fails if primary method not available and ipv6_legacy not available
+   15 - domain/force-ipv6 fails if primary method not available and ipv6_legacy not available
+   16 - works if ipv4-only and legacy modules are unavailable
+   17 - works if ipv6 only and legacy modules are unavailable
+
+
+
+
+
 ./gen-tests.pl \
     -n 650 \
     -o pipe \
