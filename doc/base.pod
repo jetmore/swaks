@@ -235,9 +235,9 @@ Swaks can connect to a target via UNIX pipes ("pipes"), UNIX domain sockets ("UN
 
 This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for Swaks.  If none of C<--server>, C<--pipe>, or C<--socket> are given then this transport is used and the target server is determined from the recipient's domain (see C<--server> below for more details).
 
-This transport requires the L<IO::Socket> module which is part of the standard Perl distribution.  If this module is not loadable, attempting to use this transport will result in an error and program termination.
+This transport requires the L<IO::Socket::IP> module for both IPv4 and IPv6 sockets.  If this module is not loadable, Swaks will attempt to use the L<IO::Socket> library for IPv4 and L<IO::Socket::INET6> for IPv6 support.  Attempting to use this transport with none of those libraries available will result in an error and program termination.
 
-IPv6 is supported when the L<IO::Socket::INET6> module is present.
+The fall back to L<IO::Socket> and L<IO::Socket::INET6> is deprecated and will be removed in a future release.  See DEPRECATIONS below
 
 =over 4
 
@@ -269,7 +269,7 @@ Force IPv4 or IPv6. (Arg-None)
 
 =item UNIX SOCKETS
 
-This transport method attempts to deliver messages via a UNIX-domain socket file.  This is useful for testing MTA/MDAs that listen on socket files (for instance, testing LMTP delivery to Cyrus).  This transport requires the L<IO::Socket> module which is part of the standard Perl distribution.  If this module is not loadable, attempting to use this transport will result in an error and program termination.
+This transport method attempts to deliver messages via a UNIX-domain socket file.  This is useful for testing MTA/MDAs that listen on socket files (for instance, testing LMTP delivery to Cyrus).  This transport requires the L<IO::Socket::UNIX> module which is part of the standard Perl distribution.  If this module is not loadable, attempting to use this transport will result in an error and program termination.
 
 =over 4
 
@@ -1067,6 +1067,14 @@ The -g option is currently a less-good alias to C<--data ->.  Any uses of C<-g> 
 Will be removed no sooner than November 1, 2021.
 
 The C<--data>, C<--body>, C<--attach>, and C<--attach-body> options currently will attempt to distinguish between an argument that is the actual value to use vs. an argument that represents a file containing the data to use.  This behavior has been superseded by prefixing an argument to these options with C<@> to explicitly indicate that the argument indicates a file.  Any uses of providing a filename to one of these options should be moved to using C<@> to indicate a filename is being used.
+
+=back
+
+=item use of IO::Socket and IO::Socket::INET6 modules
+
+Will be removed no sooner than (ONE YEAR FROM NEXT RELEASE).
+
+The primary method of sending over IPv4 and IPv6 sockets is implemented with the L<IO::Socket::IP> module.  For the time being there is still legacy support of the L<IO::Socket> and L<IO::Socket::INET6> modules which were previously used.  Please ensure L<IO::Socket::IP> is installed to ensure future functionality.
 
 =back
 

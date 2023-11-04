@@ -1,0 +1,86 @@
+=== AUTH CRAM-MD5 supported
+=== AUTH CRAM-SHA1 supported
+=== AUTH DIGEST-MD5 supported
+=== AUTH NTLM supported
+=== Basic AUTH supported
+=== Date Manipulation supported
+=== High Resolution Timing supported
+*** IPv4/v6 Socket Transport not available: requires Unavailable::Module
+=== Legacy IPv4 Socket Transport supported
+*** Legacy IPv4/v6 Socket Transport not available: requires Unavailable::Module
+=== Local Hostname Detection supported
+=== MX Routing supported
+=== Netrc Credentials supported
+=== Pipe Transport supported
+=== TLS supported
+=== UNIX Socket Transport supported
+
+App Info:
+  X-Mailer = swaks v99999999.9 jetmore.org/john/code/swaks/
+  Cmd Line = %SWAKS_COMMAND% --from 'recip@host1.nodns.test.swaks.net' --to 'user@host1.nodns.test.swaks.net' --server '1.1.1.1' --dump
+
+Output Info:
+  show_time_lapse    = FALSE
+  show_raw_text      = FALSE
+  suppress_data      = FALSE
+  protect_prompt     = FALSE
+  no_hints_send      = FALSE
+  no_hints_recv      = FALSE
+  no_hints_info      = FALSE
+  silent             = 0
+  dump_mail          = FALSE
+  hide_send          = FALSE
+  hide_receive       = FALSE
+  hide_informational = FALSE
+  hide_all           = FALSE
+  trans_fh_of        = STDOUT (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+  trans_fh_ef        = STDERR (GLOB(0xdeadbeef),GLOB(0xdeadbeef))
+
+Transport Info:
+  type            = socket-inet
+  inet protocol   = any
+  server          = 1.1.1.1
+  port            = 25
+  local interface = 
+  local port      = 
+  copy routing    = FALSE
+
+Protocol Info:
+  protocol        = esmtp
+  helo            = LOCAL_HOST_NAME
+  from            = recip@host1.nodns.test.swaks.net
+  to              = user@host1.nodns.test.swaks.net
+  force getpwuid  = FALSE
+  quit after      = 
+  drop after      = 
+  drop after send = 
+  server_only     = FALSE
+  timeout         = 30
+  pipeline        = FALSE
+  prdr            = FALSE
+
+XCLIENT Info:
+  xclient = no
+
+PROXY Info:
+  proxy = no
+
+TLS / Encryption Info:
+  tls = no
+
+Authentication Info:
+  auth = no
+
+DATA Info:
+  data = <<.
+Date: Wed, 03 Nov 1999 11:24:29 -0500
+To: user@host1.nodns.test.swaks.net
+From: recip@host1.nodns.test.swaks.net
+Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+Message-Id: <19991103112429.047942@localhost>
+X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+
+This is a test mailing
+
+
+.
