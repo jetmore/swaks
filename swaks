@@ -52,6 +52,9 @@ if (get_arg('version', \%O)) {
 
 # Get our functional dependencies and then print and exit early if requested
 load_dependencies();
+if (exists($ENV{SWAKS_ALTER_REQUIREMENTS}) && -f $ENV{SWAKS_ALTER_REQUIREMENTS}) { # FOR DEVELOPMENT ONLY
+	require $ENV{SWAKS_ALTER_REQUIREMENTS};                                        # FOR DEVELOPMENT ONLY
+}                                                                                  # FOR DEVELOPMENT ONLY
 if (get_arg('get_support', \%O)) {
 	test_support();
 	exit(0);
