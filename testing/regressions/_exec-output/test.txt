@@ -3,3 +3,7 @@ I'm not convinced this is how I want these tests laid out, but it's better to ha
 
 00050 - confirm that --dump-mail generates expected output
 00060 - confirm that even non-english-locale emails generate english date strings
+
+01000 - test --support when a library isn't available
+01001 - test --support when multiple libraries are required and one isn't available
+01002 - base 64 available even if optional moduule is missing
