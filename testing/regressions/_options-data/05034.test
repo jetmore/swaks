@@ -1,0 +1,9 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
+
+title: 34 data, @@existent-file works, without path
+
+pre action: MERGE @SWAKS-TEST-DATA.txt file:%TESTDIR%/@data-plain.txt
+
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver --helo host1.nodns.test.swaks.net --from from@host1.nodns.test.swaks.net --data @@SWAKS-TEST-DATA.txt
+
+test action: REMOVE_FILE @SWAKS-TEST-DATA.txt

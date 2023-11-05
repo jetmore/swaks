@@ -4,6 +4,6 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 
 title: data, config, invalid arg
 
-pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'data /path/to/bogus/file'
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'data @/path/to/bogus/file'
 test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" \
     --config %OUTDIR%/swaksrc-%TESTID%
