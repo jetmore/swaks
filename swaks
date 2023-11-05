@@ -3158,7 +3158,8 @@ sub process_args {
 					if ($name ne '-' && $filename !~ /^\@/ && $name ne $tpart->{body} && -f $filename) {
 						# name will have the unprocessed arg.  If we think it came from a file, use the filename for
 						# the attachment name.  Not super happy with this logic, try to improve in the future
-						($tpart->{name}) = $name =~ m|/?([^/]+)$|;
+						$tpart->{name} = $filename;
+						$tpart->{name} =~ s|^.*/([^/]+)$|$1|;
 					}
 				}
 				push(@{$parts{rest}}, $tpart);

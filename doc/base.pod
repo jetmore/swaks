@@ -153,7 +153,7 @@ An option labeled with From-File will handle arguments as files in certain situa
 
 If the initial argument is C<->, the final argument is the contents of C<STDIN>.  Multiple options can all specify C<STDIN>, but the same content will be used for each of them.
 
-If the initial argument is prefixed with C<@>, the argument will be treated as a path to a file.  The file will be opened and the contents will be used as the final argument.  If the contents of the file can't be read, Swaks will exit.  To specify a literal value starting with an C<@>, use two C<@> symbols.  The first will be stripped.
+If the initial argument is prefixed with C<@>, the argument will be treated as a path to a file.  The file will be opened and the contents will be used as the final argument.  If the contents of the file can't be read, Swaks will exit.  To specify a literal string value starting with an C<@>, use two C<@> symbols.  The first will be stripped.  It is not possible to include an unqualified file which starts with an C<@> sign (like C<--attach @file.txt> or C<--attach @@file.txt>), but if you include a path to the file which splits up the two C<@> signs, that will work (eg C<--attach @./@file.txt> will cinlude the contents of the file @file.txt).
 
 =item Sensitive
 
