@@ -370,6 +370,10 @@
 
 
 
+
+
+
+
 05000
     1 data, test data from file (plain)
     2 data, data from a file (tokens)
@@ -391,9 +395,14 @@
     18 -g rewrite doesn't disturb --header-Foo processing when it appears immediately following
     19 -g removal doesn't distrub --opt=foo processing when it appears immediately following
     20 -g rewrite doesn't distrub --opt=foo processing when it appears immediately following
-    21 data, @existent-file works
-    22 data, @non-existstent-file works
-    23 data, @@non-file works
+    21 data, @existent-file works, with path
+    22 data, @non-existstent-file works, with path
+    23 data, @@non-file works, with path
+    24 data, @@existent-file works, with path
+    31 data, @existent-file works, without path
+    32 data, @non-existstent-file works, without path
+    #33
+    34 data, @@existent-file is interpretted as string data (not a file) with first @ removed
 05100 --body
     0 - works inline
     1 - '-' reads from stdin
@@ -401,6 +410,11 @@
     3 body, @existent-file works
     4 body, @non-existstent-file works
     5 body, @@non-file works
+    6 body, @@existent-file works, with path
+   13 body, @existent-file works, without path
+   14 body, @non-existstent-file works, without path
+   #15
+   16 body, @@existent-file is interpretted as string data (not a file) with first @ removed
 05200 - headers
     1 - --add-header adds unique
     2 - --add-header adds duplicate
@@ -454,16 +468,26 @@
     0 - works inline
     1 - '-' reads from stdin
     2 - works from file
-    3 attach, @existent-file works
-    4 attach, @non-existstent-file works
-    5 attach, @@non-file works
+    3 attach, @existent-file works, with path
+    4 attach, @non-existstent-file works, with path
+    5 attach, @@non-file works, with path
+    6 attach, @@existent-file works, with path
+   13 attach, @existent-file works, without path
+   14 attach, @non-existstent-file works, without path
+   #15
+   16 attach, @@existent-file is interpretted as string data (not a file) with first @ removed
 05400 --attach-body
     0 - works inline
     1 - '-' reads from stdin
     2 - works from file
-    3 attach-body, @existent-file works
-    4 attach-body, @non-existstent-file works
-    5 attach-body, @@non-file works
+    3 attach-body, @existent-file works, with path
+    4 attach-body, @non-existstent-file works, with path
+    5 attach-body, @@non-file works, with path
+    6 attach-body, @@existent-file works, with path
+   13 attach-body, @existent-file works, without path
+   14 attach-body, @non-existstent-file works, without path
+   #15
+   16 attach-body, @@existent-file is interpretted as string data (not a file) with first @ removed
 05500 - body, attach interplay
     0 - baseline. Use --body to set different body value
     1 - --attach argument

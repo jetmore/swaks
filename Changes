@@ -1013,4 +1013,9 @@
 * 20231103 Update copyright year to 2023
 * 20231103 Fix unreliable results certificate/hostname verification
 * 20231104 Switch to using IO::Socket::IP by default.  Fall back to
-           IO::Socket::INET/INET6, but deprecate the use of these libraries
+           IO::Socket::INET/INET6; deprecate the use of these libraries #43
+* 20231105 Remove deprecated ability to infer filename vs. inline data for
+           --data, --body, --attach, and --attach-body options
+* 20231105 Fix bug which caused the "I really mean a filename" @sigil to
+           be included in the attachment filename in the body of the email.
+           It is now stripped from the filename before use (#55)

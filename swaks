@@ -2741,36 +2741,6 @@ sub get_arg {
 					$return = join('', <F>);
 					close(F);
 				}
-
-				{
-					# All of the functionality in this bare block is deprecated, remove the whole thing later.
-					# if --data and single line, try to open it, error otherwise
-					# if !--data and is openable file, try to open and read, otherwise just use it as literal data
-					if ($argExt->{opt} eq 'data') {
-						# the old rule for --data was that anything that didn't have a newline in it would be treated
-						# as a file, and we would error if we couldn't open it. That would prevent us from sending
-						# typoed filenames as the data of messages
-						if ($return !~ m/\\n|\n|$G::tokens->{NEWLINE}{regexp}/) {
-							deprecate('Inferring a filename from the argument to --' . $argExt->{opt} .
-							          ' will be removed in the future.  Prefix filenames with \'@\' instead.');
-							if (!open(F, "<$return")) {
-								ptrans(12, "$argExt->{opt} option appears to be a file but is not openable: $return ($!)");
-								exit(1);
-							}
-							$return = join('', <F>);
-							close(F);
-						}
-					}
-					elsif (open(F, "<$return")) {
-						# the old rule for any other file option (--attach, --attach-body, --body) was that
-						# if it was openable, we would use the contents of the file, otherwise we would
-						# use the string itself
-						deprecate('Inferring a filename from the argument to --' . $argExt->{opt} .
-						          ' will be removed in the future.  Prefix filenames with \'@\' instead.');
-						$return = join('', <F>);
-						close(F);
-					}
-				}
 			}
 		}
 	}
@@ -3188,7 +3158,8 @@ sub process_args {
 					if ($name ne '-' && $filename !~ /^\@/ && $name ne $tpart->{body} && -f $filename) {
 						# name will have the unprocessed arg.  If we think it came from a file, use the filename for
 						# the attachment name.  Not super happy with this logic, try to improve in the future
-						($tpart->{name}) = $name =~ m|/?([^/]+)$|;
+						$tpart->{name} = $filename;
+						$tpart->{name} =~ s|^.*/([^/]+)$|$1|;
 					}
 				}
 				push(@{$parts{rest}}, $tpart);

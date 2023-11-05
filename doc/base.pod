@@ -153,7 +153,7 @@ An option labeled with From-File will handle arguments as files in certain situa
 
 If the initial argument is C<->, the final argument is the contents of C<STDIN>.  Multiple options can all specify C<STDIN>, but the same content will be used for each of them.
 
-If the initial argument is prefixed with C<@>, the argument will be treated as a path to a file.  The file will be opened and the contents will be used as the final argument.  If the contents of the file can't be read, Swaks will exit.  To specify a literal value starting with an C<@>, use two C<@> symbols.  The first will be stripped.
+If the initial argument is prefixed with C<@>, the argument will be treated as a path to a file.  The file will be opened and the contents will be used as the final argument.  If the contents of the file can't be read, Swaks will exit.  To specify a literal string value starting with an C<@>, use two C<@> symbols.  The first will be stripped.  It is not possible to include an unqualified file which starts with an C<@> sign (like C<--attach @file.txt> or C<--attach @@file.txt>), but if you include a path to the file which splits up the two C<@> signs, that will work (eg C<--attach @./@file.txt> will cinlude the contents of the file @file.txt).
 
 =item Sensitive
 
@@ -1061,12 +1061,6 @@ The following features are deprecated and will be removed in a future version of
 Will be removed no sooner than November 1, 2021.
 
 The -g option is currently a less-good alias to C<--data ->.  Any uses of C<-g> should be able to be directly migrated to C<--data -> instead.
-
-=item auto-filename detection
-
-Will be removed no sooner than November 1, 2021.
-
-The C<--data>, C<--body>, C<--attach>, and C<--attach-body> options currently will attempt to distinguish between an argument that is the actual value to use vs. an argument that represents a file containing the data to use.  This behavior has been superseded by prefixing an argument to these options with C<@> to explicitly indicate that the argument indicates a file.  Any uses of providing a filename to one of these options should be moved to using C<@> to indicate a filename is being used.
 
 =back
 

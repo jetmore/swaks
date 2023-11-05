@@ -5,4 +5,4 @@ auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
 title: d, command line, invalid arg
 
 test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" \
-    --d '/path/to/bogus/file'
+    --d '@/path/to/bogus/file'
