@@ -3,11 +3,16 @@
 use strict;
 use Getopt::Long;
 
+# read up on ca/int-ca signing options:
+# https://superuser.com/a/738644
+
 my $opts = {};
-GetOptions($opts, 'signed!', 'expires=i', 'exclude-cn!', 'san:s@') || die "Couldn't understand options\n";
+GetOptions($opts, 'signed!', 'expires=i', 'exclude-cn!', 'san:s@', 'intermediate!', 'ca-cert=s') || die "Couldn't understand options\n";
 # --signed - sign the cert with our CA.  By default the generated cert will be self-signed
 # --expires - number of days from today to expire (DEFAULT: 3600)
 # --exclude-cn - don't include the cn in the subject.  By default CN=$domain will be included in the subject
+# --intermediate - set CA:TRUE instead of FALSE when signing
+# --ca-cert - the ca file to use for signing (if requested). Defaults to 'ca'.  Expects files ARG.pem and ARG.key to exist
 # --san - set argument as subject alternate name
 #    - can be provided more than once
 #    - by default, SAN will be set to the <domain>.  If --san is provided with no arg, no SAN will be created
@@ -16,10 +21,12 @@ my $domain   = shift || die "No domain specified\n";
 my $filename = shift || $domain;
 
 
-my $cafile    = 'ca';
+my $cafile    = $opts->{'ca-cert'} || 'ca';
 my $signed    = $opts->{signed} || 0;
 my $expires   = $opts->{expires} || 3600;
 my $includeCn = $opts->{'exclude-cn'} ? 0 : 1;
+my $allowCa   = $opts->{intermediate} ? 'TRUE' : 'FALSE';
+my $keyUsage  = $opts->{intermediate} ? 'cRLSign, keyCertSign' : 'nonRepudiation, keyEncipherment, dataEncipherment';
 my @san       = (exists($opts->{san}) && ref($opts->{san})) ? @{$opts->{san}} : ($domain);
 @san          = () if (scalar(grep /^$/, @san));
 
@@ -38,8 +45,8 @@ system(
 
 open(O, ">$filename.ext") || die "Couldn't open $filename.ext to write: $!\n";
 print O "authorityKeyIdentifier=keyid,issuer\n",
-        "basicConstraints=CA:FALSE\n",
-        "keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment\n";
+        "basicConstraints=CA:$allowCa\n",
+        "keyUsage = digitalSignature, $keyUsage\n";
 if (scalar(@san)) {
 	print O "subjectAltName = \@alt_names\n",
 	        "[alt_names]\n";

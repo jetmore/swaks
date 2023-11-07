@@ -1,7 +1,7 @@
 # advertize everything possible
 get_line(); # EHLO
 send_line("250-SERVER Hello Server [1.1.1.1]");
-send_line("250-TLS peer DN=$cxn{tls}{peer_cert_subject}");
+show_tls_info();
 send_line("250-PIPELINING");
 send_line("250-XCLIENT ADDR NAME PORT PROTO DESTADDR DESTPORT HELO LOGIN REVERSE_NAME");
 send_line("250-PRDR");
