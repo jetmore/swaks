@@ -312,21 +312,43 @@
   1032 tls-verify-target, command line, valid arg (--option=)
 
 
+01050 --tls-chain
+  1050 tls-chain, command line, no arg
+  1051 tls-chain, command line, valid arg
+  # 1052 tls-chain, command line, invalid arg
+  1053 tls-chain, command line, no-option
+  1060 tls-chain, config, no arg
+  1061 tls-chain, config, valid arg
+  # 1062 tls-chain, config, invalid arg
+  1063 tls-chain, config, no-option
+  1070 tls-chain, env var, no arg
+  1071 tls-chain, env var, valid arg
+  # 1072 tls-chain, env var, invalid arg
+  1073 tls-chain, env var, no-option
+  1080 tls-chain command line, no arg (-option)
+  1081 tls-chain, command line, valid arg (-option=)
+  1082 tls-chain, command line, valid arg (--option=)
+
+
 
 
 
 05000 misc
   0 --tls-cert without --tls-key is an error
   1 --tls-key without --tls-cert is an error
+  #2 --tls-chain without --tls-cert or --tls-key
+  #3 --tls-chain without --tls-key
+  #4 --tls-chain without --tls-cert
+#### cert/key/chain matrix
 
 ./gen-tests.pl \
-    -n 1000 \
-    -o tls-verify-target \
-    -v "TLS_HOST_VERIFICATION_STRING" \
+    -n 1050 \
+    -o tls-chain \
+    -v "/CHAIN/FILE" \
     -i '' \
     -d . \
     -r \
-    -s '%SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --tls'
+    -s '%SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --tls --tls-cert /CERT/FILE --tls-key /KEY/FILE'
 
 ./gen-tests.pl '.' '750' 'tls-key' '%TESTDIR%/%TESTID%.test' '/path/to/CertFile'
 

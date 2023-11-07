@@ -539,7 +539,7 @@ Specify an alternate location for CA information for verifying server certificat
 
 =item --tls-cert <cert-file>
 
-Provide a path to a file containing the local certificate Swaks should use if TLS is negotiated.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-key> is also required. (Arg-Required)
+Provide a path to a file containing the local certificate Swaks should use if TLS is negotiated.  If a certificate chain needs to be provided, it can be provided via this file or via a separate file with C<--tls-chain>.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-key> is also required. (Arg-Required)
 
 =item --tls-key <key-file>
 
@@ -547,7 +547,7 @@ Provide a path to a file containing the local private key Swaks should use if TL
 
 =item --tls-chain <chain-file>
 
-Provide a path to a file containing the local certificate chain (starting with the certificate followed by the necessary intermediate CA certificates) Swaks should use if TLS is negotiated.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-cert> and C<--tls-key> are also required. (Arg-Required)
+Provide a path to a file containing the local certificate chain Swaks should use if TLS is negotiated.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-cert> and C<--tls-key> are also required. (Arg-Required)
 
 =item --tls-get-peer-cert [<output-file>]
 

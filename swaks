@@ -392,10 +392,14 @@ sub xclient_try {
 sub tls_post_start {
 	ptrans(11, "TLS started with cipher $G::link{tls}{cipher_string}");
 	ptrans(11, "TLS client certificate " . ($G::link{tls}{server_requested_cert} ? '' : 'not ') . "requested and " . ($G::link{tls}{client_sent_cert} ? '' : 'not ') . "sent");
-	if ($G::link{tls}{local_cert_subject}) {
-		ptrans(11, "TLS local DN=\"$G::link{tls}{local_cert_subject}\"");
-	} else {
+	if (!exists($G::link{tls}{local_cert_subjects}) || !ref($G::link{tls}{local_cert_subjects}) eq 'ARRAY' || !scalar(@{$G::link{tls}{local_cert_subjects}})) {
 		ptrans(11, "TLS no local certificate set");
+	} else {
+		my $type = 'local';
+		foreach my $subject (@{$G::link{tls}{local_cert_subjects}}) {
+			ptrans(11, "TLS $type DN=\"$subject\"");
+			$type = 'chain';
+		}
 	}
 	ptrans(11, "TLS peer DN=\"$G::link{tls}{cert_subject}\"");
 	ptrans(11, sprintf("TLS peer certificate %s CA verification, %s host verification (%s)",
@@ -536,18 +540,46 @@ sub start_tls {
 		}
 	}
 	if ($G::tls_cert && $G::tls_key) {
-		if ($G::tls_chain) {
-			if (!Net::SSLeay::CTX_use_certificate_chain_file($t{con}, $G::tls_chain)) {
-				$t{res} = "Unable to set chain file $G::tls_chain to SSL CTX: "
-					. Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		# load certificates from tls-cert and, if present, tls-chain.  Doing it this way allows us maximum flexibility
+		# tls-cert only - end cert only, no chain
+		# tls-cert only - entire chain
+		# tls-crt+tls-chain - end crt in tls-crt, chain in tls-chain
+		my $sawFirstCert = 0;
+		foreach my $file ($G::tls_cert, $G::tls_chain) {
+			next if (!$file);
+			my $fileCertNum = -1;
+
+			my $bio = Net::SSLeay::BIO_new_file($file, 'r');
+			if (!$bio) {
+				$t{res} = "Unable to read from cert file $file: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 				return(0);
 			}
+			while (my $x509 = Net::SSLeay::PEM_read_bio_X509($bio)) {
+				$fileCertNum++;
+				push(@{$t{local_cert_subjects}}, Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x509)));
+				if ($sawFirstCert) {
+					if (!Net::SSLeay::CTX_add_extra_chain_cert($t{con}, $x509)) {
+						$t{res} = "Unable to add chain cert $fileCertNum from $file to SSL CTX: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+						return(0);
+					}
+				}
+				else {
+					if (!Net::SSLeay::CTX_use_certificate($t{con}, $x509)) {
+						$t{res} = "Unable to add cert $fileCertNum from $file to SSL CTX: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+						return(0);
+					}
+					$sawFirstCert = 1;
+				}
+			}
+			# doing the read_bio in a loop like that will result in an error on the last read, clear it
+			Net::SSLeay::ERR_clear_error();
+
+			# This might result in an error, but I'm not sure what the downside of continuing is since swaks is a short-lived tool and this
+			# would basically be a resource leak
+			Net::SSLeay::BIO_free($bio);
+			Net::SSLeay::ERR_clear_error();
 		}
-		if (!Net::SSLeay::CTX_use_certificate_file($t{con}, $G::tls_cert, &Net::SSLeay::FILETYPE_PEM)) {
-			$t{res} = "Unable to add cert file $G::tls_cert to SSL CTX: "
-			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
-			return(0);
-		}
+
 		if (!Net::SSLeay::CTX_use_PrivateKey_file($t{con}, $G::tls_key, &Net::SSLeay::FILETYPE_PEM)) {
 			$t{res} = "Unable to add key file $G::tls_key to SSL CTX: "
 			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
@@ -3373,14 +3405,14 @@ sub process_args {
 		$G::tls_sni_hostname  = get_arg('tls_sni_hostname', $o);
 		$G::tls_cipher        = get_arg('tls_cipher', $o);
 		$G::tls_cert          = get_arg('tls_cert', $o);
-		$G::tls_chain        = get_arg('tls_chain', $o);
+		$G::tls_chain         = get_arg('tls_chain', $o);
 		$G::tls_key           = get_arg('tls_key', $o);
 		if (($G::tls_cert || $G::tls_key) && !($G::tls_cert && $G::tls_key)) {
 			ptrans(12, "--tls-cert and --tls-key require each other.  Exiting");
 			exit(1);
 		}
 		if (($G::tls_chain) && !($G::tls_cert && $G::tls_key)) {
-			ptrans(12, "--tls-chain requires also --tls-cert and --tls-key.  Exiting");
+			ptrans(12, "--tls-chain requires both --tls-cert and --tls-key.  Exiting");
 			exit(1);
 		}
 		if (($G::tls_ca_path = get_arg('tls_ca_path', $o)) && !-f $G::tls_ca_path && !-d $G::tls_ca_path) {

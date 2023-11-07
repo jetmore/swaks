@@ -3,6 +3,7 @@ TLS / Encryption Info:
   peer cert           = 
   local cert          = 
   local key           = 
+  local chain         = 
   local cipher list   = 
   ca path             = %TESTDIR%/00621.test
   sni string          = 
