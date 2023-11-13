@@ -269,18 +269,42 @@ sub start_tls {
       $cxn{tls}{version_name} = 'TLSv1.3';
     }
   }
-  $cxn{tls}{version_string}    = sprintf("0x%04x/%s", $cxn{tls}{version}, $cxn{tls}{version_name});
-  $cxn{tls}{cipher}            = Net::SSLeay::get_cipher($cxn{tls}{ssl});
-  $cxn{tls}{sni_string}      ||= "No SNI string present";
-  $cxn{tls}{peer_cert}         = Net::SSLeay::get_peer_certificate($cxn{tls}{ssl});
+  $cxn{tls}{version_string}     = sprintf("0x%04x/%s", $cxn{tls}{version}, $cxn{tls}{version_name});
+  $cxn{tls}{cipher}             = Net::SSLeay::get_cipher($cxn{tls}{ssl});
+  $cxn{tls}{sni_string}       ||= "No SNI string present";
+  $cxn{tls}{peer_cert}          = Net::SSLeay::get_peer_certificate($cxn{tls}{ssl});
+  $cxn{tls}{peer_certs}         = [ Net::SSLeay::get_peer_cert_chain($cxn{tls}{ssl}) ];
+
+  $cxn{tls}{peer_cert_subject}  = "No client certificate present";
+  $cxn{tls}{peer_cert_subjects} = [];
+
   if ($cxn{tls}{peer_cert}) {
     $cxn{tls}{peer_cert_subject} = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($cxn{tls}{peer_cert}));
+    push(@{$cxn{tls}{peer_cert_subjects}}, $cxn{tls}{peer_cert_subject});
   }
-  else {
-    $cxn{tls}{peer_cert_subject} = "No client certificate present";
+
+  if ($cxn{tls}{peer_certs} && scalar(@{$cxn{tls}{peer_certs}})) {
+    foreach my $cert (@{$cxn{tls}{peer_certs}}) {
+      push(@{$cxn{tls}{peer_cert_subjects}}, Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($cert)));
+    }
   }
+
   print L "* Cipher '$cxn{tls}{cipher}'\n" if (!$opt{silent});
 }
+
+sub show_tls_info {
+  #250-TLS peer DN=/C=US/ST=Indiana/O=Swaks Development (unsigned.example.com, with-SAN)/CN=unsigned.example.com/emailAddress=proj-swaks@jetmore.net
+    if ($cxn{tls}{peer_cert_subjects} && scalar(@{$cxn{tls}{peer_cert_subjects}})) {
+      for (my $i = 0; $i < scalar(@{$cxn{tls}{peer_cert_subjects}}); $i++) {
+        my $subject = $cxn{tls}{peer_cert_subjects}[$i];
+        send_line("250-TLS peer $i DN=$subject");
+      }
+    }
+    else {
+      send_line("250-TLS peer DN=No client certificate present");
+    }
+}
+
 
 sub verify {
   return 1; # 0 means ok

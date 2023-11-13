@@ -3,6 +3,7 @@ TLS / Encryption Info:
   peer cert           = 
   local cert          = 
   local key           = 
+  local chain         = 
   local cipher list   = 3DES:+RSA
   ca path             = 
   sni string          = 

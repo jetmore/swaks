@@ -7,6 +7,8 @@ other root ca that doesn't actually sign any of these certs:
   openssl genrsa -out ca-other.key 2048
   openssl req -x509 -new -nodes -key ca-other.key -sha256 -days 3650 -out ca-other.pem -subj "/C=US/ST=Indiana/O=Other Development/CN=Other Root CA/emailAddress=proj-swaks@jetmore.net"
 
+
+
 get contents of a crt:
   openssl x509 -text -in signed.example.com.crt
 
@@ -123,3 +125,63 @@ SPECIALTY CERTS:
     # Subject: C = US, ST = Indiana, O = "Swaks Development (san-multiple.example.com, with-SAN)", CN = san-multiple.example.com, emailAddress = proj-swaks@jetmore.net
     # X509v3 Subject Alternative Name:
     # DNS:san-multiple.example.com, DNS:san-m1.example.com, DNS:san-m2.example.com
+
+
+
+
+------------------------------
+Create an intermediate cert
+
+
+
+./generate-cert.pl --signed --intermediate --san --exclude-cn ca-intermediate
+    # Signed: ca.pem
+    # Files: ca-intermediate.key, ca-intermediate.crt
+    # Not After : Sep 15 22:49:32 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (ca-intermediate, without-SAN)", emailAddress = proj-swaks@jetmore.net
+
+mv ca-intermediate.crt ca-intermediate.pem
+
+./generate-cert.pl --signed --ca-cert ca-intermediate signed-intermediate.example.com
+    # Signed: ca-intermediate.pem
+    # Files: signed-intermediate.example.com.key, signed-intermediate.example.com.crt
+    # Not After : Sep 15 22:49:58 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (signed-intermediate.example.com, with-SAN)", CN = signed-intermediate.example.com, emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # DNS:signed-intermediate.example.com
+
+c_rehash ~/Documents/git/swaks/testing/certs
+cat ca-intermediate.pem ca.pem > ca-chain.pem
+
+
+$ openssl verify -show_chain -CAfile ca.pem ca-intermediate.pem
+ca-intermediate.pem: OK
+Chain:
+depth=0: C = US, ST = Indiana, O = "Swaks Development (ca-intermediate, without-SAN)", emailAddress = proj-swaks@jetmore.net (untrusted)
+depth=1: C = US, ST = Indiana, O = Swaks Development, CN = Swaks Root CA, emailAddress = proj-swaks@jetmore.net
+
+$ openssl verify -show_chain -CAfile ca-intermediate.pem signed-intermediate.example.com.crt
+C = US, ST = Indiana, O = "Swaks Development (ca-intermediate, without-SAN)", emailAddress = proj-swaks@jetmore.net
+error 2 at 1 depth lookup: unable to get issuer certificate
+error signed-intermediate.example.com.crt: verification failed
+C0E44A4EF87F0000:error:80000002:system library:file_open:No such file or directory:providers/implementations/storemgmt/file_store.c:267:calling stat(/usr/local/etc/openssl@3/certs)
+
+$ c_rehash ~/Documents/git/swaks/testing/certs
+$ openssl verify -CApath ./ signed-intermediate.example.com.crt
+signed-intermediate.example.com.crt: OK
+
+
+# create the chain file, just the certs in the chain, does not include the end cert
+$ cat ca-intermediate.pem ca.pem > ca-chain.pem
+$ openssl verify -CAfile ca-chain.pem signed-intermediate.example.com.crt
+signed-intermediate.example.com.crt: OK
+
+# create a complete cert chain, including the end user cert
+$ cat signed-intermediate.example.com.crt ca-intermediate.pem ca.pem > signed-intermediate-full-chain.pem
+$ openssl verify -CAfile signed-intermediate-full-chain.pem signed-intermediate.example.com.crt
+signed-intermediate.example.com.crt: OK
+
+
+
+
+

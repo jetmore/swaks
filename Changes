@@ -1019,3 +1019,5 @@
 * 20231105 Fix bug which caused the "I really mean a filename" @sigil to
            be included in the attachment filename in the body of the email.
            It is now stripped from the filename before use (#55)
+* 20231110 implement --tls-chain (based on initial implementation by
+           Wolfgang Karall-Ahlborn in #60)

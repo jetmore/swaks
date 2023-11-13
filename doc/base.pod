@@ -483,7 +483,7 @@ Tell Swaks to use the system-default method of determining the current user's us
 
 These are options related to encrypting the transaction.  These have been tested and confirmed to work with all three transport methods.  The L<Net::SSLeay> module is used to perform encryption when it is requested.  If this module is not loadable Swaks will either ignore the TLS request or error out, depending on whether the request was optional.  STARTTLS is defined as an extension in the ESMTP protocol and will be unavailable if C<--protocol> is set to a variation of plain SMTP.  Because it is not defined in the protocol itself, C<--tls-on-connect> is available for any protocol type if the target supports it.
 
-A local certificate is not required for a TLS connection to be negotiated.  However, some servers use client certificate checking to verify that the client is allowed to connect.  Swaks can be told to use a specific local certificate using the C<--tls-cert> and C<--tls-key> options.
+A local certificate is not required for a TLS connection to be negotiated.  However, some servers use client certificate checking to verify that the client is allowed to connect.  Swaks can be told to use a specific local certificate using the C<--tls-cert> and C<--tls-key> options, and optionally to use a certificate chain using the C<--tls-chain> option.
 
 =over 4
 
@@ -539,11 +539,15 @@ Specify an alternate location for CA information for verifying server certificat
 
 =item --tls-cert <cert-file>
 
-Provide a path to a file containing the local certificate Swaks should use if TLS is negotiated.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-key> is also required. (Arg-Required)
+Provide a path to a file containing the local certificate Swaks should use if TLS is negotiated.  If a certificate chain needs to be provided, it can be provided via this file or via a separate file with C<--tls-chain>.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-key> is also required. (Arg-Required)
 
 =item --tls-key <key-file>
 
 Provide a path to a file containing the local private key Swaks should use if TLS is negotiated.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-cert> is also required. (Arg-Required)
+
+=item --tls-chain <chain-file>
+
+Provide a path to a file containing the local certificate chain Swaks should use if TLS is negotiated.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-cert> and C<--tls-key> are also required. (Arg-Required)
 
 =item --tls-get-peer-cert [<output-file>]
 

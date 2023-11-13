@@ -24,7 +24,7 @@
 === TLS peer certificate failed CA verification, failed host verification (no host string available to verify)
  ~> EHLO hserver
 <~  250-SERVER Hello Server [1.1.1.1]
-<~  250-TLS peer DN=/C=US/ST=Indiana/O=Swaks Development (unsigned.example.com, with-SAN)/CN=unsigned.example.com/emailAddress=proj-swaks@jetmore.net
+<~  250-TLS peer 0 DN=/C=US/ST=Indiana/O=Swaks Development (unsigned.example.com, with-SAN)/CN=unsigned.example.com/emailAddress=proj-swaks@jetmore.net
 <~  250-PIPELINING
 <~  250-XCLIENT ADDR NAME PORT PROTO DESTADDR DESTPORT HELO LOGIN REVERSE_NAME
 <~  250-PRDR
