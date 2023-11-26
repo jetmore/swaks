@@ -19,8 +19,22 @@
 <-  220 TLS go ahead
 === TLS started with cipher VERSION:CIPHER:BITS
 === TLS client certificate not requested and not sent
-=== TLS no local certificate set
-=== TLS peer DN="/C=US/ST=Indiana/O=Swaks Development (::1, with-SAN)/emailAddress=proj-swaks@jetmore.net"
+=== TLS no client certificate set
+=== TLS peer[0]   DN="/C=US/ST=Indiana/O=Swaks Development (::1, with-SAN)/emailAddress=proj-swaks@jetmore.net"
+===               notBefore=2023-11-03T14:57:04Z
+===               notAfter=2033-09-11T14:57:04Z
+===               subjectAltName=[ IP Address:::1 ]
+===               commonName=
+=== TLS peer[1]   DN="/C=US/ST=Indiana/O=Swaks Development (::1, with-SAN)/emailAddress=proj-swaks@jetmore.net"
+===               notBefore=2023-11-03T14:57:04Z
+===               notAfter=2033-09-11T14:57:04Z
+===               subjectAltName=[ IP Address:::1 ]
+===               commonName=
+=== TLS peer[2]   DN="/C=US/ST=Indiana/O=Swaks Development (::1, with-SAN)/emailAddress=proj-swaks@jetmore.net"
+===               notBefore=2023-11-03T14:57:04Z
+===               notAfter=2033-09-11T14:57:04Z
+===               subjectAltName=[ IP Address:::1 ]
+===               commonName=
 === TLS peer certificate failed CA verification, passed host verification (using host ::1 to verify)
  ~> QUIT
 <~  221 SERVER closing connection

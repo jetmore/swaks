@@ -19,8 +19,22 @@
 <-  220 TLS go ahead
 === TLS started with cipher VERSION:CIPHER:BITS
 === TLS client certificate not requested and not sent
-=== TLS no local certificate set
-=== TLS peer DN="/C=US/ST=Indiana/O=Swaks Development (signed.example.com, with-SAN)/CN=signed.example.com/emailAddress=proj-swaks@jetmore.net"
+=== TLS no client certificate set
+=== TLS peer[0]   DN="/C=US/ST=Indiana/O=Swaks Development (signed.example.com, with-SAN)/CN=signed.example.com/emailAddress=proj-swaks@jetmore.net"
+===               notBefore=2023-11-03T14:50:47Z
+===               notAfter=2033-09-11T14:50:47Z
+===               subjectAltName=[ DNS:signed.example.com ]
+===               commonName=signed.example.com
+=== TLS peer[1]   DN="/C=US/ST=Indiana/O=Swaks Development (signed.example.com, with-SAN)/CN=signed.example.com/emailAddress=proj-swaks@jetmore.net"
+===               notBefore=2023-11-03T14:50:47Z
+===               notAfter=2033-09-11T14:50:47Z
+===               subjectAltName=[ DNS:signed.example.com ]
+===               commonName=signed.example.com
+=== TLS peer[2]   DN="/C=US/ST=Indiana/O=Swaks Development (signed.example.com, with-SAN)/CN=signed.example.com/emailAddress=proj-swaks@jetmore.net"
+===               notBefore=2023-11-03T14:50:47Z
+===               notAfter=2033-09-11T14:50:47Z
+===               subjectAltName=[ DNS:signed.example.com ]
+===               commonName=signed.example.com
 === TLS peer certificate failed CA verification, failed host verification (no host string available to verify)
  ~> QUIT
 <~  221 SERVER closing connection

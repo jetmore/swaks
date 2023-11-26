@@ -392,15 +392,16 @@ sub xclient_try {
 sub tls_post_start {
 	ptrans(11, "TLS started with cipher $G::link{tls}{cipher_string}");
 	ptrans(11, "TLS client certificate " . ($G::link{tls}{server_requested_cert} ? '' : 'not ') . "requested and " . ($G::link{tls}{client_sent_cert} ? '' : 'not ') . "sent");
-	if (!exists($G::link{tls}{local_cert_subjects}) || !ref($G::link{tls}{local_cert_subjects}) eq 'ARRAY' || !scalar(@{$G::link{tls}{local_cert_subjects}})) {
-		ptrans(11, "TLS no local certificate set");
+	if (!exists($G::link{tls}{local_certs}) || !ref($G::link{tls}{local_certs}) eq 'ARRAY' || !scalar(@{$G::link{tls}{local_certs}})) {
+		ptrans(11, "TLS no client certificate set");
 	} else {
-		for(my $i = 0; $i < scalar(@{$G::link{tls}{local_cert_subjects}}); $i++) {
-			my $string = sprintf('TLS local%s DN="%s"', scalar(@{$G::link{tls}{local_cert_subjects}}) > 1 ? "[$i]" : '', $G::link{tls}{local_cert_subjects}[$i]);
-			ptrans(11, $string);
+		for (my $i = 0; $i < scalar(@{$G::link{tls}{local_certs}}); $i++) {
+			print_cert_info($G::link{tls}{local_certs}, $i, "client");
 		}
 	}
-	ptrans(11, "TLS peer DN=\"$G::link{tls}{cert_subject}\"");
+	for (my $i = 0; $i < scalar(@{$G::link{tls}{server_certs}}); $i++) {
+		print_cert_info($G::link{tls}{server_certs}, $i, "peer");
+	}
 	ptrans(11, sprintf("TLS peer certificate %s CA verification, %s host verification (%s)",
 		$G::link{tls}{server_cert_verified_ca}   ? 'passed' : 'failed',
 		$G::link{tls}{server_cert_verified_host} ? 'passed' : 'failed',
@@ -415,6 +416,87 @@ sub tls_post_start {
 		print CERT $G::link{tls}{cert_x509}, "\n";
 		close(CERT);
 	}
+}
+
+sub print_cert_info {
+	my $list     = shift;
+	my $pos      = shift;
+	my $label    = shift;
+	my $x509     = $list->[$pos];
+	my $indent   = ' ' x 14;
+	my $fmtLabel = sprintf("%s%s", $label, scalar(@$list) > 1 ? "[$pos]" : '');
+
+	ptrans(11, sprintf('TLS %-9s DN="%s"', $fmtLabel, Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x509))));
+	ptrans(11, sprintf("%snotBefore=%s", $indent, Net::SSLeay::P_ASN1_TIME_get_isotime(Net::SSLeay::X509_get_notBefore($x509))));
+	ptrans(11, sprintf("%snotAfter=%s", $indent, Net::SSLeay::P_ASN1_TIME_get_isotime(Net::SSLeay::X509_get_notAfter($x509))));
+	ptrans(11, sprintf("%ssubjectAltName=%s", $indent, getSanString($x509)));
+	# ptrans(11, Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_issuer_name($x509)));
+	# ptrans(11, Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), "commonName"));
+
+	# this is a useful stanza for finding all objects in the name, but I don't need it for anything specific right now
+	# my $name = Net::SSLeay::X509_get_subject_name($x509);
+	# for (my $i = 0; $i < Net::SSLeay::X509_NAME_entry_count($name); $i++) {
+	# 	my $data = Net::SSLeay::X509_NAME_get_entry($name, $i);
+	# 	ptrans(11, sprintf("    %s) %s=%s", $i,
+	# 		Net::SSLeay::OBJ_obj2txt(Net::SSLeay::X509_NAME_ENTRY_get_object($data)),
+	# 		Net::SSLeay::P_ASN1_STRING_get(Net::SSLeay::X509_NAME_ENTRY_get_data($data))));
+	# }
+
+	my $commonName = '';
+	if (my $obj = Net::SSLeay::OBJ_txt2obj("commonName", 0)) {
+		if (my $nid = Net::SSLeay::OBJ_obj2nid($obj)) {
+			$commonName = Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), $nid);
+		}
+	}
+	ptrans(11, sprintf("%scommonName=%s", $indent, $commonName));
+
+}
+
+sub getSanString {
+	my $x509 = shift;
+
+	my @list = Net::SSLeay::X509_get_subjectAltNames($x509);
+
+	if (!scalar(@list)) {
+		return '';
+	}
+
+	# This is designed to closely follow (eg labels, capitalization, etc) openssl-x509 output unless otherwise noted below.
+	# The relevant code is in i2v_GENERAL_NAME in crypto/x509/v3_san.c.
+	my @modList = ();
+	while (scalar(@list)) {
+		my $type  = shift(@list);
+		my $value = shift(@list);
+
+		if ($type == Net::SSLeay::GEN_OTHERNAME()) {
+			# openssl-x509 further decodes this, but I'm defering that until someone actually asks
+			push(@modList, "othername:$value");
+		} elsif ($type == Net::SSLeay::GEN_X400()) {
+			# per Net::SSLeay POD, GEN_X400 is not supported and will never be returned, even if it is present in the cert
+			push(@modList, "X400Name:$value");
+		} elsif ($type == Net::SSLeay::GEN_EDIPARTY()) {
+			# per Net::SSLeay POD, GEN_EDIPARTY is not supported and will never be returned, even if it is present in the cert
+			push(@modList, "EdiPartyName:$value");
+		} elsif ($type == Net::SSLeay::GEN_EMAIL()) {
+			push(@modList, "email:$value");
+		} elsif ($type == Net::SSLeay::GEN_DNS()) {
+			push(@modList, "DNS:$value");
+		} elsif ($type == Net::SSLeay::GEN_URI()) {
+			push(@modList, "URI:$value");
+		} elsif ($type == Net::SSLeay::GEN_DIRNAME()) {
+			push(@modList, "DirName:$value");
+		} elsif ($type == Net::SSLeay::GEN_RID()) {
+			push(@modList, "Registered ID:$value");
+		} elsif ($type == Net::SSLeay::GEN_IPADD()) {
+			# There is a difference here, but I don't care enough to fix it right now.  for a cert with SAN element `::1`,
+			# openssl-x509 prints "IP Address:0:0:0:0:0:0:0:1", this code prints "IP Address:::1"
+			push(@modList, "IP Address:" . Socket::inet_ntop(length($value) == 4 ? Socket::AF_INET() : Socket::AF_INET6(), $value));
+		} else {
+			push(@modList, "$type:$value");
+		}
+	}
+
+	return '[ ' . join(', ', @modList) . ' ]';
 }
 
 sub start_tls {
@@ -456,6 +538,7 @@ sub start_tls {
 	$t{server_cert_verification_status} = undef;
 	$t{server_cert_host_target}         = $G::tls_verify_target || $G::link{server};
 	$t{server_cert_error_components}    = {};
+	$t{server_certs}                    = [];
 	# This callback can get called multiple times, once per cert in the chain.  Because of that we have to be careful in how
 	# we design it - CA verification is sticky on failure (any cert failure means the whole thing is a failure) and loose
 	# on hostname verification (any hostname success is a success).  Also, we might generate the same error multiple times,
@@ -465,8 +548,9 @@ sub start_tls {
 		my $x509_ctx     = shift;
 		my @failures     = ();
 
-		# my $x = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
-		# print STDERR "CALLING CTX_set_verify($preverify_ok): " . Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x)) . "\n";
+		my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
+		unshift(@{$t{server_certs}}, $x509);
+		# print STDERR "CALLING CTX_set_verify($preverify_ok): " . Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x509)) . "\n";
 
 		# we don't have to do the ca verification, that's handled before we get here
 		# we shape it like this because any cert failure fails the whole chain for cert verification
@@ -555,7 +639,7 @@ sub start_tls {
 			}
 			while (my $x509 = Net::SSLeay::PEM_read_bio_X509($bio)) {
 				$fileCertNum++;
-				push(@{$t{local_cert_subjects}}, Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x509)));
+				push(@{$t{local_certs}}, $x509);
 				if ($sawFirstCert) {
 					if (!Net::SSLeay::CTX_add_extra_chain_cert($t{con}, $x509)) {
 						$t{res} = "Unable to add chain cert $fileCertNum from $file to SSL CTX: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
