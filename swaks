@@ -395,10 +395,9 @@ sub tls_post_start {
 	if (!exists($G::link{tls}{local_cert_subjects}) || !ref($G::link{tls}{local_cert_subjects}) eq 'ARRAY' || !scalar(@{$G::link{tls}{local_cert_subjects}})) {
 		ptrans(11, "TLS no local certificate set");
 	} else {
-		my $type = 'local';
-		foreach my $subject (@{$G::link{tls}{local_cert_subjects}}) {
-			ptrans(11, "TLS $type DN=\"$subject\"");
-			$type = 'chain';
+		for(my $i = 0; $i < scalar(@{$G::link{tls}{local_cert_subjects}}); $i++) {
+			my $string = sprintf('TLS local%s DN="%s"', scalar(@{$G::link{tls}{local_cert_subjects}}) > 1 ? "[$i]" : '', $G::link{tls}{local_cert_subjects}[$i]);
+			ptrans(11, $string);
 		}
 	}
 	ptrans(11, "TLS peer DN=\"$G::link{tls}{cert_subject}\"");
