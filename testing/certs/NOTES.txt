@@ -181,7 +181,6 @@ $ cat signed-intermediate.example.com.crt ca-intermediate.pem ca.pem > signed-in
 $ openssl verify -CAfile signed-intermediate-full-chain.pem signed-intermediate.example.com.crt
 signed-intermediate.example.com.crt: OK
 
-
-
-
+# create partial cert chain (the end user cert and the intermediate cert, but no root)
+$ cat signed-intermediate.example.com.crt ca-intermediate.pem > signed-intermediate-partial-chain.pem
 

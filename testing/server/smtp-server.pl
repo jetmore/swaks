@@ -229,6 +229,7 @@ sub start_tls {
   my $ssl_keyf  = $keyFile;
   my $ssl_certf = $certFile;
   my $ssl_caf   = $caFile;
+# print STDERR "$ssl_keyf, $ssl_certf\n";
 
   Net::SSLeay::load_error_strings();
   Net::SSLeay::SSLeay_add_ssl_algorithms();
@@ -236,7 +237,39 @@ sub start_tls {
   $cxn{tls}{ctx} = Net::SSLeay::CTX_new();
   Net::SSLeay::CTX_set_options($cxn{tls}{ctx}, &Net::SSLeay::OP_ALL);
   Net::SSLeay::CTX_use_RSAPrivateKey_file ($cxn{tls}{ctx}, $ssl_keyf, &Net::SSLeay::FILETYPE_PEM);
-  Net::SSLeay::CTX_use_certificate_file ($cxn{tls}{ctx}, $ssl_certf, &Net::SSLeay::FILETYPE_PEM);
+
+  # Net::SSLeay::CTX_use_certificate_file ($cxn{tls}{ctx}, $ssl_certf, &Net::SSLeay::FILETYPE_PEM);
+  my $sawFirstCert = 0;
+  my $bio = Net::SSLeay::BIO_new_file($ssl_certf, 'r');
+  # turn off error checking, there's actually a side effect of the file not being present that we rely on in the test suite
+  # (it results in a TLS handshake error - to be more clean I should change --cert to take an argument of NONE, which then replicates the behavior
+  # explicitly instead of relying on a side effect
+  # if (!$bio) {
+  #   die "Unable to read from cert file $ssl_certf: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+  # }
+  while (my $x509 = Net::SSLeay::PEM_read_bio_X509($bio)) {
+    # print STDERR "LOADING CERT\n";
+    if ($sawFirstCert) {
+      if (!Net::SSLeay::CTX_add_extra_chain_cert($cxn{tls}{ctx}, $x509)) {
+        die "Unable to add chain cert from $ssl_certf to SSL CTX: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+      }
+    }
+    else {
+      if (!Net::SSLeay::CTX_use_certificate($cxn{tls}{ctx}, $x509)) {
+        die "Unable to add cert from $ssl_certf to SSL CTX: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+        return(0);
+      }
+      $sawFirstCert = 1;
+    }
+  }
+  # doing the read_bio in a loop like that will result in an error on the last read, clear it
+  Net::SSLeay::ERR_clear_error();
+
+  # This might result in an error, but I'm not sure what the downside of continuing is since swaks is a short-lived tool and this
+  # would basically be a resource leak
+  Net::SSLeay::BIO_free($bio);
+  Net::SSLeay::ERR_clear_error();
+
   Net::SSLeay::CTX_set_tlsext_servername_callback($cxn{tls}{ctx}, sub { $cxn{tls}{sni_string} = Net::SSLeay::get_servername(shift()); });
 
   # https://stackoverflow.com/questions/21050366/testing-ssl-tls-client-authentication-with-openssl
