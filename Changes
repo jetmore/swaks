@@ -1021,3 +1021,9 @@
            It is now stripped from the filename before use (#55)
 * 20231110 implement --tls-chain (based on initial implementation by
            Wolfgang Karall-Ahlborn in #60)
+* 20231126 In prep for handling peer chains properly, change the printing
+           of local cert labeling from local/chain to local[i], but
+           only if there is more than one local cert.
+* 20231130 Flesh out printing of certs to include notBefore/After,
+           commonName (not as part of the DN), and subjectAltName
+* 20231130 Show debug for entire peer cert chain, not just for the end cert

@@ -47,6 +47,7 @@
    26 TLS client certificate info line -- client certs ARE present, server does NOT request them
    27 --tls-cert contains a chain
    28 --tls-cert + --tls-chain
+   29 TLS peer presents chain
    40 TLS verification info line: --fail ca (unsigned cert),           --fail host (pipe - no target host)
    41 TLS verification info line: --fail ca (signed but unknown cert), --fail host (pipe - no target host)
    42 TLS verification info line: ++pass ca (signed and known cert),   --fail host (pipe - no target host)
@@ -62,7 +63,7 @@
    52 TLS verification info line: --fail ca (unsigned cert),           ++pass host (hostname NOT in cert CN,         in SAN)
    53 TLS verification info line: --fail ca (unsigned cert),           ++pass host (wildcard hostname in cert)
    54 TLS verification info line: ++pass ca,                           ++pass host (socket, using --tls-verify-target)
-   #55 TLS verification info line: --fail ca (signed but expired cert), --fail host (pipe - no target host)
+   55 TLS verification info line: --fail ca (signed but expired cert), --fail host (pipe - no target host)
    56 TLS verification info line: --fail ca (unsigned cert),           ++pass host (hostname in list of multiple SANs)
    57 TLS verification info line: --fail ca (unsigned cert),           ++pass host (inet - host (localhost) DOES match cert (ipv6))
    58 TLS verification info line: --fail ca (unsigned cert),           ++pass host (inet - host (::1) DOES match cert (ipv6))
