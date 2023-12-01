@@ -955,9 +955,10 @@ sub munge_tls_error {
 	# the exact formats of tls errors can change with the version of openssl running.
 	# *** TLS startup failed (connect(): error:0A000410:SSL routines::sslv3 alert handshake failure)
 	# *** TLS startup failed (connect(): error:14094410:SSL routines:ssl3_read_bytes:sslv3 alert handshake failure)
+	# *** TLS startup failed (connect(): error:0A000410:SSL routines::ssl/tls alert handshake failure)
 	# munge to:
-	# *** TLS startup failed (connect(): error:CODE:SSL routines::sslv3 alert handshake failure)
-	munge_general($lines, 'error:.*:SSL routines:', 'error:[A-F0-9]+:SSL routines:([^:]*)?:', 'error:CODE:SSL routines::');
+	# *** TLS startup failed (connect(): error:CODE:SSL routines:: alert handshake failure)
+	munge_general($lines, 'error:.*:SSL routines:', 'error:[A-F0-9]+:SSL routines:([^:]*)?:\S+', 'error:CODE:SSL routines::');
 }
 
 # this is just a convenience so I can add new munges without having to manually apply them to all test files
