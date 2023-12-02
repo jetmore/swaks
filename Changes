@@ -1026,4 +1026,7 @@
            only if there is more than one local cert.
 * 20231130 Flesh out printing of certs to include notBefore/After,
            commonName (not as part of the DN), and subjectAltName
-* 20231130 Show debug for entire peer cert chain, not just for the end cert
+* 20231130 Show debug for entire peer cert chain, not just for the end
+           cert (#73)
+* 20231202 Add --tls-get-peer-chain option.  Analogous to --tls-get-peer-cert
+           but shows every cert sent by the peer, not just the first one (#72)

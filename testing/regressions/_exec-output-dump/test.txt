@@ -38,7 +38,7 @@
  0 limiting to TLS works
  1 limiting to tls works
  2 flex all options
- 3 test the other options for --tls-verify and --tls-get-peer-cert
+ 3 test the other options for --tls-verify and --tls-get-peer-cert and --tls-get-peer-chain
  4 --tls-optional
  5 --tls-optional-strict
  6 --tls-on-connect

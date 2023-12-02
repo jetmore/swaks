@@ -310,8 +310,6 @@
   1030 tls-verify-target command line, no arg (-option)
   1031 tls-verify-target, command line, valid arg (-option=)
   1032 tls-verify-target, command line, valid arg (--option=)
-
-
 01050 --tls-chain
   1050 tls-chain, command line, no arg
   1051 tls-chain, command line, valid arg
@@ -328,6 +326,22 @@
   1080 tls-chain command line, no arg (-option)
   1081 tls-chain, command line, valid arg (-option=)
   1082 tls-chain, command line, valid arg (--option=)
+01100 --tls-get-peer-chain
+  1100 tls-get-peer-chain, command line, no arg
+  1101 tls-get-peer-chain, command line, valid arg
+  # 1102 tls-get-peer-chain, command line, invalid arg
+  1103 tls-get-peer-chain, command line, no-option
+  1110 tls-get-peer-chain, config, no arg
+  1111 tls-get-peer-chain, config, valid arg
+  # 1112 tls-get-peer-chain, config, invalid arg
+  1113 tls-get-peer-chain, config, no-option
+  1120 tls-get-peer-chain, env var, no arg
+  1121 tls-get-peer-chain, env var, valid arg
+  # 1122 tls-get-peer-chain, env var, invalid arg
+  1123 tls-get-peer-chain, env var, no-option
+  1130 tls-get-peer-chain command line, no arg (-option)
+  1131 tls-get-peer-chain, command line, valid arg (-option=)
+  1132 tls-get-peer-chain, command line, valid arg (--option=)
 
 
 
@@ -349,6 +363,16 @@
     -d . \
     -r \
     -s '%SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --tls --tls-cert /CERT/FILE --tls-key /KEY/FILE'
+
+./gen-tests.pl \
+    -n 1100 \
+    -o tls-get-peer-chain \
+    -v "/PEER/CHAIN/FILE" \
+    -i '' \
+    -d . \
+    -r \
+    -s '%SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --tls'
+
 
 ./gen-tests.pl '.' '750' 'tls-key' '%TESTDIR%/%TESTID%.test' '/path/to/CertFile'
 

@@ -416,6 +416,15 @@ sub tls_post_start {
 		print CERT $G::link{tls}{cert_x509}, "\n";
 		close(CERT);
 	}
+
+	if ($G::tls_get_peer_chain eq 'STDOUT') {
+		ptrans(11, join("\n", @{$G::link{tls}{chain_x509}}));
+	} elsif ($G::tls_get_peer_chain) {
+		open(CERT, ">$G::tls_get_peer_chain") ||
+			ptrans(12, "Couldn't open $G::tls_get_peer_chain for writing: $!");
+		print CERT join("\n", @{$G::link{tls}{chain_x509}}), "\n";
+		close(CERT);
+	}
 }
 
 sub print_cert_info {
@@ -750,13 +759,18 @@ sub start_tls {
 		return(0);
 	}
 	$t{cipher_string}   = sprintf("%s:%s:%s", $t{version}, $t{cipher}, $t{cipher_bits});
+	$t{cert_chain}      = [ Net::SSLeay::get_peer_cert_chain($t{ssl}) ];
 	$t{cert}            = Net::SSLeay::get_peer_certificate($t{ssl});
 	if (!$t{cert}) {
 		$t{res} = "error response from get_peer_certificate()";
 		return(0);
 	}
-	chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
 	$t{cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{cert}));
+	chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
+	foreach my $certId (@{$t{cert_chain}}) {
+		chomp(my $x509 = Net::SSLeay::PEM_get_string_X509($certId));
+		push(@{$t{chain_x509}}, $x509);
+	}
 
 	if ($G::tls_cert && $G::tls_key) {
 		$t{local_cert}            = Net::SSLeay::get_certificate($t{ssl});
@@ -2113,6 +2127,10 @@ sub get_option_struct {
 		{ opts    => ['tls-get-peer-cert'],                                suffix => ':s',
 		  cfgs    => OP_ARG_OPT,
 		  okey    => 'tls_get_peer_cert',                                  type   => 'scalar', },
+		# save tls peer chain
+		{ opts    => ['tls-get-peer-chain'],                               suffix => ':s',
+		  cfgs    => OP_ARG_OPT,
+		  okey    => 'tls_get_peer_chain',                                 type   => 'scalar', },
 		# hostname to request in TLS SNI header
 		{ opts    => ['tls-sni'],                                          suffix => '=s',
 		  cfgs    => OP_ARG_REQ,
@@ -3542,8 +3560,10 @@ sub process_args {
 			}
 		}
 
-		$G::tls_get_peer_cert = get_arg('tls_get_peer_cert', $o);
-		$G::tls_get_peer_cert = 'STDOUT' if (defined($G::tls_get_peer_cert) && !length($G::tls_get_peer_cert));
+		$G::tls_get_peer_cert  = get_arg('tls_get_peer_cert', $o);
+		$G::tls_get_peer_cert  = 'STDOUT' if (defined($G::tls_get_peer_cert) && !length($G::tls_get_peer_cert));
+		$G::tls_get_peer_chain = get_arg('tls_get_peer_chain', $o);
+		$G::tls_get_peer_chain = 'STDOUT' if (defined($G::tls_get_peer_chain) && !length($G::tls_get_peer_chain));
 	}
 
 	# SMTP port
@@ -4021,6 +4041,7 @@ sub get_running_state {
 			$verifyString     = 'FALSE' if (!$verifyString);
 			push(@{$parts[-1]},
 				"  peer cert           = $G::tls_get_peer_cert",
+				"  peer chain          = $G::tls_get_peer_chain",
 				"  local cert          = $G::tls_cert",
 				"  local key           = $G::tls_key",
 				"  local chain         = $G::tls_chain",

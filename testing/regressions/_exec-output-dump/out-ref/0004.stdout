@@ -79,6 +79,7 @@ PROXY Info:
 TLS / Encryption Info:
   tls                 = starttls (required)
   peer cert           = 
+  peer chain          = 
   local cert          = 
   local key           = 
   local chain         = 

@@ -1,6 +1,7 @@
 TLS / Encryption Info:
   tls                 = starttls (required)
   peer cert           = 
+  peer chain          = 
   local cert          = /path/to/CertFile
   local key           = %TESTDIR%/00702.test
   local chain         = 

@@ -1,0 +1,122 @@
+=== Trying pipe to %TEST_SERVER% --silent --domain pipe   --cert %CERTDIR%/signed-intermediate-partial-chain.pem   --key  %CERTDIR%/signed-intermediate.example.com.key   part-0000-connect-standard.txt   part-0101-ehlo-all.txt   part-0200-starttls-basic.txt   part-0101-ehlo-all.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   ...
+=== Connected to %TEST_SERVER% --silent --domain pipe   --cert %CERTDIR%/signed-intermediate-partial-chain.pem   --key  %CERTDIR%/signed-intermediate.example.com.key   part-0000-connect-standard.txt   part-0101-ehlo-all.txt   part-0200-starttls-basic.txt   part-0101-ehlo-all.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   .
+<-  220 SERVER ESMTP ready
+ -> EHLO hserver
+<-  250-SERVER Hello Server [1.1.1.1]
+<-  250-STARTTLS
+<-  250-PIPELINING
+<-  250-XCLIENT ADDR NAME PORT PROTO DESTADDR DESTPORT HELO LOGIN REVERSE_NAME
+<-  250-PRDR
+<-  250-AUTH CRAM-MD5
+<-  250-AUTH CRAM-SHA1
+<-  250-AUTH PLAIN
+<-  250-AUTH LOGIN
+<-  250-AUTH NTLM
+<-  250-AUTH DIGEST-MD5
+<-  250-AUTH=login
+<-  250 HELP
+ -> STARTTLS
+<-  220 TLS go ahead
+=== TLS started with cipher VERSION:CIPHER:BITS
+=== TLS client certificate not requested and not sent
+=== TLS no client certificate set
+=== TLS peer[0]   DN="/C=US/ST=Indiana/O=Swaks Development (signed-intermediate.example.com, with-SAN)/CN=signed-intermediate.example.com/emailAddress=proj-swaks@jetmore.net"
+===               notBefore=2023-11-07T22:49:58Z
+===               notAfter=2033-09-15T22:49:58Z
+===               subjectAltName=[ DNS:signed-intermediate.example.com ]
+===               commonName=signed-intermediate.example.com
+=== TLS peer[1]   DN="/C=US/ST=Indiana/O=Swaks Development (ca-intermediate, without-SAN)/emailAddress=proj-swaks@jetmore.net"
+===               notBefore=2023-11-07T22:49:32Z
+===               notAfter=2033-09-15T22:49:32Z
+===               subjectAltName=
+===               commonName=
+=== TLS peer[2]   DN="/C=US/ST=Indiana/O=Swaks Development/CN=Swaks Root CA/emailAddress=proj-swaks@jetmore.net"
+===               notBefore=2020-12-13T15:28:17Z
+===               notAfter=2030-12-11T15:28:17Z
+===               subjectAltName=
+===               commonName=Swaks Root CA
+=== TLS peer certificate passed CA verification, failed host verification (no host string available to verify)
+=== -----BEGIN CERTIFICATE-----
+=== MIIEUTCCAzmgAwIBAgIUc7ifUQ0e+ANWtuG9VWrP7gzjO1IwDQYJKoZIhvcNAQEL
+=== BQAwgYExCzAJBgNVBAYTAlVTMRAwDgYDVQQIDAdJbmRpYW5hMTkwNwYDVQQKDDBT
+=== d2FrcyBEZXZlbG9wbWVudCAoY2EtaW50ZXJtZWRpYXRlLCB3aXRob3V0LVNBTikx
+=== JTAjBgkqhkiG9w0BCQEWFnByb2otc3dha3NAamV0bW9yZS5uZXQwHhcNMjMxMTA3
+=== MjI0OTU4WhcNMzMwOTE1MjI0OTU4WjCBuDELMAkGA1UEBhMCVVMxEDAOBgNVBAgM
+=== B0luZGlhbmExRjBEBgNVBAoMPVN3YWtzIERldmVsb3BtZW50IChzaWduZWQtaW50
+=== ZXJtZWRpYXRlLmV4YW1wbGUuY29tLCB3aXRoLVNBTikxKDAmBgNVBAMMH3NpZ25l
+=== ZC1pbnRlcm1lZGlhdGUuZXhhbXBsZS5jb20xJTAjBgkqhkiG9w0BCQEWFnByb2ot
+=== c3dha3NAamV0bW9yZS5uZXQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
+=== AQDJ2+/3jRzqf3Rl28APL61Wd0aYDwS1Dim8AR2TD7IbrfETqgmFEvfalNeqWTXH
+=== t9TFz+YpNERpPbQR3o5AhFnUIhmBgPKzMk/iMXYVejyZkTtX0FlBgMtxEze6g6Mp
+=== Vq0Qs+6aL4ZBAUZhs/s9KrXWyibu1++ugGbq5NVfAOj+gA2eHvTcGlj20/zJ/7Qe
+=== KNT4mrPNpCkXzpACSYIumGGcFV85muQYOJtVztf5q+2wXvQuxVDIWDBdA3a6+BTH
+=== acd/J9Vw1Mp+76Yjid+zrjqn1j4fXu1m/Qf9n+ZSBuog02o/CZrQxzA9R27eBG+j
+=== BoovuS15oO0VwKzyuiKX5yLTAgMBAAGjgYcwgYQwHwYDVR0jBBgwFoAUNMHR/Tk7
+=== tgynP2gyPlzP/2amG7cwCQYDVR0TBAIwADALBgNVHQ8EBAMCBPAwKgYDVR0RBCMw
+=== IYIfc2lnbmVkLWludGVybWVkaWF0ZS5leGFtcGxlLmNvbTAdBgNVHQ4EFgQU0CA4
+=== SQiEGWaqzAbOMaTJx4e0rlQwDQYJKoZIhvcNAQELBQADggEBADucxlTPiiDwqzy2
+=== lKeFWwl//CvmlZD+CscHjjUDlRw4cG4JCdaeEPF0cfTzPc0zr3Aojd1OpV+T9vXr
+=== BJk1JNL8T5LDz4BOEuQm1uO72bXvAe46U74py8lKy/hmD3t+VRw1uh7suutBg0p2
+=== U2OCMcnLBnkYtr1MP6uI7/8ij0+ls5kROPu7OOC19hlXMp0K1nPQn9da3A5mZpbY
+=== 9jwD32dkDd149Cj7X9yNyuu2k4XtwZId5HFSIa06WBeKUxReOKM7lwcEia1XQwKk
+=== IPofpSZwSn+e8OrFH0TjXb5czdtU/QWvhKrfQMLwKvl0mm4Xs9jS46fu2WcBSumM
+=== HGuVtmE=
+=== -----END CERTIFICATE-----
+=== -----BEGIN CERTIFICATE-----
+=== MIID5zCCAs+gAwIBAgIUFQU5NT2EO9gtC5YP96Fa9d8vFWYwDQYJKoZIhvcNAQEL
+=== BQAwejELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB0luZGlhbmExGjAYBgNVBAoMEVN3
+=== YWtzIERldmVsb3BtZW50MRYwFAYDVQQDDA1Td2FrcyBSb290IENBMSUwIwYJKoZI
+=== hvcNAQkBFhZwcm9qLXN3YWtzQGpldG1vcmUubmV0MB4XDTIzMTEwNzIyNDkzMloX
+=== DTMzMDkxNTIyNDkzMlowgYExCzAJBgNVBAYTAlVTMRAwDgYDVQQIDAdJbmRpYW5h
+=== MTkwNwYDVQQKDDBTd2FrcyBEZXZlbG9wbWVudCAoY2EtaW50ZXJtZWRpYXRlLCB3
+=== aXRob3V0LVNBTikxJTAjBgkqhkiG9w0BCQEWFnByb2otc3dha3NAamV0bW9yZS5u
+=== ZXQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDIas5CX0NYxr4pNS54
+=== 4+2hYb/0jbf04iPK0Mj0/4mN2opqHY6INRn4VBbF9b3gJVO7nOQ5zPNFVc0oOmCb
+=== AeyjK7KlDPxeAPKy9zHOf3aTXSbIs4xJPJkM12GvzqEEE19VMwGo9w96DdMwcwqN
+=== lcvX+uPZlBu/a8ayr+LaEQttIbRrV4dlYbpNYJRBqf7abzqkVAi7FpGsG4A+jO9t
+=== IDEzSUbt3zYqcPaMfaNKt2y41WLJT1lPLagqEscm1p633tljQuir0kluk2Oa0Tvn
+=== +qMM5Z87dRPtGFiJuScwT6BZes9jvzQzsV6Xg8EwRU5IhMxIWcPzCcDudThE7/gA
+=== ie3jAgMBAAGjXTBbMB8GA1UdIwQYMBaAFArSKSuq9dXE68pYge0+2IgVLOx+MAwG
+=== A1UdEwQFMAMBAf8wCwYDVR0PBAQDAgGGMB0GA1UdDgQWBBQ0wdH9OTu2DKc/aDI+
+=== XM//ZqYbtzANBgkqhkiG9w0BAQsFAAOCAQEAVCvIrT0vW7Ha2kC0oxR/+zyiNb3k
+=== Fbf6eWnF6TX1gi2SsEpSqls9hq8IhhfJTU0tEU4V9knIMCdlIJeffjsNTK2aYW6l
+=== 8AQmIKnV01Au/M5mTylBfAYazu3VmeD40lUG9Kz8t/jSbuwTZ0rHYpmXb2wMh6Uu
+=== 9OohXvoy/Sgxh5cAbMKy4sVFFDgBiYD/Sbw7n6bk8Dh4v2pcWZeV+exhlHwniEdu
+=== IKFKBirWjGBSpbkWP330x4bMd0VQl8dBB25jnKaYkSsWdHBQrQMfx29nBKTIzPtK
+=== A2rCL7C4OhTvts3sCD9Skf48NTBYSPOy3CEDxAq5zGVEJUfrp2QjJu7yGQ==
+=== -----END CERTIFICATE-----
+ ~> EHLO hserver
+<~  250-SERVER Hello Server [1.1.1.1]
+<~  250-STARTTLS
+<~  250-PIPELINING
+<~  250-XCLIENT ADDR NAME PORT PROTO DESTADDR DESTPORT HELO LOGIN REVERSE_NAME
+<~  250-PRDR
+<~  250-AUTH CRAM-MD5
+<~  250-AUTH CRAM-SHA1
+<~  250-AUTH PLAIN
+<~  250-AUTH LOGIN
+<~  250-AUTH NTLM
+<~  250-AUTH DIGEST-MD5
+<~  250-AUTH=login
+<~  250 HELP
+ ~> MAIL FROM:<recip@host1.nodns.test.swaks.net>
+<~  250 Accepted
+ ~> RCPT TO:<user@host1.nodns.test.swaks.net>
+<~  250 Accepted
+ ~> DATA
+<~  354 Enter message, ending with "." on a line by itself
+ ~> Date: Wed, 03 Nov 1999 11:24:29 -0500
+ ~> To: user@host1.nodns.test.swaks.net
+ ~> From: recip@host1.nodns.test.swaks.net
+ ~> Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+ ~> Message-Id: <19991103112429.047942@localhost>
+ ~> X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+ ~> 
+ ~> This is a test mailing
+ ~> 
+ ~> 
+ ~> .
+<~  250 OK id=fakeemail
+ ~> QUIT
+<~  221 SERVER closing connection
+=== Connection closed with child process.

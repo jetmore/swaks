@@ -551,7 +551,11 @@ Provide a path to a file containing the local certificate chain Swaks should use
 
 =item --tls-get-peer-cert [<output-file>]
 
-Get a copy of the TLS peer's certificate.  If no argument is given, it will be displayed to C<STDOUT>.  If an argument is given it is assumed to be a filesystem path specifying where the certificate should be written.  The saved certificate can then be examined using standard tools such as the openssl command.  If a file is specified its contents will be overwritten. (Arg-Optional)
+Get a copy of the TLS peer's certificate.  If no argument is given, it will be displayed to C<STDOUT>.  If an argument is given it is assumed to be a filesystem path specifying where the certificate should be written.  The saved certificate can then be examined using standard tools such as the openssl command.  If a file is specified its contents will be overwritten.  This option will only ever return one certificate.  In order to get every certificate sent by the server, see C<--tls-get-peer-chain>. (Arg-Optional)
+
+=item --tls-get-peer-chain [<output-file>]
+
+Get a copy of the TLS certificate chain sent by the server.  If no argument is given, it will be displayed to C<STDOUT>.  If an argument is given it is assumed to be a filesystem path specifying where the certificate should be written.  The saved chain can then be examined using standard tools such as the openssl command.  If a file is specified its contents will be overwritten. See also C<--tls-get-peer-cert>. (Arg-Optional)
 
 =item --tls-sni <sni-string>
 
