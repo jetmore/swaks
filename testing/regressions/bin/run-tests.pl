@@ -825,8 +825,13 @@ sub munge_general {
 	my $replace  = shift;
 
 	foreach my $line (@$lines) {
+		my $dbg = (($line =~ m|ssl/tls|) && $consider =~ /SSL routines/);
+		$dbg = 0;
+		print "SAW (<<$consider>>,<<$find>>,<<$replace>>) $line\n" if ($dbg);
 		if ($line =~ /$consider/) {
+			print "CONSIDERING $line\n" if ($dbg);
 			$line =~ s/$find/$replace/g;
+			print "AFTER $line\n" if ($dbg);
 		}
 	}
 }
@@ -952,13 +957,23 @@ sub munge_time_lapse {
 sub munge_tls_error {
 	my $lines = shift;
 
-	# the exact formats of tls errors can change with the version of openssl running.
+	# first, get rid of the error code and the error class:
 	# *** TLS startup failed (connect(): error:0A000410:SSL routines::sslv3 alert handshake failure)
 	# *** TLS startup failed (connect(): error:14094410:SSL routines:ssl3_read_bytes:sslv3 alert handshake failure)
 	# *** TLS startup failed (connect(): error:0A000410:SSL routines::ssl/tls alert handshake failure)
+	# *** TLS startup failed (connect(): error:DEADBEEF:SSL routines::no ciphers available)
 	# munge to:
-	# *** TLS startup failed (connect(): error:CODE:SSL routines:: alert handshake failure)
-	munge_general($lines, 'error:.*:SSL routines:', 'error:[A-F0-9]+:SSL routines:([^:]*)?:\S+', 'error:CODE:SSL routines::');
+	# *** TLS startup failed (connect(): error:CODE:SSL routines::untouched here)
+	munge_general($lines, 'error:.*:SSL routines:', 'error:[A-F0-9]+:SSL routines:([^:]*)?:', 'error:CODE:SSL routines::');
+
+	# then, if needed, mungle the first word of the error description.  If it starts with "ssl" (encompassing sslv3 and ssl/tls
+	# in what I've seen so far), replace with TLS
+	# *** TLS startup failed (connect(): error:CODE:SSL routines::sslv3 alert handshake failure)
+	# *** TLS startup failed (connect(): error:CODE:SSL routines::ssl/tls alert handshake failure)
+	# TO: *** TLS startup failed (connect(): error:CODE:SSL routines::TLS handshake failure)
+	# *** TLS startup failed (connect(): error:CODE:SSL routines::no ciphers available)
+	# TO: *** TLS startup failed (connect(): error:CODE:SSL routines::no ciphers available)
+	munge_general($lines, 'error:.*:SSL routines::', 'SSL routines::ssl\S*', 'SSL routines::TLS');
 }
 
 # this is just a convenience so I can add new munges without having to manually apply them to all test files

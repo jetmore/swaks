@@ -1,1 +1,1 @@
-*** TLS startup failed (connect(): error:CODE:SSL routines:: alert handshake failure)
+*** TLS startup failed (connect(): error:CODE:SSL routines::TLS alert handshake failure)
