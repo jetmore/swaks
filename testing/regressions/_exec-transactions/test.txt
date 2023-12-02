@@ -48,6 +48,10 @@
    27 --tls-cert contains a chain
    28 --tls-cert + --tls-chain
    29 TLS peer presents chain
+   30 --tls-get-peer-chain (STDOUT) (peer passes single cert)
+   31 --tls-get-peer-chain (FILE) (peer passes single cert)
+   32 --tls-get-peer-chain (STDOUT) (peer passes partial chain)
+   33 --tls-get-peer-chain (STDOUT) (peer passes complete chain)
    40 TLS verification info line: --fail ca (unsigned cert),           --fail host (pipe - no target host)
    41 TLS verification info line: --fail ca (signed but unknown cert), --fail host (pipe - no target host)
    42 TLS verification info line: ++pass ca (signed and known cert),   --fail host (pipe - no target host)

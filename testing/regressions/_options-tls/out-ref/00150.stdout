@@ -1,6 +1,7 @@
 TLS / Encryption Info:
   tls                 = starttls (optional)
   peer cert           = 
+  peer chain          = 
   local cert          = 
   local key           = 
   local chain         = 
