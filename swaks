@@ -508,15 +508,15 @@ sub getSanString {
 	return '[ ' . join(', ', @modList) . ' ]';
 }
 
-sub start_tls {
-	my %t         = (); # This is a convenience var to access $G::link{tls}{...}
-	$G::link{tls} = \%t;
+# build the context, and do any pre-create-ssl, pre-connect actions on the ctx (set certs, set callbacks, etc
+sub start_tls_build_ctx {
+	my $t = shift;
 
 	Net::SSLeay::load_error_strings();
 	Net::SSLeay::SSLeay_add_ssl_algorithms();
 	Net::SSLeay::randomize();
-	if (!($t{con} = Net::SSLeay::CTX_new())) {
-		$t{res} = "CTX_new(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+	if (!($t->{con} = Net::SSLeay::CTX_new())) {
+		$t->{res} = "CTX_new(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 		return(0);
 	}
 
@@ -538,56 +538,48 @@ sub start_tls {
 			}
 		}
 	}
-	Net::SSLeay::CTX_set_options($t{con}, $ctx_options);
+	Net::SSLeay::CTX_set_options($t->{con}, $ctx_options);
 
-	$t{verify_failure_message}          = '';
-	$t{server_cert_verified_ca}         = 1;
-	$t{server_cert_verified_host}       = 0;
-	$t{server_cert_host_target}         = '';
-	$t{server_cert_verification_status} = undef;
-	$t{server_cert_host_target}         = $G::tls_verify_target || $G::link{server};
-	$t{server_cert_error_components}    = {};
-	$t{server_certs}                    = [];
 	# This callback can get called multiple times, once per cert in the chain.  Because of that we have to be careful in how
 	# we design it - CA verification is sticky on failure (any cert failure means the whole thing is a failure) and loose
 	# on hostname verification (any hostname success is a success).  Also, we might generate the same error multiple times,
 	# so we need to figure out how to remove duplicates
-	Net::SSLeay::CTX_set_verify($t{con}, &Net::SSLeay::VERIFY_PEER, sub {
+	Net::SSLeay::CTX_set_verify($t->{con}, &Net::SSLeay::VERIFY_PEER, sub {
 		my $preverify_ok = shift;
 		my $x509_ctx     = shift;
 		my @failures     = ();
 
 		my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
-		unshift(@{$t{server_certs}}, $x509);
+		unshift(@{$t->{server_certs}}, $x509);
 		# print STDERR "CALLING CTX_set_verify($preverify_ok): " . Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x509)) . "\n";
 
 		# we don't have to do the ca verification, that's handled before we get here
 		# we shape it like this because any cert failure fails the whole chain for cert verification
 		if (!$preverify_ok) {
-			$t{server_cert_verified_ca} = 0;
-			$t{server_cert_error_components}{A_sign} = 'server certificate not signed by known CA';
+			$t->{server_cert_verified_ca} = 0;
+			$t->{server_cert_error_components}{A_sign} = 'server certificate not signed by known CA';
 		}
 
-		if (!$t{server_cert_host_target}) {
-			$t{server_cert_error_components}{B_host} = "no host available for host verification";
+		if (!$t->{server_cert_host_target}) {
+			$t->{server_cert_error_components}{B_host} = "no host available for host verification";
 		}
 		else {
 			my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
-			if ($t{server_cert_host_target} =~ /(:|^\d+\.\d+\.\d+\.\d+$)/) {
+			if ($t->{server_cert_host_target} =~ /(:|^\d+\.\d+\.\d+\.\d+$)/) {
 				# verify as an IP
-				if (Net::SSLeay::X509_check_ip_asc($x509, $t{server_cert_host_target}, 0) == 1) {
-					$t{server_cert_verified_host} = 1;
+				if (Net::SSLeay::X509_check_ip_asc($x509, $t->{server_cert_host_target}, 0) == 1) {
+					$t->{server_cert_verified_host} = 1;
 				}
 			}
 			else {
 				# verify as a hostname
-				if (Net::SSLeay::X509_check_host($x509, $t{server_cert_host_target}, 0) == 1) {
-					$t{server_cert_verified_host} = 1;
+				if (Net::SSLeay::X509_check_host($x509, $t->{server_cert_host_target}, 0) == 1) {
+					$t->{server_cert_verified_host} = 1;
 				}
 			}
 
-			if (!$t{server_cert_verified_host}) {
-				$t{server_cert_error_components}{B_host} = 'server certificate did not match target host ' . $t{server_cert_host_target};
+			if (!$t->{server_cert_verified_host}) {
+				$t->{server_cert_error_components}{B_host} = 'server certificate did not match target host ' . $t->{server_cert_host_target};
 			}
 		}
 
@@ -598,39 +590,40 @@ sub start_tls {
 	# This callback is called at various stages of the TLS negotiation.  Currently used to determine whether the server requested
 	# a certificate. CTX_set_client_cert_cb (cf https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_client_cert_cb.html)
 	# would be much better for this, but doesn't seem to be implemented in Net::SSLeay yet
-	$t{server_requested_cert} = 0;
-	$t{client_sent_cert}      = 0;
-	Net::SSLeay::CTX_set_info_callback($t{con}, sub {
+	$t->{server_requested_cert} = 0;
+	$t->{client_sent_cert}      = 0;
+	Net::SSLeay::CTX_set_info_callback($t->{con}, sub {
 		# print STDERR "in SSL info callback: $_[1], $_[2], ", Net::SSLeay::state_string($_[0]), ", ", Net::SSLeay::state_string_long($_[0]), "\n";
 		if (Net::SSLeay::state_string($_[0]) eq 'TRCR') {
 			# TRCR, SSLv3/TLS read server certificate request
-			$t{server_requested_cert} = 1;
+			$t->{server_requested_cert} = 1;
 		}
 		elsif (Net::SSLeay::state_string($_[0]) eq 'TWCV') {
 			# TWCV, SSLv3/TLS write certificate verify
-			$t{client_sent_cert} = 1;
+			$t->{client_sent_cert} = 1;
 		}
 	});
 
 	if ($G::tls_ca_path) {
 		my @args = ('', $G::tls_ca_path);
 		@args    = ($G::tls_ca_path, '') if (-f $G::tls_ca_path);
-		if (!Net::SSLeay::CTX_load_verify_locations($t{con}, @args)) {
-			$t{res} = "Unable to set set CA path to (" . join(',', @args) . "): "
+		if (!Net::SSLeay::CTX_load_verify_locations($t->{con}, @args)) {
+			$t->{res} = "Unable to set set CA path to (" . join(',', @args) . "): "
 			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 			return(0);
 		}
 	} else {
-		Net::SSLeay::CTX_set_default_verify_paths($t{con});
+		Net::SSLeay::CTX_set_default_verify_paths($t->{con});
 	}
 
 	if ($G::tls_cipher) {
-		if (!Net::SSLeay::CTX_set_cipher_list($t{con}, $G::tls_cipher)) {
-			$t{res} = "Unable to set cipher list to $G::tls_cipher: "
+		if (!Net::SSLeay::CTX_set_cipher_list($t->{con}, $G::tls_cipher)) {
+			$t->{res} = "Unable to set cipher list to $G::tls_cipher: "
 			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 			return(0);
 		}
 	}
+
 	if ($G::tls_cert && $G::tls_key) {
 		# load certificates from tls-cert and, if present, tls-chain.  Doing it this way allows us maximum flexibility
 		# tls-cert only - end cert only, no chain
@@ -643,21 +636,21 @@ sub start_tls {
 
 			my $bio = Net::SSLeay::BIO_new_file($file, 'r');
 			if (!$bio) {
-				$t{res} = "Unable to read from cert file $file: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+				$t->{res} = "Unable to read from cert file $file: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 				return(0);
 			}
 			while (my $x509 = Net::SSLeay::PEM_read_bio_X509($bio)) {
 				$fileCertNum++;
-				push(@{$t{local_certs}}, $x509);
+				push(@{$t->{local_certs}}, $x509);
 				if ($sawFirstCert) {
-					if (!Net::SSLeay::CTX_add_extra_chain_cert($t{con}, $x509)) {
-						$t{res} = "Unable to add chain cert $fileCertNum from $file to SSL CTX: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+					if (!Net::SSLeay::CTX_add_extra_chain_cert($t->{con}, $x509)) {
+						$t->{res} = "Unable to add chain cert $fileCertNum from $file to SSL CTX: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 						return(0);
 					}
 				}
 				else {
-					if (!Net::SSLeay::CTX_use_certificate($t{con}, $x509)) {
-						$t{res} = "Unable to add cert $fileCertNum from $file to SSL CTX: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+					if (!Net::SSLeay::CTX_use_certificate($t->{con}, $x509)) {
+						$t->{res} = "Unable to add cert $fileCertNum from $file to SSL CTX: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 						return(0);
 					}
 					$sawFirstCert = 1;
@@ -672,113 +665,153 @@ sub start_tls {
 			Net::SSLeay::ERR_clear_error();
 		}
 
-		if (!Net::SSLeay::CTX_use_PrivateKey_file($t{con}, $G::tls_key, &Net::SSLeay::FILETYPE_PEM)) {
-			$t{res} = "Unable to add key file $G::tls_key to SSL CTX: "
+		if (!Net::SSLeay::CTX_use_PrivateKey_file($t->{con}, $G::tls_key, &Net::SSLeay::FILETYPE_PEM)) {
+			$t->{res} = "Unable to add key file $G::tls_key to SSL CTX: "
 			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 			return(0);
 		}
 	}
 
-	if (!($t{ssl} = Net::SSLeay::new($t{con}))) {
-		$t{res} = "new(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+	return(1);
+}
+
+# build the ssl object and perform any pre-connect configurations on it
+sub start_tls_build_ssl {
+	my $t = shift;
+
+	if (!($t->{ssl} = Net::SSLeay::new($t->{con}))) {
+		$t->{res} = "new(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 		return(0);
 	}
 
 	if ($G::tls_sni_hostname) {
-		if (!Net::SSLeay::set_tlsext_host_name($t{ssl}, $G::tls_sni_hostname)) {
-			$t{res} = "Unable to set SNI hostname to $G::tls_sni_hostname: "
+		if (!Net::SSLeay::set_tlsext_host_name($t->{ssl}, $G::tls_sni_hostname)) {
+			$t->{res} = "Unable to set SNI hostname to $G::tls_sni_hostname: "
 			        . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 			return(0);
 		}
 	}
 
 	if ($G::link{type} eq 'pipe') {
-		Net::SSLeay::set_wfd($t{ssl}, fileno($G::link{sock}{wr})); # error check?
-		Net::SSLeay::set_rfd($t{ssl}, fileno($G::link{sock}{re})); # error check?
+		Net::SSLeay::set_wfd($t->{ssl}, fileno($G::link{sock}{wr})); # error check?
+		Net::SSLeay::set_rfd($t->{ssl}, fileno($G::link{sock}{re})); # error check?
 	} else {
-		Net::SSLeay::set_fd($t{ssl}, fileno($G::link{sock})); # error check?
+		Net::SSLeay::set_fd($t->{ssl}, fileno($G::link{sock})); # error check?
 	}
+
+	return(1);
+}
+
+sub start_tls_connect {
+	my $t = shift;
 
 	# actually attempt the connection
-	$t{active} = Net::SSLeay::connect($t{ssl}) == 1 ? 1 : 0;
+	$t->{active} = Net::SSLeay::connect($t->{ssl}) == 1 ? 1 : 0;
+
+	return(1);
+}
+
+sub start_tls_post_connect {
+	my $t = shift;
 
 	# Our verification callback always succeeds, so we need to actually evaluate whether we should consider the connection successful here
-	$t{server_cert_verification_status} = 1;
-	if ($G::tls_verify_ca && !$t{server_cert_verified_ca}) {
-		$t{server_cert_verification_status} = 0;
+	$t->{server_cert_verification_status} = 1;
+	if ($G::tls_verify_ca && !$t->{server_cert_verified_ca}) {
+		$t->{server_cert_verification_status} = 0;
 	}
-	if ($G::tls_verify_host && !$t{server_cert_verified_host}) {
-		$t{server_cert_verification_status} = 0;
+	if ($G::tls_verify_host && !$t->{server_cert_verified_host}) {
+		$t->{server_cert_verification_status} = 0;
 	}
-	if (scalar(keys(%{$t{server_cert_error_components}}))) {
-		$t{verify_failure_message} = join(', ', map { $t{server_cert_error_components}{$_} } sort(keys(%{$t{server_cert_error_components}})));
+	if (scalar(keys(%{$t->{server_cert_error_components}}))) {
+		$t->{verify_failure_message} = join(', ', map { $t->{server_cert_error_components}{$_} } sort(keys(%{$t->{server_cert_error_components}})));
 	}
 
-	if (!$t{active}) {
-		$t{res} = "connect(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
-		if ($t{verify_failure_message}) {
-			$t{res} .= ' (' . $t{verify_failure_message} . ')';
+	if (!$t->{active}) {
+		$t->{res} = "connect(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+		if ($t->{verify_failure_message}) {
+			$t->{res} .= ' (' . $t->{verify_failure_message} . ')';
 		}
 		return(0);
 	}
-	elsif (!$t{server_cert_verification_status}) {
-		$t{res} = "connect(): " . $t{verify_failure_message};
+	elsif (!$t->{server_cert_verification_status}) {
+		$t->{res} = "connect(): " . $t->{verify_failure_message};
 		return(0);
 	}
 
 	# egrep 'define.*VERSION\b' *.h
 	# when adding new types here, see also the code that pushes supported values onto tls_supported_protocols
-	$t{version} = Net::SSLeay::version($t{ssl});
-	if ($t{version} == 0x0002) {
-		$t{version} = "SSLv2";    # openssl/ssl2.h
-	} elsif ($t{version} == 0x0300) {
-		$t{version} = "SSLv3";    # openssl/ssl3.h
-	} elsif ($t{version} == 0x0301) {
-		$t{version} = "TLSv1";    # openssl/tls1.h
-	} elsif ($t{version} == 0x0302) {
-		$t{version} = "TLSv1.1";  # openssl/tls1.h
-	} elsif ($t{version} == 0x0303) {
-		$t{version} = "TLSv1.2";  # openssl/tls1.h
-	} elsif ($t{version} == 0x0304) {
-		$t{version} = "TLSv1.3";  # openssl/tls1.h
-	} elsif ($t{version} == 0xFEFF) {
-		$t{version} = "DTLSv1";   # openssl/dtls1.h
-	} elsif ($t{version} == 0xFEFD) {
-		$t{version} = "DTLSv1.2"; # openssl/dtls1.h
+	$t->{version} = Net::SSLeay::version($t->{ssl});
+	if ($t->{version} == 0x0002) {
+		$t->{version} = "SSLv2";    # openssl/ssl2.h
+	} elsif ($t->{version} == 0x0300) {
+		$t->{version} = "SSLv3";    # openssl/ssl3.h
+	} elsif ($t->{version} == 0x0301) {
+		$t->{version} = "TLSv1";    # openssl/tls1.h
+	} elsif ($t->{version} == 0x0302) {
+		$t->{version} = "TLSv1.1";  # openssl/tls1.h
+	} elsif ($t->{version} == 0x0303) {
+		$t->{version} = "TLSv1.2";  # openssl/tls1.h
+	} elsif ($t->{version} == 0x0304) {
+		$t->{version} = "TLSv1.3";  # openssl/tls1.h
+	} elsif ($t->{version} == 0xFEFF) {
+		$t->{version} = "DTLSv1";   # openssl/dtls1.h
+	} elsif ($t->{version} == 0xFEFD) {
+		$t->{version} = "DTLSv1.2"; # openssl/dtls1.h
 	} else {
-		$t{version} = sprintf("UNKNOWN(0x%04X)", $t{version});
+		$t->{version} = sprintf("UNKNOWN(0x%04X)", $t->{version});
 	}
-	$t{cipher}          = Net::SSLeay::get_cipher($t{ssl});
-	if (!$t{cipher}) {
-		$t{res} = "empty response from get_cipher()";
+	$t->{cipher}          = Net::SSLeay::get_cipher($t->{ssl});
+	if (!$t->{cipher}) {
+		$t->{res} = "empty response from get_cipher()";
 		return(0);
 	}
-	$t{cipher_bits}     = Net::SSLeay::get_cipher_bits($t{ssl}, undef);
-	if (!$t{cipher_bits}) {
-		$t{res} = "empty response from get_cipher_bits()";
+	$t->{cipher_bits}     = Net::SSLeay::get_cipher_bits($t->{ssl}, undef);
+	if (!$t->{cipher_bits}) {
+		$t->{res} = "empty response from get_cipher_bits()";
 		return(0);
 	}
-	$t{cipher_string}   = sprintf("%s:%s:%s", $t{version}, $t{cipher}, $t{cipher_bits});
-	$t{cert_chain}      = [ Net::SSLeay::get_peer_cert_chain($t{ssl}) ];
-	$t{cert}            = Net::SSLeay::get_peer_certificate($t{ssl});
-	if (!$t{cert}) {
-		$t{res} = "error response from get_peer_certificate()";
+	$t->{cipher_string}   = sprintf("%s:%s:%s", $t->{version}, $t->{cipher}, $t->{cipher_bits});
+	$t->{cert_chain}      = [ Net::SSLeay::get_peer_cert_chain($t->{ssl}) ];
+	$t->{cert}            = Net::SSLeay::get_peer_certificate($t->{ssl});
+	if (!$t->{cert}) {
+		$t->{res} = "error response from get_peer_certificate()";
 		return(0);
 	}
-	$t{cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{cert}));
-	chomp($t{cert_x509} = Net::SSLeay::PEM_get_string_X509($t{cert}));
-	foreach my $certId (@{$t{cert_chain}}) {
+	$t->{cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t->{cert}));
+	chomp($t->{cert_x509} = Net::SSLeay::PEM_get_string_X509($t->{cert}));
+	foreach my $certId (@{$t->{cert_chain}}) {
 		chomp(my $x509 = Net::SSLeay::PEM_get_string_X509($certId));
-		push(@{$t{chain_x509}}, $x509);
+		push(@{$t->{chain_x509}}, $x509);
 	}
 
 	if ($G::tls_cert && $G::tls_key) {
-		$t{local_cert}            = Net::SSLeay::get_certificate($t{ssl});
-		chomp($t{local_cert_x509} = Net::SSLeay::PEM_get_string_X509($t{local_cert}));
-		$t{local_cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t{local_cert}));
+		$t->{local_cert}            = Net::SSLeay::get_certificate($t->{ssl});
+		chomp($t->{local_cert_x509} = Net::SSLeay::PEM_get_string_X509($t->{local_cert}));
+		$t->{local_cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t->{local_cert}));
 	}
 
-	return($t{active});
+	return(1);
+}
+
+sub start_tls {
+	$G::link{tls} = {};
+
+	$G::link{tls}{verify_failure_message}          = '';
+	$G::link{tls}{server_cert_verified_ca}         = 1;
+	$G::link{tls}{server_cert_verified_host}       = 0;
+	$G::link{tls}{server_cert_host_target}         = '';
+	$G::link{tls}{server_cert_verification_status} = undef;
+	$G::link{tls}{server_cert_host_target}         = $G::tls_verify_target || $G::link{server};
+	$G::link{tls}{server_cert_error_components}    = {};
+	$G::link{tls}{server_certs}                    = [];
+
+	start_tls_build_ctx($G::link{tls}) || return(0);
+	start_tls_build_ssl($G::link{tls}) || return(0);
+	start_tls_connect($G::link{tls}) || return(0);
+	start_tls_post_connect($G::link{tls}) || return(0);
+
+
+	return($G::link{tls}{active});
 }
 
 sub deprecate {

@@ -1030,3 +1030,4 @@
            cert (#73)
 * 20231202 Add --tls-get-peer-chain option.  Analogous to --tls-get-peer-cert
            but shows every cert sent by the peer, not just the first one (#72)
+* 20231203 Reorganize TLS internals to make support easier
