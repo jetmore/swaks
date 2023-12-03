@@ -20,21 +20,8 @@
 === TLS started with cipher VERSION:CIPHER:BITS
 === TLS client certificate requested and not sent
 === TLS no client certificate set
-=== TLS peer[0]   DN="/C=US/ST=Indiana/O=Swaks Development (node.example.com, with-SAN)/CN=node.example.com/emailAddress=proj-swaks@jetmore.net"
-===               notBefore=2023-11-03T14:50:10Z
-===               notAfter=2033-09-11T14:50:10Z
-===               subjectAltName=[ DNS:node.example.com ]
-===               commonName=node.example.com
-=== TLS peer[1]   DN="/C=US/ST=Indiana/O=Swaks Development (node.example.com, with-SAN)/CN=node.example.com/emailAddress=proj-swaks@jetmore.net"
-===               notBefore=2023-11-03T14:50:10Z
-===               notAfter=2033-09-11T14:50:10Z
-===               subjectAltName=[ DNS:node.example.com ]
-===               commonName=node.example.com
-=== TLS peer[2]   DN="/C=US/ST=Indiana/O=Swaks Development (node.example.com, with-SAN)/CN=node.example.com/emailAddress=proj-swaks@jetmore.net"
-===               notBefore=2023-11-03T14:50:10Z
-===               notAfter=2033-09-11T14:50:10Z
-===               subjectAltName=[ DNS:node.example.com ]
-===               commonName=node.example.com
+=== TLS peer[0]   subject=[/C=US/ST=Indiana/O=Swaks Development (node.example.com, with-SAN)/CN=node.example.com/emailAddress=proj-swaks@jetmore.net]
+===               commonName=[node.example.com], subjectAltName=[DNS:node.example.com] notAfter=[2033-09-11T14:50:10Z]
 === TLS peer certificate failed CA verification, failed host verification (no host string available to verify)
  ~> EHLO hserver
 <~  250-SERVER Hello Server [1.1.1.1]

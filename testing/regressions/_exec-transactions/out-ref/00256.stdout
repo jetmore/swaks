@@ -20,21 +20,8 @@
 === TLS started with cipher VERSION:CIPHER:BITS
 === TLS client certificate not requested and not sent
 === TLS no client certificate set
-=== TLS peer[0]   DN="/C=US/ST=Indiana/O=Swaks Development (san-multiple.example.com, with-SAN)/CN=san-multiple.example.com/emailAddress=proj-swaks@jetmore.net"
-===               notBefore=2023-11-03T15:04:20Z
-===               notAfter=2033-09-11T15:04:20Z
-===               subjectAltName=[ DNS:san-multiple.example.com, DNS:san-m1.example.com, DNS:san-m2.example.com ]
-===               commonName=san-multiple.example.com
-=== TLS peer[1]   DN="/C=US/ST=Indiana/O=Swaks Development (san-multiple.example.com, with-SAN)/CN=san-multiple.example.com/emailAddress=proj-swaks@jetmore.net"
-===               notBefore=2023-11-03T15:04:20Z
-===               notAfter=2033-09-11T15:04:20Z
-===               subjectAltName=[ DNS:san-multiple.example.com, DNS:san-m1.example.com, DNS:san-m2.example.com ]
-===               commonName=san-multiple.example.com
-=== TLS peer[2]   DN="/C=US/ST=Indiana/O=Swaks Development (san-multiple.example.com, with-SAN)/CN=san-multiple.example.com/emailAddress=proj-swaks@jetmore.net"
-===               notBefore=2023-11-03T15:04:20Z
-===               notAfter=2033-09-11T15:04:20Z
-===               subjectAltName=[ DNS:san-multiple.example.com, DNS:san-m1.example.com, DNS:san-m2.example.com ]
-===               commonName=san-multiple.example.com
+=== TLS peer[0]   subject=[/C=US/ST=Indiana/O=Swaks Development (san-multiple.example.com, with-SAN)/CN=san-multiple.example.com/emailAddress=proj-swaks@jetmore.net]
+===               commonName=[san-multiple.example.com], subjectAltName=[DNS:san-multiple.example.com, DNS:san-m1.example.com, DNS:san-m2.example.com] notAfter=[2033-09-11T15:04:20Z]
 === TLS peer certificate failed CA verification, passed host verification (using host san-m1.example.com to verify)
  ~> QUIT
 <~  221 SERVER closing connection

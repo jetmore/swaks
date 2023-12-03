@@ -348,7 +348,36 @@ sub runResult {
 								redo TEST_EXECUTION;
 							}
 							elsif ($input eq 'u') {
-								$action = join(' ', mshellwords(replaceTokens($tokens, $testObj->{'test action'}[0])));
+								my @pieces = ();
+								my $seenSwaks = 0;
+								foreach my $p (mshellwords(replaceTokens($tokens, $testObj->{'test action'}[0]))) {
+									if (!$seenSwaks) {
+										if ($p =~ m|/swaks|) {
+											push(@pieces, $p);
+											$seenSwaks = 1;
+										}
+										elsif (!scalar(@pieces)) {
+											push(@pieces, $p);
+										}
+										else {
+											$pieces[-1] .= ' ' . $p;
+										}
+									}
+									elsif ($p =~ /^-/) {
+										$p = '    ' . $p;
+										push(@pieces, $p);
+									}
+									elsif ($pieces[-1] =~ /^\s*-/) {
+										if ($p =~ / /) {
+											$p = '"' . $p . '"';
+										}
+										$pieces[-1] .= ' ' . $p
+									}
+									else {
+										print "ERROR: What should I do with this? <<$p>>, <<$pieces[-1]>>\n";
+									}
+								}
+								$action = join(" \\\n", @pieces);
 								next INTERACT;
 							}
 							elsif ($input eq 'r') {
