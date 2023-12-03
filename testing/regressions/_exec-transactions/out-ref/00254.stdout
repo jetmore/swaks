@@ -20,11 +20,8 @@
 === TLS started with cipher VERSION:CIPHER:BITS
 === TLS client certificate not requested and not sent
 === TLS no client certificate set
-=== TLS peer      DN="/C=US/ST=Indiana/O=Swaks Development (signed.example.com, with-SAN)/CN=signed.example.com/emailAddress=proj-swaks@jetmore.net"
-===               notBefore=2023-11-03T14:50:47Z
-===               notAfter=2033-09-11T14:50:47Z
-===               subjectAltName=[ DNS:signed.example.com ]
-===               commonName=signed.example.com
+=== TLS peer[0]   subject=[/C=US/ST=Indiana/O=Swaks Development (signed.example.com, with-SAN)/CN=signed.example.com/emailAddress=proj-swaks@jetmore.net]
+===               commonName=[signed.example.com], subjectAltName=[DNS:signed.example.com] notAfter=[2033-09-11T14:50:47Z]
 === TLS peer certificate passed CA verification, passed host verification (using host signed.example.com to verify)
  ~> QUIT
 <~  221 SERVER closing connection

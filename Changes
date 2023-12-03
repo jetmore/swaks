@@ -1033,3 +1033,5 @@
 * 20231203 Reorganize TLS internals to make support easier
 * 20231203 Switch method for getting peer certs, making debug way more
            reliable
+* 20231203 Clean up the output when we print local and peer cert info, make it
+           more compact and uniform

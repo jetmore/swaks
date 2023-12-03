@@ -433,14 +433,21 @@ sub print_cert_info {
 	my $label    = shift;
 	my $x509     = $list->[$pos];
 	my $indent   = ' ' x 14;
-	my $fmtLabel = sprintf("%s%s", $label, scalar(@$list) > 1 ? "[$pos]" : '');
+	my $fmtLabel = sprintf("%s%s", $label, "[$pos]");
 
-	ptrans(11, sprintf('TLS %-9s DN="%s"', $fmtLabel, Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x509))));
-	ptrans(11, sprintf("%snotBefore=%s", $indent, Net::SSLeay::P_ASN1_TIME_get_isotime(Net::SSLeay::X509_get_notBefore($x509))));
-	ptrans(11, sprintf("%snotAfter=%s", $indent, Net::SSLeay::P_ASN1_TIME_get_isotime(Net::SSLeay::X509_get_notAfter($x509))));
-	ptrans(11, sprintf("%ssubjectAltName=%s", $indent, getSanString($x509)));
-	# ptrans(11, Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_issuer_name($x509)));
-	# ptrans(11, Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), "commonName"));
+	ptrans(11, sprintf('TLS %-9s subject=[%s]', $fmtLabel, Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x509))));
+	ptrans(11, sprintf('%scommonName=[%s], subjectAltName=[%s] notAfter=[%s]',
+		$indent,
+		getSubjectNameComponent($x509, "commonName"),
+		getSanString($x509),
+		Net::SSLeay::P_ASN1_TIME_get_isotime(Net::SSLeay::X509_get_notAfter($x509))
+	));
+	# ptrans(11, sprintf('%sissuer=[%s]', $indent, Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_issuer_name($x509))));
+}
+
+sub getSubjectNameComponent {
+	my $x509      = shift;
+	my $component = shift; # like "commonName"
 
 	# this is a useful stanza for finding all objects in the name, but I don't need it for anything specific right now
 	# my $name = Net::SSLeay::X509_get_subject_name($x509);
@@ -451,15 +458,16 @@ sub print_cert_info {
 	# 		Net::SSLeay::P_ASN1_STRING_get(Net::SSLeay::X509_NAME_ENTRY_get_data($data))));
 	# }
 
-	my $commonName = '';
-	if (my $obj = Net::SSLeay::OBJ_txt2obj("commonName", 0)) {
+	if (my $obj = Net::SSLeay::OBJ_txt2obj($component, 0)) {
 		if (my $nid = Net::SSLeay::OBJ_obj2nid($obj)) {
-			$commonName = Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), $nid);
+			return(Net::SSLeay::X509_NAME_get_text_by_NID(Net::SSLeay::X509_get_subject_name($x509), $nid));
 		}
 	}
-	ptrans(11, sprintf("%scommonName=%s", $indent, $commonName));
 
+	return undef;
 }
+
+
 
 sub getSanString {
 	my $x509 = shift;
@@ -505,7 +513,7 @@ sub getSanString {
 		}
 	}
 
-	return '[ ' . join(', ', @modList) . ' ]';
+	return join(', ', @modList);
 }
 
 # build the context, and do any pre-create-ssl, pre-connect actions on the ctx (set certs, set callbacks, etc
