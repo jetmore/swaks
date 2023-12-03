@@ -30,11 +30,6 @@
 ===               notAfter=2033-09-15T22:49:32Z
 ===               subjectAltName=
 ===               commonName=
-=== TLS peer[2]   DN="/C=US/ST=Indiana/O=Swaks Development/CN=Swaks Root CA/emailAddress=proj-swaks@jetmore.net"
-===               notBefore=2020-12-13T15:28:17Z
-===               notAfter=2030-12-11T15:28:17Z
-===               subjectAltName=
-===               commonName=Swaks Root CA
 === TLS peer certificate passed CA verification, failed host verification (no host string available to verify)
 === -----BEGIN CERTIFICATE-----
 === MIIEUTCCAzmgAwIBAgIUc7ifUQ0e+ANWtuG9VWrP7gzjO1IwDQYJKoZIhvcNAQEL

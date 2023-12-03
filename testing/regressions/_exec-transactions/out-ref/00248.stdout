@@ -20,12 +20,7 @@
 === TLS started with cipher VERSION:CIPHER:BITS
 === TLS client certificate not requested and not sent
 === TLS no client certificate set
-=== TLS peer[0]   DN="/C=US/ST=Indiana/O=Swaks Development (unsigned.example.com, with-SAN)/CN=unsigned.example.com/emailAddress=proj-swaks@jetmore.net"
-===               notBefore=2023-11-03T14:51:48Z
-===               notAfter=2033-09-11T14:51:48Z
-===               subjectAltName=[ DNS:unsigned.example.com ]
-===               commonName=unsigned.example.com
-=== TLS peer[1]   DN="/C=US/ST=Indiana/O=Swaks Development (unsigned.example.com, with-SAN)/CN=unsigned.example.com/emailAddress=proj-swaks@jetmore.net"
+=== TLS peer      DN="/C=US/ST=Indiana/O=Swaks Development (unsigned.example.com, with-SAN)/CN=unsigned.example.com/emailAddress=proj-swaks@jetmore.net"
 ===               notBefore=2023-11-03T14:51:48Z
 ===               notAfter=2033-09-11T14:51:48Z
 ===               subjectAltName=[ DNS:unsigned.example.com ]

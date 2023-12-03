@@ -35,11 +35,6 @@
 ===               notAfter=2030-12-11T15:28:17Z
 ===               subjectAltName=
 ===               commonName=Swaks Root CA
-=== TLS peer[3]   DN="/C=US/ST=Indiana/O=Swaks Development/CN=Swaks Root CA/emailAddress=proj-swaks@jetmore.net"
-===               notBefore=2020-12-13T15:28:17Z
-===               notAfter=2030-12-11T15:28:17Z
-===               subjectAltName=
-===               commonName=Swaks Root CA
 === TLS peer certificate failed CA verification, failed host verification (no host string available to verify)
  ~> EHLO hserver
 <~  250-SERVER Hello Server [1.1.1.1]

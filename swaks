@@ -399,8 +399,8 @@ sub tls_post_start {
 			print_cert_info($G::link{tls}{local_certs}, $i, "client");
 		}
 	}
-	for (my $i = 0; $i < scalar(@{$G::link{tls}{server_certs}}); $i++) {
-		print_cert_info($G::link{tls}{server_certs}, $i, "peer");
+	for (my $i = 0; $i < scalar(@{$G::link{tls}{cert_chain}}); $i++) {
+		print_cert_info($G::link{tls}{cert_chain}, $i, "peer");
 	}
 	ptrans(11, sprintf("TLS peer certificate %s CA verification, %s host verification (%s)",
 		$G::link{tls}{server_cert_verified_ca}   ? 'passed' : 'failed',
@@ -550,7 +550,6 @@ sub start_tls_build_ctx {
 		my @failures     = ();
 
 		my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
-		unshift(@{$t->{server_certs}}, $x509);
 		# print STDERR "CALLING CTX_set_verify($preverify_ok): " . Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x509)) . "\n";
 
 		# we don't have to do the ca verification, that's handled before we get here
@@ -803,7 +802,6 @@ sub start_tls {
 	$G::link{tls}{server_cert_verification_status} = undef;
 	$G::link{tls}{server_cert_host_target}         = $G::tls_verify_target || $G::link{server};
 	$G::link{tls}{server_cert_error_components}    = {};
-	$G::link{tls}{server_certs}                    = [];
 
 	start_tls_build_ctx($G::link{tls}) || return(0);
 	start_tls_build_ssl($G::link{tls}) || return(0);
