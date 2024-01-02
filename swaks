@@ -21,7 +21,7 @@ my($p_name)   = (splitdir($0))[-1] =~ m|^(.+?)(\.pl)?$|;
 my $p_version = build_version("DEVRELEASE", '$Id$');
 my $p_usage   = "Usage: $p_name [--help|--version] (see --help for details)";
 my $p_cp      = <<'EOM';
-        Copyright (c) 2003-2008,2010-2023 John Jetmore <jj33@pobox.com>
+        Copyright (c) 2003-2008,2010-2024 John Jetmore <jj33@pobox.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -555,9 +555,8 @@ sub start_tls_build_ctx {
 	Net::SSLeay::CTX_set_verify($t->{con}, &Net::SSLeay::VERIFY_PEER, sub {
 		my $preverify_ok = shift;
 		my $x509_ctx     = shift;
-		my @failures     = ();
 
-		my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
+		#my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
 		# print STDERR "CALLING CTX_set_verify($preverify_ok): " . Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x509)) . "\n";
 
 		# we don't have to do the ca verification, that's handled before we get here

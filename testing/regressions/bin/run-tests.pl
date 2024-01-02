@@ -347,37 +347,51 @@ sub runResult {
 								system($editor, $file);
 								redo TEST_EXECUTION;
 							}
-							elsif ($input eq 'u') {
+							elsif ($input eq 'u') { # unmunge
 								my @pieces = ();
-								my $seenSwaks = 0;
-								foreach my $p (mshellwords(replaceTokens($tokens, $testObj->{'test action'}[0]))) {
-									if (!$seenSwaks) {
-										if ($p =~ m|/swaks|) {
+								ACTION:
+								for (my $i = 0; $i < scalar(@{$testObj->{'test action'}}); $i++) {
+									my $tAction = $testObj->{'test action'}[$i];
+									my @actionWords = mshellwords(replaceTokens($tokens, $tAction));
+									WORD:
+									for (my $j = 0; $j < scalar(@actionWords); $j++) {
+										my $p = $actionWords[$j];
+										next ACTION if ($j == 0 && $p !~ /^(FORK|CMD_CAPTURE|CMD)$/);
+										if ($j == 0) {
+											# This is the verb, like FORK or CMD_CAPTURE
+											$p = ">> $p";
+											$p = "\n$p" if ($i == 0);
 											push(@pieces, $p);
-											$seenSwaks = 1;
 										}
-										elsif (!scalar(@pieces)) {
-											push(@pieces, $p);
+										elsif ($j == 1) {
+											# this is the command, like swaks or smtp-server.pl
+											push(@pieces, $p . ' \\');
+										}
+										elsif ($p =~ /^-/) {
+											# option: indent and put on own line
+											$p = '    ' . $p;
+											push(@pieces, $p . ' \\');
+										}
+										elsif ($pieces[-1] =~ /^\s*-/) {
+											# argument: if the previous piece was an option, add it tot he previous piece
+											if ($p =~ / /) {
+												$p = '"' . $p . '"';
+											}
+											$pieces[-1] =~ s/ \\$//;
+											$pieces[-1] .= ' ' . $p . ' \\';
 										}
 										else {
-											$pieces[-1] .= ' ' . $p;
+											print "ERROR: What should I do with this? <<$i,$j,$p>>, <<$pieces[-1]>>\n";
 										}
-									}
-									elsif ($p =~ /^-/) {
-										$p = '    ' . $p;
-										push(@pieces, $p);
-									}
-									elsif ($pieces[-1] =~ /^\s*-/) {
-										if ($p =~ / /) {
-											$p = '"' . $p . '"';
+
+										# if we're on the last word of the command, remove the backslash
+										if ($j == scalar(@actionWords) - 1) {
+											$pieces[-1] =~ s/ \\$//;
 										}
-										$pieces[-1] .= ' ' . $p
-									}
-									else {
-										print "ERROR: What should I do with this? <<$p>>, <<$pieces[-1]>>\n";
 									}
 								}
-								$action = join(" \\\n", @pieces);
+								# $action = join(" \\\n", @pieces);
+								$action = join("\n", @pieces);
 								next INTERACT;
 							}
 							elsif ($input eq 'r') {
