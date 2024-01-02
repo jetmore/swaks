@@ -1035,3 +1035,4 @@
            reliable
 * 20231203 Clean up the output when we print local and peer cert info, make it
            more compact and uniform
+* 20240102 Update copyright year to 2024
