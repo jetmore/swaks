@@ -555,9 +555,8 @@ sub start_tls_build_ctx {
 	Net::SSLeay::CTX_set_verify($t->{con}, &Net::SSLeay::VERIFY_PEER, sub {
 		my $preverify_ok = shift;
 		my $x509_ctx     = shift;
-		my @failures     = ();
 
-		my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
+		#my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
 		# print STDERR "CALLING CTX_set_verify($preverify_ok): " . Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x509)) . "\n";
 
 		# we don't have to do the ca verification, that's handled before we get here
