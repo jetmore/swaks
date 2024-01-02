@@ -521,13 +521,13 @@ By default, TLS verification is not required.  If TLS verification is required b
 
 =item --tls-verify-ca
 
-Require that the server's certificate be signed by a known certificate authority.  By default the list of known CAs will be whatever is available via the client Swaks is running on.  To provide a custom CA, see C<--tls-ca-path>. (Arg-None)
+Require that the server's certificate be signed by a known certificate authority and not be expired.  By default the list of known CAs will be whatever is available via the client Swaks is running on.  To provide a custom CA, see C<--tls-ca-path>. (Arg-None)
 
 =item --tls-verify-host
 
 Require that the target of the current connection be listed in the server certificate's Subject Alternative Name (SAN) or Subject CommonName (CN).
 
-The target that Swaks uses for verification will vary.  It can be a hostname, either provided directly via the C<--server> option or looked up via MX records.  In this case, verification performs as expected.  If the target is an IP, the IP will be looked up in the certificate, which is possible but usual.  If the transport is C<--pipe> or C<--socket>, there will not be a meaningful target to verify in the certificate and verification will fail.  In this situation it's better to use only C<--tls-verify-ca> or to override the target used for verification with the C<--tls-verify-target> option. (Arg-None)
+The target that Swaks uses for verification will vary.  It can be a hostname, either provided directly via the C<--server> option or looked up via MX records.  In this case, verification performs as expected.  If the target is an IP, the IP will be looked up in the certificate, which is possible but unusual.  If the transport is C<--pipe> or C<--socket>, there will not be a meaningful target to verify in the certificate and verification will fail.  In this situation it's better to use only C<--tls-verify-ca> or to override the target used for verification with the C<--tls-verify-target> option. (Arg-None)
 
 =item --tls-verify-target <verification-string>
 

@@ -1,2 +1,2 @@
-*** TLS startup failed (connect(): server certificate not signed by known CA)
+*** TLS startup failed (connect(): certificate verification failed (unable to get local issuer certificate))
 *** STARTTLS attempted but failed

@@ -509,50 +509,9 @@ sub start_tls_build_ctx {
 	}
 	Net::SSLeay::CTX_set_options($t->{con}, $ctx_options);
 
-	# This callback can get called multiple times, once per cert in the chain.  Because of that we have to be careful in how
-	# we design it - CA verification is sticky on failure (any cert failure means the whole thing is a failure) and loose
-	# on hostname verification (any hostname success is a success).  Also, we might generate the same error multiple times,
-	# so we need to figure out how to remove duplicates
-	Net::SSLeay::CTX_set_verify($t->{con}, &Net::SSLeay::VERIFY_PEER, sub {
-		my $preverify_ok = shift;
-		my $x509_ctx     = shift;
-
-		#my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
-		# print STDERR "CALLING CTX_set_verify($preverify_ok): " . Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($x509)) . "\n";
-
-		# we don't have to do the ca verification, that's handled before we get here
-		# we shape it like this because any cert failure fails the whole chain for cert verification
-		if (!$preverify_ok) {
-			$t->{server_cert_verified_ca} = 0;
-			$t->{server_cert_error_components}{A_sign} = 'server certificate not signed by known CA';
-		}
-
-		if (!$t->{server_cert_host_target}) {
-			$t->{server_cert_error_components}{B_host} = "no host available for host verification";
-		}
-		else {
-			my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
-			if ($t->{server_cert_host_target} =~ /(:|^\d+\.\d+\.\d+\.\d+$)/) {
-				# verify as an IP
-				if (Net::SSLeay::X509_check_ip_asc($x509, $t->{server_cert_host_target}, 0) == 1) {
-					$t->{server_cert_verified_host} = 1;
-				}
-			}
-			else {
-				# verify as a hostname
-				if (Net::SSLeay::X509_check_host($x509, $t->{server_cert_host_target}, 0) == 1) {
-					$t->{server_cert_verified_host} = 1;
-				}
-			}
-
-			if (!$t->{server_cert_verified_host}) {
-				$t->{server_cert_error_components}{B_host} = 'server certificate did not match target host ' . $t->{server_cert_host_target};
-			}
-		}
-
-		# we return success unconditionally and then handle anything we don't like after the connection
-		return 1;
-	});
+	# Set our verification to VERIFY_NONE.  This means openssl won't fail, but we will still get a report if it doesn't verify.
+	# If that happens, we will report it in our own way instead of just killing the transaction.
+	Net::SSLeay::CTX_set_verify($t->{con}, &Net::SSLeay::VERIFY_NONE);
 
 	# This callback is called at various stages of the TLS negotiation.  Currently used to determine whether the server requested
 	# a certificate. CTX_set_client_cert_cb (cf https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_client_cert_cb.html)
@@ -681,24 +640,9 @@ sub start_tls_connect {
 sub start_tls_post_connect {
 	my $t = shift;
 
-	# Our verification callback always succeeds, so we need to actually evaluate whether we should consider the connection successful here
-	$t->{server_cert_verification_status} = 1;
-	if ($G::tls_verify_ca && !$t->{server_cert_verified_ca}) {
-		$t->{server_cert_verification_status} = 0;
-	}
-	if ($G::tls_verify_host && !$t->{server_cert_verified_host}) {
-		$t->{server_cert_verification_status} = 0;
-	}
-	if (scalar(keys(%{$t->{server_cert_error_components}}))) {
-		$t->{verify_failure_message} = join(', ', map { $t->{server_cert_error_components}{$_} } sort(keys(%{$t->{server_cert_error_components}})));
-	}
-
 	# this is a real negotiate failure, not a verification failure
 	if (!$t->{active}) {
 		$t->{res} = "connect(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
-		if ($t->{verify_failure_message}) {
-			$t->{res} .= ' (' . $t->{verify_failure_message} . ')';
-		}
 		return(0);
 	}
 
@@ -755,6 +699,52 @@ sub start_tls_post_connect {
 		$t->{local_cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t->{local_cert}));
 	}
 
+	# do hostname verification.  This is only done on the peer cert (not the chain)
+	if (!$t->{server_cert_host_target}) {
+		$t->{server_cert_error_components}{B_host} = "no host available for host verification";
+	}
+	else {
+		# my $x509 = Net::SSLeay::X509_STORE_CTX_get_current_cert($x509_ctx);
+		my $x509 = $t->{cert};
+		if ($t->{server_cert_host_target} =~ /(:|^\d+\.\d+\.\d+\.\d+$)/) {
+			# verify as an IP
+			if (Net::SSLeay::X509_check_ip_asc($x509, $t->{server_cert_host_target}, 0) == 1) {
+				$t->{server_cert_verified_host} = 1;
+			}
+		}
+		else {
+			# verify as a hostname
+			# print STDERR "XXXXX ", Net::SSLeay::X509_check_host($x509, $t->{server_cert_host_target}, 0), "\n";;
+			if (Net::SSLeay::X509_check_host($x509, $t->{server_cert_host_target}, 0) == 1) {
+				$t->{server_cert_verified_host} = 1;
+			}
+		}
+
+		if (!$t->{server_cert_verified_host}) {
+			$t->{server_cert_error_components}{B_host} = 'server certificate did not match target host ' . $t->{server_cert_host_target};
+		}
+	}
+
+	# certificate verification
+	my $verifyResult = Net::SSLeay::get_verify_result($t->{ssl});
+	my $verifyResultString = '';
+	$t->{server_cert_verified_ca} = $verifyResult == 0;
+	if (!$t->{server_cert_verified_ca}) {
+		$verifyResultString = Net::SSLeay::X509_verify_cert_error_string($verifyResult);
+		$t->{server_cert_error_components}{A_sign} = 'certificate verification failed (' . $verifyResultString . ')';
+	}
+
+	$t->{server_cert_verification_status} = 1;
+	if ($G::tls_verify_ca && !$t->{server_cert_verified_ca}) {
+		$t->{server_cert_verification_status} = 0;
+	}
+	if ($G::tls_verify_host && !$t->{server_cert_verified_host}) {
+		$t->{server_cert_verification_status} = 0;
+	}
+	if (scalar(keys(%{$t->{server_cert_error_components}}))) {
+		$t->{verify_failure_message} = join(', ', map { $t->{server_cert_error_components}{$_} } sort(keys(%{$t->{server_cert_error_components}})));
+	}
+
 	# DISPLAY connection information.  Could probably be combined with saving, they were two different steps in the past
 	ptrans(11, "TLS started with cipher $G::link{tls}{cipher_string}");
 	ptrans(11, "TLS client certificate " . ($G::link{tls}{server_requested_cert} ? '' : 'not ') . "requested and " . ($G::link{tls}{client_sent_cert} ? '' : 'not ') . "sent");
@@ -768,8 +758,9 @@ sub start_tls_post_connect {
 	for (my $i = 0; $i < scalar(@{$G::link{tls}{cert_chain}}); $i++) {
 		print_cert_info($G::link{tls}{cert_chain}, $i, "peer");
 	}
-	ptrans(11, sprintf("TLS peer certificate %s CA verification, %s host verification (%s)",
+	ptrans(11, sprintf("TLS peer certificate %s CA verification%s, %s host verification (%s)",
 		$G::link{tls}{server_cert_verified_ca}   ? 'passed' : 'failed',
+		$G::link{tls}{server_cert_verified_ca}   ? '' : ' (' . $verifyResultString . ')',
 		$G::link{tls}{server_cert_verified_host} ? 'passed' : 'failed',
 		$G::link{tls}{server_cert_host_target} ? "using host $G::link{tls}{server_cert_host_target} to verify" : "no host string available to verify"
 	));

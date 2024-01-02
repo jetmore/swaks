@@ -22,7 +22,7 @@
 === TLS no client certificate set
 === TLS peer[0]   subject=[/C=US/ST=Indiana/O=Swaks Development (localhost, with-SAN)/CN=localhost/emailAddress=proj-swaks@jetmore.net]
 ===               commonName=[localhost], subjectAltName=[DNS:localhost] notAfter=[2033-09-11T14:59:07Z]
-=== TLS peer certificate failed CA verification, passed host verification (using host localhost to verify)
+=== TLS peer certificate failed CA verification (unable to get local issuer certificate), passed host verification (using host localhost to verify)
  ~> QUIT
 <~  221 SERVER closing connection
 === Connection closed with remote host.

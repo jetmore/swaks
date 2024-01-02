@@ -1038,3 +1038,7 @@
 * 20240102 Update copyright year to 2024
 * 20240102 Print all available certificate information even if TLS was not
            successfully negotiated
+* 20240102 Rework tls verification. On cert verification failure, print
+           openssl's error message.  Get rid of verify callback.
+* 20240102 Clarify --tls-verify-ca docs, this verifies both signing and
+           date expiration (notBefore/notAfter)

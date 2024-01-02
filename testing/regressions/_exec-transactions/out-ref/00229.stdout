@@ -26,7 +26,7 @@
 ===               commonName=[], subjectAltName=[] notAfter=[2033-09-15T22:49:32Z]
 === TLS peer[2]   subject=[/C=US/ST=Indiana/O=Swaks Development/CN=Swaks Root CA/emailAddress=proj-swaks@jetmore.net]
 ===               commonName=[Swaks Root CA], subjectAltName=[] notAfter=[2030-12-11T15:28:17Z]
-=== TLS peer certificate failed CA verification, failed host verification (no host string available to verify)
+=== TLS peer certificate failed CA verification (self-signed certificate in certificate chain), failed host verification (no host string available to verify)
  ~> EHLO hserver
 <~  250-SERVER Hello Server [1.1.1.1]
 <~  250-TLS peer DN=No client certificate present
