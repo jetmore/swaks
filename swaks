@@ -213,7 +213,6 @@ sub sendmail {
 	# start up tls if -tlsc specified
 	if ($G::tls_on_connect) {
 		if (start_tls()) {
-			tls_post_start();
 			do_smtp_drop()     if ($G::drop_after eq 'tls' || $G::drop_after_send eq 'tls');
 			do_smtp_quit(1, 0) if ($G::quit_after eq 'tls');
 		} else {
@@ -387,44 +386,6 @@ sub xclient_try {
 	}
 	do_smtp_drop()     if ($G::drop_after =~ /xclient(?:-helo)?/ || $G::drop_after_send =~ /xclient(?:-helo)?/);
 	do_smtp_quit(1, 0) if ($G::quit_after =~ /xclient(?:-helo)?/);
-}
-
-sub tls_post_start {
-	ptrans(11, "TLS started with cipher $G::link{tls}{cipher_string}");
-	ptrans(11, "TLS client certificate " . ($G::link{tls}{server_requested_cert} ? '' : 'not ') . "requested and " . ($G::link{tls}{client_sent_cert} ? '' : 'not ') . "sent");
-	if (!exists($G::link{tls}{local_certs}) || !ref($G::link{tls}{local_certs}) eq 'ARRAY' || !scalar(@{$G::link{tls}{local_certs}})) {
-		ptrans(11, "TLS no client certificate set");
-	} else {
-		for (my $i = 0; $i < scalar(@{$G::link{tls}{local_certs}}); $i++) {
-			print_cert_info($G::link{tls}{local_certs}, $i, "client");
-		}
-	}
-	for (my $i = 0; $i < scalar(@{$G::link{tls}{cert_chain}}); $i++) {
-		print_cert_info($G::link{tls}{cert_chain}, $i, "peer");
-	}
-	ptrans(11, sprintf("TLS peer certificate %s CA verification, %s host verification (%s)",
-		$G::link{tls}{server_cert_verified_ca}   ? 'passed' : 'failed',
-		$G::link{tls}{server_cert_verified_host} ? 'passed' : 'failed',
-		$G::link{tls}{server_cert_host_target} ? "using host $G::link{tls}{server_cert_host_target} to verify" : "no host string available to verify"
-	));
-
-	if ($G::tls_get_peer_cert eq 'STDOUT') {
-		ptrans(11, $G::link{tls}{cert_x509});
-	} elsif ($G::tls_get_peer_cert) {
-		open(CERT, ">$G::tls_get_peer_cert") ||
-			ptrans(12, "Couldn't open $G::tls_get_peer_cert for writing: $!");
-		print CERT $G::link{tls}{cert_x509}, "\n";
-		close(CERT);
-	}
-
-	if ($G::tls_get_peer_chain eq 'STDOUT') {
-		ptrans(11, join("\n", @{$G::link{tls}{chain_x509}}));
-	} elsif ($G::tls_get_peer_chain) {
-		open(CERT, ">$G::tls_get_peer_chain") ||
-			ptrans(12, "Couldn't open $G::tls_get_peer_chain for writing: $!");
-		print CERT join("\n", @{$G::link{tls}{chain_x509}}), "\n";
-		close(CERT);
-	}
 }
 
 sub print_cert_info {
@@ -732,6 +693,7 @@ sub start_tls_post_connect {
 		$t->{verify_failure_message} = join(', ', map { $t->{server_cert_error_components}{$_} } sort(keys(%{$t->{server_cert_error_components}})));
 	}
 
+	# this is a real negotiate failure, not a verification failure
 	if (!$t->{active}) {
 		$t->{res} = "connect(): " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
 		if ($t->{verify_failure_message}) {
@@ -739,11 +701,8 @@ sub start_tls_post_connect {
 		}
 		return(0);
 	}
-	elsif (!$t->{server_cert_verification_status}) {
-		$t->{res} = "connect(): " . $t->{verify_failure_message};
-		return(0);
-	}
 
+	# STORE connection information
 	# egrep 'define.*VERSION\b' *.h
 	# when adding new types here, see also the code that pushes supported values onto tls_supported_protocols
 	$t->{version} = Net::SSLeay::version($t->{ssl});
@@ -794,6 +753,49 @@ sub start_tls_post_connect {
 		$t->{local_cert}            = Net::SSLeay::get_certificate($t->{ssl});
 		chomp($t->{local_cert_x509} = Net::SSLeay::PEM_get_string_X509($t->{local_cert}));
 		$t->{local_cert_subject}    = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($t->{local_cert}));
+	}
+
+	# DISPLAY connection information.  Could probably be combined with saving, they were two different steps in the past
+	ptrans(11, "TLS started with cipher $G::link{tls}{cipher_string}");
+	ptrans(11, "TLS client certificate " . ($G::link{tls}{server_requested_cert} ? '' : 'not ') . "requested and " . ($G::link{tls}{client_sent_cert} ? '' : 'not ') . "sent");
+	if (!exists($G::link{tls}{local_certs}) || !ref($G::link{tls}{local_certs}) eq 'ARRAY' || !scalar(@{$G::link{tls}{local_certs}})) {
+		ptrans(11, "TLS no client certificate set");
+	} else {
+		for (my $i = 0; $i < scalar(@{$G::link{tls}{local_certs}}); $i++) {
+			print_cert_info($G::link{tls}{local_certs}, $i, "client");
+		}
+	}
+	for (my $i = 0; $i < scalar(@{$G::link{tls}{cert_chain}}); $i++) {
+		print_cert_info($G::link{tls}{cert_chain}, $i, "peer");
+	}
+	ptrans(11, sprintf("TLS peer certificate %s CA verification, %s host verification (%s)",
+		$G::link{tls}{server_cert_verified_ca}   ? 'passed' : 'failed',
+		$G::link{tls}{server_cert_verified_host} ? 'passed' : 'failed',
+		$G::link{tls}{server_cert_host_target} ? "using host $G::link{tls}{server_cert_host_target} to verify" : "no host string available to verify"
+	));
+
+	if ($G::tls_get_peer_cert eq 'STDOUT') {
+		ptrans(11, $G::link{tls}{cert_x509});
+	} elsif ($G::tls_get_peer_cert) {
+		open(CERT, ">$G::tls_get_peer_cert") ||
+			ptrans(12, "Couldn't open $G::tls_get_peer_cert for writing: $!");
+		print CERT $G::link{tls}{cert_x509}, "\n";
+		close(CERT);
+	}
+
+	if ($G::tls_get_peer_chain eq 'STDOUT') {
+		ptrans(11, join("\n", @{$G::link{tls}{chain_x509}}));
+	} elsif ($G::tls_get_peer_chain) {
+		open(CERT, ">$G::tls_get_peer_chain") ||
+			ptrans(12, "Couldn't open $G::tls_get_peer_chain for writing: $!");
+		print CERT join("\n", @{$G::link{tls}{chain_x509}}), "\n";
+		close(CERT);
+	}
+
+	# if we got to here we negotiated TLS successfully but there was a verification issue
+	if (!$t->{server_cert_verification_status}) {
+		$t->{res} = "connect(): " . $t->{verify_failure_message};
+		return(0);
 	}
 
 	return(1);
@@ -941,7 +943,6 @@ sub do_smtp_tls {
 		ptrans(12, "TLS startup failed ($G::link{tls}{res})");
 		return(2);
 	}
-	tls_post_start();
 
 	return(0);
 }

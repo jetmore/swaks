@@ -17,3 +17,9 @@
 <-  250 HELP
  -> STARTTLS
 <-  220 TLS go ahead
+=== TLS started with cipher VERSION:CIPHER:BITS
+=== TLS client certificate not requested and not sent
+=== TLS no client certificate set
+=== TLS peer[0]   subject=[/C=US/ST=Indiana/O=Swaks Development (node.example.com, with-SAN)/CN=node.example.com/emailAddress=proj-swaks@jetmore.net]
+===               commonName=[node.example.com], subjectAltName=[DNS:node.example.com] notAfter=[2033-09-11T14:50:10Z]
+=== TLS peer certificate failed CA verification, failed host verification (using host foo.example.com to verify)

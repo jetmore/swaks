@@ -1036,3 +1036,5 @@
 * 20231203 Clean up the output when we print local and peer cert info, make it
            more compact and uniform
 * 20240102 Update copyright year to 2024
+* 20240102 Print all available certificate information even if TLS was not
+           successfully negotiated
