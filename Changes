@@ -1043,3 +1043,4 @@
 * 20240102 Clarify --tls-verify-ca docs, this verifies both signing and
            date expiration (notBefore/notAfter)
 * 20240103 Previously-deprecated option -g removed entirely
+* 20240103 Improve test suite experience on FreeBSD
