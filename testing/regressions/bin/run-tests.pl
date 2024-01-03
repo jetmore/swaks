@@ -514,6 +514,12 @@ sub runAction {
 			die "Unable to FORK @args: $!($@)\n";
 		}
 		push(@forks, $proc);
+
+		# work around timing issue on freebsd where very often the forked process hasn't had time to set up the socket yet
+		# it's unclear if this is an actual freebsd issue or just one caused by my freebsd host
+		if ($runningOs eq 'freebsd') {
+			select(undef, undef, undef, 0.5);
+		}
 	}
 	elsif ($verb eq 'DEFINE') {
 		debug('DEFINE', join('; ', @args));
