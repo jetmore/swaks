@@ -1,0 +1,8 @@
+# Generated Fri Nov 10 15:24:03 2023 by ./gen-tests.pl '-n' '1050' '-o' 'tls-chain' '-v' '/CHAIN/FILE' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --tls --tls-cert /CERT/FILE --tls-key /KEY/FILE'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tls-chain, command line, valid arg (--option=)
+
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --tls --tls-cert /CERT/FILE --tls-key /KEY/FILE \
+    --tls-chain=/CHAIN/FILE

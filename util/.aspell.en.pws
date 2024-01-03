@@ -1,4 +1,4 @@
-personal_ws-1.1 en 343 
+personal_ws-1.1 en 358 
 ADDR
 ARGV
 ASN
@@ -19,6 +19,7 @@ CHLD
 CPAN
 CRLF
 CTX
+Changelog
 Christoph
 Clasen
 Cmd
@@ -96,6 +97,7 @@ PWD
 Pieter
 Pimlott
 Postfix
+Postfix's
 RCPTs
 README
 RSA
@@ -159,14 +161,18 @@ au
 auth
 authenticator
 authenticators
+backend
 balancer
 bcc
 bes
 bh
+binmode
 boolean
 changelogs
 chmod
 chris
+cmd
+commonName
 communigate
 config
 configurability
@@ -194,6 +200,7 @@ errored
 erroring
 esmtp
 exchangers
+exe
 exim
 fany
 faq
@@ -243,6 +250,7 @@ md
 microtimer
 missingcharacter
 multiline
+munge
 mx
 nBaz
 nFrom
@@ -256,6 +264,8 @@ ndf
 ne
 netrc
 nih
+notAfter
+notBefore
 nrh
 nsf
 nsh
@@ -266,6 +276,7 @@ okey
 oobar
 openable
 openssl
+openssl's
 pacman
 params
 perl
@@ -287,6 +298,7 @@ qpsmtpd
 readkey
 recv
 redhat
+reimplemented
 repo
 rfc
 ritcey
@@ -298,6 +310,7 @@ scripters
 se
 serv
 sha
+sigil
 smtp
 smtps
 sni
@@ -308,9 +321,11 @@ starttls
 stderr
 stdout
 stl
+strftime
 struct
 stty
 su'd
+subjectAltName
 submitters
 subscripting
 sudo

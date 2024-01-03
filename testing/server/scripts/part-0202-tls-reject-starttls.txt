@@ -1,0 +1,2 @@
+get_line(); # STARTTLS
+send_line("550 STARTTLS rejected");

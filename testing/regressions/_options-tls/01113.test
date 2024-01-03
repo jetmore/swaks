@@ -1,0 +1,9 @@
+# Generated Sat Dec  2 11:50:03 2023 by ./gen-tests.pl '-n' '1100' '-o' 'tls-get-peer-chain' '-v' '/PEER/CHAIN/FILE' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --tls'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: tls-get-peer-chain, config, no-option
+
+pre action: MERGE %OUTDIR%/swaksrc-%TESTID% string:'tls-get-peer-chain /PEER/CHAIN/FILE\nno-tls-get-peer-chain'
+test action: CMD_CAPTURE %SWAKS% --dump TLS --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --tls \
+    --config %OUTDIR%/swaksrc-%TESTID%

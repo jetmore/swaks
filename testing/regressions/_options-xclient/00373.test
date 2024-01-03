@@ -1,6 +1,6 @@
 # Generated Wed Jul 10 22:56:30 2019 by ./gen-tests.pl '-n' '350' '-o' 'xclient-login' '-v' 'LOGINSTR' '-i' '' '-p' 'XCLIENT login:' '-d' '.' '-r'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: xclient-login, env var, no-option
 

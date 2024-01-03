@@ -1,0 +1,5 @@
+To: foo
+From: bar
+Subject: baz
+
+This is the file from @data-plain.txt

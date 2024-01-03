@@ -1,0 +1,13 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
+
+
+
+test action: CMD_CAPTURE %SWAKS% --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver \
+  --tls --quit tls --tls-verify --tls-verify-target node.example.com --tls-ca-path %CERTDIR%/ca-other.pem \
+  --pipe '%TEST_SERVER% --silent --domain pipe \
+    --cert %CERTDIR%/node.example.com.crt --key %CERTDIR%/node.example.com.key \
+    part-0000-connect-standard.txt \
+    part-0101-ehlo-all.txt \
+    part-0200-starttls-basic.txt \
+    part-3000-shutdown-accept.txt \
+  '

@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 12:35:59 2018 by ./gen-tests.pl '.' '600' 'protect-prompt' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: protect-prompt, command line, no-option
 

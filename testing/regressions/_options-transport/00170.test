@@ -1,6 +1,6 @@
 # Generated Tue Dec 25 18:50:48 2018 by ./gen-tests.pl '-n' '150' '-o' 'p' '-v' '9999' '-i' 'badportname' '-p' 'Port:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: p, env var, no arg
 

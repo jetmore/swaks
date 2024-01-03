@@ -1,0 +1,3 @@
+get_line(); # DATA (command, not actual data)
+send_line("354 Enter message, ending with \".\" on a line by itself");
+get_line('^\.$'); # rest of email

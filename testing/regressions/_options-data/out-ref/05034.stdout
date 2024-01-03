@@ -1,0 +1,6 @@
+DATA Info:
+  data = <<.
+@SWAKS-TEST-DATA.txt
+
+
+.

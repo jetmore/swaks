@@ -1,0 +1,2 @@
+*** TLS startup failed (connect(): certificate verification failed (unable to get local issuer certificate), no host available for host verification)
+*** STARTTLS attempted but failed

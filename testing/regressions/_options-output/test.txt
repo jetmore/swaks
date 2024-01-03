@@ -527,6 +527,11 @@ thoroughly flex all of the OUTPUT options.  The options-* tests are designed to 
   1682 output-file-stderr, command line, valid arg (--option=)
 
 
+05000 trigger-decrecation triggers a deprecation warning
+05001 output-file truncates existing file
+05002 output-file-stdout truncates existing file
+05003 output-file-stderr truncates existing file
+
 
 
 

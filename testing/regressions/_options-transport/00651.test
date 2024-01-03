@@ -1,6 +1,6 @@
 # Generated Tue Dec 25 19:29:24 2018 by ./gen-tests.pl '-n' '650' '-o' 'pipe' '-v' '/path/to/command' '-i' '' '-p' 'Pipe:' '-d' '.' '-r' '-s' '%SWAKS% --dump TRANSPORT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: pipe, command line, valid arg
 

@@ -1,6 +1,6 @@
 # Generated Thu Dec 20 17:35:20 2018 by ./gen-tests.pl '.' '750' 'hr' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: hr command line, no arg (-option)
 

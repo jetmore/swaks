@@ -30,6 +30,8 @@ open(I, "<$home/swaks") || die "can't read from $home/swaks\n";
 while (<I>) {
   # build_version("DEVRELEASE"
   s|build_version\("DEVRELEASE"|build_version("$release"|g;
+  next if (/# FOR DEVELOPMENT ONLY/);
+  last if (/^### This is the end of released code/);
   print O;
 }
 close(I);

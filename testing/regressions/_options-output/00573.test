@@ -1,8 +1,8 @@
 # Generated Mon Dec 10 12:22:47 2018 by ./gen-tests.pl '.' '550' 'nth' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: nth, env var, no-option
 
-pre action: SET_ENV SWAKS_OPT_nth 
+pre action: SET_ENV SWAKS_OPT_nth
 test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver" --no-nth

@@ -1,6 +1,6 @@
 # Generated Tue Dec 11 18:55:52 2018 by ./gen-tests.pl '.' '250' 'tlsos' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tlsos, command line, invalid arg
 

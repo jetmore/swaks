@@ -1,0 +1,2 @@
+CMD_CAPTURE       0   /Users/jetmore/Documents/git/swaks/testing/regressions/../../swaks --dump data --to user@host1.nodns.test.swaks.net --server ser.ver --config _options-processing/out-dyn/swaksrc-0071-1
+CMD_CAPTURE:2     0   /Users/jetmore/Documents/git/swaks/testing/regressions/../../swaks --dump data --to user@host1.nodns.test.swaks.net --server ser.ver --config _options-processing/out-dyn/swaksrc-0071-2

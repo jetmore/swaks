@@ -1,0 +1,39 @@
+=== Trying pipe to %TEST_SERVER% --silent --domain pipe   part-0800-proxy-read.txt   part-0000-connect-standard.txt   part-0101-ehlo-all.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   ...
+=== Connected to %TEST_SERVER% --silent --domain pipe   part-0800-proxy-read.txt   part-0000-connect-standard.txt   part-0101-ehlo-all.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   .
+ -> PROXY TCP4 3.3.3.3 4.4.4.4 333 444
+<-  220 SERVER ESMTP ready
+ -> EHLO hserver
+<-  250-SERVER Hello Server [1.1.1.1]
+<-  250-STARTTLS
+<-  250-PIPELINING
+<-  250-XCLIENT ADDR NAME PORT PROTO DESTADDR DESTPORT HELO LOGIN REVERSE_NAME
+<-  250-PRDR
+<-  250-AUTH CRAM-MD5
+<-  250-AUTH CRAM-SHA1
+<-  250-AUTH PLAIN
+<-  250-AUTH LOGIN
+<-  250-AUTH NTLM
+<-  250-AUTH DIGEST-MD5
+<-  250-AUTH=login
+<-  250 HELP
+ -> MAIL FROM:<recip@host1.nodns.test.swaks.net>
+<-  250 Accepted
+ -> RCPT TO:<user@host1.nodns.test.swaks.net>
+<-  250 Accepted
+ -> DATA
+<-  354 Enter message, ending with "." on a line by itself
+ -> Date: Wed, 03 Nov 1999 11:24:29 -0500
+ -> To: user@host1.nodns.test.swaks.net
+ -> From: recip@host1.nodns.test.swaks.net
+ -> Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+ -> Message-Id: <19991103112429.047942@localhost>
+ -> X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+ -> 
+ -> This is a test mailing
+ -> 
+ -> 
+ -> .
+<-  250 OK id=fakeemail
+ -> QUIT
+<-  221 SERVER closing connection
+=== Connection closed with child process.

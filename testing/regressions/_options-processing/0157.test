@@ -1,4 +1,6 @@
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 pre action: SET_ENV SWAKS_OPT_h_From '"User Example" <fred-%TESTID%@host1.nodns.test.swaks.net>'
 test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver
+
+skip: IFOS=MSWin32 Windows does not support embedding the header name in the header option via environment variable

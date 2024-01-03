@@ -1,0 +1,12 @@
+Policies and guidelines around Swaks development
+
+This file is probably overkill but I keep forgetting decisions I previously made.
+Nothing in this file is binding.
+
+#########################
+Deprecations
+
+No feature should be completely removed without marking is as deprecated.
+"Marking as deprecated" varies on the feature, but Swaks should print a warning when deprecated behavior is used.
+
+Deprecated features will not be removed less than 1 year from the release in which they were deprecated.

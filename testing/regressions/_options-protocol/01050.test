@@ -1,0 +1,7 @@
+# Generated Sat Jan 23 11:11:12 2021 by ./gen-tests.pl '-n' '1050' '-o' 'bcc' '-v' 'bcc@example.com' '-i' '' '-p' 'Bcc:' '-d' '.' '-r' '-s' '%SWAKS% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo helo-string --server ser.ver'
+
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+
+title: bcc, command line, no arg
+
+auto: INTERACT '%SWAKS% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --helo helo-string --server ser.ver --bcc' 'Bcc:' 'bcc@example.com'

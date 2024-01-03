@@ -1,0 +1,14 @@
+TLS / Encryption Info:
+  tls                 = starttls (required)
+  peer cert           = 
+  peer chain          = 
+  local cert          = /CERT/FILE
+  local key           = /KEY/FILE
+  local chain         = 
+  local cipher list   = 
+  ca path             = 
+  sni string          = 
+  verify server cert  = FALSE
+  verify target host  = 
+  available protocols = TLS_PROTOCOL_LIST
+  requested protocols = 

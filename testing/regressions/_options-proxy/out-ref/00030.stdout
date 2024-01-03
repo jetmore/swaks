@@ -1,6 +1,4 @@
-spawn %SWAKS_COMMAND% --dump PROXY --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server ser ver -proxy
-PROXY string: PROXY_STRING
-PROXY Info:
+PROXY string: PROXY Info:
   proxy       = yes
   version     = 1
   raw string  = PROXY_STRING

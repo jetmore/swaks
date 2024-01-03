@@ -1,6 +1,4 @@
-spawn %SWAKS_COMMAND% --dump PROTOCOL --from sender@host2.nodns.test.swaks.net --server ser.ver --helo hstring --quit-after RCPT
-To: test-recip
-Protocol Info:
+To: Protocol Info:
   protocol        = esmtp
   helo            = hstring
   from            = sender@host2.nodns.test.swaks.net

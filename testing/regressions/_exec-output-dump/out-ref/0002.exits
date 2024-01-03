@@ -1,0 +1,2 @@
+CMD_CAPTURE       0   /Users/jetmore/Documents/git/swaks/testing/regressions/../../swaks --dump support,app,output,transport,protocol,xclient,proxy,tls,auth,data --to user@host1.nodns.test.swaks.net --server ser.ver --helo host1.nodns.test.swaks.net --from from@host1.nodns.test.swaks.net
+CMD_CAPTURE:2     0   /Users/jetmore/Documents/git/swaks/testing/regressions/../../swaks --dump all --to user@host1.nodns.test.swaks.net --server ser.ver --helo host1.nodns.test.swaks.net --from from@host1.nodns.test.swaks.net

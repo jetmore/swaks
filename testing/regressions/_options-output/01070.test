@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 12:37:36 2018 by ./gen-tests.pl '.' '1050' 'ha' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: ha, env var, no arg
 

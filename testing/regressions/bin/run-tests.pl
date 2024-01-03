@@ -1,51 +1,81 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # - example usage (run every test under _options-data):
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl _options-data
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl _options-data
 # - example usage (run every test under _options-data matching ^05)
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl _options-data ^05
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl _options-data ^05
 # - example usage (run every test without prompting the user, but save the results):
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl --headless --outfile var/results.1570707905 _options-data
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl --headless --outfile var/results.1570707905 _options-data
 # - example usage (only run tests that failed during the previous headless run):
-#  - TEST_SWAKS=../../swaks bin/run-tests.pl --errors --infile var/results.1570707905 _options-data
+#  - SWAKS_TEST_SWAKS=../../swaks bin/run-tests.pl --errors --infile var/results.1570707905 _options-data
 
 use strict;
+use Capture::Tiny;
+use Cwd qw(realpath);
+use File::Copy qw();
+use File::Spec::Functions qw(:ALL);
+use FindBin qw($Bin);
 use Getopt::Long;
+use Proc::Background;
 use Sys::Hostname;
 use Term::ReadKey;
 use Text::ParseWords;
+use Text::Diff qw();
+
+$| = 1;
 
 # --headless - don't prompt the user, just run and display the results
 # --outfile - save the results in a way that can be read by infile
 # --infile - load state of a previous run.  Only really useful in conjunction with --errors
 # --errors - load the state from --infile.  Only run tests that were marked as failures in the infile state.
 # --skip-only - temporarily ignore the skip directive in a test and run it anyway. Ignore non-skip tests
+# --unmunge - don't run the test, just show which CMD, CMD_CAPTURE, and FORK actions would have been taken
 my $opts = {};
-GetOptions($opts, 'headless|h!', 'outfile|o=s', 'infile|i=s', 'errors|e!', 'skip-only') || die "Couldn't understand options\n";
+GetOptions($opts, 'headless|h!', 'outfile|o=s', 'infile|i=s', 'errors|e!', 'skip-only', 'unmunge') || die "Couldn't understand options\n";
 
 my $testDir =  shift || die "Please provide the path to the test directory\n";
-$testDir    =~ s|/+$||;
+$testDir    =~ canonpath($testDir); # remove trailing slashes
 my $testRe  =  shift || '.'; # pattern to match test IDs against. Allows to run subset of tests by specifying, eg, '005.'
-my $outDir  =  "$testDir/out-dyn";
-my $refDir  =  "$testDir/out-ref";
+my $outDir  =  catfile($testDir, "out-dyn");
+my $refDir  =  catfile($testDir, "out-ref");
+my $certDir =  catfile($Bin, '..', '..', 'certs');
+my $autoCat =  $ENV{SWAKS_TEST_AUTOCAT} ? 1 : 0;
+my $runningOs = $^O; # darwin, linux, freebsd, MSWin32,
 
-my $tokens = {
+my @forks        = ();
+my $customTokens = {};
+my $tokens       = {
 	'global' => {
-		'%SWAKS%'    => 'swaks',
+		'%SWAKS%'    => $runningOs eq 'MSWin32' ? 'swaks.pl' : 'swaks',
 		'%TESTDIR%'  => $testDir,
 		'%OUTDIR%'   => $outDir,
 		'%REFDIR%'   => $refDir,
+		'%CERTDIR%'  => $certDir,
 		'%HOSTNAME%' => get_hostname(),
+		'%USERNAME%' => get_username(),
 	},
 	'local' => {},
 };
-if ($ENV{TEST_SWAKS}) {
-	$tokens->{'global'}{'%SWAKS%'} = $ENV{TEST_SWAKS};
+if ($ENV{SWAKS_TEST_SWAKS}) {
+	if ($ENV{SWAKS_TEST_SWAKS} =~ m|[/\\]|) {
+		$ENV{SWAKS_TEST_SWAKS} = realpath(rel2abs($ENV{SWAKS_TEST_SWAKS}));
+	}
+	$tokens->{'global'}{'%SWAKS%'} = $ENV{SWAKS_TEST_SWAKS};
+}
+if ($ENV{SWAKS_TEST_SERVER}) {
+	if ($ENV{SWAKS_TEST_SERVER} =~ m|[/\\]|) {
+		$ENV{SWAKS_TEST_SERVER} = realpath(rel2abs($ENV{SWAKS_TEST_SERVER}));
+	}
+	$tokens->{'global'}{'%TEST_SERVER%'} = $ENV{SWAKS_TEST_SERVER};
 }
 
+if (!-d $testDir) {
+	die "invalid test suite (not a directory): $testDir\n";
+}
 if (!-d $outDir) {
 	mkdir($outDir) || die "Can't mkdir($outDir): $!\n";
-	open(O, ">$outDir/.gitignore") || die "Can't open $outDir/.gitignore for writing: $!\n";
+	my $gitignore = catfile($outDir, ".gitignore");
+	open(O, ">$gitignore") || die "Can't open $gitignore for writing: $!\n";
 	print O "*\n";
 	close(O);
 }
@@ -75,7 +105,7 @@ TEST_EXECUTION:
 foreach my $testFile (sort @testDefs) {
 	restoreEnv();
 
-	my $testObj = readTestFile("$testDir/$testFile");
+	my $testObj = readTestFile(catfile($testDir, $testFile));
 	next if ($testObj->{id} !~ /$testRe/);
 
 	my $result = runTest($testDir, $outDir, $testObj);
@@ -103,6 +133,7 @@ sub runTest {
 	my $outDir    = shift;
 	my $obj       = shift;
 	my $allTokens = {};
+	@forks        = ();
 
 	# set local tokens (currently only %TESTID% can be set)
 	$tokens->{'local'} = { '%TESTID%' => $obj->{'id'} }; # reset the local tokens and set id to the test ID
@@ -112,6 +143,11 @@ sub runTest {
 		foreach my $token (keys(%{$tokens->{$tokenType}})) {
 			$allTokens->{$token} = $tokens->{$tokenType}{$token};
 		}
+	}
+
+	if ($opts->{'unmunge'}) {
+		print unmungeActions($obj->{'test action'}, $allTokens), "\n";
+		return;
 	}
 
 	if ($opts->{'skip-only'} && !$obj->{'skip'}) {
@@ -148,6 +184,20 @@ sub runTest {
 		my $result = "$testDir/$obj->{id}: " . ($failed ? "FAIL ($failed)" : 'PASS');
 		saveResult($result);
 	}
+
+	foreach my $proc (@forks) {
+		$proc->die();
+	}
+}
+
+sub saveExit {
+	my $id   = shift;
+	my $exit = shift;
+	my $file = catfile($outDir, $id . '.exits');
+
+	open(O, ">>$file") || die "Couldn't open $file to write: $!\n";
+	printf O "%-15s %3d   %s\n", $exit->[0], $exit->[1], join(' ', @{$exit->[2]});
+	close(O);
 }
 
 sub saveResult {
@@ -162,6 +212,46 @@ sub saveResult {
 	}
 }
 
+sub genDiffs {
+	my $baseDiffFile = shift;
+	my $refFile      = shift;
+	my $dynFile      = shift;
+	my $leDiffFile   = $baseDiffFile . '.showle';
+	my $noleDiffFile = $baseDiffFile . '.nole';
+
+	unlink($baseDiffFile, $leDiffFile, $noleDiffFile);
+
+	my $diff = Text::Diff::diff($refFile, $dynFile, { STYLE => 'Unified' });
+
+	if (!$diff) {
+		return;
+	}
+
+	open(O, ">$baseDiffFile") || die "Can't write to $baseDiffFile: $!\n";
+	print O $diff;
+	close(O);
+
+	$diff =~ s|\r|\\r|g;
+	$diff =~ s|\n|\\n\n|g;
+	open(O, ">$leDiffFile") || die "Can't write to $leDiffFile: $!\n";
+	print O $diff;
+	close(O);
+
+	open(I, "<$refFile");
+	my $refData = join('', <I>);
+	close(I);
+	open(I, "<$dynFile");
+	my $dynData = join('', <I>);
+	close(I);
+
+	$refData =~ s|\r||g;
+	$dynData =~ s|\r||g;
+
+	open(O, ">$noleDiffFile") || die "Can't write to $noleDiffFile: $!\n";
+	print O Text::Diff::diff(\$refData, \$dynData, { STYLE => 'Unified' });
+	close(O);
+}
+
 
 sub runResult {
 	my $testObj = shift;
@@ -174,55 +264,109 @@ sub runResult {
 	foreach my $test (@$tests) {
 		debug('result', $test);
 
-		my($verb, @args) = shellwords(replaceTokens($tokens, $test));
+		my($verb, @args) = mshellwords(replaceTokens($tokens, $test));
 
 		if ($verb eq 'COMPARE_FILE') {
 			debug('COMPARE_FILE', join('; ', @args));
-			if (-f $args[0] && -f $args[1]) {
-				my($diffFile) = $args[0] =~ m|([^/]+)$|;
-				$diffFile     = $tokens->{'%OUTDIR%'} . '/' . $diffFile . '.diff';
+			my $refFile = $args[0];
+			my $dynFile = $args[1];
+			my $osRefFile = $refFile;
+			$osRefFile =~ s/^(.*\.)?([^\.]+?)$/$1$runningOs.$2/; # _options-data/out-ref/05272.stderr -> _options-data/out-ref/05272.darwin.stderr
+			if (-f $osRefFile) {
+				$refFile = $osRefFile;
+			}
+
+			if (-f $refFile && -f $dynFile) {
+				my $diffFile     = catfile($tokens->{'%OUTDIR%'}, (splitpath($refFile))[2] . '.diff');
 				unlink($diffFile);
+				genDiffs($diffFile, $refFile, $dynFile);
 
-				debug('exec', "diff -u $args[0] $args[1]");
-				open(P, "diff -u $args[0] $args[1] |") || die "Can't run diff: $!\n";
-				my $diff = join('', <P>);
-				close(P);
-
-				if ($diff) {
-					# my $diffFile = $tokens->{'%OUTDIR%'} . '/' . $tokens->{'%TESTID%'} . '.diff';
-					open(O, ">$diffFile") || die "Can't write to $diffFile: $!\n";
-					print O $diff;
-					close(O);
-
+				if (-e $diffFile) {
 					if (!$opts->{'headless'}) {
+						my $autoCatRan = 0;
+						my $action     = $testObj->{'test action'}[0];
 						INTERACT:
 						while (1) {
-							print "Test $tokens->{'%TESTDIR%'}/$tokens->{'%TESTID%'} is about to fail.\n",
-							      "DIFF:   $args[0], $args[1]\n",
+							# only show the "(O)S specific part if we're not already using an os-specific file
+							my $acceptLanguage = sprintf("(a)ccept%s new results", $refFile ne $osRefFile ? ' ((O)S-specific)' : '');
+							print "Test ", catfile($tokens->{'%TESTDIR%'}, $tokens->{'%TESTID%'}), " is about to fail.\n",
+							      "DIFF:   $refFile, $dynFile\n",
 							      ($testObj->{title} ? "TITLE:  $testObj->{title}\n" : ''),
-							      "ACTION: ", $testObj->{'test action'}[0], "\n",
-							      "(i)gnore, review (d)iff, (e)dit test, (r)erun test, (s)kip test, (a)ccept new results, (q)uit: ";
+							      "ACTION: $action\n",
+							      "(i)gnore file; review (d)iff ((w)ith or with(o)ut line endings); (e)dit, (r)erun, or (s)kip test; (u)nmunge; $acceptLanguage; (q)uit: ";
 
-							# read a single character w/o requiring user to hit enter
-							ReadMode 'cbreak';
-							my $input = ReadKey(0);
-							ReadMode 'normal';
-							print "$input\n";
+							my $input;
+							if (!$autoCat || $autoCatRan) {
+								# read a single character w/o requiring user to hit enter
+								ReadMode 'cbreak';
+								$input = ReadKey(0);
+								ReadMode 'normal';
+								print "$input\n";
+							}
+							elsif ($autoCat) {
+								$input = 'd';
+								print "autoCat\n";
+							}
 
 							if ($input eq 'i') {
 								# ignore is to ignore this specific file failure
 								last INTERACT;
 							}
-							elsif ($input eq 'd') {
-								debug('exec', "$ENV{'PAGER'} $diffFile");
-								system($ENV{'PAGER'}, $diffFile);
+							elsif ($input eq 'd' || $input eq 'w' || $input eq 'o') {
+								my $showFile = $diffFile;
+								$showFile = "$diffFile.showle" if ($input eq 'w');
+								$showFile = "$diffFile.nole" if ($input eq 'o');
+
+								my @cmds = ('intcat');
+								if ($input eq 'd' && $autoCat && !$autoCatRan) {
+									$autoCatRan = 1;
+								}
+								else {
+									if (length($ENV{'PAGER'})) {
+										unshift(@cmds, $ENV{'PAGER'});
+									}
+									if (length($ENV{'SWAKS_TEST_PAGER'})) {
+										unshift(@cmds, $ENV{'SWAKS_TEST_PAGER'});
+									}
+									if (scalar(@cmds) == 1) {
+										print "WARNING: consider setting SWAKS_TEST_PAGER or PAGER environment variables\n";
+									}
+								}
+
+								CMD:
+								foreach my $cmd (@cmds) {
+									if ($cmd eq 'intcat') {
+										open(I, $showFile) || print "ERROR: unable to open $showFile: $!\n";
+										while (<I>) {
+											print;
+										}
+										close(I);
+									}
+									else {
+										debug('exec', "$cmd $showFile");
+										if (system($cmd, $showFile) == -1) {
+											print "ERROR: unable to execute '$cmd $showFile': $!\n";
+											next CMD;
+										}
+										last CMD;
+									}
+								}
 								next INTERACT;
 							}
 							elsif ($input eq 'e') {
-								my $editor = $ENV{'SWAKS_EDITOR'} || $ENV{'VISUAL'} || $ENV{'EDITOR'};
-								debug('exec', "$editor $tokens->{'%TESTDIR%'}/$tokens->{'%TESTID%'}.test");
-								system($editor, "$tokens->{'%TESTDIR%'}/$tokens->{'%TESTID%'}.test");
+								my $editor = $ENV{'SWAKS_TEST_EDITOR'} || $ENV{'VISUAL'} || $ENV{'EDITOR'};
+								my $file   = catfile($tokens->{'%TESTDIR%'}, "$tokens->{'%TESTID%'}.test");
+								if (!-e $editor) {
+									print STDERR "No valid editor found, consider setting SWAKS_TEST_EDITOR, VISUAL, or EDITOR environment variables\n";
+									next INTERACT;
+								}
+								debug('exec', "$editor $file");
+								system($editor, $file);
 								redo TEST_EXECUTION;
+							}
+							elsif ($input eq 'u') { # unmunge
+								$action = unmungeActions($testObj->{'test action'}, $tokens);
+								next INTERACT;
 							}
 							elsif ($input eq 'r') {
 								redo TEST_EXECUTION;
@@ -232,13 +376,18 @@ sub runResult {
 								push(@return, $diffFile, 'SKIPPED');
 								last FILE;
 							}
-							elsif ($input eq 'a') {
-								debug('exec', "/bin/cp $args[1] $args[0]");
-								system("/bin/cp", $args[1], $args[0]);
+							elsif ($input eq 'a' || $input eq 'O') {
+								if ($input eq 'O') {
+									$refFile = $osRefFile;
+								}
+								File::Copy::copy($dynFile, $refFile);
 								redo TEST_EXECUTION;
 							}
 							elsif ($input eq 'q') {
 								exit;
+							}
+							else {
+								print "ERROR: unknown option '$input'\n";
 							}
 						}
 					}
@@ -250,7 +399,7 @@ sub runResult {
 				}
 			}
 			else {
-				push(@return, "Can't COMPARE_FILE($args[0], $args[1]), one or both files don't exist");
+				push(@return, "Can't COMPARE_FILE($refFile, $dynFile), one or both files don't exist");
 			}
 		}
 		elsif (!$verb) {
@@ -269,33 +418,112 @@ sub runResult {
 	}
 }
 
+sub unmungeActions {
+	my $actions = shift;
+	my $tokens = shift;
+
+	my @pieces = ();
+	ACTION:
+	for (my $i = 0; $i < scalar(@$actions); $i++) {
+		my $tAction = $actions->[$i];
+		my @actionWords = mshellwords(replaceTokens($tokens, $tAction));
+		WORD:
+		for (my $j = 0; $j < scalar(@actionWords); $j++) {
+			my $p = $actionWords[$j];
+			next ACTION if ($j == 0 && $p !~ /^(FORK|CMD_CAPTURE|CMD)$/);
+			if ($j == 0) {
+				# This is the verb, like FORK or CMD_CAPTURE
+				$p = ">> $p";
+				$p = "\n$p" if ($i == 0);
+				push(@pieces, $p);
+			}
+			elsif ($j == 1) {
+				# this is the command, like swaks or smtp-server.pl
+				push(@pieces, $p . ' \\');
+			}
+			elsif ($p =~ /^-/) {
+				# option: indent and put on own line
+				$p = '    ' . $p;
+				push(@pieces, $p . ' \\');
+			}
+			elsif ($pieces[-1] =~ /^\s*-/) {
+				# argument: if the previous piece was an option, add it tot he previous piece
+				if ($p =~ / /) {
+					$p = '"' . $p . '"';
+				}
+				$pieces[-1] =~ s/ \\$//;
+				$pieces[-1] .= ' ' . $p . ' \\';
+			}
+			else {
+				print "ERROR: What should I do with this? <<$i,$j,$p>>, <<$pieces[-1]>>\n";
+			}
+
+			# if we're on the last word of the command, remove the backslash
+			if ($j == scalar(@actionWords) - 1) {
+				$pieces[-1] =~ s/ \\$//;
+			}
+		}
+	}
+	my $action = join("\n", @pieces);
+	return $action;
+}
+
 sub runAction {
 	my $tokens = shift;
 	my $action = shift;
 
 	debug('action', $action);
 
-	my($verb, @args) = shellwords(replaceTokens($tokens, $action));
+	my($verb, @args) = mshellwords(replaceTokens($tokens, $action));
+
+	# print "\$verb = $verb\n";
+	# for (my $i = 0; $i < scalar(@args); $i++) {
+	# 	print "ARG $i) $args[$i]\n";
+	# }
 
 	if ($verb eq 'REMOVE_FILE') {
 		debug('REMOVE_FILE', join('; ', @args));
 		unlink(@args);
 	}
 	elsif ($verb eq 'CMD') {
+		$args[0] =~ s|/|\\|g if ($runningOs eq 'MSWin32');
 		debug('CMD', join('; ', @args));
 		debug('exec', join(' ', map { "'$_'" } @args));
-		system(@args);
+		my $exit = system(@args);
+		saveExit($tokens->{'local'}{'%TESTID%'}, [ $verb, $exit >> 8, \@args ]);
 	}
 	elsif ($verb =~ /^CMD_CAPTURE(?::(\S+))?$/) {
-		debug('CMD_CAPTURE', join('; ', @args));
 		my $suffix     = $1 ? ".$1" : '';
-		my $stdoutFile = $tokens->{'%OUTDIR%'} . '/' . $tokens->{'%TESTID%'} . '.stdout' . $suffix;
-		my $stderrFile = $tokens->{'%OUTDIR%'} . '/' . $tokens->{'%TESTID%'} . '.stderr' . $suffix;
+		$args[0]       =~ s|/|\\|g if ($runningOs eq 'MSWin32');
+		debug('CMD_CAPTURE', join('; ', @args));
+		my $stdoutFile = catfile($tokens->{'%OUTDIR%'}, $tokens->{'%TESTID%'} . '.stdout' . $suffix);
+		my $stderrFile = catfile($tokens->{'%OUTDIR%'}, $tokens->{'%TESTID%'} . '.stderr' . $suffix);
 		my $stdinFile  = (grep(/^STDIN:/, @args))[0];
 		@args          = grep(!/^STDIN:/, @args);
 
-		$stdinFile =~ s/^STDIN://g;
-		captureOutput(\@args, $stdoutFile, $stderrFile, $stdinFile);
+		$stdinFile =~ s/^STDIN://;
+		my $exit = captureOutput(\@args, $stdoutFile, $stderrFile, $stdinFile);
+		saveExit($tokens->{'%TESTID%'}, [ $verb, $exit, \@args ]);
+	}
+	elsif ($verb eq 'FORK') {
+		$args[0] =~ s|/|\\|g if ($runningOs eq 'MSWin32');
+		debug('FORK', join('; ', @args));
+		debug('exec', join(' ', map { "'$_'" } @args));
+		my $proc = Proc::Background->new(@args);
+		if (!$proc->alive()) {
+			die "Unable to FORK @args: $!($@)\n";
+		}
+		push(@forks, $proc);
+
+		# work around timing issue on freebsd where very often the forked process hasn't had time to set up the socket yet
+		# it's unclear if this is an actual freebsd issue or just one caused by my freebsd host
+		if ($runningOs eq 'freebsd') {
+			select(undef, undef, undef, 0.5);
+		}
+	}
+	elsif ($verb eq 'DEFINE') {
+		debug('DEFINE', join('; ', @args));
+		$customTokens->{$args[0]} = $args[1];
 	}
 	elsif ($verb eq 'CREATE_FILE') {
 		debug('CREATE_FILE', join('; ', @args));
@@ -320,8 +548,9 @@ sub runAction {
 			delete($ENV{$args[0]});
 		}
 		else {
-			# print STDERR "SET_ENV $args[0] - setting ENV{$args[0]} to $args[1]\n";
-			$ENV{$args[0]} = $args[1];
+			my $tv = ($runningOs eq 'MSWin32' && !$args[1]) ? '<>' : $args[1];
+			# print STDERR "SET_ENV $args[0] - setting ENV{$args[0]} to $tv\n";
+			$ENV{$args[0]} = $tv;
 		}
 	}
 	elsif ($verb eq 'MERGE') {
@@ -352,14 +581,16 @@ sub runAction {
 		}
 		close(O);
 
-		if (length($post{mode})) {
-			chmod(oct($post{mode}), $outFile);
-		}
-		elsif (length($post{owner})) {
-			chown($post{owner}, -1, $outFile);
-		}
-		elsif (length($post{group})) {
-			chown(-1, $post{group}, $outFile);
+		if ($runningOs ne 'MSWin32') {
+			if (length($post{mode})) {
+				chmod(oct($post{mode}), $outFile);
+			}
+			elsif (length($post{owner})) {
+				chown($post{owner}, -1, $outFile);
+			}
+			elsif (length($post{group})) {
+				chown(-1, $post{group}, $outFile);
+			}
 		}
 	}
 	elsif ($verb eq 'MUNGE') {
@@ -382,7 +613,8 @@ sub runAction {
 					die "Couldn't run $munge: $@\n";
 				}
 			}
-			munge_general(\@lines, '.?', $tokens->{'%SWAKS%'}, '%SWAKS_COMMAND%');
+			munge_general(\@lines, '.?', quotemeta($tokens->{'%SWAKS%'}), '%SWAKS_COMMAND%');
+			munge_general(\@lines, '.?', quotemeta($tokens->{'%TEST_SERVER%'}), '%TEST_SERVER%');
 
 			open(O, ">$file") || die "Couldn't write to $file: $!\n";
 			print O join('', @lines);
@@ -404,8 +636,11 @@ sub replaceTokens {
 	my $tokens = shift;
 	my $action = shift;
 
-	foreach my $token (keys %$tokens) {
-		$action =~ s/$token/$tokens->{$token}/g
+	foreach my $source ($tokens, $customTokens) {
+		foreach my $token (keys %$source) {
+			$action =~ s/$token/$source->{$token}/g;
+			debug('token', "REPLACE $token -> $source->{$token}, $action\n");
+		}
 	}
 
 	return($action);
@@ -430,6 +665,23 @@ sub readTestFile {
 			$fullLine .= $line;
 		}
 
+		# handle specific platforms
+		if ($fullLine =~ s/IFOS(!)?=(\S+) //) {
+			my $negate = $1;
+			my $testOs = $2;
+
+
+			# pre action: IFOS=MSWin32 SET_ENV LC_ALL Czech
+			# pre action: IFOS!=MSWin32 SET_ENV LC_ALL cs_CZ.UTF-8
+			# Windows:  IFOS=MSWin32 = (1 && 0) || (0 && 1), IFOS!=MSWin32 = (1 && 1) || (0 && 0)
+			# Linux:    IFOS=MSWin32 = (0 && 0) || (1 && 1), IFOS!=MSWin32 = (0 && 1) || (1 && 0)
+			if (($testOs eq $runningOs && $negate) || ($testOs ne $runningOs && !$negate)) {
+				$fullLine = '';
+				next LINE;
+			}
+		}
+
+
 		if ($fullLine =~ /^(\w[^:]+):\s+(.*)$/) {
 			my $testKey = $1;
 			my $testArg = $2;
@@ -453,7 +705,8 @@ sub readTestFile {
 
 		$fullLine = '';
 	}
-	if ($file =~ m%([^/]+)\.[^/]+$%) {
+	my $idFile = (splitpath($file))[2];
+	if ($idFile =~ m%^(.+)\.[^.]+$%) {
 		$obj->{id} = $1;
 	}
 	else {
@@ -465,39 +718,54 @@ sub readTestFile {
 	if (exists($obj->{'auto'}) && ref($obj->{'auto'}) eq 'ARRAY') {
 		foreach my $auto (@{$obj->{'auto'}}) {
 			# my($types, @files) = split(' ', $auto);
-			my($types, @files) = shellwords($auto);
+			my($types, @files) = mshellwords($auto);
 			foreach my $type (split(/,/, $types)) {
 				if ($type eq 'REMOVE_FILE') {
-					map { push(@{$obj->{'pre action'}}, "REMOVE_FILE %OUTDIR%/$_"); } (@files);
+					map { push(@{$obj->{'pre action'}}, "REMOVE_FILE " . catfile('%OUTDIR%', $_)); } (@files);
 				}
 				elsif ($type eq 'CREATE_FILE') {
 					map { push(@{$obj->{'pre action'}}, "CREATE_FILE %REFDIR%/$_"); } (@files);
 				}
 				elsif ($type eq 'MUNGE') {
-					map { push(@{$obj->{'test action'}}, "MUNGE file:%OUTDIR%/$_ munge_standard"); } (@files);
+					map { push(@{$obj->{'test action'}}, "MUNGE file:" . catfile('%OUTDIR%', $_) . " munge_standard"); } (@files);
 				}
 				elsif ($type eq 'COMPARE_FILE') {
 					# if we're comparing stdout and stderr, manipulate the list to compare stderr first.  It turns
 					# out that seeing errors first is much more useful, but I don't want to modify all the existing tests
 					my @filesSorted = grep(/\.stderr/, @files);
 					push(@filesSorted, grep(/\.stdout/, @files), grep(!/\.(stdout|stderr)/, @files));
-					map { push(@{$obj->{'test result'}}, "COMPARE_FILE %REFDIR%/$_ %OUTDIR%/$_"); } (@filesSorted);
+					map { push(@{$obj->{'test result'}}, "COMPARE_FILE " . catfile('%REFDIR%', $_) .' ' . catfile('%OUTDIR%', $_)); } (@filesSorted);
 				}
 				elsif ($type eq 'INTERACT') {
-					my $file     = '%OUTDIR%/%TESTID%.expect';
-					push(@{$obj->{'pre action'}}, "REMOVE_FILE $file");
-
-					my $cmd       = shift(@files);
-					my $expectStr = "MERGE $file string:'spawn $cmd\\n' ";
+					# my $infile = catfile('%OUTDIR%', '%TESTID%.stdin');
+					# push(@{$obj->{'pre action'}}, "REMOVE_FILE $infile");
+					my $stdin = "STDIN:LITERAL:";
+					my $cmd   = shift(@files);
 					while (scalar(@files)) {
 						my $expect   = shift(@files);
 						my $response = shift(@files);
-						$expectStr  .= "string:'expect \"$expect\"\\n' string:'send -- \"$response\\r\"\\n' ";
+						$stdin .= "$response\\n";
 					}
-					$expectStr .= "string:'interact\\n'";
+					unshift(@{$obj->{'test action'}}, "CMD_CAPTURE $cmd '$stdin'");
 
-					push(@{$obj->{'pre action'}}, $expectStr);
-					unshift(@{$obj->{'test action'}}, "CMD_CAPTURE expect $file");
+
+					# if ($runningOs eq 'MSWin32') {
+					# 	$obj->{'skip'} ||= "INTERACTive testing not currently supported on windows";
+					# }
+					# my $file     = catfile('%OUTDIR%', '%TESTID%.expect');
+					# push(@{$obj->{'pre action'}}, "REMOVE_FILE $file");
+
+					# my $cmd       = shift(@files);
+					# my $expectStr = "MERGE $file string:'spawn $cmd\\n' ";
+					# while (scalar(@files)) {
+					# 	my $expect   = shift(@files);
+					# 	my $response = shift(@files);
+					# 	$expectStr  .= "string:'expect \"$expect\"\\n' string:'send -- \"$response\\r\"\\n' ";
+					# }
+					# $expectStr .= "string:'interact\\n'";
+
+					# push(@{$obj->{'pre action'}}, $expectStr);
+					# unshift(@{$obj->{'test action'}}, "CMD_CAPTURE expect $file");
 				}
 				else {
 					die "unknown 'auto' type $type\n";
@@ -509,52 +777,66 @@ sub readTestFile {
 	return($obj);
 }
 
+sub cmdquote {
+	# start at 1 - never quote the actual command
+	for (my $i = 1; $i < scalar(@_); $i++) {
+		next if ($_[$i] !~ / /);
+		# $_[$i] =~ s%%'\\''%g;
+		$_[$i] =  '"' . $_[$i] .'"';
+	}
+	return join(' ', @_);
+}
+
 sub captureOutput {
 	my $args    = shift;
 	my $outFile = shift;
 	my $errFile = shift;
 	my $inFile  = shift;
+	my $exit;
 	my $debug   = join(' ', map { "'$_'" } (@$args)) . " >$outFile 2>$errFile";
 	$debug     .= " <$inFile" if ($inFile);
 
 	debug('exec', $debug);
 
-	FORK: {
-		if (my $pid = fork) {
-			# parent
-
-			#### wait here
-			wait();
-			return;
-		}
-		elsif (defined $pid) { # $PID is zero here if defined
-			# child.  reopen STDOUT and STDERR into the files we want to capture into
-
-			open(NEWSTDOUT, ">$outFile") || die "Can't open new stdout file $outFile to write: $!\n";
-			open(NEWSTDERR, ">$errFile") || die "Can't open new stderr file $errFile to write: $!\n";
-			close(STDOUT);
-			open(STDOUT, ">&NEWSTDOUT") || die "Couldn't redirect STDOUT to new file: $!\n";
-			close(STDERR);
-			open(STDERR, ">&NEWSTDERR") || die "Couldn't redirect STDERR to new file: $!\n";
-
-			if ($inFile) {
-				open(NEWSTDIN, "<$inFile") || die "Can't open new stdin file $inFile to read: $!\n";
-				close(STDIN);
-				open(STDIN, "<&NEWSTDIN")     || die "Couldn't redirect STDIN to read from new file: $!\n";
-			}
-
-			exec(@$args);
-			exit;
-		}
-		elsif ($! =~ /No more process/) {
-			# EAGAIN, in parent, supposedly recoverable fork error
-			sleep 5;
-			redo FORK;
+	my $stdin = '';
+	if ($inFile) {
+		if ($inFile =~ s/^LITERAL://) {
+			$stdin = $inFile;
+			$stdin =~ s/\\n/\n/g;
 		}
 		else {
-			die "Can't fork: $!\n";
+			open(I, "<$inFile") || die "Can't open inFile $inFile for reading: $!\n";
+			$stdin = join('', <I>);
+			close(I);
 		}
 	}
+
+	my($stdout, $stderr, @rest) = Capture::Tiny::capture {
+		if ($inFile) {
+			my $command = cmdquote(@$args);
+			open(P, "|-", join(' ', $command)) || die "Couldn't open pipe to $command: $!\n";
+			print P $stdin;
+			if (close(P)) {
+				$exit = 0;
+			}
+			else {
+				$exit = $?;
+			}
+		}
+		else {
+			$exit = system(@$args) >> 8;
+		}
+	};
+
+	open(FILESTDOUT, ">$outFile") || die "Can't open new stdout file $outFile to write: $!\n";
+	print FILESTDOUT $stdout;
+	close(FILESTDOUT);
+
+	open(FILESTDERR, ">$errFile") || die "Can't open new stderr file $errFile to write: $!\n";
+	print FILESTDERR $stderr;
+	close(FILESTDERR);
+
+	return($exit);
 }
 
 sub get_hostname {
@@ -567,6 +849,14 @@ sub get_hostname {
 	$G::hostname = $l || $h;
 
 	return($G::hostname);
+}
+
+sub get_username {
+	if ($runningOs eq 'MSWin32') {
+		require Win32;
+		return Win32::LoginName();
+	}
+	return $ENV{LOGNAME} || (getpwuid($<))[0];
 }
 
 sub debug {
@@ -583,6 +873,27 @@ sub debug {
 	}
 }
 
+# yuck.  Just yuck
+sub mshellwords {
+	my $line = shift;
+	my @return = ();
+
+	if ($runningOs eq 'MSWin32') {
+		$line =~ s/\\/::BACKSLASH::/g;
+		foreach my $part (shellwords($line)) {
+			$part =~ s/::BACKSLASH::/\\/g;
+			push(@return, $part);
+		}
+	}
+	else {
+		@return = shellwords($line);
+	}
+
+	map { s/\%QUOTE_DOUBLE\%/"/g; s/\%QUOTE_SINGLE\%/'/g; } (@return);
+
+	return @return;
+}
+
 sub munge_general {
 	my $lines    = shift;
 	my $consider = shift;
@@ -590,8 +901,13 @@ sub munge_general {
 	my $replace  = shift;
 
 	foreach my $line (@$lines) {
+		my $dbg = (($line =~ m|ssl/tls|) && $consider =~ /SSL routines/);
+		$dbg = 0;
+		print "SAW (<<$consider>>,<<$find>>,<<$replace>>) $line\n" if ($dbg);
 		if ($line =~ /$consider/) {
+			print "CONSIDERING $line\n" if ($dbg);
 			$line =~ s/$find/$replace/g;
+			print "AFTER $line\n" if ($dbg);
 		}
 	}
 }
@@ -651,9 +967,10 @@ sub munge_paths {
 	my $lines    = shift;
 	my $consider = shift || '.?';
 
-	munge_general($lines, $consider, $tokens->{'global'}{'%OUTDIR%'}, '/path/to/OUTDIR');
-	munge_general($lines, $consider, $tokens->{'global'}{'%REFDIR%'}, '/path/to/REFDIR');
-	munge_general($lines, $consider, $tokens->{'global'}{'%TESTDIR%'}, '/path/to/TESTDIR');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%OUTDIR%'}), '%OUTDIR%');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%REFDIR%'}), '%REFDIR%');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%TESTDIR%'}), '%TESTDIR%');
+	munge_general($lines, $consider, quotemeta($tokens->{'global'}{'%CERTDIR%'}), '%CERTDIR%');
 }
 
 sub munge_local_hostname {
@@ -664,6 +981,14 @@ sub munge_local_hostname {
 	munge_general($lines, $consider, $tokens->{'global'}{'%HOSTNAME%'}, 'LOCAL_HOST_NAME');
 }
 
+sub munge_local_username {
+	my $lines    = shift;
+	my $consider = shift || '.?';
+
+	return if (!$tokens->{'global'}{'%USERNAME%'});
+	munge_general($lines, $consider, $tokens->{'global'}{'%USERNAME%'} . '@', 'LOCAL_USER_NAME@');
+}
+
 sub munge_copyright {
 	my $lines    = shift;
 	my $consider = shift || '.?';
@@ -672,17 +997,78 @@ sub munge_copyright {
 		'Copyright (c) 2003-2008,2010-YEAR John Jetmore <jj33@pobox.com>');
 }
 
+sub munge_tls_available_protocols {
+	my $lines = shift;
+	my $consider = shift || '.?';
+
+	# make sure we have at least one TLSv1 family protocol, and if we do, replace with a generic string.
+	# if we don't replace it, it won't match and will cause investigation, which is good since why aren't there any
+	# tls protocols?
+	munge_general($lines, $consider, 'available protocols = .*TLSv1.*', 'available protocols = TLS_PROTOCOL_LIST');
+}
+
+sub munge_open2_failure {
+	my $lines = shift;
+
+	# macOS and Debian's open2 have different error formats, munge them to be the same
+	# macOS: open2: exec of /foo/bar failed at %SWAKS_COMMAND% line 165.
+	# Debian: open2: exec of /foo/bar failed: No such file or directory at %SWAKS_COMMAND% line 165.
+	munge_general($lines, 'open2: exec of', 'failed: No such file or directory at', 'failed at');
+	munge_general($lines, 'open2: exec of', 'line \d+', 'line ###');
+}
+
+sub munge_tls_cipher {
+	my $lines = shift;
+
+	munge_general($lines, 'TLS started with cipher', 'TLS started with cipher .*', 'TLS started with cipher VERSION:CIPHER:BITS');
+}
+
+sub munge_time_lapse {
+	my $lines = shift;
+
+	munge_general($lines, '^=== response in', '^=== response in \d+\.\d+s', '=== response in FLOATs');
+	munge_general($lines, '^=== response in', '^=== response in \d+s', '=== response in INTs');
+}
+
+sub munge_tls_error {
+	my $lines = shift;
+
+	# first, get rid of the error code and the error class:
+	# *** TLS startup failed (connect(): error:0A000410:SSL routines::sslv3 alert handshake failure)
+	# *** TLS startup failed (connect(): error:14094410:SSL routines:ssl3_read_bytes:sslv3 alert handshake failure)
+	# *** TLS startup failed (connect(): error:0A000410:SSL routines::ssl/tls alert handshake failure)
+	# *** TLS startup failed (connect(): error:DEADBEEF:SSL routines::no ciphers available)
+	# munge to:
+	# *** TLS startup failed (connect(): error:CODE:SSL routines::untouched here)
+	munge_general($lines, 'error:.*:SSL routines:', 'error:[A-F0-9]+:SSL routines:([^:]*)?:', 'error:CODE:SSL routines::');
+
+	# then, if needed, mungle the first word of the error description.  If it starts with "ssl" (encompassing sslv3 and ssl/tls
+	# in what I've seen so far), replace with TLS
+	# *** TLS startup failed (connect(): error:CODE:SSL routines::sslv3 alert handshake failure)
+	# *** TLS startup failed (connect(): error:CODE:SSL routines::ssl/tls alert handshake failure)
+	# TO: *** TLS startup failed (connect(): error:CODE:SSL routines::TLS handshake failure)
+	# *** TLS startup failed (connect(): error:CODE:SSL routines::no ciphers available)
+	# TO: *** TLS startup failed (connect(): error:CODE:SSL routines::no ciphers available)
+	munge_general($lines, 'error:.*:SSL routines::', 'SSL routines::ssl\S*', 'SSL routines::TLS');
+}
+
 # this is just a convenience so I can add new munges without having to manually apply them to all test files
 sub munge_standard {
 	my $lines    = shift;
 	my $consider = shift || '.?';
 
 	munge_globs($lines);
-	munge_dates($lines, '^(Subject|Date):');
-	munge_message_ids($lines, '^Message-Id:');
+	munge_dates($lines, '(Subject|Date):');
+	munge_message_ids($lines, 'Message-Id:');
 	munge_version($lines, 'X-Mailer');
 	munge_mime_boundaries($lines);
 	munge_paths($lines);
 	munge_local_hostname($lines);
+	munge_local_username($lines);
 	munge_copyright($lines);
+	munge_tls_available_protocols($lines);
+	munge_open2_failure($lines);
+	munge_tls_cipher($lines);
+	munge_time_lapse($lines);
+	munge_tls_error($lines);
 }

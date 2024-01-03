@@ -1,0 +1,186 @@
+
+root ca:
+  openssl genrsa -out ca.key 2048
+  openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 -out ca.pem -subj "/C=US/ST=Indiana/O=Swaks Development/CN=Swaks Root CA/emailAddress=proj-swaks@jetmore.net"
+
+other root ca that doesn't actually sign any of these certs:
+  openssl genrsa -out ca-other.key 2048
+  openssl req -x509 -new -nodes -key ca-other.key -sha256 -days 3650 -out ca-other.pem -subj "/C=US/ST=Indiana/O=Other Development/CN=Other Root CA/emailAddress=proj-swaks@jetmore.net"
+
+
+
+get contents of a crt:
+  openssl x509 -text -in signed.example.com.crt
+
+test if a crt is signed:
+  openssl verify -CAfile ca.pem unsigned.example.com.crt
+
+regenerate the hashes used by --tls-ca-path when provided with a path instead of a directory
+  /usr/local/Cellar/openssl@1.1/1.1.1h/bin/c_rehash ~/Documents/git/swaks/testing/certs
+
+regenerate all certificates:
+
+GENERAL PURPOSE CERTS:
+
+# general
+./generate-cert.pl --signed node.example.com
+    # Signed: ca.pem
+    # Files: node.example.com.key, node.example.com.crt
+    # Not After : Sep 11 14:50:10 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (node.example.com, with-SAN)", CN = node.example.com, emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # DNS:node.example.com
+
+# signed
+./generate-cert.pl --signed signed.example.com
+    # Signed: ca.pem
+    # Files: signed.example.com.key, signed.example.com.crt
+    # Not After : Sep 11 14:50:47 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (signed.example.com, with-SAN)", CN = signed.example.com, emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # DNS:signed.example.com
+
+# unsigned
+./generate-cert.pl unsigned.example.com
+    # Signed: NO
+    # Files: unsigned.example.com.key, unsigned.example.com.crt
+    # Not After : Sep 11 14:51:48 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (unsigned.example.com, with-SAN)", CN = unsigned.example.com, emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # DNS:unsigned.example.com
+
+# signed IPv4
+./generate-cert.pl --signed --san 127.0.0.1 --exclude-cn 127.0.0.1 127_0_0_1
+    # Signed: ca.pem
+    # Files: 127_0_0_1.key, 127_0_0_1.crt
+    # Not After : Sep 11 14:54:07 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (127.0.0.1, with-SAN)", emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # IP Address:127.0.0.1
+
+# signed IPv6
+./generate-cert.pl --signed --san ::1 --exclude-cn ::1 __1
+    # Signed: ca.pem
+    # Files: __1.key, __1.crt
+    # Not After : Sep 11 14:57:04 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (::1, with-SAN)", emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # IP Address:0:0:0:0:0:0:0:1
+
+
+
+
+SPECIALTY CERTS:
+
+./generate-cert.pl --signed localhost
+    # Signed: ca.pem
+    # Files: localhost.key, localhost.crt
+    # Not After : Sep 11 14:59:07 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (localhost, with-SAN)", CN = localhost, emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # DNS:localhost
+
+./generate-cert.pl --expires -1 expired-unsigned.example.com
+    # Signed: NO
+    # Files: expired-unsigned.example.com.key, expired-unsigned.example.com.crt
+    # Not After : Nov  2 14:59:48 2023 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (expired-unsigned.example.com, with-SAN)", CN = expired-unsigned.example.com, emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # DNS:expired-unsigned.example.com
+
+./generate-cert.pl --expires -1 --signed expired-signed.example.com
+    # Signed: ca.pem
+    # Files: expired-signed.example.com.key, expired-signed.example.com.crt
+    # Not After : Nov  2 15:00:55 2023 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (expired-signed.example.com, with-SAN)", CN = expired-signed.example.com, emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # DNS:expired-signed.example.com
+
+./generate-cert.pl --signed '*.example.com' wildcard.example.com
+    # Signed: ca.pem
+    # Files: wildcard.example.com.key, wildcard.example.com.crt
+    # Not After : Sep 11 15:02:41 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (*.example.com, with-SAN)", CN = *.example.com, emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # DNS:*.example.com
+
+./generate-cert.pl --signed --san '' cn-only.example.com
+    # Signed: ca.pem
+    # Files: cn-only.example.com.key, cn-only.example.com.crt
+    # Not After : Sep 11 15:03:37 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (cn-only.example.com, without-SAN)", CN = cn-only.example.com, emailAddress = proj-swaks@jetmore.net
+
+./generate-cert.pl --signed --exclude-cn  san-only.example.com
+    # Signed: ca.pem
+    # Files: san-only.example.com.key, san-only.example.com.crt
+    # Not After : Sep 11 15:03:56 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (san-only.example.com, with-SAN)", emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # DNS:san-only.example.com
+
+./generate-cert.pl --signed --san san-multiple.example.com --san san-m1.example.com --san san-m2.example.com  san-multiple.example.com
+    # Signed: ca.pem
+    # Files: san-multiple.example.com.key, san-multiple.example.com.crt
+    # Not After : Sep 11 15:04:20 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (san-multiple.example.com, with-SAN)", CN = san-multiple.example.com, emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # DNS:san-multiple.example.com, DNS:san-m1.example.com, DNS:san-m2.example.com
+
+
+
+
+------------------------------
+Create an intermediate cert
+
+
+
+./generate-cert.pl --signed --intermediate --san --exclude-cn ca-intermediate
+    # Signed: ca.pem
+    # Files: ca-intermediate.key, ca-intermediate.crt
+    # Not After : Sep 15 22:49:32 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (ca-intermediate, without-SAN)", emailAddress = proj-swaks@jetmore.net
+
+mv ca-intermediate.crt ca-intermediate.pem
+
+./generate-cert.pl --signed --ca-cert ca-intermediate signed-intermediate.example.com
+    # Signed: ca-intermediate.pem
+    # Files: signed-intermediate.example.com.key, signed-intermediate.example.com.crt
+    # Not After : Sep 15 22:49:58 2033 GMT
+    # Subject: C = US, ST = Indiana, O = "Swaks Development (signed-intermediate.example.com, with-SAN)", CN = signed-intermediate.example.com, emailAddress = proj-swaks@jetmore.net
+    # X509v3 Subject Alternative Name:
+    # DNS:signed-intermediate.example.com
+
+c_rehash ~/Documents/git/swaks/testing/certs
+cat ca-intermediate.pem ca.pem > ca-chain.pem
+
+
+$ openssl verify -show_chain -CAfile ca.pem ca-intermediate.pem
+ca-intermediate.pem: OK
+Chain:
+depth=0: C = US, ST = Indiana, O = "Swaks Development (ca-intermediate, without-SAN)", emailAddress = proj-swaks@jetmore.net (untrusted)
+depth=1: C = US, ST = Indiana, O = Swaks Development, CN = Swaks Root CA, emailAddress = proj-swaks@jetmore.net
+
+$ openssl verify -show_chain -CAfile ca-intermediate.pem signed-intermediate.example.com.crt
+C = US, ST = Indiana, O = "Swaks Development (ca-intermediate, without-SAN)", emailAddress = proj-swaks@jetmore.net
+error 2 at 1 depth lookup: unable to get issuer certificate
+error signed-intermediate.example.com.crt: verification failed
+C0E44A4EF87F0000:error:80000002:system library:file_open:No such file or directory:providers/implementations/storemgmt/file_store.c:267:calling stat(/usr/local/etc/openssl@3/certs)
+
+$ c_rehash ~/Documents/git/swaks/testing/certs
+$ openssl verify -CApath ./ signed-intermediate.example.com.crt
+signed-intermediate.example.com.crt: OK
+
+
+# create the chain file, just the certs in the chain, does not include the end cert
+$ cat ca-intermediate.pem ca.pem > ca-chain.pem
+$ openssl verify -CAfile ca-chain.pem signed-intermediate.example.com.crt
+signed-intermediate.example.com.crt: OK
+
+# create a complete cert chain, including the end user cert
+$ cat signed-intermediate.example.com.crt ca-intermediate.pem ca.pem > signed-intermediate-full-chain.pem
+$ openssl verify -CAfile signed-intermediate-full-chain.pem signed-intermediate.example.com.crt
+signed-intermediate.example.com.crt: OK
+
+# create partial cert chain (the end user cert and the intermediate cert, but no root)
+$ cat signed-intermediate.example.com.crt ca-intermediate.pem > signed-intermediate-partial-chain.pem
+

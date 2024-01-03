@@ -1,0 +1,9 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
+
+title: 7 attach-body, @non-existstent-file works, without path
+
+#pre action: MERGE SWAKS-TEST-BODY.txt file:%TESTDIR%/body.txt
+
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver --helo host1.nodns.test.swaks.net --from from@host1.nodns.test.swaks.net --attach-body @THIS-FILE-DOES-NOT-EXIST.txt
+
+#test action: REMOVE_FILE SWAKS-TEST-BODY.txt

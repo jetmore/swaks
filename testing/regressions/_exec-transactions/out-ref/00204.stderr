@@ -1,0 +1,3 @@
+*** TLS startup failed (connect(): error:CODE:SSL routines::no ciphers available)
+*** STARTTLS attempted but failed
+*** Child process closed connection unexpectedly.

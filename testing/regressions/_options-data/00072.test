@@ -1,8 +1,8 @@
 # Generated Sat Jul 13 10:18:19 2019 by ./gen-tests.pl '-n' '50' '-o' 'data' '-v' 'Date: C%DATE%%NEWLINE%%NEWLINE%C%BODY%' '-i' '/path/to/bogus/file' '-d' '.' '-p' 'Data:' '-r' '-s' '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: data, env var, invalid arg
 
-pre action: SET_ENV SWAKS_OPT_data '/path/to/bogus/file'
+pre action: SET_ENV SWAKS_OPT_data '@/path/to/bogus/file'
 test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver"

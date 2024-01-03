@@ -39,7 +39,7 @@ Test a spam scanner using GTUBE in the body of an email, routed via the MX recor
 
 =over 4
 
- swaks --to user@example.com --body /path/to/gtube/file
+ swaks --to user@example.com --body @/path/to/gtube/file
 
 =back
 
@@ -153,7 +153,7 @@ An option labeled with From-File will handle arguments as files in certain situa
 
 If the initial argument is C<->, the final argument is the contents of C<STDIN>.  Multiple options can all specify C<STDIN>, but the same content will be used for each of them.
 
-If the initial argument is prefixed with C<@>, the argument will be treated as a path to a file.  The file will be opened and the contents will be used as the final argument.  If the contents of the file can't be read, Swaks will exit.  To specify a literal value starting with an C<@>, use two C<@> symbols.  The first will be stripped.
+If the initial argument is prefixed with C<@>, the argument will be treated as a path to a file.  The file will be opened and the contents will be used as the final argument.  If the contents of the file can't be read, Swaks will exit.  To specify a literal string value starting with an C<@>, use two C<@> symbols.  The first will be stripped.  It is not possible to include an unqualified file which starts with an C<@> sign (like C<--attach @file.txt> or C<--attach @@file.txt>), but if you include a path to the file which splits up the two C<@> signs, that will work (eg C<--attach @./@file.txt> will include the contents of the file @file.txt).
 
 =item Sensitive
 
@@ -209,7 +209,7 @@ Options can be supplied via environment variables.  The variables are in the for
     $ SWAKS_OPT_from='fred@example.com'
     $ SWAKS_OPT_h_From='"Fred Example" <fred@example.com>'
 
-Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting <SWAKS_OPT_server=""> would cause Swaks to prompt the user for the server to which to connect at each invocation.
+Setting a variable to an empty value is the same as specifying it on the command line with no argument.  For instance, setting <SWAKS_OPT_server=""> would cause Swaks to prompt the user for the server to which to connect at each invocation.  On Windows, it is not possible to set empty environment variables.  The behavior can be simulated by setting the environment variable to C<< <> >> instead.  Additionally, embedding the header name in the header option via environment variable is not allowed on Windows (eg C<SWAKS_OPT_header_Foo=bar> will result in an error, but C<SWAKS_OPT_header="Foo: bar"> will work.)
 
 Because there is no inherent order in options provided by setting environment variables, the options are sorted before being processed.  This is not a great solution, but it at least defines the behavior, which would be otherwise undefined.  As an example, if both C<$SWAKS_OPT_from> and C<$SWAKS_OPT_f> were set, the value from C<$SWAKS_OPT_from> would be used, because it sorts after C<$SWAKS_OPT_f>.  Also as a result of not having an inherent order in environment processing, unsetting options with the C<no-> prefix is unreliable.  It works if the option being turned off sorts before C<no->, but fails if it sorts after. Because C<no-> is primarily meant to operate between config types (for instance, unsetting from the command line an option that was set in a config file), this is not likely to be a problem.
 
@@ -235,15 +235,15 @@ Swaks can connect to a target via UNIX pipes ("pipes"), UNIX domain sockets ("UN
 
 This transport attempts to deliver a message via TCP/IP, the standard method for delivering SMTP.  This is the default transport for Swaks.  If none of C<--server>, C<--pipe>, or C<--socket> are given then this transport is used and the target server is determined from the recipient's domain (see C<--server> below for more details).
 
-This transport requires the L<IO::Socket> module which is part of the standard Perl distribution.  If this module is not loadable, attempting to use this transport will result in an error and program termination.
+This transport requires the L<IO::Socket::IP> module for both IPv4 and IPv6 sockets.  If this module is not loadable, Swaks will attempt to use the L<IO::Socket> library for IPv4 and L<IO::Socket::INET6> for IPv6 support.  Attempting to use this transport with none of those libraries available will result in an error and program termination.
 
-IPv6 is supported when the L<IO::Socket::INET6> module is present.
+The fall back to L<IO::Socket> and L<IO::Socket::INET6> is deprecated and will be removed in a future release.  See DEPRECATIONS below
 
 =over 4
 
 =item -s, --server [<target-server>[:<port>]]
 
-Explicitly tell Swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the L<Net::DNS> module.  If L<Net::DNS> is not available Swaks will attempt to connect to localhost to deliver.  The target port can optionally be set here.  Supported formats for this include SERVER:PORT (supporting names and IPv4 addresses); [SERVER]:PORT and SERVER/PORT (supporting names, IPv4 and IPv6 addresses).  See also C<--copy-routing>. (Arg-Required, From-Prompt)
+Explicitly tell Swaks to use network sockets and specify the hostname or IP address to which to connect, or prompt if no argument is given.  If this option is not given and no other transport option is given, the target mail server is determined from the appropriate DNS records for the domain of the recipient email address using the L<Net::DNS> module.  If L<Net::DNS> is not available Swaks will attempt to connect to localhost to deliver.  The target port can optionally be set here.  Supported formats for this include SERVER:PORT (supporting names and IPv4 addresses); [SERVER]:PORT and SERVER/PORT (supporting names, IPv4 and IPv6 addresses).  A port set via this option will only be used if the C<--port> option is not used.  See also C<--copy-routing>. (Arg-Required, From-Prompt)
 
 =item -p, --port [<port>]
 
@@ -251,7 +251,7 @@ Specify which TCP port on the target is to be used, or prompt if no argument is 
 
 =item -li, --local-interface [<local-interface>[:<port>]]
 
-Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose the local interface.  See C<--server> for additional comments on :<port> format. (Arg-Required, From-Prompt)
+Use argument as the local interface for the outgoing SMTP connection, or prompt user if no argument given.  Argument can be an IP address or a hostname.  Default action is to let the operating system choose the local interface.  See C<--server> for additional comments on :<port> format.  A port set via this option will only be used if the C<--port> option is not used. (Arg-Required, From-Prompt)
 
 =item -lp, --local-port, --lport [<port>]
 
@@ -269,7 +269,7 @@ Force IPv4 or IPv6. (Arg-None)
 
 =item UNIX SOCKETS
 
-This transport method attempts to deliver messages via a UNIX-domain socket file.  This is useful for testing MTA/MDAs that listen on socket files (for instance, testing LMTP delivery to Cyrus).  This transport requires the L<IO::Socket> module which is part of the standard Perl distribution.  If this module is not loadable, attempting to use this transport will result in an error and program termination.
+This transport method attempts to deliver messages via a UNIX-domain socket file.  This is useful for testing MTA/MDAs that listen on socket files (for instance, testing LMTP delivery to Cyrus).  This transport requires the L<IO::Socket::UNIX> module which is part of the standard Perl distribution.  If this module is not loadable, attempting to use this transport will result in an error and program termination.
 
 =over 4
 
@@ -303,13 +303,19 @@ These options are related to the protocol layer.
 
 =item -t, --to [<email-address>[,<email-address>[,...]]]
 
-Tells Swaks to use argument(s) as the envelope-recipient for the email, or prompt for recipient if no argument provided.  If multiple recipients are provided and the recipient domain is needed to determine routing the domain of the last recipient provided is used.
+=item --cc [<email-address>[,<email-address>[,...]]]
 
-There is no default value for this option.  If no recipients are provided via any means, user will be prompted to provide one interactively.  The only exception to this is if a C<--quit-after> value is provided which will cause the SMTP transaction to be terminated before the recipient is needed. (Arg-Required, From-Prompt)
+=item --bcc [<email-address>[,<email-address>[,...]]]
+
+These options all tell Swaks to use the argument(s) as the envelope-recipient for the email.  There are subtle differences between these three options, detailed below.  If any option is specified but with no arguments, Swaks will prompt the user for an argument.
+
+C<--to> is special in that it is the only option required by Swaks. There is no default value for this option.  If no recipients are provided via any means, user will be prompted to provide one interactively.  The only exception to this is if a C<--quit-after> value is provided which will cause the SMTP transaction to be terminated before the recipient is needed.  If multiple recipients are provided and the recipient domain is needed to determine routing, the domain of the last recipient in the C<--to> argument list is used.
+
+The primary distinction between these options is how their arguments are treated when generating the DATA portion of the email.  They each have their own replacement tokens (C<%TO_ADDRESS%>, C<%CC_ADDRESS%>, and C<%BCC_ADDRESS%> respectively) which can be used by anyone crafting a custom DATA.  In Swaks' default message, C<%TO_ADDRESS%> will be used for the To: header and, if it is populated, C<%CC_HEADER%> will be used for a Cc: header.  C<%BCC_ADDRESS%> is not used in the default DATA. (Arg-Required, From-Prompt)
 
 =item -f, --from [<email-address>]
 
-Use argument as envelope-sender for email, or prompt user if no argument specified.  The string C<< <> >> can be supplied to mean the null sender.  If user does not specify a sender address a default value is used.  The domain-part of the default sender is a best guess at the fully-qualified domain name of the local host.  The method of determining the local-part varies.  On Windows, C<Win32::LoginName()> is used.  On UNIX-ish platforms, the C<$LOGNAME> environment variable is used if it is set.  Otherwise L<getpwuid(3)> is used.  See also C<--force-getpwuid>.  If Swaks cannot determine a local hostname and the sender address is needed for the transaction, Swaks will error and exit.  In this case, a valid string must be provided via this option. (Arg-Required, From-Prompt)
+Use argument as envelope-sender for email, or prompt user if no argument specified.  The string C<< <> >> can be supplied to mean the null sender.  If user does not specify a sender address a default value is used.  The domain-part of the default sender is a best guess at the fully-qualified domain name of the local host.  The method of determining the local-part varies.  If the C<$LOGNAME> environment variable is set, it will be used as the local-part.  Otherwise the value from C<Win32::LoginName()> will be used on Windows and L<getpwuid(3)> on UNIX-ish platforms.  See also C<--force-getpwuid>.  If Swaks cannot determine a local hostname and the sender address is needed for the transaction, Swaks will error and exit.  In this case, a valid string must be provided via this option. (Arg-Required, From-Prompt)
 
 =item --ehlo, --lhlo, -h, --helo [<helo-string>]
 
@@ -321,6 +327,10 @@ Point at which the transaction should be stopped.  When the requested stopping p
 
 =over 4
 
+=item PROXY
+
+Quit after the server sends a response to a PROXY request.  Note that if there is not an error negotiating proxy, this will be synonymous with CONNECT.
+
 =item CONNECT, BANNER
 
 Terminate the session after receiving the greeting banner from the target.
@@ -331,7 +341,11 @@ In a STARTTLS (but not tls-on-connect) session, terminate the transaction after 
 
 =item XCLIENT
 
-Quit after XCLIENT is sent.
+Quit after XCLIENT is negotiation. This always quits after the point where XCLIENT would have been negotiated, regardless of whether it was attempted.
+
+=item XCLIENT-HELO
+
+Quit after the HELO that XCLIENT negotiation triggers. This differs from HELO and FIRST-HELO because XCLIENT negotiation can happen at multiple points in the SMTP transaction and it is impossible to specifically refer to the XCLIENT-triggered HELO using the HELO or FIRST-HELO stop-points. This always quits after the point where the XCLIENT-triggered HELO would have occurred, regardless of whether it was attempted.
 
 =item STARTTLS, TLS
 
@@ -363,17 +377,33 @@ The option is similar to C<--quit-after>, but instead of trying to cleanly shut 
 
 =item DATA
 
-Quit after DATA is sent.
+Drop the connection after DATA is sent by server.
 
 =item DOT
 
-Quit after the final '.' of the message is sent.
+Drop the connection after the final '.' of the message is sent by server.
 
 =back
 
 =item --das, --drop-after-send <stop-point>
 
-This option is similar to C<--drop-after>, but instead of dropping the connection after reading a response to the stop-point, it drops the connection immediately after sending stop-point.  It accepts the same stop-points as C<--drop-after>. (Arg-Required)
+This option is similar to C<--drop-after>, but instead of dropping the connection after reading a response to the stop-point, it drops the connection immediately after sending stop-point.  It accepts the same stop-points as C<--drop-after>. If the stop-point is for an optional part of the transaction which is not actually sent (for instance STARTTLS or AUTH), this option will behave identically to C<--drop-after>. See below for specific details. (Arg-Required)
+
+=over 4
+
+=item CONNECT
+
+Connect to the server and then drops the connection before receiving the server's banner.
+
+=item STARTTLS, TLS
+
+Behaves identically to C<--drop-after>.
+
+=item HELO, EHLO, LHLO
+
+Doesn't necessarily work as expected.  If it appears to read the HELO response incorrectly, use FIRST-HELO instead.
+
+=back
 
 =item --timeout [<time>]
 
@@ -445,15 +475,15 @@ If the server supports it, attempt Per-Recipient Data Response (PRDR) (L<https:/
 
 =item --force-getpwuid
 
-Tell Swaks to use the getpwuid method of finding the default sender local-part instead of trying C<$LOGNAME> first. (Arg-None)
+Tell Swaks to use the system-default method of determining the current user's username for the default sender local-part instead of trying C<$LOGNAME> first.  Despite the UNIX-ish-specific option name, this option also works on Windows. (Arg-None)
 
 =back
 
 =head1 TLS / ENCRYPTION
 
-These are options related to encrypting the transaction.  These have been tested and confirmed to work with all three transport methods.  The L<Net::SSLeay> module is used to perform encryption when it is requested.  If this module is not loadable Swaks will either ignore the TLS request or error out, depending on whether the request was optional.  STARTTLS is defined as an extension in the ESMTP protocol and will be unavailable if C<--protocol> is set to a variation of SMTP.  Because it is not defined in the protocol itself, C<--tls-on-connect> is available for any protocol type if the target supports it.
+These are options related to encrypting the transaction.  These have been tested and confirmed to work with all three transport methods.  The L<Net::SSLeay> module is used to perform encryption when it is requested.  If this module is not loadable Swaks will either ignore the TLS request or error out, depending on whether the request was optional.  STARTTLS is defined as an extension in the ESMTP protocol and will be unavailable if C<--protocol> is set to a variation of plain SMTP.  Because it is not defined in the protocol itself, C<--tls-on-connect> is available for any protocol type if the target supports it.
 
-A local certificate is not required for a TLS connection to be negotiated.  However, some servers use client certificate checking to verify that the client is allowed to connect.  Swaks can be told to use a specific local certificate using the C<--tls-cert> and C<--tls-key> options.
+A local certificate is not required for a TLS connection to be negotiated.  However, some servers use client certificate checking to verify that the client is allowed to connect.  Swaks can be told to use a specific local certificate using the C<--tls-cert> and C<--tls-key> options, and optionally to use a certificate chain using the C<--tls-chain> option.
 
 =over 4
 
@@ -481,11 +511,27 @@ The specification string is a comma-delimited list of protocols that can be used
 
 =item --tls-cipher <cipher-string>
 
-The argument to this option is passed to the underlying OpenSSL library to set the list of acceptable ciphers to the be used for the connection.  The format of this string is opaque to Swaks and is defined in L<http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT>.  A brief example would be C<--tls-cipher '3DES:+RSA'>. (Arg-Required)
+The argument to this option is passed to the underlying OpenSSL library to set the list of acceptable ciphers to the be used for the connection.  The format of this string is opaque to Swaks and is defined in L<https://www.openssl.org/docs/manmaster/man1/openssl-ciphers.html#CIPHER-LIST-FORMAT>.  A brief example would be C<--tls-cipher '3DES:+RSA'>. (Arg-Required)
 
 =item --tls-verify
 
-Tell Swaks to attempt to verify the server's certificate.  If this option is set and the server's certificate is not verifiable (either using the system-default CA information, or custom CA information (see C<--tls-ca-path>)) TLS negotiation will not succeed.  By default, Swaks does not attempt certificate verification. (Arg-None)
+Tell Swaks to attempt to verify the server's certificate.  This option is identical to specifying both the C<--tls-verify-ca> and C<--tls-verify-host> options.  See those options for detailed descriptions of how to fine-tune each type of verification.
+
+By default, TLS verification is not required.  If TLS verification is required by C<--tls-verify>, C<--tls-verify-ca>, or C<--tls-verify-host> and the requested type of verification fails, TLS negotiation will not succeed. (Arg-None)
+
+=item --tls-verify-ca
+
+Require that the server's certificate be signed by a known certificate authority and not be expired.  By default the list of known CAs will be whatever is available via the client Swaks is running on.  To provide a custom CA, see C<--tls-ca-path>. (Arg-None)
+
+=item --tls-verify-host
+
+Require that the target of the current connection be listed in the server certificate's Subject Alternative Name (SAN) or Subject CommonName (CN).
+
+The target that Swaks uses for verification will vary.  It can be a hostname, either provided directly via the C<--server> option or looked up via MX records.  In this case, verification performs as expected.  If the target is an IP, the IP will be looked up in the certificate, which is possible but unusual.  If the transport is C<--pipe> or C<--socket>, there will not be a meaningful target to verify in the certificate and verification will fail.  In this situation it's better to use only C<--tls-verify-ca> or to override the target used for verification with the C<--tls-verify-target> option. (Arg-None)
+
+=item --tls-verify-target <verification-string>
+
+When set, the argument to this option will be used as the host to be verified for C<--tls-verify-host>.  This is necessary when using C<--tls-verify-host> with either the C<--pipe> or C<--socket> transports, which do not have a verifiable target by default.  It can also be used to override the default target lookup when using the C<--server> transport.  For instance, it can be used to verify that the certificate of a server explicitly connect to via IP contains a specific certificate. (Arg-Required)
 
 =item --tls-ca-path <ca-location>
 
@@ -493,15 +539,23 @@ Specify an alternate location for CA information for verifying server certificat
 
 =item --tls-cert <cert-file>
 
-Provide a path to a file containing the local certificate Swaks should use if TLS is negotiated.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-key> is also required. (Arg-Required)
+Provide a path to a file containing the local certificate Swaks should use if TLS is negotiated.  If a certificate chain needs to be provided, it can be provided via this file or via a separate file with C<--tls-chain>.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-key> is also required. (Arg-Required)
 
 =item --tls-key <key-file>
 
 Provide a path to a file containing the local private key Swaks should use if TLS is negotiated.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-cert> is also required. (Arg-Required)
 
+=item --tls-chain <chain-file>
+
+Provide a path to a file containing the local certificate chain Swaks should use if TLS is negotiated.  The file path argument is required.  As currently implemented the certificate in the file must be in PEM format.  Contact the author if there's a compelling need for ASN1.  If this option is set, C<--tls-cert> and C<--tls-key> are also required. (Arg-Required)
+
 =item --tls-get-peer-cert [<output-file>]
 
-Get a copy of the TLS peer's certificate.  If no argument is given, it will be displayed to C<STDOUT>.  If an argument is given it is assumed to be a filesystem path specifying where the certificate should be written.  The saved certificate can then be examined using standard tools such as the openssl command.  If a file is specified its contents will be overwritten. (Arg-Optional)
+Get a copy of the TLS peer's certificate.  If no argument is given, it will be displayed to C<STDOUT>.  If an argument is given it is assumed to be a filesystem path specifying where the certificate should be written.  The saved certificate can then be examined using standard tools such as the openssl command.  If a file is specified its contents will be overwritten.  This option will only ever return one certificate.  In order to get every certificate sent by the server, see C<--tls-get-peer-chain>. (Arg-Optional)
+
+=item --tls-get-peer-chain [<output-file>]
+
+Get a copy of the TLS certificate chain sent by the server.  If no argument is given, it will be displayed to C<STDOUT>.  If an argument is given it is assumed to be a filesystem path specifying where the certificate should be written.  The saved chain can then be examined using standard tools such as the openssl command.  If a file is specified its contents will be overwritten. See also C<--tls-get-peer-cert>. (Arg-Optional)
 
 =item --tls-sni <sni-string>
 
@@ -555,7 +609,7 @@ The CRAM-SHA1 authenticator requires the L<Digest::SHA> module.  This type has o
 
 =item NTLM/SPA/MSN
 
-These authenticators require the Authen::NTLM module.  Note that there are two modules using the L<Authen::NTLM> namespace on CPAN.  The Mark Bush implementation (Authen/NTLM-1.03.tar.gz) is the version required by Swaks.  This type has been tested against Exim, Communigate, and Exchange 2007.
+These authenticators require the Authen::NTLM module.  This type has been tested against Exim, Communigate, and Exchange 2007.
 
 In addition to the standard username and password, this authentication type can also recognize a "domain".  The domain can be set using the C<--auth-extra> "domain" keyword.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
 
@@ -567,7 +621,7 @@ This option behaves identically to C<--auth> except that it requests authenticat
 
 =item -aos, --auth-optional-strict [<auth-type>[,<auth-type>[,...]]]
 
-This option is a compromise between C<--auth> and C<--auth-optional>.  If no common auth-types are found, Swaks behaves as if C<--auth-optional> were specified and proceeds with the transaction.  If Swaks can't support requested auth-type, the server doesn't advertise any common auth-types, or if no credentials succeed, Swaks behaves as if C<--auth> were used and exits with an error. (Arg-Optional)
+This option is a compromise between C<--auth> and C<--auth-optional>.  If authentication is never attempted (server doesn't advertise authentication or no common authentication types are found), it behaves like C<--auth-optional> and the smtp transaction continues.  If authentication is attempted but fails, it behaves like C<--auth> and exits with an error. (Arg-Optional)
 
 =item -au, --auth-user [<username>]
 
@@ -695,11 +749,13 @@ When C<--proxy> is not used, all of C<--proxy-family>, C<--proxy-source>, C<--pr
 
 =item --proxy-version [ 1 | 2 ]
 
-Whether to use version 1 (human readable) or version 2 (binary) of the Proxy protocol.  Version 1 is the default.  Version 2 is only implemented through the "address block", and is roughly on par with the information provided in version 1.
+Whether to use version 1 (human readable) or version 2 (binary) of the Proxy protocol.  Version 1 is the default.  Version 2 is only implemented through the "address block", and is roughly on par with the information provided in version 1. (Arg-Required, From-Prompt)
 
 =item --proxy [<string>]
 
-If this option is used, its argument is passed unchanged after the "PROXY " portion (or the 12-byte protocol header for version 2) of the Proxy exchange.  This option allows sending incomplete or malformed Proxy strings to a target server for testing.  No attempt to translate or modify this string is made, so if used with C<--proxy-version 2> the argument should be in the appropriate binary format.  This option is mutually exclusive with all other C<--proxy-*> options which provide granular proxy information. (Arg-Required, From-Prompt)
+This option provides the raw proxy string which will be sent to the server.  The protocol prefix ("PROXY " for version 1, the 12-byte protocol header for version 2) can be present or not in the argument.  This option allows sending incomplete or malformed Proxy strings to a target server for testing.  This option is mutually exclusive with all other C<--proxy-*> options which provide granular proxy information.
+
+Because version 2 of the Proxy protocol is a binary protocol, there are multiple ways to provide the argument to this option.  If the argument starts with "base64:", that prefix is stripped and the rest of the string is base64 decoded before use.  If the argument starts with C<@> it will be treated as a filename and the proxy value will be read from the file.  Any other value is assumed to be the literal value for the proxy string. (Arg-Required, From-Prompt, From-File)
 
 =item --proxy-family [<string>]
 
@@ -753,41 +809,49 @@ If the argument does not contain any literal (0x0a) or representative (0x5c, 0x6
 
 Any other argument will be used as the DATA contents.
 
-The value can be on one single line, with C<\n> (ASCII 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is C<Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\nMessage-Id: <%MESSAGEID%>\nX-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n>.
+The value can be on one single line, with C<\n> (ASCII 0x5c, 0x6e) representing where line breaks should be placed.  Leading dots will be quoted.  Closing dot is not required but is allowed.  The default value for this option is C<< Date: %DATE%\nTo: %TO_ADDRESS%\nFrom: %FROM_ADDRESS%\nSubject: test %DATE%\nMessage-Id: <%MESSAGEID%>\nX-Mailer: swaks v%SWAKS_VERSION% jetmore.org/john/code/swaks/\n%NEW_HEADERS%\n%BODY%\n >>.
 
 Very basic token parsing is performed on the DATA portion.  The following table shows the recognized tokens and their replacement values. (Arg-Required, From-Prompt, From-File)
 
 =over 4
 
-=item %FROM_ADDRESS%
+=item %FROM_ADDRESS%, ..FROM_ADDRESS..
 
 Replaced with the envelope-sender.
 
-=item %TO_ADDRESS%
+=item %TO_ADDRESS%, ..TO_ADDRESS..
 
-Replaced with the envelope-recipient(s).
+Replaced with the envelope-recipient(s) set by the C<--to> option.
 
-=item %DATE%
+=item %CC_ADDRESS%, ..CC_ADDRESS..
 
-Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module L<POSIX> for timezone calculations.  If this module is unavailable the date string will be in GMT.
+Replaced with the envelope-recipient(s) set by the C<--cc> option.
 
-=item %MESSAGEID%
+=item %BCC_ADDRESS%, ..BCC_ADDRESS..
+
+Replaced with the envelope-recipient(s) set by the C<--bcc> option.
+
+=item %DATE%, ..DATE..
+
+Replaced with the current time in a format suitable for inclusion in the Date: header.  Note this attempts to use the standard module L<POSIX> for timezone calculations.  If this module is unavailable or the current environment doesn't support the %z strftime format token (as on Windows) the date string will be in GMT.
+
+=item %MESSAGEID%, ..MESSAGEID..
 
 Replaced with a message ID string suitable for use in a Message-Id header.  The value for this token will remain consistent for the life of the process.
 
-=item %SWAKS_VERSION%
+=item %SWAKS_VERSION%, ..SWAKS_VERSION..
 
 Replaced with the version of the currently-running Swaks process.
 
-=item %NEW_HEADERS%
+=item %NEW_HEADERS%, ..NEW_HEADERS..
 
 Replaced with the contents of the C<--add-header> option.  If C<--add-header> is not specified this token is simply removed.
 
-=item %BODY%
+=item %BODY%, ..BODY..
 
 Replaced with the value specified by the C<--body> option.  See C<--body> for default.
 
-=item %NEWLINE%
+=item %NEWLINE%, ..BODY..
 
 Replaced with carriage return, newline (0x0d, 0x0a).  This is identical to using C<\n> (0x5c, 0x6e), but doesn't have the escaping concerns that the backslash can cause on the newline.
 
@@ -837,7 +901,7 @@ The option can either be specified multiple times or a single time with multiple
 
 =item --header <header-and-data>, --h-<header> <data>
 
-These options allow a way to change headers that already exist in the DATA.  C<--header 'Subject: foo'> and C<--h-Subject foo> are equivalent.  If the header does not already exist in the data then this argument behaves identically to C<--add-header>.  However, if the header already exists it is replaced with the one specified.  Negating the version of this option with the header name in the option (eg C<--no-header-Subject>) will remove all previously processed C<--header> options, not just the ones used for 'Subject'. (Arg-Required)
+These options allow a way to change headers that already exist in the DATA.  C<--header 'Subject: foo'> and C<--h-Subject foo> are equivalent.  If the header does not already exist in the data then this argument behaves identically to C<--add-header>.  However, if the header already exists it is replaced with the one specified.  Negating the version of this option with the header name in the option (eg C<--no-header-Subject>) will remove all previously processed C<--header> options, not just the ones used for 'Subject'. Embedding the header name in the option via environment variable is not supported on Windows and will result in an error. (Arg-Required)
 
 =item -g
 
@@ -923,9 +987,10 @@ Summarizes the DATA portion of the SMTP transaction instead of printing every li
 
 Display time lapse between send/receive pairs.  This option is most useful when L<Time::HiRes> is available, in which case the time lapse will be displayed in thousandths of a second.  If L<Time::HiRes> is unavailable or "i" is given as an argument the lapse will be displayed in integer seconds only. (Arg-Optional)
 
-=item -nih, --no-info-hints
 
 Don't display the transaction hint for informational transactions.  This is most useful when needing to copy some portion of the informational lines, for instance the certificate output from C<--tls-get-peer-cert>. (Arg-None)
+
+=item -nih, --no-info-hints
 
 =item -nsh, --no-send-hints
 
@@ -933,7 +998,7 @@ Don't display the transaction hint for informational transactions.  This is most
 
 =item -nth, --no-hints
 
-C<--no-send-hints> and C<--no-receive-hints> suppress the transaction hints from send and receive lines, respectively.  This is often useful when copying some portion of the transaction for use elsewhere (for instance, C<--no-send-hints --hide-receive --hide-informational> is a useful way to get only the client-side commands for a given transaction).  C<--no-hints> is identical to specifying both C<--no-send-hints> and C<--no-receive-hints>. (Arg-None)
+C<--no-info-hints>, C<--no-send-hints>, and C<--no-receive-hints> suppress the transaction hints from info, send, and receive lines, respectively.  This is often useful when copying some portion of the transaction for use elsewhere (for instance, C<--no-send-hints --hide-receive --hide-informational> is a useful way to get only the client-side commands for a given transaction and C<--no-info-hints --tls-get-peer-cert> for copying the peer certificate).  C<--no-hints> is identical to specifying C<--no-info-hints --no-send-hints --no-receive-hints>. (Arg-None)
 
 =item -raw, --show-raw-text
 
@@ -969,7 +1034,7 @@ Do not display any content to the terminal. (Arg-None)
 
 =item -S, --silent [ 1 | 2 | 3 ]
 
-Cause Swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.  C<--silent> affects most output but not all.  For instance, C<--help>, C<--version>, C<--dump>, and C<--dump-mail> are not affected. (Arg-Optional)
+Cause Swaks to be silent.  If no argument is given or if an argument of "1" is given, print no output unless/until an error occurs, after which all output is shown.  If an argument of "2" is given, only print errors.  If "3" is given, show no output ever.  C<--silent> affects most output but not all.  For instance, C<--help>, C<--version>, C<--dump>, and C<--dump-mail> are not affected.  For historical reasons, -S is not settable via environment variable on Windows, use SWAKS_OPT_silent instead. (Arg-Optional)
 
 =item --support
 
@@ -999,17 +1064,11 @@ The following features are deprecated and will be removed in a future version of
 
 =over 4
 
-=item -g option
+=item use of IO::Socket and IO::Socket::INET6 modules
 
-Will be removed no sooner than November 1, 2021.
+Will be removed no sooner than (February 1, 2025).
 
-The -g option is currently a less-good alias to C<--data ->.  Any uses of C<-g> should be able to be directly migrated to C<--data -> instead.
-
-=item auto-filename detection
-
-Will be removed no sooner than November 1, 2021.
-
-The C<--data>, C<--body>, C<--attach>, and C<--attach-body> options currently will attempt to distinguish between an argument that is the actual value to use vs. an argument that represents a file containing the data to use.  This behavior has been superseded by prefixing an argument to these options with C<@> to explicitly indicate that the argument indicates a file.  Any uses of providing a filename to one of these options should be moved to using C<@> to indicate a filename is being used.
+The primary method of sending over IPv4 and IPv6 sockets is implemented with the L<IO::Socket::IP> module.  For the time being there is still legacy support of the L<IO::Socket> and L<IO::Socket::INET6> modules which were previously used.  Please ensure L<IO::Socket::IP> is installed to ensure future functionality.
 
 =back
 
@@ -1021,7 +1080,7 @@ The C<--data>, C<--body>, C<--attach>, and C<--attach-body> options currently wi
 
 This program was primarily intended for use on UNIX-like operating systems, and it should work on any reasonable version thereof.  It has been developed and tested on Solaris, Linux, and Mac OS X and is feature complete on all of these.
 
-This program is known to demonstrate basic functionality on Windows using ActiveState's Perl.  It has not been fully tested.  Known to work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5 auth types.  Unknown is any TLS functionality and the NTLM/SPA and DIGEST-MD5 auth types.
+This program is known to demonstrate basic functionality on Windows using Strawberry Perl.  In all documentation, unless otherwise noted, "Windows" refers to running Swaks via CMD.exe, not WSL or cygwin.  It has not been fully tested, but known to work are basic SMTP functionality and the LOGIN, PLAIN, and CRAM-MD5 auth types.  Unknown is any TLS functionality and the NTLM/SPA and DIGEST-MD5 auth types.  Some functionality is known to be limited on Windows, including inability to embed header name in environment variables (see L</"CONFIGURATION ENVIRONMENT VARIABLES"> and C<--header>), inability to generate a local-timezone date string (see C<%DATE%> token under C<--data>), inability to use C<-S> option as an environment variable (see C<--silent>), and inability to have a "set but empty" value in an environment variable (see L</"CONFIGURATION ENVIRONMENT VARIABLES"> for workaround).
 
 Because this program should work anywhere Perl works, I would appreciate knowing about any new operating systems you've thoroughly used Swaks on as well as any problems encountered on a new OS.
 

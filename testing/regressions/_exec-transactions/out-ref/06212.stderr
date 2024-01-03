@@ -1,0 +1,1 @@
+*** DEPRECATION WARNING: Relying on IO::Socket::INET6 to send via inet sockets. Install IO::Socket::IP instead.

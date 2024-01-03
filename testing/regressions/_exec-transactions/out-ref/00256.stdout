@@ -1,0 +1,28 @@
+=== Trying pipe to %TEST_SERVER% --silent --domain pipe     --cert %CERTDIR%/san-multiple.example.com.crt --key %CERTDIR%/san-multiple.example.com.key     part-0000-connect-standard.txt     part-0101-ehlo-all.txt     part-0200-starttls-basic.txt     part-3000-shutdown-accept.txt   ...
+=== Connected to %TEST_SERVER% --silent --domain pipe     --cert %CERTDIR%/san-multiple.example.com.crt --key %CERTDIR%/san-multiple.example.com.key     part-0000-connect-standard.txt     part-0101-ehlo-all.txt     part-0200-starttls-basic.txt     part-3000-shutdown-accept.txt   .
+<-  220 SERVER ESMTP ready
+ -> EHLO hserver
+<-  250-SERVER Hello Server [1.1.1.1]
+<-  250-STARTTLS
+<-  250-PIPELINING
+<-  250-XCLIENT ADDR NAME PORT PROTO DESTADDR DESTPORT HELO LOGIN REVERSE_NAME
+<-  250-PRDR
+<-  250-AUTH CRAM-MD5
+<-  250-AUTH CRAM-SHA1
+<-  250-AUTH PLAIN
+<-  250-AUTH LOGIN
+<-  250-AUTH NTLM
+<-  250-AUTH DIGEST-MD5
+<-  250-AUTH=login
+<-  250 HELP
+ -> STARTTLS
+<-  220 TLS go ahead
+=== TLS started with cipher VERSION:CIPHER:BITS
+=== TLS client certificate not requested and not sent
+=== TLS no client certificate set
+=== TLS peer[0]   subject=[/C=US/ST=Indiana/O=Swaks Development (san-multiple.example.com, with-SAN)/CN=san-multiple.example.com/emailAddress=proj-swaks@jetmore.net]
+===               commonName=[san-multiple.example.com], subjectAltName=[DNS:san-multiple.example.com, DNS:san-m1.example.com, DNS:san-m2.example.com] notAfter=[2033-09-11T15:04:20Z]
+=== TLS peer certificate failed CA verification (unable to get local issuer certificate), passed host verification (using host san-m1.example.com to verify)
+ ~> QUIT
+<~  221 SERVER closing connection
+=== Connection closed with child process.

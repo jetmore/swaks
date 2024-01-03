@@ -1,0 +1,2 @@
+*** TLS startup failed (connect(): server certificate did not match target host badhost.example.com)
+*** STARTTLS attempted but failed

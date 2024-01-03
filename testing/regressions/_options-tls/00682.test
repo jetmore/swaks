@@ -1,6 +1,6 @@
 # Generated Thu Dec 20 17:09:21 2018 by ./gen-tests.pl '.' '650' 'tls-get-peer-cert' '/path/to/KeyFile' ''
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tls-get-peer-cert, command line, valid arg (--option=)
 

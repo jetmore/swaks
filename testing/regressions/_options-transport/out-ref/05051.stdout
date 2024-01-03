@@ -1,0 +1,8 @@
+Transport Info:
+  type            = socket-inet
+  inet protocol   = any
+  server          = host1.nodns.test.swaks.net
+  port            = 25
+  local interface = foo
+  local port      = 2222
+  copy routing    = FALSE

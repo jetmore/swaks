@@ -1,8 +1,10 @@
 # Generated Mon Dec 10 12:45:41 2018 by ./gen-tests.pl '.' '1150' 'S' '2' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: S, env var, invalid arg
 
 pre action: SET_ENV SWAKS_OPT_S asdf
 test action: CMD_CAPTURE %SWAKS% --dump OUTPUT --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --server "ser ver"
+
+skip: IFOS=MSWin32 Windows does not support the -S option when set via environment variable

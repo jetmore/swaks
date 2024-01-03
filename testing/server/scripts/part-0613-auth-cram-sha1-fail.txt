@@ -1,0 +1,8 @@
+#  -> AUTH CRAM-SHA1
+get_line();
+# <-  334 PDI2NDYuMTYwNzQ3MzI2MUBub2RlLmV4YW1wbGUuY29tPg==
+send_line("334 PDI2NDYuMTYwNzQ3MzI2MUBub2RlLmV4YW1wbGUuY29tPg==");
+#  -> dmFsaWR1c2VyIGIwYzY0NTk4NGRjZGRhZjIzMGMwYmM3MzA0ZTUwNWUwMzg1ZWM1MDk=
+get_line();
+send_line("535 Incorrect authentication data");
+

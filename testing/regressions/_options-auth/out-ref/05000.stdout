@@ -4,7 +4,7 @@ Authentication Info:
   password       = 'PASS'
   show plaintext = FALSE
   hide password  = FALSE
-  allowed types  = LOGIN, PLAIN, CRAM-MD5, DIGEST-MD5, CRAM-SHA1
+  allowed types  = LOGIN, PLAIN, CRAM-MD5, DIGEST-MD5, CRAM-SHA1, NTLM, SPA, MSN
   extras         = 
   type map       = CRAM-MD5 = CRAM-MD5
                    CRAM-SHA1 = CRAM-SHA1

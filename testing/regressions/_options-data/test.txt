@@ -350,23 +350,10 @@
   1380 no-strip-from command line, no arg (-option)
   # 1381 no-strip-from, command line, valid arg (-option=)
   # 1382 no-strip-from, command line, valid arg (--option=)
-01400 --g
-  # note that "no-" processing was removed for this option and the option as a whole is now deprecated
-  1400 g, command line, no arg
-  # 1401 g, command line, valid arg
-  # 1402 g, command line, invalid arg
-#  1403 g, command line, no-option
-  1410 g, config, no arg
-  # 1411 g, config, valid arg
-  # 1412 g, config, invalid arg
-#  1413 g, config, no-option
-  1420 g, env var, no arg
-  # 1421 g, env var, valid arg
-  # 1422 g, env var, invalid arg
-#  1423 g, env var, no-option
-  1430 g command line, no arg (-option)
-  # 1431 g, command line, valid arg (-option=)
-  # 1432 g, command line, valid arg (--option=)
+
+
+
+
 
 
 
@@ -383,17 +370,14 @@
     10 data, quoting trailing dot
     11 data, - reads from STDIN
     12 --no-data-fixup actually works (prevents data from being rewritten
-    13 -g ignored if --data present in same option level (before)
-    14 -g ignored if --data present in same option level (after)
-    15 -g ignored if --data present in previous option level
-    16 -g overwritten if --data present in later option level
-    17 -g removal doesn't disturb --header-Foo processing when it appears immediately following
-    18 -g rewrite doesn't disturb --header-Foo processing when it appears immediately following
-    19 -g removal doesn't distrub --opt=foo processing when it appears immediately following
-    20 -g rewrite doesn't distrub --opt=foo processing when it appears immediately following
-    21 data, @existent-file works
-    22 data, @non-existstent-file works
-    23 data, @@non-file works
+    21 data, @existent-file works, with path
+    22 data, @non-existstent-file works, with path
+    23 data, @@non-file works, with path
+    24 data, @@existent-file works, with path
+    31 data, @existent-file works, without path
+    32 data, @non-existstent-file works, without path
+    #33
+    34 data, @@existent-file is interpretted as string data (not a file) with first @ removed
 05100 --body
     0 - works inline
     1 - '-' reads from stdin
@@ -401,6 +385,11 @@
     3 body, @existent-file works
     4 body, @non-existstent-file works
     5 body, @@non-file works
+    6 body, @@existent-file works, with path
+   13 body, @existent-file works, without path
+   14 body, @non-existstent-file works, without path
+   #15
+   16 body, @@existent-file is interpretted as string data (not a file) with first @ removed
 05200 - headers
     1 - --add-header adds unique
     2 - --add-header adds duplicate
@@ -412,6 +401,7 @@
     15 - --header works with spaces in header name (dupe)
     16 - no colon in header line
     17 - first line of data looks like a continuation header
+    18 - embedding header name in environment variable results in error on Windows
 05250 - regression tests for multi-line headers
   251 header replacement SINGLE-LINE, SINGLE-HEADER FIRST
   252 header replacement SINGLE-LINE, SINGLE-HEADER MIDDLE
@@ -453,16 +443,26 @@
     0 - works inline
     1 - '-' reads from stdin
     2 - works from file
-    3 attach, @existent-file works
-    4 attach, @non-existstent-file works
-    5 attach, @@non-file works
+    3 attach, @existent-file works, with path
+    4 attach, @non-existstent-file works, with path
+    5 attach, @@non-file works, with path
+    6 attach, @@existent-file works, with path
+   13 attach, @existent-file works, without path
+   14 attach, @non-existstent-file works, without path
+   #15
+   16 attach, @@existent-file is interpretted as string data (not a file) with first @ removed
 05400 --attach-body
     0 - works inline
     1 - '-' reads from stdin
     2 - works from file
-    3 attach-body, @existent-file works
-    4 attach-body, @non-existstent-file works
-    5 attach-body, @@non-file works
+    3 attach-body, @existent-file works, with path
+    4 attach-body, @non-existstent-file works, with path
+    5 attach-body, @@non-file works, with path
+    6 attach-body, @@existent-file works, with path
+   13 attach-body, @existent-file works, without path
+   14 attach-body, @non-existstent-file works, without path
+   #15
+   16 attach-body, @@existent-file is interpretted as string data (not a file) with first @ removed
 05500 - body, attach interplay
     0 - baseline. Use --body to set different body value
     1 - --attach argument
@@ -486,6 +486,16 @@
     24 - multiple bodies forces msg:multipart/alternative (--attach-type text/plain --attach-body body.txt --attach-type text/html --attach-body body.html)
     25 - single body, multiple attachments = msg:mp/mixed,
     26 - mult bodies, mult attach = msg:mp/mixed, body:mp/alt, att:whatever
+05600 - data replacement tokens
+    0 - ensure the standard body is replaced
+    1 - all tokens, %TOKEN%, command line
+    2 - all tokens, %TOKEN%, environment variable
+    3 - all tokens, %TOKEN%, config file
+    4 - all tokens, ..TOKEN.., command line
+    5 - all tokens, ..TOKEN.., environment variable
+    6 - all tokens, ..TOKEN.., config file
+   10 --cc causes Cc: header to be added to default body
+   11 --bcc not shown in default body
 
 
 

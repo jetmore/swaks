@@ -1,0 +1,36 @@
+Author:
+=======
+- Postfix/TLS support was originally developed by Lutz Jaenicke of
+  Brandenburg University of Technology, Cottbus, Germany.
+
+License:
+========
+- This software is free. You can do with it whatever you want.
+  I would however kindly ask you to acknowledge the use of this
+  package, if you are going use it in your software, which you might
+  be going to distribute. I would also like to receive a note if
+  you are a satisfied user :-)
+
+Acknowledgements:
+=================
+- This package is based on the OpenSSL package as provided by the
+  ``OpenSSL Project''.
+
+Disclaimer:
+===========
+- This software is provided ``as is''. You are using it at your own risk.
+  I will take no liability in any case.
+- This software package uses strong cryptography, so even if it is created,
+  maintained and distributed from liberal countries in Europe (where it is
+  legal to do this), it falls under certain export/import and/or use
+  restrictions in some other parts of the world. 
+- PLEASE REMEMBER THAT EXPORT/IMPORT AND/OR USE OF STRONG
+  CRYPTOGRAPHY SOFTWARE, PROVIDING CRYPTOGRAPHY HOOKS OR EVEN JUST
+  COMMUNICATING TECHNICAL DETAILS ABOUT CRYPTOGRAPHY SOFTWARE IS
+  ILLEGAL IN SOME PARTS OF THE WORLD. SO, WHEN YOU IMPORT THIS PACKAGE
+  TO YOUR COUNTRY, RE-DISTRIBUTE IT FROM THERE OR EVEN JUST EMAIL
+  TECHNICAL SUGGESTIONS OR EVEN SOURCE PATCHES TO THE AUTHOR OR
+  OTHER PEOPLE YOU ARE STRONGLY ADVISED TO PAY CLOSE ATTENTION TO ANY
+  EXPORT/IMPORT AND/OR USE LAWS WHICH APPLY TO YOU. THE AUTHOR OF
+  PFIXTLS IS NOT LIABLE FOR ANY VIOLATIONS YOU MAKE HERE. SO BE
+  CAREFULLY YOURSELF, IT IS YOUR RESPONSIBILITY.  

@@ -1,6 +1,6 @@
 # Generated Sat Jul 13 12:20:57 2019 by ./gen-tests.pl '-n' '850' '-o' 'add-header' '-v' 'From: added-by--add-header' '-i' '' '-d' '.' '-r' '-s' '%SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" %TESTING%'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: add-header, config, valid arg
 

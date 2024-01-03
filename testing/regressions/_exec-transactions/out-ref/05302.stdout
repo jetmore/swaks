@@ -1,0 +1,34 @@
+=== Trying pipe to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   part-0100-ehlo-basic.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   ...
+=== Connected to %TEST_SERVER% --silent --domain pipe   part-0000-connect-standard.txt   part-0100-ehlo-basic.txt   part-1000-mail-basic.txt   part-1100-rcpt-basic-accept.txt   part-2500-data-accept-basic.txt   part-3000-shutdown-accept.txt   .
+=== response in INTs
+<-  220 SERVER ESMTP ready
+ -> EHLO hserver
+=== response in INTs
+<-  250-SERVER Hello Server [1.1.1.1]
+<-  250 HELP
+ -> MAIL FROM:<recip@host1.nodns.test.swaks.net>
+=== response in INTs
+<-  250 Accepted
+ -> RCPT TO:<user@host1.nodns.test.swaks.net>
+=== response in INTs
+<-  250 Accepted
+ -> DATA
+=== response in INTs
+<-  354 Enter message, ending with "." on a line by itself
+ -> Date: Wed, 03 Nov 1999 11:24:29 -0500
+ -> To: user@host1.nodns.test.swaks.net
+ -> From: recip@host1.nodns.test.swaks.net
+ -> Subject: test Wed, 03 Nov 1999 11:24:29 -0500
+ -> Message-Id: <19991103112429.047942@localhost>
+ -> X-Mailer: swaks v99999999.9 jetmore.org/john/code/swaks/
+ -> 
+ -> This is a test mailing
+ -> 
+ -> 
+ -> .
+=== response in INTs
+<-  250 OK id=fakeemail
+ -> QUIT
+=== response in INTs
+<-  221 SERVER closing connection
+=== Connection closed with child process.

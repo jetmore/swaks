@@ -1,6 +1,4 @@
-spawn %SWAKS_COMMAND% --dump PROTOCOL --to recip@host1.nodns.test.swaks.net --from sender@host2.nodns.test.swaks.net --server ser.ver
-Helo: test-helo-string
-Protocol Info:
+Helo: Protocol Info:
   protocol        = esmtp
   helo            = test-helo-string
   from            = sender@host2.nodns.test.swaks.net

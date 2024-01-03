@@ -19,10 +19,18 @@ Thumbs.db
 *.tmp
 *.log
 *.lock
+tmp/*
 
 *.csr
 *.key
 *.crt
+*.pem
+!testing/certs/*.csr
+!testing/certs/*.key
+!testing/certs/*.crt
+!testing/certs/*.pem
+
+testing/mta/*-install
 
 # sublime project files
 *.sublime-project

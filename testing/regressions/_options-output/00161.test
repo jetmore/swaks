@@ -1,6 +1,6 @@
 # Generated Mon Dec 10 12:22:47 2018 by ./gen-tests.pl '.' '150' 'stl' 'i' 'foo'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: stl, config, valid arg
 

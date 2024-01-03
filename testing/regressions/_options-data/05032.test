@@ -1,0 +1,9 @@
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
+
+title: 32 data, @non-existstent-file works, without path
+
+#pre action: MERGE SWAKS-TEST-DATA.txt file:%TESTDIR%/data-plain.txt
+
+test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --server ser.ver --helo host1.nodns.test.swaks.net --from from@host1.nodns.test.swaks.net --data @THIS-FILE-DOES-NOT-EXIST.txt
+
+#test action: REMOVE_FILE SWAKS-TEST-DATA.txt

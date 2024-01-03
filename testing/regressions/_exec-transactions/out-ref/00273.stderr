@@ -1,0 +1,2 @@
+*** TLS startup failed (connect(): certificate verification failed (unable to get local issuer certificate), server certificate did not match target host foo.example.com)
+*** STARTTLS attempted but failed

@@ -1,6 +1,6 @@
 # Generated Tue Dec 11 18:56:14 2018 by ./gen-tests.pl '.' '300' 'tls-on-connect' '' 'asdf'
 
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr
+auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 title: tls-on-connect, config, no arg
 

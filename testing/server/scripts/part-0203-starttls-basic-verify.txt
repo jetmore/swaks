@@ -1,0 +1,4 @@
+get_line(); # STARTTLS
+send_line("220 TLS go ahead");
+start_tls({ VERIFY_PEER => 1 });
+#include("$Bin/scripts/part-ehlo-all.txt");

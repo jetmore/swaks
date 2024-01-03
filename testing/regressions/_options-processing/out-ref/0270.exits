@@ -1,0 +1,1 @@
+CMD_CAPTURE       0   %SWAKS_COMMAND% --dump data --to user@host1.nodns.test.swaks.net --server ser.ver --from Z-user@host1.nodns.test.swaks.net --from A-user@host1.nodns.test.swaks.net

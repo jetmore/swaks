@@ -1,0 +1,28 @@
+=== Trying %OUTDIR%/00243.sock...
+=== Connected to %OUTDIR%/00243.sock.
+<-  220 SERVER ESMTP ready
+ -> EHLO hserver
+<-  250-SERVER Hello Server [1.1.1.1]
+<-  250-STARTTLS
+<-  250-PIPELINING
+<-  250-XCLIENT ADDR NAME PORT PROTO DESTADDR DESTPORT HELO LOGIN REVERSE_NAME
+<-  250-PRDR
+<-  250-AUTH CRAM-MD5
+<-  250-AUTH CRAM-SHA1
+<-  250-AUTH PLAIN
+<-  250-AUTH LOGIN
+<-  250-AUTH NTLM
+<-  250-AUTH DIGEST-MD5
+<-  250-AUTH=login
+<-  250 HELP
+ -> STARTTLS
+<-  220 TLS go ahead
+=== TLS started with cipher VERSION:CIPHER:BITS
+=== TLS client certificate not requested and not sent
+=== TLS no client certificate set
+=== TLS peer[0]   subject=[/C=US/ST=Indiana/O=Swaks Development (unsigned.example.com, with-SAN)/CN=unsigned.example.com/emailAddress=proj-swaks@jetmore.net]
+===               commonName=[unsigned.example.com], subjectAltName=[DNS:unsigned.example.com] notAfter=[2033-09-11T14:51:48Z]
+=== TLS peer certificate failed CA verification (self-signed certificate), failed host verification (no host string available to verify)
+ ~> QUIT
+<~  221 SERVER closing connection
+=== Connection closed with remote host.

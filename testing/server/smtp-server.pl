@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # add tls support for all domains
 
@@ -17,53 +17,96 @@
 
 
 use strict;
-use IO::Socket;
-use Getopt::Std;
-use Net::SSLeay;
+no strict "subs";
+use Socket;
+use IO::Socket::IP;
+use Getopt::Long;
+use Net::SSLeay qw(die_now die_if_ssl_error);
 use FindBin qw($Bin);
 
 my %opt     = ();
-getopts('t:p:i:d:f:s', \%opt) || mexit(1);
+GetOptions(\%opt, 'port|p=s', 'interface|i=s', 'domain|d=s', 'silent|s!', 'include=s@', 'cert=s', 'key=s', 'cafile=s') || mexit(1);
 # p - port
 # i - interface (or socket file for unix domain)
 # d - domain (inet or unix or pipe)
 # s - silent (don't print transaction hints)
+# include files - if specified even once, no command line file will be checked.  If multiple, will be executed in order specified
 
-my $scriptFile = shift;
-if (!$scriptFile) {
-  $scriptFile = $Bin . '/scripts/basic-successful-email.txt';
+my $scriptDir   = "$Bin/scripts";
+my @scriptFiles = ();
+if (exists($opt{include}) && ref($opt{include}) eq 'ARRAY') {
+  @scriptFiles = @{$opt{include}};
 }
-if (!-f $scriptFile) {
-  mexit(1, "script file $scriptFile does not exist\n");
+elsif (scalar(@ARGV)) {
+  @scriptFiles = @ARGV;
+}
+else {
+  @scriptFiles = ($scriptDir . '/script-basic-success.txt');
 }
 
-my $domain  = lc($opt{d}) || 'inet';
+for (my $i = 0; $i < @scriptFiles; $i++) {
+  my($file, @tokens) = split(/::/, $scriptFiles[$i]);
+  if ($file !~ m%[/\\]%) {
+    $file = "$scriptDir/$file";
+  }
+
+  if (!-f $file) {
+    mexit(1, "script file $file does not exist\n");
+  }
+
+  my $info = {
+    file => $file,
+    tokens => {},
+  };
+  for (my $j = 0; $j < @tokens; $j++) {
+    my $token = $tokens[$j];
+    my $value = $tokens[++$j];
+    $value =~ s/([^\\])([\@\$\%])/$1\\$2/g; # not a huge fan of this, but since we're eval'ing this, protect perl sigils
+    $info->{tokens}{$token} = $value;
+  }
+  $scriptFiles[$i] = $info;
+}
+
+my $keyFile  = $opt{key}    || $Bin . '/../certs/node.example.com.key';
+my $certFile = $opt{cert}   || $Bin . '/../certs/node.example.com.crt';
+my $caFile   = $opt{cafile} || "";
+
+my $domain  = lc($opt{domain}) || 'inet';
 if ($domain !~ /^(unix|inet|pipe)$/) {
   mexit(1, "unknown domain $domain\n");
 }
-my $port    = $opt{p} || 11111;
-my $lint    = $domain eq 'unix' ? $opt{i} || "/tmp/server.$>.$$" : $opt{i} || '0.0.0.0';
-$lint      .= ":$port" if ($domain eq 'inet' && $lint !~ /:/);
 my %cxn     = ();
+my $port    = $opt{port} || 11111;
+my $lint    = $domain eq 'unix' ? $opt{interface} || "/tmp/server.$>.$$" : $opt{interface} || '0.0.0.0';
 
 open(L, ">&STDERR") || warn "Can't redirect L: $!\n";
 select((select(L), $| = 1)[0]);
 
-get_cxn(set_up_cxn($domain, $lint));
+get_cxn(set_up_cxn($domain, $lint, $port));
 
-handle_script_file($scriptFile);
+foreach my $scriptFile (@scriptFiles) {
+  handle_script_file($scriptFile);
+}
 
 exit;
 
 sub handle_script_file {
-  my $f = shift;
-  print "Run script file $f\n";
-  open(my $fh, "<$f") || die "Can't open $f: $!\n";
+  my $args = shift;
+  my $file = ref($args) ? $args->{file} : $args;
+
+  print "Run script file $file\n" if (!$opt{silent});
+  open(my $fh, "<$file") || die "Can't open $file: $!\n";
   while (defined(my $l = <$fh>)) {
-    if ($l =~ /^include\(['"](?:\$Bin\/)?(.*)['"]\);/) {
-      handle_script_file($Bin . '/' . $1);
+    if ($l =~ /^include\(['"](?:\$scriptDir\/)?(.*)['"]\);/) {
+      handle_script_file($scriptDir . '/' . $1);
     }
     else {
+      if (ref($args)) {
+        foreach my $token (keys %{$args->{tokens}}) {
+          $l =~ s|\.\.$token\.\.|$args->{tokens}{$token}|g
+        }
+      }
+
       eval($l);
       if ($@) {
         chomp($@);
@@ -80,6 +123,10 @@ sub get_cxn {
   if ($s) {
     $cxn{cxn} = $s->accept();
     $cxn{type} = "socket";
+    if ($domain eq 'inet') {
+      $cxn{peer}{addr} = Socket::inet_ntop(length($cxn{cxn}->peeraddr()) == 4 ? AF_INET : AF_INET6, $cxn{cxn}->peeraddr());
+      $cxn{peer}{port} = $cxn{cxn}->peerport();
+    }
   } else {
     $cxn{cxn_wr} = \*STDOUT;
     $cxn{cxn_re} = \*STDIN;
@@ -90,11 +137,30 @@ sub get_cxn {
   $cxn{tls}{active} = 0;
 }
 
+sub print_tls_info {
+  foreach my $part (@_) {
+    if ($part eq 'protocol') {
+      print L "220-TLS Protocol Version: $cxn{tls}{version_string}\n";
+    }
+    elsif ($part eq 'cipher') {
+      print L "220-TLS Cipher: $cxn{tls}{cipher}\n";
+    }
+    elsif ($part eq 'peercert') {
+      print L "220-TLS Peer Certificate Subject: $cxn{tls}{peer_cert_subject}\n";
+    }
+    elsif ($part eq 'snistring') {
+      print L "220-TLS SNI String: $cxn{tls}{sni_string}\n";
+    }
+  }
+}
+
 sub set_up_cxn {
   my $domain = shift; # inet or unix
-  return if ($domain eq 'pipe');
   my $lint   = shift; # sockfile for unix, ip:port for inet
+  my $port   = shift;
   my $server;
+
+  return if ($domain eq 'pipe');
 
   if ($domain eq 'unix') {
     unlink($lint);
@@ -103,12 +169,12 @@ sub set_up_cxn {
       warn("Couldn't be a unix domain server on $lint: $@");
       exit(2);
     }
-    print L "listening on $lint pid $$\n";
+    print L "listening on $lint pid $$\n" if (!$opt{silent});
   } else {
-    if (!($server = IO::Socket::INET->new(Proto => 'tcp', Listen => SOMAXCONN, ReuseAddr => 1, LocalAddr => $lint))) {
-      mexit(2, "Couldn't be an inet domain server on $lint: $@");
+    if (!($server = IO::Socket::IP->new(Proto => 'tcp', Listen => SOMAXCONN, ReuseAddr => 1, LocalAddr => $lint, LocalPort => $port))) {
+      mexit(2, "Couldn't be an inet domain server on $lint($port): $@");
     }
-    print L "listening on $lint pid $$\n";
+    print L "listening on $lint($port) pid $$\n" if (!$opt{silent});
   }
   return($server);
 }
@@ -123,7 +189,7 @@ sub mexit {
 
 sub send_line {
   my $l = shift;
-  print L "> $l\n" if (!$opt{s});
+  print L "> $l\n" if (!$opt{silent});
   $l =~ s/([^\r])\n/$1\r\n/;
 
   if ($cxn{tls}{active}) {
@@ -150,7 +216,7 @@ sub get_line {
       $l = <$s>;
     }
     $l =~ s/\r//g;
-    print L "< $l" if (!$opt{s});
+    print L "< $l" if (!$opt{silent});
     $r .= $l;
   } while ($e && $l && $l !~ /$e/ms);
 
@@ -158,9 +224,12 @@ sub get_line {
 }
 
 sub start_tls {
+  my $opts      = shift || {};
   $Net::SSLeay::trace = 9;
-  my $ssl_keyf  = $Bin . '/test.key';
-  my $ssl_certf = $Bin . '/test.crt';
+  my $ssl_keyf  = $keyFile;
+  my $ssl_certf = $certFile;
+  my $ssl_caf   = $caFile;
+# print STDERR "$ssl_keyf, $ssl_certf\n";
 
   Net::SSLeay::load_error_strings();
   Net::SSLeay::SSLeay_add_ssl_algorithms();
@@ -168,9 +237,49 @@ sub start_tls {
   $cxn{tls}{ctx} = Net::SSLeay::CTX_new();
   Net::SSLeay::CTX_set_options($cxn{tls}{ctx}, &Net::SSLeay::OP_ALL);
   Net::SSLeay::CTX_use_RSAPrivateKey_file ($cxn{tls}{ctx}, $ssl_keyf, &Net::SSLeay::FILETYPE_PEM);
-  Net::SSLeay::CTX_use_certificate_file ($cxn{tls}{ctx}, $ssl_certf, &Net::SSLeay::FILETYPE_PEM);
+
+  # Net::SSLeay::CTX_use_certificate_file ($cxn{tls}{ctx}, $ssl_certf, &Net::SSLeay::FILETYPE_PEM);
+  my $sawFirstCert = 0;
+  my $bio = Net::SSLeay::BIO_new_file($ssl_certf, 'r');
+  # turn off error checking, there's actually a side effect of the file not being present that we rely on in the test suite
+  # (it results in a TLS handshake error - to be more clean I should change --cert to take an argument of NONE, which then replicates the behavior
+  # explicitly instead of relying on a side effect
+  # if (!$bio) {
+  #   die "Unable to read from cert file $ssl_certf: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+  # }
+  while (my $x509 = Net::SSLeay::PEM_read_bio_X509($bio)) {
+    # print STDERR "LOADING CERT\n";
+    if ($sawFirstCert) {
+      if (!Net::SSLeay::CTX_add_extra_chain_cert($cxn{tls}{ctx}, $x509)) {
+        die "Unable to add chain cert from $ssl_certf to SSL CTX: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+      }
+    }
+    else {
+      if (!Net::SSLeay::CTX_use_certificate($cxn{tls}{ctx}, $x509)) {
+        die "Unable to add cert from $ssl_certf to SSL CTX: " . Net::SSLeay::ERR_error_string(Net::SSLeay::ERR_get_error());
+        return(0);
+      }
+      $sawFirstCert = 1;
+    }
+  }
+  # doing the read_bio in a loop like that will result in an error on the last read, clear it
+  Net::SSLeay::ERR_clear_error();
+
+  # This might result in an error, but I'm not sure what the downside of continuing is since swaks is a short-lived tool and this
+  # would basically be a resource leak
+  Net::SSLeay::BIO_free($bio);
+  Net::SSLeay::ERR_clear_error();
+
+  Net::SSLeay::CTX_set_tlsext_servername_callback($cxn{tls}{ctx}, sub { $cxn{tls}{sni_string} = Net::SSLeay::get_servername(shift()); });
+
+  # https://stackoverflow.com/questions/21050366/testing-ssl-tls-client-authentication-with-openssl
+  if ($opts->{VERIFY_PEER}) {
+    Net::SSLeay::CTX_load_verify_locations($cxn{tls}{ctx}, $ssl_caf, '');
+    Net::SSLeay::CTX_set_verify($cxn{tls}{ctx}, &Net::SSLeay::VERIFY_PEER, \&verify);
+  }
 
   $cxn{tls}{ssl} = Net::SSLeay::new($cxn{tls}{ctx});
+
   if ($cxn{type} eq 'pipe') {
     Net::SSLeay::set_rfd($cxn{tls}{ssl}, fileno($cxn{cxn_re}));
     Net::SSLeay::set_wfd($cxn{tls}{ssl}, fileno($cxn{cxn_wr}));
@@ -178,6 +287,58 @@ sub start_tls {
     Net::SSLeay::set_fd($cxn{tls}{ssl}, fileno($cxn{cxn}));
   }
   my $err = Net::SSLeay::accept($cxn{tls}{ssl}) ;
-  print L "* Cipher '", Net::SSLeay::get_cipher($cxn{tls}{ssl}), "'\n" if (!$opt{s});
-  $cxn{tls}{active} = 1;
+  # print "err in TLS accept: $err\n" if ($err);
+  $cxn{tls}{active}            = 1;
+  $cxn{tls}{version}           = Net::SSLeay::version($cxn{tls}{ssl});
+  eval {
+    $cxn{tls}{version_name}      = Net::SSLeay::get_version($cxn{tls}{ssl}); # 1.85 doesn't have this, 1.88 does
+  };
+  if ($@) {
+    # can hard code other version -> name mappings here if I need them
+    if ($cxn{tls}{version} == 0x0303) {
+      $cxn{tls}{version_name} = 'TLSv1.2';
+    }
+    elsif ($cxn{tls}{version} == 0x0304) {
+      $cxn{tls}{version_name} = 'TLSv1.3';
+    }
+  }
+  $cxn{tls}{version_string}     = sprintf("0x%04x/%s", $cxn{tls}{version}, $cxn{tls}{version_name});
+  $cxn{tls}{cipher}             = Net::SSLeay::get_cipher($cxn{tls}{ssl});
+  $cxn{tls}{sni_string}       ||= "No SNI string present";
+  $cxn{tls}{peer_cert}          = Net::SSLeay::get_peer_certificate($cxn{tls}{ssl});
+  $cxn{tls}{peer_certs}         = [ Net::SSLeay::get_peer_cert_chain($cxn{tls}{ssl}) ];
+
+  $cxn{tls}{peer_cert_subject}  = "No client certificate present";
+  $cxn{tls}{peer_cert_subjects} = [];
+
+  if ($cxn{tls}{peer_cert}) {
+    $cxn{tls}{peer_cert_subject} = Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($cxn{tls}{peer_cert}));
+    push(@{$cxn{tls}{peer_cert_subjects}}, $cxn{tls}{peer_cert_subject});
+  }
+
+  if ($cxn{tls}{peer_certs} && scalar(@{$cxn{tls}{peer_certs}})) {
+    foreach my $cert (@{$cxn{tls}{peer_certs}}) {
+      push(@{$cxn{tls}{peer_cert_subjects}}, Net::SSLeay::X509_NAME_oneline(Net::SSLeay::X509_get_subject_name($cert)));
+    }
+  }
+
+  print L "* Cipher '$cxn{tls}{cipher}'\n" if (!$opt{silent});
+}
+
+sub show_tls_info {
+  #250-TLS peer DN=/C=US/ST=Indiana/O=Swaks Development (unsigned.example.com, with-SAN)/CN=unsigned.example.com/emailAddress=proj-swaks@jetmore.net
+    if ($cxn{tls}{peer_cert_subjects} && scalar(@{$cxn{tls}{peer_cert_subjects}})) {
+      for (my $i = 0; $i < scalar(@{$cxn{tls}{peer_cert_subjects}}); $i++) {
+        my $subject = $cxn{tls}{peer_cert_subjects}[$i];
+        send_line("250-TLS peer $i DN=$subject");
+      }
+    }
+    else {
+      send_line("250-TLS peer DN=No client certificate present");
+    }
+}
+
+
+sub verify {
+  return 1; # 0 means ok
 }
