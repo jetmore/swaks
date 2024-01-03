@@ -153,7 +153,7 @@ An option labeled with From-File will handle arguments as files in certain situa
 
 If the initial argument is C<->, the final argument is the contents of C<STDIN>.  Multiple options can all specify C<STDIN>, but the same content will be used for each of them.
 
-If the initial argument is prefixed with C<@>, the argument will be treated as a path to a file.  The file will be opened and the contents will be used as the final argument.  If the contents of the file can't be read, Swaks will exit.  To specify a literal string value starting with an C<@>, use two C<@> symbols.  The first will be stripped.  It is not possible to include an unqualified file which starts with an C<@> sign (like C<--attach @file.txt> or C<--attach @@file.txt>), but if you include a path to the file which splits up the two C<@> signs, that will work (eg C<--attach @./@file.txt> will cinlude the contents of the file @file.txt).
+If the initial argument is prefixed with C<@>, the argument will be treated as a path to a file.  The file will be opened and the contents will be used as the final argument.  If the contents of the file can't be read, Swaks will exit.  To specify a literal string value starting with an C<@>, use two C<@> symbols.  The first will be stripped.  It is not possible to include an unqualified file which starts with an C<@> sign (like C<--attach @file.txt> or C<--attach @@file.txt>), but if you include a path to the file which splits up the two C<@> signs, that will work (eg C<--attach @./@file.txt> will include the contents of the file @file.txt).
 
 =item Sensitive
 
@@ -998,7 +998,7 @@ Don't display the transaction hint for informational transactions.  This is most
 
 =item -nth, --no-hints
 
-C<--no-info-hints>, C<--no-send-hints>, and C<--no-receive-hints> suppress the transaction hints from info, send, and receive lines, respectively.  This is often useful when copying some portion of the transaction for use elsewhere (for instance, C<--no-send-hints --hide-receive --hide-informational> is a useful way to get only the client-side commands for a given transaction and C<--no-info-hints --tls-get-peer-cert> for copying the peer certifiate).  C<--no-hints> is identical to specifying C<--no-info-hints --no-send-hints --no-receive-hints>. (Arg-None)
+C<--no-info-hints>, C<--no-send-hints>, and C<--no-receive-hints> suppress the transaction hints from info, send, and receive lines, respectively.  This is often useful when copying some portion of the transaction for use elsewhere (for instance, C<--no-send-hints --hide-receive --hide-informational> is a useful way to get only the client-side commands for a given transaction and C<--no-info-hints --tls-get-peer-cert> for copying the peer certificate).  C<--no-hints> is identical to specifying C<--no-info-hints --no-send-hints --no-receive-hints>. (Arg-None)
 
 =item -raw, --show-raw-text
 
@@ -1066,7 +1066,7 @@ The following features are deprecated and will be removed in a future version of
 
 =item use of IO::Socket and IO::Socket::INET6 modules
 
-Will be removed no sooner than (ONE YEAR FROM NEXT RELEASE).
+Will be removed no sooner than (February 1, 2025).
 
 The primary method of sending over IPv4 and IPv6 sockets is implemented with the L<IO::Socket::IP> module.  For the time being there is still legacy support of the L<IO::Socket> and L<IO::Socket::INET6> modules which were previously used.  Please ensure L<IO::Socket::IP> is installed to ensure future functionality.
 

@@ -19,13 +19,15 @@ missing functionality, and how to get that functionality.  Example output:
     === Basic AUTH supported
     === Date Manipulation supported
     === High Resolution Timing supported
-    === IPv6 supported
+    === IPv4/v6 Socket Transport supported
+    === Legacy IPv4 Socket Transport supported
+    === Legacy IPv4/v6 Socket Transport supported
     === Local Hostname Detection supported
     === MX Routing supported
     === Netrc Credentials supported
     === Pipe Transport supported
-    === Socket Transport supported
     === TLS supported
+    === UNIX Socket Transport supported
 
 ------------------------------
 Documentation

@@ -4,12 +4,13 @@ to manually update the "Change Summary" section of RELEASE/README.txt.
 
 
 # Choose a release
-export RELEASE=20201014.0
+export RELEASE=20240103.0
 export SWAKSDIR=/Users/jetmore/Documents/git/swaks
 export BUILDDIR=$SWAKSDIR/tmp
 
 # We will be releasing what's in the develop branch
 # create a branch from develop named release/v$RELEASE
+cd $SWAKSDIR
 git fetch
 git checkout develop
 git pull
@@ -17,7 +18,7 @@ git checkout -b release/v$RELEASE
 
 # review deprecations
   - base.pod.  Make sure new deprecations are present.  Update the "not before" date
-  - remove code/docs/tests for any functionality that has reached its not-before date
+  - remove code/docs/tests for any functionality that has reached its not-before date (doc, deprecate function in swaks, OP_DEPRECATED for opts)
   - add Changes entry for any removed functionality
 
 # Update Changes, add a release entry
@@ -34,11 +35,17 @@ bin/runenv bin/run-all.pl --errors
 # run manual testing
 ## see steps in testing/MANUAL.txt
 
+# update the github milestone
+# - make sure it is empty, at this point any open issues in it should be dropped to the backlog
+# - update the milestone name to be the version number and a brief descriptioninstead of "next (SUBJECT)" ("v20240103.0 TLS and testing improvements")
+https://github.com/jetmore/swaks/milestone/1?closed=1
+
 # Generate a skeleton of the announce blog post.  Don't publish it yet, but you should
 # draft and save it so you can have the URL for the following docs
-https://www.jetmore.org/john/blog/2020/10/swaks-release-20201014-0-available/
+https://www.jetmore.org/john/blog/2024/01/swaks-release-20240103-0-available/
 
-# update README.md
+# update README.md (version)
+  - replace old release version with new release version
 
 # update App-swaks/Changes (in general this will only ever be "repackaging of version blah blah blah".  Only thing else would be changes specifically related to packaging)
 
@@ -46,9 +53,9 @@ https://www.jetmore.org/john/blog/2020/10/swaks-release-20201014-0-available/
 
 # update App-swaks/README (version and copyright year)
 
-# update doc/index.html
+# update doc/index.html (version, link to announcement)
 
-# update doc/versions.html
+# update doc/versions.html (new stanza, replace version, update link, copy relevant Changes, add a summary of the release)
 
 # update doc/installation.html (fix the links in the direct-download examples to include the latest version, also the link to App::swaks)
 
@@ -57,8 +64,8 @@ https://www.jetmore.org/john/blog/2020/10/swaks-release-20201014-0-available/
 # Run the spell checker
 # aspell --personal to set a personal wordlist doesn't seem to work, but using the "default"
 # personal word list does.  So change where aspell looks for the default personal word list
-# setting $HOME
-# alias aspell=~/Documents/dev/bin/aspell
+# by setting $HOME
+# (might need to install aspell w/ `brew install aspell`)
 
 # Can save changes directly:
 HOME=$SWAKSDIR/util aspell check Changes
@@ -66,6 +73,7 @@ HOME=$SWAKSDIR/util aspell --mode perl check swaks
 HOME=$SWAKSDIR/util aspell --mode html check doc/faq.html
 HOME=$SWAKSDIR/util aspell --mode html check doc/index.html
 HOME=$SWAKSDIR/util aspell --mode html check doc/installation.html
+HOME=$SWAKSDIR/util aspell --mode html check doc/versions.html
 HOME=$SWAKSDIR/util aspell check RELEASE/README.txt
 HOME=$SWAKSDIR/util aspell check doc/recipes.pod
 HOME=$SWAKSDIR/util aspell check doc/base.pod
@@ -76,14 +84,17 @@ HOME=$SWAKSDIR/util aspell --mode markdown check README.md
 # run the actual script (this preps some stuff, but this won't be the final release):
 $SWAKSDIR/util/gen-release.pl $RELEASE
 
-# review RELEASE/README.txt and update with detailed changes and high-level overview of release
+# review RELEASE/README.txt and update with detailed changes and high-level overview of release (the details are pulled from versions.html above)
 
 HOME=$SWAKSDIR/util aspell check RELEASE/README.txt
 
+# look for any .bak files (created by aspell) and remove if present
+find $SWAKSDIR -name '*.bak'
+
 # Create the release gz and post on the website
-# this tar command is for macos.  linux would not need the env variable and would use --transform instead of -s
+# this tar command is for macos.  linux would not need the env variable or --no-xattrs; and would use --transform instead of -s
 /bin/rm $BUILDDIR/swaks-$RELEASE.tar.gz
-COPYFILE_DISABLE=1 tar -cvzf $BUILDDIR/swaks-$RELEASE.tar.gz -s/^RELEASE/swaks-$RELEASE/ --exclude '._*' RELEASE
+COPYFILE_DISABLE=1 tar --no-xattrs -cvzf $BUILDDIR/swaks-$RELEASE.tar.gz -s/^RELEASE/swaks-$RELEASE/ --exclude '._*' RELEASE
 scp $BUILDDIR/swaks-$RELEASE.tar.gz ftp.jetmore.org:jetmore.org/john/code/swaks/files
 
 # Build the perl distribution
@@ -115,33 +126,34 @@ scp doc/installation.html ftp.jetmore.org:jetmore.org/john/code/swaks/installati
 # requires `cpan install CPAN::Uploader`
 # `perl -MConfig -e 'Config::config_vars(qw(prefix));'` for probable install location
 # see https://metacpan.org/pod/distribution/CPAN-Uploader/bin/cpan-upload for format of .pause
-/usr/local/Cellar/perl/5.32.0/bin/cpan-upload --config $BUILDDIR/.pause $BUILDDIR/App-swaks-$RELEASE.tar.gz
+/opt/homebrew/Cellar/perl/5.38.2_1/bin/cpan-upload --config $BUILDDIR/.pause $BUILDDIR/App-swaks-$RELEASE.tar.gz
 
 (recommend updating the links in this file and saving before actually doing this git stuff)
 
 # tag the release and merge the release branch into master
+cd $SWAKSDIR
+git add .
+git commit -m "changes for v$RELEASE"
+git push
+# open a release/v$RELEASE -> devel PR
+## make sure it's in the right milestone
+## merge PR
+# open a devel -> master PR
+## make sure it's in the right milestone
+## merge PR
 git fetch
 git checkout master
 git pull
-git merge --no-ff release/v$RELEASE
-git push
 git tag -a v$RELEASE -m "Tagging the $RELEASE release"
 git push origin v$RELEASE
-
-# merge release branch into develop (there can be conflicts here)
-git checkout develop
-git pull
-git merge --no-ff release/v$RELEASE
-git push
-
 
 ###
 # To this point we're published but we haven't told anyone yet.  Start sending actual announcements:
 
-## publish the draft blog post
+## fill in the details and publish the draft blog post
 
 ## send twitter notification
-# Swaks release 20201014.0 available :: https://www.jetmore.org/john/blog/2020/10/swaks-release-20201014-0-available/ :: Share and Enjoy!
+# Swaks release 20240103.0 available :: https://www.jetmore.org/john/blog/2024/01/swaks-release-20240103-0-available/ :: Share and Enjoy!
 
 ## publish github release
 - click "Releases" in side bar
@@ -157,10 +169,10 @@ git push
 g3: egrep -v '^#' ~/Documents/programming/swaks/NOTIFY  | egrep -v '^$'
 
 ######
-Subject: Swaks 20201014.0 released
+Subject: Swaks 20240103.0 released
 
 A new version of Swaks is available for download.  Please visit
-https://www.jetmore.org/john/blog/2020/10/swaks-release-20201014-0-available/
+https://www.jetmore.org/john/blog/2024/01/swaks-release-20240103-0-available/
 for links and details.
 
 --John
