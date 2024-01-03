@@ -40,12 +40,13 @@ my $outDir  =  catfile($testDir, "out-dyn");
 my $refDir  =  catfile($testDir, "out-ref");
 my $certDir =  catfile($Bin, '..', '..', 'certs');
 my $autoCat =  $ENV{SWAKS_TEST_AUTOCAT} ? 1 : 0;
+my $runningOs = $^O; # darwin, linux, freebsd, MSWin32,
 
 my @forks        = ();
 my $customTokens = {};
 my $tokens       = {
 	'global' => {
-		'%SWAKS%'    => $^O eq 'MSWin32' ? 'swaks.pl' : 'swaks',
+		'%SWAKS%'    => $runningOs eq 'MSWin32' ? 'swaks.pl' : 'swaks',
 		'%TESTDIR%'  => $testDir,
 		'%OUTDIR%'   => $outDir,
 		'%REFDIR%'   => $refDir,
@@ -267,10 +268,18 @@ sub runResult {
 
 		if ($verb eq 'COMPARE_FILE') {
 			debug('COMPARE_FILE', join('; ', @args));
-			if (-f $args[0] && -f $args[1]) {
-				my $diffFile     = catfile($tokens->{'%OUTDIR%'}, (splitpath($args[0]))[2] . '.diff');
+			my $refFile = $args[0];
+			my $dynFile = $args[1];
+			my $osRefFile = $refFile;
+			$osRefFile =~ s/^(.*\.)?([^\.]+?)$/$1$runningOs.$2/; # _options-data/out-ref/05272.stderr -> _options-data/out-ref/05272.darwin.stderr
+			if (-f $osRefFile) {
+				$refFile = $osRefFile;
+			}
+
+			if (-f $refFile && -f $dynFile) {
+				my $diffFile     = catfile($tokens->{'%OUTDIR%'}, (splitpath($refFile))[2] . '.diff');
 				unlink($diffFile);
-				genDiffs($diffFile, $args[0], $args[1]);
+				genDiffs($diffFile, $refFile, $dynFile);
 
 				if (-e $diffFile) {
 					if (!$opts->{'headless'}) {
@@ -278,11 +287,13 @@ sub runResult {
 						my $action     = $testObj->{'test action'}[0];
 						INTERACT:
 						while (1) {
+							# only show the "(O)S specific part if we're not already using an os-specific file
+							my $acceptLanguage = sprintf("(a)ccept%s new results", $refFile ne $osRefFile ? ' ((O)S-specific)' : '');
 							print "Test ", catfile($tokens->{'%TESTDIR%'}, $tokens->{'%TESTID%'}), " is about to fail.\n",
-							      "DIFF:   $args[0], $args[1]\n",
+							      "DIFF:   $refFile, $dynFile\n",
 							      ($testObj->{title} ? "TITLE:  $testObj->{title}\n" : ''),
 							      "ACTION: $action\n",
-							      "(i)gnore file; review (d)iff ((w)ith or with(o)ut line endings); (e)dit, (r)erun, or (s)kip test; (u)nmunge; (a)ccept new results; (q)uit: ";
+							      "(i)gnore file; review (d)iff ((w)ith or with(o)ut line endings); (e)dit, (r)erun, or (s)kip test; (u)nmunge; $acceptLanguage; (q)uit: ";
 
 							my $input;
 							if (!$autoCat || $autoCatRan) {
@@ -365,8 +376,11 @@ sub runResult {
 								push(@return, $diffFile, 'SKIPPED');
 								last FILE;
 							}
-							elsif ($input eq 'a') {
-								File::Copy::copy($args[1], $args[0]);
+							elsif ($input eq 'a' || $input eq 'O') {
+								if ($input eq 'O') {
+									$refFile = $osRefFile;
+								}
+								File::Copy::copy($dynFile, $refFile);
 								redo TEST_EXECUTION;
 							}
 							elsif ($input eq 'q') {
@@ -385,7 +399,7 @@ sub runResult {
 				}
 			}
 			else {
-				push(@return, "Can't COMPARE_FILE($args[0], $args[1]), one or both files don't exist");
+				push(@return, "Can't COMPARE_FILE($refFile, $dynFile), one or both files don't exist");
 			}
 		}
 		elsif (!$verb) {
@@ -472,7 +486,7 @@ sub runAction {
 		unlink(@args);
 	}
 	elsif ($verb eq 'CMD') {
-		$args[0] =~ s|/|\\|g if ($^O eq 'MSWin32');
+		$args[0] =~ s|/|\\|g if ($runningOs eq 'MSWin32');
 		debug('CMD', join('; ', @args));
 		debug('exec', join(' ', map { "'$_'" } @args));
 		my $exit = system(@args);
@@ -480,7 +494,7 @@ sub runAction {
 	}
 	elsif ($verb =~ /^CMD_CAPTURE(?::(\S+))?$/) {
 		my $suffix     = $1 ? ".$1" : '';
-		$args[0]       =~ s|/|\\|g if ($^O eq 'MSWin32');
+		$args[0]       =~ s|/|\\|g if ($runningOs eq 'MSWin32');
 		debug('CMD_CAPTURE', join('; ', @args));
 		my $stdoutFile = catfile($tokens->{'%OUTDIR%'}, $tokens->{'%TESTID%'} . '.stdout' . $suffix);
 		my $stderrFile = catfile($tokens->{'%OUTDIR%'}, $tokens->{'%TESTID%'} . '.stderr' . $suffix);
@@ -492,7 +506,7 @@ sub runAction {
 		saveExit($tokens->{'%TESTID%'}, [ $verb, $exit, \@args ]);
 	}
 	elsif ($verb eq 'FORK') {
-		$args[0] =~ s|/|\\|g if ($^O eq 'MSWin32');
+		$args[0] =~ s|/|\\|g if ($runningOs eq 'MSWin32');
 		debug('FORK', join('; ', @args));
 		debug('exec', join(' ', map { "'$_'" } @args));
 		my $proc = Proc::Background->new(@args);
@@ -528,7 +542,7 @@ sub runAction {
 			delete($ENV{$args[0]});
 		}
 		else {
-			my $tv = ($^O eq 'MSWin32' && !$args[1]) ? '<>' : $args[1];
+			my $tv = ($runningOs eq 'MSWin32' && !$args[1]) ? '<>' : $args[1];
 			# print STDERR "SET_ENV $args[0] - setting ENV{$args[0]} to $tv\n";
 			$ENV{$args[0]} = $tv;
 		}
@@ -561,7 +575,7 @@ sub runAction {
 		}
 		close(O);
 
-		if ($^O ne 'MSWin32') {
+		if ($runningOs ne 'MSWin32') {
 			if (length($post{mode})) {
 				chmod(oct($post{mode}), $outFile);
 			}
@@ -649,13 +663,13 @@ sub readTestFile {
 		if ($fullLine =~ s/IFOS(!)?=(\S+) //) {
 			my $negate = $1;
 			my $testOs = $2;
-			my $realOs = $^O;
+
 
 			# pre action: IFOS=MSWin32 SET_ENV LC_ALL Czech
 			# pre action: IFOS!=MSWin32 SET_ENV LC_ALL cs_CZ.UTF-8
 			# Windows:  IFOS=MSWin32 = (1 && 0) || (0 && 1), IFOS!=MSWin32 = (1 && 1) || (0 && 0)
 			# Linux:    IFOS=MSWin32 = (0 && 0) || (1 && 1), IFOS!=MSWin32 = (0 && 1) || (1 && 0)
-			if (($testOs eq $realOs && $negate) || ($testOs ne $realOs && !$negate)) {
+			if (($testOs eq $runningOs && $negate) || ($testOs ne $runningOs && !$negate)) {
 				$fullLine = '';
 				next LINE;
 			}
@@ -729,7 +743,7 @@ sub readTestFile {
 					unshift(@{$obj->{'test action'}}, "CMD_CAPTURE $cmd '$stdin'");
 
 
-					# if ($^O eq 'MSWin32') {
+					# if ($runningOs eq 'MSWin32') {
 					# 	$obj->{'skip'} ||= "INTERACTive testing not currently supported on windows";
 					# }
 					# my $file     = catfile('%OUTDIR%', '%TESTID%.expect');
@@ -832,7 +846,7 @@ sub get_hostname {
 }
 
 sub get_username {
-	if ($^O eq 'MSWin32') {
+	if ($runningOs eq 'MSWin32') {
 		require Win32;
 		return Win32::LoginName();
 	}
@@ -858,7 +872,7 @@ sub mshellwords {
 	my $line = shift;
 	my @return = ();
 
-	if ($^O eq 'MSWin32') {
+	if ($runningOs eq 'MSWin32') {
 		$line =~ s/\\/::BACKSLASH::/g;
 		foreach my $part (shellwords($line)) {
 			$part =~ s/::BACKSLASH::/\\/g;
