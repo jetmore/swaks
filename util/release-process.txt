@@ -4,12 +4,13 @@ to manually update the "Change Summary" section of RELEASE/README.txt.
 
 
 # Choose a release
-export RELEASE=20201014.0
+export RELEASE=20240103.0
 export SWAKSDIR=/Users/jetmore/Documents/git/swaks
 export BUILDDIR=$SWAKSDIR/tmp
 
 # We will be releasing what's in the develop branch
 # create a branch from develop named release/v$RELEASE
+cd $SWAKSDIR
 git fetch
 git checkout develop
 git pull
@@ -17,7 +18,7 @@ git checkout -b release/v$RELEASE
 
 # review deprecations
   - base.pod.  Make sure new deprecations are present.  Update the "not before" date
-  - remove code/docs/tests for any functionality that has reached its not-before date
+  - remove code/docs/tests for any functionality that has reached its not-before date (doc, deprecate function in swaks, OP_DEPRECATED for opts)
   - add Changes entry for any removed functionality
 
 # Update Changes, add a release entry

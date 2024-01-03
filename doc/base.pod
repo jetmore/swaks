@@ -1066,7 +1066,7 @@ The following features are deprecated and will be removed in a future version of
 
 =item use of IO::Socket and IO::Socket::INET6 modules
 
-Will be removed no sooner than (ONE YEAR FROM NEXT RELEASE).
+Will be removed no sooner than (February 1, 2025).
 
 The primary method of sending over IPv4 and IPv6 sockets is implemented with the L<IO::Socket::IP> module.  For the time being there is still legacy support of the L<IO::Socket> and L<IO::Socket::INET6> modules which were previously used.  Please ensure L<IO::Socket::IP> is installed to ensure future functionality.
 
