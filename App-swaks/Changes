@@ -1,6 +1,11 @@
 Revision history for Perl extension App::swaks.
 
-20201014.0  Web Oct 14 17:00:00 2020
+20240103.0  Wed Jan  3 17:00:00 2024
+	- tracking Swaks release 20240103.0.  See
+		http://jetmore.org/john/code/swaks/versions.html
+		for full details.
+
+20201014.0  Wed Oct 14 17:00:00 2020
 	- tracking Swaks release 20201014.0.  See
 		http://jetmore.org/john/code/swaks/versions.html
 		for full details.

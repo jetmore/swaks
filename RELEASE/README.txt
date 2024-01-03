@@ -19,13 +19,15 @@ missing functionality, and how to get that functionality.  Example output:
     === Basic AUTH supported
     === Date Manipulation supported
     === High Resolution Timing supported
-    === IPv6 supported
+    === IPv4/v6 Socket Transport supported
+    === Legacy IPv4 Socket Transport supported
+    === Legacy IPv4/v6 Socket Transport supported
     === Local Hostname Detection supported
     === MX Routing supported
     === Netrc Credentials supported
     === Pipe Transport supported
-    === Socket Transport supported
     === TLS supported
+    === UNIX Socket Transport supported
 
 ------------------------------
 Documentation
@@ -88,16 +90,38 @@ A full copy of this license should be available in the LICENSE.txt file.
 ------------------------------
 Change Summary
 ------------------------------
-v20201014.0
+v20240103.0
   New Features:
-    * None
+    * Added --cc and --bcc options
+    * Numerous TLS debugging and verification improvements
+      * Debug output contains whether a client cert was requested and whether
+        one was sent
+      * Add new options --tls-verify-ca and --tls-verify-host to differentiate
+        between types of certificate verification (--tls-verify does both)
+      * Add --tls-target option to allow setting of hostname to be used in
+        hostname verification.  This is useful in some inet debugging situations
+        and required to do hostname verification with --socket or --pipe
+      * Add --tls-chain (#60, initial implementation by Wolfgang Karall-Ahlborn)
+      * Add --tls-get-peer-chain option (analogous to --tls-get-peer-cert, #73)
+      * Certificate debug now includes all client and peer certs, it a chain
+        was used (#73)
+      * Certificate debug now includes notAfter, commonName, and subjectAltName
   Notable Changes:
-    * None
+    * --output-file, --output-file-stderr, and --output-file-stdout now truncate
+      the specified file if it already exists
+    * Documentation improvements
+    * Extensive test harness improvements
+    * Add new stop-point XCLIENT-HELO to address lack of specificity when
+      mixing XCLIENT usage with the HELO stop-point
+    * Add new stop-point PROXY
+    * Use IO::Socket::IP by default.  Will still use IO::Socket::INET/INET6
+      to cover transition, but this is deprecated and will be removed in the
+      future (#43)
+    * TLS session debug information is now printed even if we decide not to
+      continue the session (eg for failed verification)
+    * Previously-deprecated functionality to allow some options to be either
+      a filename or a literal string has been removed.  Using the '@' sigil is
+      now the only was to specify file contents
+    * Previously-deprecated -g option removed
   Notable Bugs Fixed:
-    * Last release introduced a bug where Date: headers were localized, which
-      is against RFC.  Further, that localization then broke character rendering
-      in some locales.  A new fix for the original issue (#17) was put in place,
-      which no longer localizes the Date: header and fixes the newly introduced
-      rendering issue (#25)
-    * Last release introduced a bug which prevented --protect-prompt from
-      working.  This is now fixed (#26)
+    * TLS certificate verification did not always work.  It should now

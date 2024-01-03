@@ -1,4 +1,4 @@
-App-swaks version 20201014.0
+App-swaks version 20240103.0
 ======================
 
 App::swaks is a perl package which distributes the Swaks SMTP test
@@ -27,7 +27,7 @@ modules may be desired.
 
 COPYRIGHT AND LICENSE
 
-Copyright (c) 2003-2008,2010-2020 John Jetmore <jj33@pobox.com>
+Copyright (c) 2003-2008,2010-2024 John Jetmore <jj33@pobox.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
