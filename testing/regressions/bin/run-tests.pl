@@ -29,8 +29,9 @@ $| = 1;
 # --infile - load state of a previous run.  Only really useful in conjunction with --errors
 # --errors - load the state from --infile.  Only run tests that were marked as failures in the infile state.
 # --skip-only - temporarily ignore the skip directive in a test and run it anyway. Ignore non-skip tests
+# --unmunge - don't run the test, just show which CMD, CMD_CAPTURE, and FORK actions would have been taken
 my $opts = {};
-GetOptions($opts, 'headless|h!', 'outfile|o=s', 'infile|i=s', 'errors|e!', 'skip-only') || die "Couldn't understand options\n";
+GetOptions($opts, 'headless|h!', 'outfile|o=s', 'infile|i=s', 'errors|e!', 'skip-only', 'unmunge') || die "Couldn't understand options\n";
 
 my $testDir =  shift || die "Please provide the path to the test directory\n";
 $testDir    =~ canonpath($testDir); # remove trailing slashes
@@ -141,6 +142,11 @@ sub runTest {
 		foreach my $token (keys(%{$tokens->{$tokenType}})) {
 			$allTokens->{$token} = $tokens->{$tokenType}{$token};
 		}
+	}
+
+	if ($opts->{'unmunge'}) {
+		print unmungeActions($obj->{'test action'}, $allTokens), "\n";
+		return;
 	}
 
 	if ($opts->{'skip-only'} && !$obj->{'skip'}) {
@@ -348,50 +354,7 @@ sub runResult {
 								redo TEST_EXECUTION;
 							}
 							elsif ($input eq 'u') { # unmunge
-								my @pieces = ();
-								ACTION:
-								for (my $i = 0; $i < scalar(@{$testObj->{'test action'}}); $i++) {
-									my $tAction = $testObj->{'test action'}[$i];
-									my @actionWords = mshellwords(replaceTokens($tokens, $tAction));
-									WORD:
-									for (my $j = 0; $j < scalar(@actionWords); $j++) {
-										my $p = $actionWords[$j];
-										next ACTION if ($j == 0 && $p !~ /^(FORK|CMD_CAPTURE|CMD)$/);
-										if ($j == 0) {
-											# This is the verb, like FORK or CMD_CAPTURE
-											$p = ">> $p";
-											$p = "\n$p" if ($i == 0);
-											push(@pieces, $p);
-										}
-										elsif ($j == 1) {
-											# this is the command, like swaks or smtp-server.pl
-											push(@pieces, $p . ' \\');
-										}
-										elsif ($p =~ /^-/) {
-											# option: indent and put on own line
-											$p = '    ' . $p;
-											push(@pieces, $p . ' \\');
-										}
-										elsif ($pieces[-1] =~ /^\s*-/) {
-											# argument: if the previous piece was an option, add it tot he previous piece
-											if ($p =~ / /) {
-												$p = '"' . $p . '"';
-											}
-											$pieces[-1] =~ s/ \\$//;
-											$pieces[-1] .= ' ' . $p . ' \\';
-										}
-										else {
-											print "ERROR: What should I do with this? <<$i,$j,$p>>, <<$pieces[-1]>>\n";
-										}
-
-										# if we're on the last word of the command, remove the backslash
-										if ($j == scalar(@actionWords) - 1) {
-											$pieces[-1] =~ s/ \\$//;
-										}
-									}
-								}
-								# $action = join(" \\\n", @pieces);
-								$action = join("\n", @pieces);
+								$action = unmungeActions($testObj->{'test action'}, $tokens);
 								next INTERACT;
 							}
 							elsif ($input eq 'r') {
@@ -439,6 +402,56 @@ sub runResult {
 	else {
 		return '';
 	}
+}
+
+sub unmungeActions {
+	my $actions = shift;
+	my $tokens = shift;
+
+	my @pieces = ();
+	ACTION:
+	for (my $i = 0; $i < scalar(@$actions); $i++) {
+		my $tAction = $actions->[$i];
+		my @actionWords = mshellwords(replaceTokens($tokens, $tAction));
+		WORD:
+		for (my $j = 0; $j < scalar(@actionWords); $j++) {
+			my $p = $actionWords[$j];
+			next ACTION if ($j == 0 && $p !~ /^(FORK|CMD_CAPTURE|CMD)$/);
+			if ($j == 0) {
+				# This is the verb, like FORK or CMD_CAPTURE
+				$p = ">> $p";
+				$p = "\n$p" if ($i == 0);
+				push(@pieces, $p);
+			}
+			elsif ($j == 1) {
+				# this is the command, like swaks or smtp-server.pl
+				push(@pieces, $p . ' \\');
+			}
+			elsif ($p =~ /^-/) {
+				# option: indent and put on own line
+				$p = '    ' . $p;
+				push(@pieces, $p . ' \\');
+			}
+			elsif ($pieces[-1] =~ /^\s*-/) {
+				# argument: if the previous piece was an option, add it tot he previous piece
+				if ($p =~ / /) {
+					$p = '"' . $p . '"';
+				}
+				$pieces[-1] =~ s/ \\$//;
+				$pieces[-1] .= ' ' . $p . ' \\';
+			}
+			else {
+				print "ERROR: What should I do with this? <<$i,$j,$p>>, <<$pieces[-1]>>\n";
+			}
+
+			# if we're on the last word of the command, remove the backslash
+			if ($j == scalar(@actionWords) - 1) {
+				$pieces[-1] =~ s/ \\$//;
+			}
+		}
+	}
+	my $action = join("\n", @pieces);
+	return $action;
 }
 
 sub runAction {

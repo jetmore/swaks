@@ -22,7 +22,7 @@
 === TLS no client certificate set
 === TLS peer[0]   subject=[/C=US/ST=Indiana/O=Swaks Development (*.example.com, with-SAN)/CN=*.example.com/emailAddress=proj-swaks@jetmore.net]
 ===               commonName=[*.example.com], subjectAltName=[DNS:*.example.com] notAfter=[2033-09-11T15:02:41Z]
-=== TLS peer certificate failed CA verification, passed host verification (using host anything.example.com to verify)
+=== TLS peer certificate failed CA verification (unable to get local issuer certificate), passed host verification (using host anything.example.com to verify)
  ~> QUIT
 <~  221 SERVER closing connection
 === Connection closed with child process.
