@@ -1064,14 +1064,6 @@ The following features are deprecated and will be removed in a future version of
 
 =over 4
 
-=item -g option
-
-Will be removed no sooner than November 1, 2021.
-
-The -g option is currently a less-good alias to C<--data ->.  Any uses of C<-g> should be able to be directly migrated to C<--data -> instead.
-
-=back
-
 =item use of IO::Socket and IO::Socket::INET6 modules
 
 Will be removed no sooner than (ONE YEAR FROM NEXT RELEASE).

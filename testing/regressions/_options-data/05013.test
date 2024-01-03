@@ -1,7 +1,0 @@
-
-auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
-
-title: -g ignored if --data present in same option level (before)
-
-test action: CMD_CAPTURE %SWAKS% --dump DATA --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" \
-    -g --data 'this is the%NEWLINE%correct body'

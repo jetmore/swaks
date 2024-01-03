@@ -2626,22 +2626,6 @@ sub fetch_args {
 			splice(@$argv_local, $i+1, 0, $2);
 		}
 
-		# -g is not really necessary.  It is now deprecated. During the deprecation window, make
-		# it a straight-up alias to `--data -`.  If has already appeared, just ignore -g.  If
-		# --data has not appeared, change -g into `--data -`.
-		if ($argv_local->[$i] =~ /^-?-g$/) {
-			deprecate('The -g option is deprecated and will be removed. Please use \'--data -\' instead.');
-			if (scalar(grep(/^-?-data$/, @$argv_local)) || check_arg('mail_data', $r)) {
-				# if --data appears in the current stream or has already appeared in a previous stream, ignore -g
-				splice(@$argv_local, $i, 1); # remove the current index from @$argv_local
-				redo(RUNOPTS);        # since there's now a new value at $i, redo this iteration of the loop
-			}
-			else {
-				# if we haven't seen --data yet, change -g into `--data -`
-				splice(@$argv_local, $i, 1, '--data', '-');
-			}
-		}
-
 		if ($argv_local->[$i] =~ /^-?-h(?:eader)?-([^:]+):?$/) {
 			# rewrite '--header-Foo bar' into '--header "Foo: bar"'
 			$argv_local->[$i]   = "--header";
