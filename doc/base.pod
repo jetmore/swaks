@@ -587,7 +587,11 @@ The following tables lists the valid auth-types
 
 =item LOGIN, PLAIN
 
-These basic authentication types are fully supported and tested and have no additional requirements
+These basic authentication types are fully supported and tested and have no additional requirements.
+
+=item LOGIN-INITIAL
+
+This is a variation of the LOGIN auth-type where the username is sent to the server as as part of the initial-response argument to the AUTH LOGIN request.  See L<https://www.rfc-editor.org/rfc/rfc4954#page-3>.
 
 =item CRAM-MD5
 
@@ -611,7 +615,7 @@ The CRAM-SHA1 authenticator requires the L<Digest::SHA> module.  This type has o
 
 These authenticators require the Authen::NTLM module.  This type has been tested against Exim, Communigate, and Exchange 2007.
 
-In addition to the standard username and password, this authentication type can also recognize a "domain".  The domain can be set using the C<--auth-extra> "domain" keyword.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may be implemented incorrectly.
+In addition to the standard username and password, this authentication type can also recognize a "domain".  The domain can be set using the C<--auth-extra> "domain" keyword.  Note that this has never been tested with a mail server that doesn't ignore DOMAIN so this may not be implemented incorrectly.
 
 =back
 

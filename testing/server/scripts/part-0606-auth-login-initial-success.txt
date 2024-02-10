@@ -1,0 +1,8 @@
+#  -> AUTH LOGIN
+get_line();
+# <-  334 UGFzc3dvcmQ6
+send_line("334 UGFzc3dvcmQ6");
+#  -> dmFsaWRwYXNzd29yZA==
+get_line();
+# <-  235 Authentication succeeded
+send_line("235 Authentication succeeded");

@@ -1045,3 +1045,5 @@
 * 20240103 Previously-deprecated option -g removed entirely
 * 20240103 Improve test suite experience on FreeBSD
 > 20240102 released 20240102.0
+* 20240210 Implement the LOGIN-INITIAL auth type, which forces the
+           initial-response form of LOGIN

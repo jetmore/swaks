@@ -2,4 +2,4 @@
 auto: REMOVE_FILE,CREATE_FILE,MUNGE,COMPARE_FILE %TESTID%.stdout %TESTID%.stderr %TESTID%.exits
 
 test action: CMD_CAPTURE %SWAKS% --dump AUTH --to user@host1.nodns.test.swaks.net --from recip@host1.nodns.test.swaks.net --helo hserver --server "ser.ver" --au USER -ap PASS \
-    --auth LOGIN,PLAIN,CRAM-MD5,DIGEST-MD5,CRAM-SHA1,NTLM,SPA,MSN
+    --auth LOGIN,LOGIN-INITIAL,PLAIN,CRAM-MD5,DIGEST-MD5,CRAM-SHA1,NTLM,SPA,MSN
