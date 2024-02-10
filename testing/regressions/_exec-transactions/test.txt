@@ -133,12 +133,14 @@
     3 CRAM-SHA1 success
 ##    4 DIGEST-MD5 success
     5 NTLM success
+    6 LOGIN-INITIAL success
    10 PLAIN failed
    11 LOGIN failed
    12 CRAM-MD5 failed
    13 CRAM-SHA1 failure
 #   14 DIGEST-MD5 failure
    15 NTLM failure
+   16 LOGIN-INITIAL failure
    20 --auth -> choose protocol (this relies on the fact that CRAM-MD5 is tried first in the code)
    21 --auth not advertised
    22 --auth not advertised --auth-optional
@@ -157,6 +159,7 @@
    35 --auth-plaintext
    36 --auth-hide-password
    37 --auth-plaintext --auth-hide-password
+   38 --auth-plaintext --auth-hide-password (LOGIN-INITIAL)
 
 00800 - proxy
     0 v1 (implicit), --proxy-*, success

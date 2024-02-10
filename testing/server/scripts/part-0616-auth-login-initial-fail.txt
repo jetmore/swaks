@@ -1,0 +1,7 @@
+#  -> AUTH LOGIN
+get_line();
+# <-  334 VXNlcm5hbWU6
+send_line("334 UGFzc3dvcmQ6");
+#  -> dmFsaWRwYXNzd29yZA==
+get_line();
+send_line("535 Incorrect authentication data");

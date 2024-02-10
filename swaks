@@ -994,7 +994,7 @@ sub do_smtp_auth {
 
 	foreach my $btype (@$at) {
 		# if server doesn't support, skip type (may change in future)
-		next if (!$e->{AUTH}{$btype});
+		next if (!$e->{AUTH}{$btype} && $btype ne 'LOGIN-INITIAL');
 
 		foreach my $type (@{$G::auth_map_t{'CRAM-MD5'}}) {
 			if ($btype eq $type) {
@@ -1182,13 +1182,27 @@ sub do_smtp_auth_login {
 	my $p  = shift; # auth password
 	my $as = shift; # auth string
 
-	do_smtp_gen("AUTH $as", '334', undef, '', '', $G::auth_showpt ? \&unencode_smtp : '')
+	my $do_login_initial = 0;
+	my $initial_string = "AUTH $as";
+	my $initial_string_plain = "AUTH $as";
+	if ($as eq 'LOGIN-INITIAL') {
+		$do_login_initial = 1;
+		$initial_string = "AUTH LOGIN " . eb64($u);
+		$initial_string_plain = "AUTH LOGIN $u";
+	}
+
+	do_smtp_gen($initial_string, '334', undef, '', $G::auth_showpt ? $initial_string_plain : '', $G::auth_showpt ? \&unencode_smtp : '')
 		|| return(0);
-	do_smtp_gen(eb64($u),   '334', undef, '', $G::auth_showpt ? $u : '', $G::auth_showpt ? \&unencode_smtp : '')
-		|| return(0);
+
+	if (!$do_login_initial) {
+		do_smtp_gen(eb64($u),   '334', undef, '', $G::auth_showpt ? $u : '', $G::auth_showpt ? \&unencode_smtp : '')
+			|| return(0);
+	}
+
 	do_smtp_gen(eb64($p),   '235', undef, '',
 	            $G::auth_showpt ? ($G::auth_hidepw || $p) : eb64($G::auth_hidepw || $p))
 		|| return(0);
+
 	return(1);
 }
 
@@ -3730,7 +3744,8 @@ sub process_args {
 		# handle the --auth-map options plus our default mappings
 		foreach (split(/\s*,\s*/, get_arg('auth_map', $o)),"PLAIN=PLAIN","LOGIN=LOGIN",
 		                          "CRAM-MD5=CRAM-MD5","DIGEST-MD5=DIGEST-MD5",
-		                          "CRAM-SHA1=CRAM-SHA1","NTLM=NTLM","SPA=NTLM","MSN=NTLM")
+		                          "CRAM-SHA1=CRAM-SHA1","NTLM=NTLM","SPA=NTLM","MSN=NTLM",
+		                          "LOGIN-INITIAL=LOGIN")
 		{
 			if (/^([^=]+)=(.+)$/) {
 				my($alias,$type)        = ($1,$2);
