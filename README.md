@@ -17,6 +17,25 @@ See the [installation page][installation_page] for details on installing in mult
 
 There is also a [versions page][versions_page] which lists every released version of Swaks, complete with changelogs and download links.
 
+## Docker
+
+Usage:
+```
+docker run --rm -ti bryancs/swaks [OPTIONS]
+```
+
+Example:
+```
+# test
+docker run --rm -ti bryancs/swaks \
+  -f foo@bar.com \
+  -t foo@baz.com \
+  -s localhost
+
+# help
+docker run --rm bryancs/swaks --help
+```
+
 ## Documentation
 
 The reference documentation from the latest release, which includes quick-start examples, is available as [plain text][plain_doc] and [rendered][rendered_doc].  The documentation from each release is available from the [versions page][versions_page].  There is also an [Occasionally Asked Questions][oaq] document.
