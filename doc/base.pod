@@ -473,6 +473,10 @@ If the remote server supports it, attempt SMTP PIPELINING (RFC 2920). (Arg-None)
 
 If the server supports it, attempt Per-Recipient Data Response (PRDR) (L<https://tools.ietf.org/html/draft-hall-prdr-00.txt>).  PRDR is not yet standardized, but MTAs have begun implementing the proposal. (Arg-None)
 
+=item --smtputf8
+
+If the server supports it, attempt SMTPUTF8 (RFC 6531). (Arg-None)
+
 =item --force-getpwuid
 
 Tell Swaks to use the system-default method of determining the current user's username for the default sender local-part instead of trying C<$LOGNAME> first.  Despite the UNIX-ish-specific option name, this option also works on Windows. (Arg-None)
@@ -1187,6 +1191,10 @@ error in TLS transaction
 =item Z<>30
 
 PRDR requested/required but not advertised
+
+=item Z<>31
+
+SMTPUTF8 requested/required but not advertised
 
 =item Z<>32
 
